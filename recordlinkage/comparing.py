@@ -73,14 +73,9 @@ class Compare(object):
 		else:
 
 			name = kwargs.pop('name', None)
-			self._append(self._compare_column(comp_func, *args, **kwargs), name=name)
+			self._append(comp_func(*args, **kwargs), name=name)
 
 		return self.comparison_vectors
-
-
-	def _compare_column(self, comp_func, *args, **kwargs):
-
-		return comp_func(*args, **kwargs)
 
 	def _append(self, comp_vect, name=None, store=True, *args, **kwargs):
 
@@ -121,7 +116,7 @@ def exact_string(*args, **kwargs):
 
 	return exact(*args, **kwargs)
 
-def exact(s1, s2, missing_value=np.nan, output='any'):
+def exact(s1, s2, missing_value=0, output='any'):
 	"""
 	Compare two series or dataframes exactly on all fields. 
 	"""
