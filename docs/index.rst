@@ -11,6 +11,7 @@ Ready to start linking records? For deduplication or linking between datasets? T
 .. toctree::
    :maxdepth: 2
 
+   intro_example
    Linking
    methods
 
