@@ -10,45 +10,41 @@ class Compare(object):
 
 		self.comparison_vectors = None
 
-	def similarity(self):
+	def exact(self, *args, **kwargs):
+		"""
+		exact(s1, s2, missing_value=0, output='any')
 
-		if type(comp_func) == list:
+		Compare the record pairs exactly.
 
-			if len(comp_func) != len(list(name)):
-				raise RuntimeError
+		:param s1: Series or DataFrame to compare all fields. 
+		:param s2: Series or DataFrame to compare all fields. 
+		:param missing_value: The value for a comparison with a missing value. Default 0.
+		:param output: Default 'any'. This holds only for comparing dataframes.
 
-			for func in comp_func:
-				self._append(self._compare_column(func))
+		:return: A Series with comparison values.
+		:rtype: pandas.Series
 
-		elif type(comp_func) == dict:
+		"""
 
-			for name, func in comp_func.items:
-				self._append(self._compare_column(func, name=name))
+		return self.compare(exact(*args, **kwargs))
 
-		else:
-			self._append(self._compare_column(func))
+	def window_numerical(self, *args, **kwargs):
+		"""
+		window_numerical(s1, s2, offset_left, offset_right, missing_value=0)
 
-		return self.comparison_vectors[names]
+		Compare numerical values with a tolerance window.
 
-	def binary(self):
+		:param s1: Series or DataFrame to compare all fields. 
+		:param s2: Series or DataFrame to compare all fields. 
+		:param missing_value: The value for a comparison with a missing value. Default 0.
+		:param window: The window size. Can be a tuple with two values or a single number. 
 
-		if type(comp_func) == list:
+		:return: A Series with comparison values.
+		:rtype: pandas.Series
 
-			if len(comp_func) != len(list(name)):
-				raise RuntimeError
+		"""
 
-			for func in comp_func:
-				self._append(self._compare_column(func))
-
-		elif type(comp_func) == dict:
-
-			for name, func in comp_func.items:
-				self._append(self._compare_column(func, name=name))
-
-		else:
-			self._append(self._compare_column(func))
-
-		return self.comparison_vectors[name]
+		return self.compare(exact(*args, **kwargs))
 
 	def compare(self, comp_func, *args, **kwargs):
 		"""Compare the records given. 
@@ -157,9 +153,13 @@ def exact(s1, s2, missing_value=0, output='any'):
 
 	return compare
 
-def window_numerical(s1, s2, offset_left, offset_right, missing_value=np.nan):
+def window_numerical(s1, s2, window, missing_value=0):
 
-	compare = (((s1-s2) <= offset_right) & ((s1-s2) >= offset_left)).astype(int)
+	if isinstance(window, (list, tuple)):
+		compare = (((s1-s2) <= window[1]) & ((s1-s2) >= window[0])).astype(int)
+	else:
+		compare = (((s1-s2) <= window) & ((s1-s2) >= window)).astype(int)
+
 	compare[_missing(s1, s2)] = missing_value 
 
 	return compare
