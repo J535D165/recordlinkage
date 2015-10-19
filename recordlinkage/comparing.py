@@ -28,9 +28,9 @@ class Compare(object):
 
 		return self.compare(exact(*args, **kwargs))
 
-	def window_numerical(self, *args, **kwargs):
+	def numerical(self, *args, **kwargs):
 		"""
-		window_numerical(s1, s2, offset_left, offset_right, missing_value=0)
+		numerical(s1, s2, window, missing_value=0)
 
 		Compare numerical values with a tolerance window.
 
@@ -44,7 +44,24 @@ class Compare(object):
 
 		"""
 
-		return self.compare(exact(*args, **kwargs))
+		return self.compare(window_numerical(*args, **kwargs))
+
+	def fuzzy(self, *args, **kwargs):
+		"""
+		fuzzy(s1, s2, compare_method, missing_value=0)
+
+		Compare numerical values with a tolerance window.
+
+		:param s1: Series or DataFrame to compare all fields. 
+		:param s2: Series or DataFrame to compare all fields. 
+		:param missing_value: The value for a comparison with a missing value. Default 0.
+		:param compare_method: levestein
+
+		:return: A Series with comparison values.
+		:rtype: pandas.Series
+
+		"""
+		print "Not implemented"
 
 	def compare(self, comp_func, *args, **kwargs):
 		"""Compare the records given. 
@@ -104,14 +121,6 @@ def _missing(s1, s2):
 
 	return (pd.DataFrame(s1).isnull().all(axis=1) | pd.DataFrame(s2).isnull().all(axis=1))
 
-def exact_numerical(*args, **kwargs):
-
-	return exact(*args, **kwargs)
-
-def exact_string(*args, **kwargs):
-
-	return exact(*args, **kwargs)
-
 def exact(s1, s2, missing_value=0, output='any'):
 	"""
 	Compare two series or dataframes exactly on all fields. 
@@ -164,30 +173,11 @@ def window_numerical(s1, s2, window, missing_value=0):
 
 	return compare
 
-
-def bin_compare_cat(cat1, cat2, missing_value=0):
-
-	# compare
-	comp = (cat1 == cat2).astype(int)
-	comp.ix[_missing(cat1, cat2)] = missing_value 
-
-	return comp
-
 def bin_compare_geq(cat1, cat2, missing_value=0):
 
 	# compare
 	comp = (cat1 >= cat2).astype(int)
 	comp.ix[_missing(cat1, cat2)] = missing_value 
-
-	return comp
-
-def bin_compare_num(s1, s2, offset_left=0, offset_right=0, missing_value=0):
-
-	diff = (s1 - s2)
-
-	# compare
-	comp = ((diff >= -offset_left) & (diff <= offset_right)).astype(int)
-	comp.ix[_missing(s1, s2)] = missing_value 
 
 	return comp
 
@@ -203,7 +193,7 @@ def compare_levels(s1, s2, freq, split=np.array([1, 5, 10, 20, 50, 100, np.inf])
 
 	return comp
 
-def compare_geo(X1, Y1, X2, Y2, radius=20, disagreement_value = -1, missing_value=np.nan):
+def compare_geo(X1, Y1, X2, Y2, radius=20, disagreement_value = -1, missing_value=-1):
     
     distance = np.sqrt(np.power(X1-X2,2)+np.power(Y1-Y2,2))
     
