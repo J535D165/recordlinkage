@@ -212,7 +212,14 @@ class ECMEstimate(EMEstimate):
         :rtype: pandas.Series
         """
 
-        return y.replace(self.m).prod(axis=1)
+        y_m = y.copy()
+
+        for col in set(self.variables) & set(self.m.keys()):
+
+            keys, values = zip(*self.m[col].items())
+            y_m[col].replace(keys, values, inplace=True)
+
+        return y_m.prod(axis=1)
     
     def u_prob(self, y):
         """Compute the u-probability, P(comparison vector|U), for a dataframe with comparison vectors. 
@@ -220,4 +227,11 @@ class ECMEstimate(EMEstimate):
         :return: A Series with u-probabilities.
         :rtype: pandas.Series
         """        
-        return y.replace(self.u).prod(axis=1)
+        y_u = y.copy()
+
+        for col in set(self.variables) & set(self.u.keys()):
+
+            keys, values = zip(*self.u[col].items())
+            y_u[col].replace(keys, values, inplace=True)
+
+        return y_u.prod(axis=1)
