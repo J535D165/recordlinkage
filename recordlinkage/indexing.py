@@ -215,6 +215,13 @@ class Pairs(object):
 			A = self.A
 			B = self.B
 
+		if len_block_A is None:
+			len_block_A = len(A)
+		elif len_block_B is None:
+			len_block_B = len(B)
+		else:
+			pass
+
 		blocks = [(x,y) for x in np.arange(0, len(A), len_block_A) for y in np.arange(0, len(B), len_block_B) ]
 
 		for bl in blocks:
