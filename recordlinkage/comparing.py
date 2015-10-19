@@ -26,7 +26,7 @@ class Compare(object):
 
 		"""
 
-		return self.compare(exact(*args, **kwargs))
+		return self.compare(exact, *args, **kwargs)
 
 	def numerical(self, *args, **kwargs):
 		"""
@@ -44,7 +44,7 @@ class Compare(object):
 
 		"""
 
-		return self.compare(window_numerical(*args, **kwargs))
+		return self.compare(window_numerical, *args, **kwargs)
 
 	def fuzzy(self, *args, **kwargs):
 		"""
@@ -172,6 +172,31 @@ def window_numerical(s1, s2, window, missing_value=0):
 	compare[_missing(s1, s2)] = missing_value 
 
 	return compare
+
+def window(s1, s2, window, missing_value=0, disagreement_value=0, sim_func=None):
+
+	diff = s2-s1
+
+	w = window if isinstance(window, (list, tuple)) else (window,window)
+
+
+
+	if sim_func == None:
+		sim = diff[(diff <= window[1]) & (diff >= window[0])]
+
+	elif sim_func == 'linear':
+		pass
+
+	else:
+		compare = (((s1-s2) <= window) & ((s1-s2) >= window)).astype(int)
+
+	compare[_missing(s1, s2)] = missing_value 
+
+	return compare
+
+def math_window(s1, s2, sim_func):
+
+	return 
 
 def bin_compare_geq(cat1, cat2, missing_value=0):
 
