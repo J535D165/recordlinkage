@@ -63,6 +63,27 @@ class Compare(object):
 		"""
 		print "Not implemented"
 
+	def geo(self, *args, **kwargs):
+		"""
+		geo(X1, Y1, X2, Y2, radius=20, disagreement_value = -1, missing_value=-1)
+
+		Compare geometric coordinates with a tolerance window.
+
+		:param X1: Series with X-coordinates
+		:param Y1: Series with Y-coordinates
+		:param X2: Series with X-coordinates
+		:param Y2: Series with Y-coordinates
+		:param missing_value: The value for a comparison with a missing value. Default -1.
+		:param disagreement_value: The value for a disagreeing comparison. Default -1.
+
+		:param compare_method: levestein
+
+		:return: A Series with comparison values.
+		:rtype: pandas.Series
+		"""
+
+		return self.compare(compare_geo, *args, **kwargs)
+
 	def compare(self, comp_func, *args, **kwargs):
 		"""Compare the records given. 
 
@@ -223,7 +244,7 @@ def compare_geo(X1, Y1, X2, Y2, radius=20, disagreement_value = -1, missing_valu
     distance = np.sqrt(np.power(X1-X2,2)+np.power(Y1-Y2,2))
     
     comp = distance.copy()
-    comp[(distance > radius)] = disagreement_value
+    comp[(distance <= radius)].astype(int)
     
     comp[_missing(X1, X2)] = missing_value
     comp[_missing(Y1, Y2)] = missing_value
