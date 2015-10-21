@@ -131,7 +131,10 @@ class Pairs(object):
 			del pairs['dedupe_col' + self.suffixes[0]]
 			del pairs['dedupe_col' + self.suffixes[1]]
 
-		return pairs 
+		if pairs.index.is_unique:
+			return pairs 
+		else:
+			print "The index is not unique."
 
 	def block(self, *args, **kwargs):
 		"""Return a blocking index. 
