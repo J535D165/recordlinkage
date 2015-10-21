@@ -243,8 +243,7 @@ def compare_geo(X1, Y1, X2, Y2, radius=None, missing_value=9):
     
     distance = np.sqrt(np.power(X1-X2,2)+np.power(Y1-Y2,2))
     
-    comp = distance.copy()
-    comp[(distance <= radius)].astype(int)
+    comp = (distance <= radius).astype(int)
     
     comp[_missing(X1, X2)] = missing_value
     comp[_missing(Y1, Y2)] = missing_value
