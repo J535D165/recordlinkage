@@ -239,7 +239,7 @@ def compare_levels(s1, s2, freq, split=np.array([1, 5, 10, 20, 50, 100, np.inf])
 
 	return comp
 
-def compare_geo(X1, Y1, X2, Y2, radius=20, disagreement_value = -1, missing_value=-1):
+def compare_geo(X1, Y1, X2, Y2, radius=None, missing_value=9):
     
     distance = np.sqrt(np.power(X1-X2,2)+np.power(Y1-Y2,2))
     
