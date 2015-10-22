@@ -70,13 +70,14 @@ def _sortedneighbourhood(A, B, column, window=3, sorted_index=None, suffixes=('_
 		left_on = blocking_on + left_blocking_on + ['sorted_neighbour_0']
 		right_on = blocking_on + right_blocking_on + [sn_col]
 
-		pairs = A_sorted.merge(B_sorted, how='inner', right_on=right_on, left_on=left_on, suffixes=suffixes).set_index(['index' + suffixes[0], 'index' + suffixes[1]])
+		pairs = A_sorted.merge(B_sorted, how='inner', right_on=right_on, left_on=left_on, suffixes=suffixes)
+		pairs.set_index(['index' + suffixes[0], 'index' + suffixes[1]], inplace=True)
 
 		if not pairs.empty:
 
-			if pairs_concat is not None:
-				pairs_concat = pd.concat([pairs_concat, pairs], axis=0)
-			else:
+			try:
+				pairs_concat = pairs_concat.append(pairs)
+			except Exception:
 				pairs_concat = pairs 
 
 	set_cols = set([cola+suffixes[0] for cola in list(A)] + [colb+suffixes[1] for colb in list(B)] + list(A) + list(B))
