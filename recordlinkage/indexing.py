@@ -57,8 +57,8 @@ def _sortedneighbourhood(A, B, column, window=3, sorted_index=None, suffixes=('_
 
 	sorted_df[(sorted_df[w_indices] < 0) | (sorted_df[w_indices] > len(sorted_df)-1) ] = np.nan
 
-	A_sorted = A.merge(sorted_df, how='inner', left_on=column, right_on='sn', left_index=True).set_index(A.index.values)
-	B_sorted = B.merge(sorted_df, how='inner', left_on=column, right_on='sn', left_index=True).set_index(B.index.values)
+	A_sorted = A.merge(sorted_df, how='left', left_on=column, right_on='sn', left_index=True).set_index(A.index.values)
+	B_sorted = B.merge(sorted_df, how='left', left_on=column, right_on='sn', left_index=True).set_index(B.index.values)
 
 	A_sorted['index' + suffixes[0]] = A_sorted.index.values
 	B_sorted['index' + suffixes[1]] = B_sorted.index.values
