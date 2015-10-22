@@ -104,7 +104,7 @@ class FellegiSunterClassifier(Classifier):
 	def _report(self, comparison_vectors, est_summary, sort=True):
 
 		if sort:
-			return comparison_vectors.merge(est_summary, on=self.est.variables, right_index=True).sort(columns='weight', ascending=False)
+			return comparison_vectors.merge(est_summary, on=self.est.variables, right_index=True).sort_values(by='weight', ascending=False)
 		else:
 			return comparison_vectors.merge(est_summary, on=self.est.variables, right_index=True)
 
