@@ -118,11 +118,11 @@ class EMEstimate(object):
         if 'p' in include and 'p' not in exclude:
             summary['p'] = self.p
 
-        summary.sort('weight', ascending=True, inplace=True)
+        summary.sort_values(by='weight', ascending=True, inplace=True)
         if 'lambda' in include and 'lambda' not in exclude:
             summary['lambda'] = summary['m'].cumsum()
 
-        summary.sort('weight', ascending=False, inplace=True)
+        summary.sort_values(by='weight', ascending=False, inplace=True)
         if 'mu' in include and 'mu' not in exclude:
             summary['mu'] = summary['u'].cumsum()
 
