@@ -20,6 +20,7 @@ class Compare(object):
 		:param s2: Series or DataFrame to compare all fields. 
 		:param missing_value: The value for a comparison with a missing value. Default 0.
 		:param output: Default 'any'. This holds only for comparing dataframes.
+		:param return_agreement_values: If return_agreement_values is True, each agreeing comparison returns the value instead of 1. Default False.		
 
 		:return: A Series with comparison values.
 		:rtype: pandas.Series
@@ -136,13 +137,11 @@ class Compare(object):
 
 		pass
 
-
-
 def _missing(s1, s2):
 
 	return (pd.DataFrame(s1).isnull().all(axis=1) | pd.DataFrame(s2).isnull().all(axis=1))
 
-def exact(s1, s2, missing_value=0, output='any'):
+def exact(s1, s2, missing_value=0, disagreement_value=0, output='any', return_agreement_values=False):
 	"""
 	Compare two series or dataframes exactly on all fields. 
 	"""
@@ -175,8 +174,12 @@ def exact(s1, s2, missing_value=0, output='any'):
 
 	else:
 
-		compare = (s1 == s2)
-		compare = compare.astype(int)
+		if not return_agreement_values:
+			compare = (s1 == s2)
+			compare = compare.astype(int)
+		else:
+			compare = s1[(s1 == s2)]
+			compare[(s1 != s2)] = disagreement_value
 
 	# Only for missing values
 	compare[_missing(df1, df2)] = missing_value
