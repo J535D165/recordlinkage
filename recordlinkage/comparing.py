@@ -178,8 +178,9 @@ def exact(s1, s2, missing_value=0, disagreement_value=0, output='any', return_ag
 			compare = (s1 == s2)
 			compare = compare.astype(int)
 		else:
-			compare = s1[(s1 == s2)]
-			compare[(s1 != s2)] = disagreement_value
+			compare = s1.copy()
+			print compare
+			compare.loc[(s1 != s2)] = disagreement_value
 
 	# Only for missing values
 	compare[_missing(df1, df2)] = missing_value
