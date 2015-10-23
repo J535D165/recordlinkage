@@ -179,7 +179,6 @@ def exact(s1, s2, missing_value=0, disagreement_value=0, output='any', return_ag
 			compare = compare.astype(int)
 		else:
 			compare = s1.copy()
-			print compare
 			compare.loc[(s1 != s2)] = disagreement_value
 
 	# Only for missing values
