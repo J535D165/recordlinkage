@@ -108,22 +108,33 @@ class FellegiSunterClassifier(Classifier):
 		else:
 			return comparison_vectors.merge(est_summary, on=self.est.variables, right_index=True)
 
-	def auto_classify(self, comparison_vectors, inplace=True):
+	def auto_classify(self, comparison_vectors, inplace=True, random_decisions=False):
 
 		e = self.est.summary()
 
 		col_status_name = 'status' 
 		labels = ['M', 'P', 'U']
 
-		e[col_status_name] = labels[2]
-		e.loc[e['count'].cumsum() <= self.est.p*e['count'].sum(), col_status_name] = labels[0]
+		number_of_matches = self.est.p*e['count'].sum()
 
-		if e[e['count'].cumsum() == self.est.p*e['count'].sum()].empty:
-			e.loc[e['count'].cumsum() == self.est.p*e['count'].sum(), col_status_name] = labels[1]
+		if not random_decisions: # No randomised decisions 
+			e[col_status_name] = labels[2]
+			e.loc[e['count'].cumsum() <= number_of_matches, col_status_name] = labels[0]
 
-		logging.info(e)
+			if e[e['count'].cumsum() == number_of_matches].empty:
+				e.loc[e['count'].cumsum() == number_of_matches, col_status_name] = labels[1]
+			
+			return self._report(comparison_vectors, e)
 
-		return self._report(comparison_vectors, e)
+		else: #Randomised decisions
+
+			output = self._report(comparison_vectors, e, sort=True)
+
+			output[col_status_name] = labels[2]
+
+			output.loc[0:number_of_matches, col_status_name] = labels[0]
+
+			return output
 
 class Deterministic:
 
