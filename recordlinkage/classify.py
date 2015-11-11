@@ -23,7 +23,7 @@ class Classifier(object):
 			est_summary = est_summary[est_summary.mu <= mu]
 
 		if p is not None:
-			est_summary = est_summary[est_summary.p >= p]
+			est_summary = est_summary[est_summary.p_M >= p]
 
 		if w is None and mu is None and p is None:
 			logging.warning('No thresholds set. All comparison vectors returned')
@@ -42,7 +42,7 @@ class Classifier(object):
 			est_summary = est_summary[(est_summary.lmbda > lmbda[0]) & (est_summary.mu < lmbda[1])]
 
 		if p is not None:
-			est_summary = est_summary[(est_summary.p > p[0]) & (est_summary.p < p[1])]
+			est_summary = est_summary[(est_summary.p_M > p[0]) & (est_summary.p_M < p[1])]
 
 		if w is None and mu is None and p is None:
 			logging.warning('No thresholds set. All comparison vectors returned')
@@ -61,7 +61,7 @@ class Classifier(object):
 			est_summary = est_summary[est_summary['lambda'] <= lmbda]
 
 		if p is not None:
-			est_summary = est_summary[est_summary.p <= p]
+			est_summary = est_summary[est_summary.p_M <= p]
 
 		if w is None and lmbda is None and p is None:
 			logging.warning('No thresholds set. All comparison vectors returned')
