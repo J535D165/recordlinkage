@@ -13,8 +13,8 @@ Contents
     import pandas as pd
     import numpy as np
     
-    import standartise
-    reload(standartise)
+    import standardise
+    reload(standardise)
     
     import indexing
     reload(indexing)

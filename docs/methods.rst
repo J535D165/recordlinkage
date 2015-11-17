@@ -1,10 +1,10 @@
 Reference
 =========
 
-Standartise data
+standardise data
 ----------------
 
-.. automodule:: standartise
+.. automodule:: standardise
 
 .. autoclass:: StandardSeries
 	:members:

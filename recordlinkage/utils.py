@@ -1,4 +1,4 @@
-import standartise
+import standardise
 import pandas as pd
 
 from functools import wraps
@@ -12,10 +12,10 @@ def check_type(func):
 		result  = func(*args, **kwargs)
 
 		if isinstance(result, (pd.Series, pd.core.series.Series)):
-			result = standartise.StandardSeries(result)
+			result = standardise.StandardSeries(result)
 
 		elif isinstance(result, (pd.DataFrame, pd.core.frame.DataFrame)):
-			result = standartise.StandardDataFrame(result)
+			result = standardise.StandardDataFrame(result)
 
 		else:
 			pass

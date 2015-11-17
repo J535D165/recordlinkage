@@ -1,1 +1,1 @@
-python tests/test_standartise.py
+python tests/test_standardise.py

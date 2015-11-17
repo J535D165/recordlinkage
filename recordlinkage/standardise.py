@@ -10,7 +10,7 @@ import pandas as pd
 import itertools
 
 class StandardSeries(pd.Series):
-    """ A pandas Series like object with additional methods for standartising data. For example, functions to clean string data and numerical information. 
+    """ A pandas Series like object with additional methods for standardising data. For example, functions to clean string data and numerical information. 
     
     """
 
@@ -31,7 +31,7 @@ class StandardSeries(pd.Series):
         :param remove_brackets: Remove all content between brackets and the brackets themselves. 
 
         :return: A cleaned Series of strings.
-        :rtype: standartise.StandardSeries
+        :rtype: standardise.StandardSeries
 
         For example:
 
@@ -71,7 +71,7 @@ class StandardSeries(pd.Series):
         """ Clean string formatted phonenumbers into string of intergers. 
 
         :return: A StandardSeries with cleaned phonenumbers.
-        :rtype: standartise.StandardSeries
+        :rtype: standardise.StandardSeries
         """
         string = self if inplace else self.copy()
         string = string.astype(str)
@@ -87,7 +87,7 @@ class StandardSeries(pd.Series):
         """DEPRECEATED SOON: Count the number of times a value occurs. The difference with pandas.value_counts is that this function returns the values for each row. 
     
         :return: A StandardSeries with value counts.
-        :rtype: standartise.StandardSeries
+        :rtype: standardise.StandardSeries
         """
 
         logging.warning('This function is depreceated soon. Use value_occurence instead.')
@@ -102,7 +102,7 @@ class StandardSeries(pd.Series):
         Count the number of times a value occurs. The difference with pandas.value_counts is that this function returns the values for each row. 
 
         :return: A StandardSeries with value counts.
-        :rtype: standartise.StandardSeries
+        :rtype: standardise.StandardSeries
         """
 
         value_count = self.copy()
@@ -161,7 +161,7 @@ class StandardSeries(pd.Series):
         :param inplace: If True, replace the current strings by their cleaned variant. Default: True.
 
         :return: A Series of strings.
-        :rtype: standartise.StandardSeries
+        :rtype: standardise.StandardSeries
 
         """
         try:
@@ -203,7 +203,7 @@ class StandardSeries(pd.Series):
 
 
 class StandardDataFrame(pd.DataFrame):
-    """ A pandas DataFrame like object with additional methods for standartising data. For example, functions to clean string data and numerical information. 
+    """ A pandas DataFrame like object with additional methods for standardising data. For example, functions to clean string data and numerical information. 
     
     """
     def __init__(self, *args, **kwargs):

@@ -1,6 +1,6 @@
 
 # Import important modules
-from standartise import *
+from standardise import *
 from indexing import *
 from comparing import *
 

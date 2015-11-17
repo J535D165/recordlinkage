@@ -91,7 +91,7 @@ class Compare(object):
 		:param comp_func: A list, dict or tuple of comparison tuples. Each tuple contains a comparison function, the fields to compare and the arguments. 
 
 		:return: A DataFrame with compared variables.
-		:rtype: standartise.DataFrame
+		:rtype: standardise.DataFrame
 		"""
 
 		if isinstance(comp_func, (list, dict, tuple)):
