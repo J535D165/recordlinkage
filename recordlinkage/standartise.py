@@ -17,7 +17,7 @@ class StandardSeries(pd.Series):
     def __init__(self, *args, **kwargs):
         super(self.__class__, self).__init__(*args, **kwargs)
 
-    @check_type
+    # @check_type
     def clean(self, lower=True, replace_by_none='[^ \-\_A-Za-z0-9]+', replace_by_whitespace='[\-\_]', remove_brackets=True, inplace=True):
         """
         clean(lower=True, replace_by_none='[^ \-\_A-Za-z0-9]+', replace_by_whitespace='[\-\_]', remove_brackets=True, inplace=True)
@@ -134,15 +134,13 @@ class StandardSeries(pd.Series):
         number_of_unique_values = len(string.unique())
 
         if encode_method == 'soundex':
-            string.encode('unicode', inplace=True)
-            return string.apply(lambda x: jellyfish.soundex(x))
+            return string.str.upper().str.decode('utf-8').apply(lambda x: jellyfish.soundex(x) if pd.notnull(x) else np.nan)
 
-        elif encode_method == 'nyiis':
-            string.encode('unicode', inplace=True)
-            return string.apply(lambda x: jellyfish.nyiis(x))
+        elif encode_method == 'nysiis':
+            return string.str.upper().str.decode('utf-8').apply(lambda x: jellyfish.nysiis(x) if pd.notnull(x) else np.nan)
 
         elif encode_method == 'unicode':
-            return  string.astype(unicode, raise_on_error=False)
+            return  string.str.decode('utf-8')
 
         else:
             raise Exception("encoding method not found")
