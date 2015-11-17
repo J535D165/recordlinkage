@@ -57,6 +57,9 @@ class StandardSeries(pd.Series):
         string = string.str.replace(replace_by_none, '')
         string = string.str.replace(replace_by_whitespace, ' ')
 
+        # Remove multiple whitespaces
+        string = string.str.replace(r'\s\s+', ' ')
+
         # Strip string
         string = string.str.lstrip().str.rstrip()
 
