@@ -210,7 +210,15 @@ class Pairs(object):
 		return self.iterindex(_sortedneighbourhood, *args, **kwargs)
 
 	def iterindex(self, index_func, len_block_A, len_block_B, *args, **kwargs):
+		"""Iterative function that returns records pairs based on a user-defined indexing function. The number of iterations can be adjusted to prevent memory problems.  
 
+		:param index_func: A user defined indexing funtion.
+		:param len_block_A: The lenght of a block of records in dataframe A. 
+		:param len_block_B: The length of a block of records in dataframe B.
+
+		:return: A DataFrame with MultiIndex
+		:rtype: standardise.DataFrame
+		"""
 		if self.deduplication:
 			A = self.A.copy()
 			A['dedupe_col'] = A.reset_index().index.values
@@ -241,43 +249,13 @@ class Pairs(object):
 			yield pairs_subset
 
 	def reduction_ratio(self):
+		""" Compute the relative reduction of records pairs as the result of indexing. 
+
+		:return: Value between 0 and 1
+		:rtype: float
+		"""
 
 		n_full_pairs = (len(self.A)*(len(self.B)-1))/2 if self.deduplication else len(self.A)*len(self.B)
 
 		return 1-self.n_pairs/n_full_pairs
-
-	def _duplicate_pairs(self, pairs):
-
-		return pairs
-
-
-
-# class Counter:
-#     def __init__(self, low, high):
-#         self.current = low
-#         self.high = high
-
-#     def __iter__(self):
-#         return self
-
-#     def next(self): # Python 3: def __next__(self)
-#         if self.current > self.high:
-#             raise StopIteration
-#         else:
-#             self.current += 1
-#             return self.current - 1
-
-
-# for c in Counter(3, 8):
-#     print c
-
-# def counter(low, high):
-#     current = low
-#     while current <= high:
-#         yield current
-#         current += 1
-
-# for c in counter(3, 8):
-#     print c
-
 
