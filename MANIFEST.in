@@ -1,0 +1,2 @@
+include versioneer.py
+include recordlinkage/_version.py
