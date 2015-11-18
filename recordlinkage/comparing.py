@@ -1,3 +1,5 @@
+from __future__ import division 
+
 import pandas as pd
 import numpy as np
 
@@ -49,20 +51,23 @@ class Compare(object):
 
 	def fuzzy(self, *args, **kwargs):
 		"""
-		fuzzy(s1, s2, compare_method, missing_value=0)
+		fuzzy(s1, s2, method='levenshtein', threshold=None, missing_value=0)
 
-		Compare numerical values with a tolerance window.
+		Compare string values with a similarity approximation. 
 
 		:param s1: Series or DataFrame to compare all fields. 
 		:param s2: Series or DataFrame to compare all fields. 
+		:param method: A approximate string comparison method. Options are ['jaro', 'jarowinkler', 'levenshtein', 'damerau_levenshtein']. Default: 'levenshtein'
+		:param threshold: A threshold value. All approximate string comparisons higher or equal than this threshold are 1. Otherwise 0.  
 		:param missing_value: The value for a comparison with a missing value. Default 0.
-		:param compare_method: levestein
 
-		:return: A Series with comparison values.
+		:return: A Series with similarity values. Values equal or between 0 and 1.
 		:rtype: pandas.Series
 
+		Note: For this function is the package 'jellyfish' required. 
+
 		"""
-		print "Not implemented"
+		return self.compare(fuzzy, *args, **kwargs)
 
 	def geo(self, *args, **kwargs):
 		"""
@@ -197,13 +202,58 @@ def window_numerical(s1, s2, window, missing_value=0):
 
 	return compare
 
+def compare_geo(X1, Y1, X2, Y2, radius=None, missing_value=9):
+
+	distance = np.sqrt(np.power(X1-X2,2)+np.power(Y1-Y2,2))
+
+	comp = (distance <= radius).astype(int)
+
+	comp[_missing(X1, X2)] = missing_value
+	comp[_missing(Y1, Y2)] = missing_value
+
+	return comp 
+
+def fuzzy(s1,s2, method='levenshtein', threshold=None, missing_value=0):
+
+	try:
+		import jellyfish
+	except ImportError:
+		print "Install jellyfish to use approximate string comparison."
+
+	series = pd.concat([s1, s2], axis=1)
+
+	if method == 'jaro':
+		approx = series.apply(lambda x: jellyfish.jaro_distance(x[0], x[1]) if pd.notnull(x[0]) and pd.notnull(x[1]) else np.nan, axis=1)
+	
+	elif method == 'jarowinkler':
+		approx = series.apply(lambda x: jellyfish.jaro_winkler(x[0], x[1]) if pd.notnull(x[0]) and pd.notnull(x[1]) else np.nan, axis=1)
+	
+	elif method == 'levenshtein':
+		approx = series.apply(lambda x: jellyfish.levenshtein_distance(x[0], x[1])/np.max([len(x[0]),len(x[1])]) if pd.notnull(x[0]) and pd.notnull(x[1]) else np.nan, axis=1)
+		approx = 1 - approx
+
+	elif method == 'damerau_levenshtein':
+		approx = series.apply(lambda x: jellyfish.damerau_levenshtein_distance(x[0], x[1])/np.max([len(x[0]),len(x[1])]) if pd.notnull(x[0]) and pd.notnull(x[1]) else np.nan, axis=1)
+		approx = 1 - approx
+
+	else:
+		raise ValueError('The method %s is not found.' % method)
+
+	if threshold is not None:
+		comp = (approx >= threshold).astype(int)
+	else:
+		comp = approx
+
+	# Only for missing values
+	compare[_missing(s1, s2)] = missing_value
+
+	return compare
+
 def window(s1, s2, window, missing_value=0, disagreement_value=0, sim_func=None):
 
 	diff = s2-s1
 
 	w = window if isinstance(window, (list, tuple)) else (window,window)
-
-
 
 	if sim_func == None:
 		sim = diff[(diff <= window[1]) & (diff >= window[0])]
@@ -242,14 +292,7 @@ def compare_levels(s1, s2, freq, split=np.array([1, 5, 10, 20, 50, 100, np.inf])
 
 	return comp
 
-def compare_geo(X1, Y1, X2, Y2, radius=None, missing_value=9):
-    
-    distance = np.sqrt(np.power(X1-X2,2)+np.power(Y1-Y2,2))
-    
-    comp = (distance <= radius).astype(int)
-    
-    comp[_missing(X1, X2)] = missing_value
-    comp[_missing(Y1, Y2)] = missing_value
-    
-    return comp 
+class CompareException(Exception):
+	pass
+
 
