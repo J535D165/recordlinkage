@@ -2,12 +2,12 @@
 
 This package, **recordlinkage**, is a Python package to link records in or between datasources. The package provides a set of additonal tools needed for record linkage such as indexing methods and similarity measures. The package is developed for research and linking of small or medium sized files. 
 
-This project is inspired on the **Freely Extensible Biomedical Record Linkage** (FEBRL) project, which is a great project. This project takes advence of the **pandas** package. This flexible and powerful data analysis and manipulation library for Python makes the record linkage process much easier. 
+This project is inspired on the **Freely Extensible Biomedical Record Linkage (FEBRL)** project, which is a great project. This project takes advence of the **pandas** package. This flexible and powerful data analysis and manipulation library for Python makes the record linkage process much easier. 
 
 One of the aims of this project is to make it easy to implement your own extensions for your own projects. Extensions like custom indeixng methods and data comparison methods. 
 
 ## Simple linking example
-Import the ``recordlinkage`` module that contains all important tools for the linking of records. Also import two Pandas dataframes with example data named ``censusdataA`` and ``censusdataB``. 
+Import the ``recordlinkage`` module that contains all important tools for the linking of records. Also import two **pandas** dataframes with example data named ``censusdataA`` and ``censusdataB``. 
 
 ```python
 import recordlinkage
@@ -47,20 +47,25 @@ recordlinkage.FellegiSunter()
 ## Main Features
 The main features of the **recordlinkage** package are:
 
-  - Coming [**test**][test] data
-
-   [test]: http://example.com
+  - Clean and standardise data
+  - Make pairs of records with several indexing methods such as **blocking** and **sorted neighbourhood indexing**
+  - Compare characteristics with a large number of comparison functions
+  - Approximate string comparison methods such as jaro-winkler distance and levenshtein distance 
+  - Fellegi and Sunter (1969) classifier implemented
+  - Expectation-Conditional Maximisation algoritm implemented to estimate parameters for the Fellegi and Sunter framework
 
 ## Dependencies
+The following packages are required. You probably have it already ;)
 - [NumPy](http://www.numpy.org): 1.7.0 or higher
 - [Pandas](https://github.com/pydata/pandas): 0.17.0 or higher
 
-### Optional dependencies
+The following packages are optional
 - [jellyfish](https://github.com/jamesturk/jellyfish): Needed for approximate string comparison. Version 0.5.0 or higher.
 - [matplotlib](http://matplotlib.sourceforge.net/): Plotting graphs.
 
 
-##Install **recordlinkage**
+##Install 
+It is not possible to install the package with ``pip``. You can download or clone the **recordlinkage** project and install it in the normal way
 
 ```sh
 python setup.py install
