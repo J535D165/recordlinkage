@@ -1,3 +1,20 @@
+# __init__.py
+
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Copyright (C) 2015 Jonathan de Bruin
+
 import pandas as pd
 import numpy as np
 
@@ -8,8 +25,8 @@ try:
 except Exception:
 	print 'Faker is not installed. Therefore, the functionalities of this module are limited.'
 
-personaldata1000A = pd.read_csv('data/personaldata1000A.csv', sep=';')
-personaldata1000B = pd.read_csv('data/personaldata1000B.csv', sep=';')
+personaldata1000A = pd.read_csv('data/personaldata1000A.csv', sep=';', encoding='utf-8')
+personaldata1000B = pd.read_csv('data/personaldata1000B.csv', sep=';', encoding='utf-8')
 
 MISSING_DICT  = {
 	'first_name': 0.02,
@@ -162,13 +179,13 @@ def dataset(N, df=None, matches=None):
 		# Return the dataframe
 		return df_persons
 
-censusdataA = dataset(1000)
-censusdataB = dataset(1000, censusdataA, 800)
-print censusdataA.head()
-print censusdataB.head()
+# censusdataA = dataset(1000)
+# censusdataB = dataset(1000, censusdataA, 800)
+# print censusdataA.head()
+# print censusdataB.head()
 
-censusdataA.to_csv('data/personaldata1000A.csv', sep=';')
-censusdataB.to_csv('data/personaldata1000B.csv', sep=';')
+# censusdataA.to_csv('data/personaldata1000A.csv', sep=';')
+# censusdataB.to_csv('data/personaldata1000B.csv', sep=';')
 
 
 
