@@ -11,13 +11,88 @@ except Exception:
 personaldata1000A = pd.read_csv('data/personaldata1000A.csv', sep=';')
 personaldata1000B = pd.read_csv('data/personaldata1000B.csv', sep=';')
 
+MISSING_DICT  = {
+	'first_name': 0.02,
+	'sex': 0.02,
+	'last_name': 0.02,
+	'phone_number': 0.1,
+	'job': 0.15,
+	'email': 0.1,
+	'birthdate': 0.005,
+	'street_address': 0.08,
+	'postcode': 0.08,
+	'city': 0.01
+}
+
+SUBS_DICT  = {
+	'first_name': 0.02,
+	'sex': 0.002,
+	'last_name': 0.02,
+	'phone_number': 0.1,
+	'job': 0.1,
+	'email': 0.08,
+	'birthdate': 0.005,
+	'street_address': 0.05,
+	'postcode': 0.08,
+	'city': 0.01
+}
+
 def addtypos(df):
 
 	return
 
-def addsubstitutions(df):
+def addmissingvalues(df, missing_dict=MISSING_DICT):
 
-	return
+	fake = Faker()
+
+	for col in list(df):
+
+		if col in missing_dict.keys():
+
+			# Make a random sample of values to replace. 
+			to_replace = np.random.choice([True, False], len(df), p=[missing_dict[col], 1-missing_dict[col]])
+			df.loc[to_replace, col] = np.nan
+
+	return df
+
+def addsubstitutions(df, subs_dict=SUBS_DICT):
+
+	fake = Faker()
+
+	for col in list(df):
+
+		if col in subs_dict.keys():
+
+			# Make a random sample of values to replace. 
+			to_replace = np.random.choice([True, False], len(df), p=[subs_dict[col], 1-subs_dict[col]])
+
+			# Special case when for first name
+			if col == 'first_name':
+
+				if 'sex' == 'M':
+					df.loc[ to_replace, col] = [fake.first_name_male() for _ in range(0,sum(to_replace))]
+				elif 'sex' == 'F':
+					df.loc[ to_replace, col] = [fake.first_name_female() for _ in range(0,sum(to_replace))]
+				else:
+					pass
+			elif col == 'last_name':
+				df.loc[ to_replace, col] = [fake.last_name() for _ in range(0,sum(to_replace))]
+			elif col == 'phone_number':
+				df.loc[ to_replace, col] = [fake.phone_number() for _ in range(0,sum(to_replace))]
+			elif col == 'job':
+				df.loc[ to_replace, col] = [fake.job() for _ in range(0,sum(to_replace))]
+			elif col == 'email':
+				df.loc[ to_replace, col] = [fake.free_email() for _ in range(0,sum(to_replace))]
+			elif col == 'birthdate':
+				df.loc[ to_replace, col] = [fake.date() for _ in range(0,sum(to_replace))]
+			elif col == 'street_address':
+				df.loc[ to_replace, col] = [fake.street_address() for _ in range(0,sum(to_replace))]
+			elif col == 'postcode':
+				df.loc[ to_replace, col] = [fake.postcode() for _ in range(0,sum(to_replace))]
+			elif col == 'city':
+				df.loc[ to_replace, col] = [fake.city() for _ in range(0,sum(to_replace))]
+
+	return df
 
 def fakeperson():
 
@@ -78,16 +153,22 @@ def dataset(N, df=None, matches=None):
 		# Reset the index of the dataframe. Start at 1e6
 		df_persons.index = np.arange(1e6, 1e6+N)
 
+		# Add substituations.
+		df_persons = addsubstitutions(df_persons)
+
+		# Add missing values
+		df_persons = addmissingvalues(df_persons)
+
 		# Return the dataframe
 		return df_persons
 
-# censusdataA = dataset(1000)
-# censusdataB = dataset(1000, censusdataA, 800)
-# print censusdataA.head()
-# print censusdataB.head()
+censusdataA = dataset(1000)
+censusdataB = dataset(1000, censusdataA, 800)
+print censusdataA.head()
+print censusdataB.head()
 
-# censusdataA.to_csv('data/personaldata1000A.csv', sep=';')
-# censusdataB.to_csv('data/personaldata1000B.csv', sep=';')
+censusdataA.to_csv('data/personaldata1000A.csv', sep=';')
+censusdataB.to_csv('data/personaldata1000B.csv', sep=';')
 
 
 
