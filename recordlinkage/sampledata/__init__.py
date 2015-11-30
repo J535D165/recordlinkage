@@ -168,7 +168,7 @@ def dataset(N, df=None, matches=None):
 		df_persons = df.sample(matches).append(pd.DataFrame([fakeperson() for _ in range(0, len_df)]))
 
 		# Reset the index of the dataframe. Start at 1e6
-		df_persons.index = np.arange(1e6, 1e6+N)
+		df_persons.set_index(np.arange(1e6, 1e6+N), inplace=True)
 
 		# Add substituations.
 		df_persons = addsubstitutions(df_persons)
@@ -183,6 +183,8 @@ def dataset(N, df=None, matches=None):
 # censusdataB = dataset(1000, censusdataA, 800)
 # print censusdataA.head()
 # print censusdataB.head()
+# print censusdataB.dtypes
+
 
 # censusdataA.to_csv('data/personaldata1000A.csv', sep=';')
 # censusdataB.to_csv('data/personaldata1000B.csv', sep=';')
