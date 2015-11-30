@@ -5,7 +5,7 @@ import recordlinkage
 import numpy as np
 import pandas as pd
 
-from recordlinkage.sampledata import personaldata1000A, personaldata1000B
+from recordlinkage import datasets
 
 class TestIndexing(unittest.TestCase):
 
@@ -54,28 +54,37 @@ class TestIndexing(unittest.TestCase):
         # Check if index is unique
         self.assertTrue(pairs.index.is_unique)
 
-    def test_full_index_sampledata(self):
+    def test_full_index_datasets(self):
 
-        index = recordlinkage.Pairs(personaldata1000A, personaldata1000B)
+        dfA = datasets.load_censusA()
+        dfB = datasets.load_censusB()
+
+        index = recordlinkage.Pairs(dfA, dfB)
         pairs = index.full()
 
         # Check if index is unique
         self.assertTrue(pairs.index.is_unique)
 
         # Check is number of pairs is correct
-        self.assertEqual(len(pairs), len(personaldata1000A)*len(personaldata1000B))
+        self.assertEqual(len(pairs), len(dfA)*len(dfB))
 
-    def test_full_block_sampledata(self):
+    def test_full_block_datasets(self):
 
-        index = recordlinkage.Pairs(personaldata1000A, personaldata1000B)
+        dfA = datasets.load_censusA()
+        dfB = datasets.load_censusB()
+
+        index = recordlinkage.Pairs(dfA, dfB)
         pairs = index.block('last_name')
 
         # Check if index is unique
         self.assertTrue(pairs.index.is_unique)
 
-    def test_full_sorted_sampledata(self):
+    def test_full_sorted_datasets(self):
 
-        index = recordlinkage.Pairs(personaldata1000A, personaldata1000B)
+        dfA = datasets.load_censusA()
+        dfB = datasets.load_censusB()
+
+        index = recordlinkage.Pairs(dfA, dfB)
         pairs = index.sortedneighbourhood('last_name')
 
         # Check if index is unique
