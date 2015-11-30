@@ -25,8 +25,13 @@ try:
 except Exception:
 	print 'Faker is not installed. Therefore, the functionalities of this module are limited.'
 
-personaldata1000A = pd.read_csv('recordlinkage/sampledata/data/personaldata1000A.csv', sep=';', encoding='utf-8')
-personaldata1000B = pd.read_csv('recordlinkage/sampledata/data/personaldata1000B.csv', sep=';', encoding='utf-8')
+def load_censusA():
+
+	return pd.read_csv('recordlinkage/datasets/data/personaldata1000A.csv', sep=';', index_col='record_id', encoding='utf-8')
+
+def load_censusB():
+
+	return pd.read_csv('recordlinkage/datasets/data/personaldata1000B.csv', sep=';', index_col='record_id', encoding='utf-8')
 
 MISSING_DICT  = {
 	'first_name': 0.02,
@@ -143,10 +148,11 @@ def dataset(N, df=None, matches=None):
 		df_persons = pd.DataFrame([fakeperson() for _ in range(0, N)])
 
 		# Set an entity id for each created record. 
-		df_persons['entity_id'] = np.arange(1, N+1)
+		df_persons['entity_id'] = np.arange(1, N+1).astype(object)
 
 		# Reset the index of the dataframe. Start at 1e6
-		df_persons.index = np.arange(1e6, 1e6+N)
+		df_persons.set_index(np.arange(1e6, 1e6+N).astype(np.int64), inplace=True)
+		df_persons.index.name = 'record_id'
 
 		# Return the dataframe
 		return df_persons
@@ -162,13 +168,14 @@ def dataset(N, df=None, matches=None):
 
 		# Set an entity id for each created record. 
 		max_entity_id = max(df['entity_id'])
-		df_persons['entity_id'] = np.arange(max_entity_id+1, max_entity_id+len_df+ 1)
+		df_persons['entity_id'] = np.arange(max_entity_id+1, max_entity_id+len_df+ 1).astype(object)
 
 		# Dataframe
 		df_persons = df.sample(matches).append(pd.DataFrame([fakeperson() for _ in range(0, len_df)]))
 
 		# Reset the index of the dataframe. Start at 1e6
-		df_persons.set_index(np.arange(1e6, 1e6+N), inplace=True)
+		df_persons.set_index(np.arange(1e6, 1e6+N).astype(np.int64), inplace=True)
+		df_persons.index.name = 'record_id'
 
 		# Add substituations.
 		df_persons = addsubstitutions(df_persons)
@@ -184,7 +191,6 @@ def dataset(N, df=None, matches=None):
 # print censusdataA.head()
 # print censusdataB.head()
 # print censusdataB.dtypes
-
 
 # censusdataA.to_csv('data/personaldata1000A.csv', sep=';')
 # censusdataB.to_csv('data/personaldata1000B.csv', sep=';')
