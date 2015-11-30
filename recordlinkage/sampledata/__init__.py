@@ -25,8 +25,8 @@ try:
 except Exception:
 	print 'Faker is not installed. Therefore, the functionalities of this module are limited.'
 
-personaldata1000A = pd.read_csv('data/personaldata1000A.csv', sep=';', encoding='utf-8')
-personaldata1000B = pd.read_csv('data/personaldata1000B.csv', sep=';', encoding='utf-8')
+personaldata1000A = pd.read_csv('recordlinkage/sampledata/data/personaldata1000A.csv', sep=';', encoding='utf-8')
+personaldata1000B = pd.read_csv('recordlinkage/sampledata/data/personaldata1000B.csv', sep=';', encoding='utf-8')
 
 MISSING_DICT  = {
 	'first_name': 0.02,
