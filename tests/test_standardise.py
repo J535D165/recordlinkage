@@ -4,23 +4,20 @@ import pandas.util.testing as pdt
 import recordlinkage
 import numpy as np
 import pandas as pd
-import os
-
-print os.getcwd()
 
 class TestStandardise(unittest.TestCase):
 
-    def test_clean_inplace(self):
+    # def test_clean_inplace(self):
 
-        values = ['Mary-ann', 'Bob :)', 'Angel', 'Bob (alias Billy)', 'Mary  ann', 'John', np.nan]
-        expected = ['mary ann', 'bob', 'angel', 'bob', 'mary ann', 'john', np.nan]
+    #     values = ['Mary-ann', 'Bob :)', 'Angel', 'Bob (alias Billy)', 'Mary  ann', 'John', np.nan]
+    #     expected = ['mary ann', 'bob', 'angel', 'bob', 'mary ann', 'john', np.nan]
 
-        s = recordlinkage.StandardSeries(values)
-        s.clean(inplace=True)
+    #     s = recordlinkage.StandardSeries(values)
+    #     s.clean(inplace=True)
 
-        s_exp = recordlinkage.StandardSeries(expected)
+    #     s_exp = recordlinkage.StandardSeries(expected)
 
-        pdt.assert_series_equal(s, s_exp)
+    #     pdt.assert_series_equal(s, s_exp)
 
     def test_clean(self):
 
@@ -80,7 +77,6 @@ class TestStandardise(unittest.TestCase):
 
         pdt.assert_series_equal(s, s_exp)
 
-
     def test_encode_nysiis(self):
 
         values = [np.nan, 'John', 'Mary Ann', 'billy', 'Jonathan', 'Gretha', 'Micheal', 'Sjors']
@@ -102,6 +98,3 @@ class TestStandardise(unittest.TestCase):
         s_exp = recordlinkage.StandardSeries(expected)
 
         pdt.assert_series_equal(s, s_exp)
-
-if __name__ == '__main__':
-    unittest.main()

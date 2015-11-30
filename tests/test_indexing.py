@@ -4,7 +4,8 @@ import pandas.util.testing as pdt
 import recordlinkage
 import numpy as np
 import pandas as pd
-import os
+
+from recordlinkage.sampledata import personaldata1000A, personaldata1000B
 
 class TestIndexing(unittest.TestCase):
 
@@ -53,8 +54,32 @@ class TestIndexing(unittest.TestCase):
         # Check if index is unique
         self.assertTrue(pairs.index.is_unique)
 
+    def test_full_index_sampledata(self):
+
+        index = recordlinkage.Pairs(personaldata1000A, personaldata1000B)
+        pairs = index.full()
+
+        # Check if index is unique
+        self.assertTrue(pairs.index.is_unique)
+
+        # Check is number of pairs is correct
+        self.assertEqual(len(pairs), len(personaldata1000A)*len(personaldata1000B))
+
+    def test_full_block_sampledata(self):
+
+        index = recordlinkage.Pairs(personaldata1000A, personaldata1000B)
+        pairs = index.block('last_name')
+
+        # Check if index is unique
+        self.assertTrue(pairs.index.is_unique)
+
+    def test_full_sorted_sampledata(self):
+
+        index = recordlinkage.Pairs(personaldata1000A, personaldata1000B)
+        pairs = index.sortedneighbourhood('last_name')
+
+        # Check if index is unique
+        self.assertTrue(pairs.index.is_unique)
 
 
 
-if __name__ == '__main__':
-    unittest.main()
