@@ -11,13 +11,17 @@ Import the ``recordlinkage`` module that contains all important tools for the li
 
 ```python
 import recordlinkage
-from recordlinkage.sampledata import censusdataA, censusdataB
+```
+Consider that we have two datasets with personal information. Load these datasets into a pandas dataframe.
+```python 
+dfA = pd.DataFrame(YOUR_FIRST_DATASET)
+dfB = pd.DataFrame(YOUR_SECOND_DATASET)
 ```
 
 Next, we make pairs of records. Each pair contains one record of ``censusdataA`` and one record of ``censusdataB``. The number of record pairs can be large, therefore required that the record pairs are identical on the surname. 
 
 ```python
-index = recordlinkage.Index(censusdataA, censusdataB)
+index = recordlinkage.Index(dfA, dfB)
 pairs = index.block('surname')
 ```
 For each record pair, we compare the records. 
