@@ -4,7 +4,12 @@ import pandas as pd
 from functools import wraps
 
 
-def check_type(func):
+def check_type(func):     
+	"""     
+	Check the type of the returned value. If the StandardSeries or
+	StandardDataFrame needs to be returned, check if this is indeed the correct type. If not, convert it
+	into the correct type.      
+	"""
 
 	@wraps(func)
 	def wrapped(*args, **kwargs):
