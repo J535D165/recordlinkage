@@ -6,7 +6,7 @@ import numpy as np
 class Compare(object):
 	"""A class to make comparing of records fields easier. It can be used to compare fields of the record pairs. """
 
-	def __init__(self, pairs, store_to_memory=True, store_to_csv=None, store_to_hdf=None):
+	def __init__(self, pairs=None, store_to_memory=True, store_to_csv=None, store_to_hdf=None):
 
 		self.pairs = pairs
 
