@@ -70,20 +70,27 @@ class StandardSeries(pd.Series):
         return result
 
     @check_type
-    def phonenumbers(self, replace_by_none='[^0-9]+', inplace=True):
+    def phonenumbers(self, country='USA' ,inplace=True):
         """ Clean string formatted phonenumbers into string of intergers. 
 
         :return: A StandardSeries with cleaned phonenumbers.
         :rtype: standardise.StandardSeries
         """
-        string = self if inplace else self.copy()
-        string = string.astype(str)
+        result = self if inplace else self.copy()
+
+        result = result.astype(str)
 
         # Remove all special tokens
-        string = string.str.replace(replace_by_none, '')
+        result = result.str.replace('[^0-9]+', '')
 
-        # Convert string into integer
-        return string.astype(str)
+        # Convert result into integer
+        result = result.astype(str)
+
+        if inplace:
+            self._update_inplace(result._data)
+            return
+
+        return result
 
     @check_type
     def count_values(self):
@@ -113,14 +120,6 @@ class StandardSeries(pd.Series):
 
         return value_count.groupby(by=value_count.values).transform('count')
 
-    # @check_type
-    # def names(self, encode_method=None):
- 
-    #     if encode:
-    #         return encode(encode_method)
-    #     else:
-    #         return self
-
     @check_type
     def encode(self, encode_method, inplace=True):
 
@@ -129,29 +128,27 @@ class StandardSeries(pd.Series):
         except ImportError:
             print "Install jellyfish to use string encoding."
 
-        if inplace:
-            string = self
-        else:
-            string = self.copy()
+        result = self if inplace else self.copy()
 
-        number_of_unique_values = len(string.unique())
+        number_of_unique_values = len(result.unique())
 
         if encode_method == 'soundex':
-            return string.str.upper().str.decode('utf-8').apply(lambda x: jellyfish.soundex(x) if pd.notnull(x) else np.nan)
+            return result.str.upper().str.decode('utf-8').apply(lambda x: jellyfish.soundex(x) if pd.notnull(x) else np.nan)
 
         elif encode_method == 'nysiis':
-            return string.str.upper().str.decode('utf-8').apply(lambda x: jellyfish.nysiis(x) if pd.notnull(x) else np.nan)
+            return result.str.upper().str.decode('utf-8').apply(lambda x: jellyfish.nysiis(x) if pd.notnull(x) else np.nan)
 
         elif encode_method == 'unicode':
-            return  string.str.decode('utf-8')
+            return  result.str.decode('utf-8')
 
         else:
             raise Exception("encoding method not found")
 
-        print "Reduction ratio is %s" % (1-number_of_unique_values/len(self.unique()))
+        if inplace:
+            self._update_inplace(result._data)
+            return
 
-        if not inplace:
-            return string
+        return result
 
     @check_type
     def similar_values(self, threshold=0.8, inplace=True):
