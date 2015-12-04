@@ -121,7 +121,19 @@ class StandardSeries(pd.Series):
         return value_count.groupby(by=value_count.values).transform('count')
 
     @check_type
-    def encode(self, encode_method, inplace=True):
+    def phonetic(self, method, encoding='utf-8', inplace=True):
+        """
+        phonetic(method, encoding='utf-8', inplace=True)
+
+        Phonetically encode the values in the StandardSeries. 
+    
+        :param method: The algorithm that is used to phonetically encode the values. The possible options are 'soundex' en 'nysiis'.
+        :param encoding: String values need to be in unicode. Default 'utf-8'
+        :param inplace: If True, replace the current strings by their encoded variant.
+
+        :return: A StandardSeries with phonetic encoded values.
+        :rtype: standardise.StandardSeries
+        """
 
         try:
             import jellyfish
@@ -130,20 +142,16 @@ class StandardSeries(pd.Series):
 
         result = self if inplace else self.copy()
 
-        number_of_unique_values = len(result.unique())
+        if method == 'soundex':
+            return result.str.upper().str.decode(encoding).apply(lambda x: jellyfish.soundex(x) if pd.notnull(x) else np.nan)
 
-        if encode_method == 'soundex':
-            return result.str.upper().str.decode('utf-8').apply(lambda x: jellyfish.soundex(x) if pd.notnull(x) else np.nan)
-
-        elif encode_method == 'nysiis':
-            return result.str.upper().str.decode('utf-8').apply(lambda x: jellyfish.nysiis(x) if pd.notnull(x) else np.nan)
-
-        elif encode_method == 'unicode':
-            return  result.str.decode('utf-8')
+        elif method == 'nysiis':
+            return result.str.upper().str.decode(encoding).apply(lambda x: jellyfish.nysiis(x) if pd.notnull(x) else np.nan)
 
         else:
-            raise Exception("encoding method not found")
+            raise Exception("Phonetic encoding method not found")
 
+        # inplace of not 
         if inplace:
             self._update_inplace(result._data)
             return
