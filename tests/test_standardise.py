@@ -91,7 +91,7 @@ class TestStandardise(unittest.TestCase):
         expected = [np.nan, 'J500', 'M650', 'B400', 'J535', 'G630', 'M240', 'S620']
 
         s = recordlinkage.StandardSeries(values)
-        s = s.encode('soundex', inplace=False)
+        s = s.phonetic('soundex', inplace=False)
         s_exp = recordlinkage.StandardSeries(expected)
 
         pdt.assert_series_equal(s, s_exp)
@@ -102,18 +102,8 @@ class TestStandardise(unittest.TestCase):
         expected = [np.nan, 'JAN', 'MARY AN', 'BALY', 'JANATAN', 'GRAT', 'MACAL', 'SJAR']
 
         s = recordlinkage.StandardSeries(values)
-        s = s.encode('nysiis', inplace=False)
+        s = s.phonetic('nysiis', inplace=False)
         s_exp = recordlinkage.StandardSeries(expected)
 
         pdt.assert_series_equal(s, s_exp)
 
-    def test_encode_unicode(self):
-
-        values = [np.nan, 'John', 'Mary Ann', 'billy', 'Jonathan', 'Gretha', 'Micheal', 'Sjors']
-        expected = [np.nan, 'John', 'Mary Ann', 'billy', 'Jonathan', 'Gretha', 'Micheal', 'Sjors']
-
-        s = recordlinkage.StandardSeries(values)
-        s = s.encode('unicode', inplace=False)
-        s_exp = recordlinkage.StandardSeries(expected)
-
-        pdt.assert_series_equal(s, s_exp)
