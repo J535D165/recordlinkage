@@ -17,7 +17,7 @@ class StandardSeries(pd.Series):
     def __init__(self, *args, **kwargs):
         super(self.__class__, self).__init__(*args, **kwargs)
 
-    # @check_type
+    @check_type
     def clean(self, lower=True, replace_by_none='[^ \-\_A-Za-z0-9]+', replace_by_whitespace='[\-\_]', remove_brackets=True, inplace=True):
         """
         clean(lower=True, replace_by_none='[^ \-\_A-Za-z0-9]+', replace_by_whitespace='[\-\_]', remove_brackets=True, inplace=True)
@@ -44,27 +44,30 @@ class StandardSeries(pd.Series):
 
         """
 
-        string = self if inplace else self.copy()
+        result = self if inplace else self.copy()
 
-        # Lower the string if lower is True
-        string = string.str.lower() if lower else string 
+        # Lower the result if lower is True
+        result = result.str.lower() if lower else result 
 
         # Remove all content between brackets
         if remove_brackets:
-            string = string.str.replace(r'(\[.*?\]|\(.*?\)|\{.*?\})', '')
+            result = result.str.replace(r'(\[.*?\]|\(.*?\)|\{.*?\})', '')
 
         # Remove the special characters
-        string = string.str.replace(replace_by_none, '')
-        string = string.str.replace(replace_by_whitespace, ' ')
+        result = result.str.replace(replace_by_none, '')
+        result = result.str.replace(replace_by_whitespace, ' ')
 
         # Remove multiple whitespaces
-        string = string.str.replace(r'\s\s+', ' ')
+        result = result.str.replace(r'\s\s+', ' ')
 
-        # Strip string
-        string = string.str.lstrip().str.rstrip()
+        # Strip result
+        result = result.str.lstrip().str.rstrip()
 
-        if not inplace:
-            return string
+        if inplace:
+            self._update_inplace(result._data)
+            return
+
+        return result
 
     @check_type
     def phonenumbers(self, replace_by_none='[^0-9]+', inplace=True):

@@ -23,7 +23,7 @@ def check_type(func):
 			result = standardise.StandardDataFrame(result)
 
 		else:
-			pass
+			return
 
 		return result
 

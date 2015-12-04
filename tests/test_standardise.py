@@ -7,17 +7,36 @@ import pandas as pd
 
 class TestStandardise(unittest.TestCase):
 
-    # def test_clean_inplace(self):
+    def test_clean_type(self):
 
-    #     values = ['Mary-ann', 'Bob :)', 'Angel', 'Bob (alias Billy)', 'Mary  ann', 'John', np.nan]
-    #     expected = ['mary ann', 'bob', 'angel', 'bob', 'mary ann', 'john', np.nan]
+        values = ['Mary-ann', 'Bob :)', 'Angel', 'Bob (alias Billy)', 'Mary  ann', 'John', np.nan]
 
-    #     s = recordlinkage.StandardSeries(values)
-    #     s.clean(inplace=True)
+        s = recordlinkage.StandardSeries(values)
+        s.clean(inplace=True)
 
-    #     s_exp = recordlinkage.StandardSeries(expected)
+        r = recordlinkage.StandardSeries(values)
+        r = r.clean(inplace=False)
 
-    #     pdt.assert_series_equal(s, s_exp)
+        # Check if type is correct
+        self.assertTrue(isinstance(s, (recordlinkage.StandardSeries)))
+
+        # Check if type is correct
+        self.assertTrue(isinstance(r, (recordlinkage.StandardSeries)))
+
+    def test_clean_inplace(self):
+
+        values = ['Mary-ann', 'Bob :)', 'Angel', 'Bob (alias Billy)', 'Mary  ann', 'John', np.nan]
+        expected = ['mary ann', 'bob', 'angel', 'bob', 'mary ann', 'john', np.nan]
+
+        s = recordlinkage.StandardSeries(values)
+        s.clean(inplace=True)
+
+        # Check if type is correct
+        self.assertTrue(isinstance(s, (recordlinkage.StandardSeries)))
+
+        # Check if series are identical.
+        s_exp = recordlinkage.StandardSeries(expected)
+        pdt.assert_series_equal(s, s_exp)
 
     def test_clean(self):
 
@@ -37,7 +56,7 @@ class TestStandardise(unittest.TestCase):
         expected = [np.nan, 'lowerhigher', 'higherlower']
 
         s = recordlinkage.StandardSeries(values)
-        s = s.clean(lower=True, inplace=False)
+        s.clean(lower=True)
 
         s_exp = recordlinkage.StandardSeries(expected)
 
@@ -49,7 +68,7 @@ class TestStandardise(unittest.TestCase):
         expected = [np.nan, 'brats', 'brackets with']
 
         s = recordlinkage.StandardSeries(values)
-        s = s.clean(remove_brackets=True, inplace=False)
+        s.clean(remove_brackets=True)
 
         s_exp = recordlinkage.StandardSeries(expected)
 
