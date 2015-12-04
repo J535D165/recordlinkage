@@ -15,19 +15,19 @@ class TestCompare(unittest.TestCase):
         s2 = pd.Series(['mary ann', 'bob2', 'angel2', 'bob', 'mary ann', 'john', np.nan])
 
         # Missing values as 0
-        result = comp.exact(s1, s2, missing_values=0)
+        result = comp.exact(s1, s2, missing_value=0)
         expected = pd.Series([1,0,0,1,1,1,0])
 
         pdt.assert_series_equal(expected, result)
 
         # Missing values as np.nan
-        result = comp.exact(s1, s2, missing_values=np.nan)
+        result = comp.exact(s1, s2, missing_value=np.nan)
         expected = pd.Series([1,0,0,1,1,1,np.nan])
 
         pdt.assert_series_equal(expected, result)
 
         # Missing values 0 and disagreement as 2
-        result = comp.exact(s1, s2, disagreement_value=2, missing_values=0)
+        result = comp.exact(s1, s2, disagreement_value=2, missing_value=0)
         expected = pd.Series([1,2,2,1,1,1,0])
 
         pdt.assert_series_equal(expected, result)
