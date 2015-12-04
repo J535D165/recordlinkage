@@ -70,7 +70,7 @@ class StandardSeries(pd.Series):
         return result
 
     @check_type
-    def phonenumbers(self, country='USA' ,inplace=True):
+    def clean_phonenumbers(self, country='USA' ,inplace=True):
         """ Clean string formatted phonenumbers into string of intergers. 
 
         :return: A StandardSeries with cleaned phonenumbers.
@@ -83,8 +83,8 @@ class StandardSeries(pd.Series):
         # Remove all special tokens
         result = result.str.replace('[^0-9]+', '')
 
-        # Convert result into integer
-        result = result.astype(str)
+        # # Convert result into integer
+        # result = result.astype(str)
 
         if inplace:
             self._update_inplace(result._data)
