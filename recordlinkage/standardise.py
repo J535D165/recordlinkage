@@ -217,26 +217,6 @@ class StandardDataFrame(pd.DataFrame):
     def __init__(self, *args, **kwargs):
         super(StandardDataFrame, self).__init__(*args, **kwargs)
 
-    def names(self, columns, encoding=None, inplace=True):
-
-    	columns = [columns] if type(columns) != list else list(columns)
-
-    	for col in columns:
-
-    		self[col] = self[col].str.lower()
-
-    def clean_string(self, lowercase=True, remove_tokens=True, inplace=True):
-
-    	for col in self.columns.tolist():
-
-    		try:
-    			self[col] = self[col].clean(inplace=False)
-    		except Exception:
-    			pass
-
-    	return self
-
-
     @property
     def _constructor(self):
         return StandardDataFrame
@@ -244,41 +224,3 @@ class StandardDataFrame(pd.DataFrame):
     @property
     def _constructor_sliced(self):
         return StandardSeries
-
-	def names(self, columns, encoding=None, inplace=True):
-
-		columns = [columns] if type(columns) == str else list(columns)
-
-		for col in columns: 
-
-		    try:
-		        self[col] = self[col].str.lower()
-		        # self[col] = self[col].str.replace(r'.|\"|\'', "")
-		        # self[col] = self[col].str.replace(r'-_', " ")
-		        self[col] = self[col].str.replace(".", "")
-		        self[col] = self[col].str.replace("-", " ")
-		        self[col] = self[col].str.replace("\"", "")
-		        self[col] = self[col].str.replace("\'", " ")
-		        self[col] = self[col].str.replace("*", "")
-
-		        
-		    except Exception:
-		        pass
-
-		    if encoding: 
-
-		    	self[col] = encode_names(columns, encoding=encoding)
-
-		return self[columns]
-
-
-	def encode_names(self, columns, encoding='soundex'):
-
-		return self[columns]
-
-
-
-
-
- 
-
