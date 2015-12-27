@@ -3,35 +3,26 @@ from __future__ import division
 import pandas as pd
 import numpy as np
 
-def _fullindex(A, B, suffixes=('_A', '_B')):
+def _fullindex(A, B):
 
-	A['pair_col'] = 1
-	B['pair_col'] = 1
+	A_merge = pd.DataFrame({'merge_col':1, A.index.name: A.index.values})
+	B_merge = pd.DataFrame({'merge_col':1, B.index.name: B.index.values})
 
-	A['index' + suffixes[0]] = A.index.values
-	B['index' + suffixes[1]] = B.index.values
+	pairs = A_merge.merge(B_merge, how='inner', on='merge_col').set_index([A.index.name, B.index.name])
 
-	pairs = A.merge(B, how='inner', on='pair_col', suffixes=suffixes).set_index(['index' + suffixes[0], 'index' + suffixes[1]])
+	return pairs.index
 
-	del pairs['pair_col']
-	del A['pair_col']
-	del B['pair_col']
-	del A['index' + suffixes[0]]
-	del B['index' + suffixes[1]]
+def _blockindex(A, B, on=[], left_on=[], right_on=[]):
 
-	return pairs
+	A_merge = A[on+left_on].copy()
+	A_merge[A.index.name] = A.index.values
 
-def _blockindex(A, B, columns, suffixes=('_A', '_B')):
+	B_merge = B[on+left_on].copy()
+	B_merge[B.index.name] = B.index.values
 
-	A['index' + suffixes[0]] = A.index.values
-	B['index' + suffixes[1]] = B.index.values
+	pairs = A_merge.merge(B_merge, how='inner', on=columns, left_on=left_on, right_on=right_on).set_index([A.index.name, B.index.name])
 
-	pairs = A.merge(B, how='inner', on=columns, suffixes=suffixes).set_index(['index' + suffixes[0], 'index' + suffixes[1]])
-
-	del A['index' + suffixes[0]]
-	del B['index' + suffixes[1]]
-
-	return pairs
+	return pairs.index
 
 def _sortedneighbourhood(A, B, column, window=3, sorted_index=None, suffixes=('_A', '_B'), blocking_on=[], left_blocking_on=[], right_blocking_on=[]):
 
@@ -84,58 +75,63 @@ def _sortedneighbourhood(A, B, column, window=3, sorted_index=None, suffixes=('_
 
 	return pairs_concat[list(set_cols.intersection(set(list(pairs_concat))))].copy()
 
-
 class Pairs(object):
 	""" Pairs class is used to make pairs of records to analyse in the comparison step. """	
 
-	def __init__(self, dataframe_A, dataframe_B=None, suffixes=('_A', '_B')):
+	def __init__(self, dataframe_A, dataframe_B=None):
 
 		self.A = dataframe_A
 
+		# Linking two datasets
 		if dataframe_B is not None:
+
 			self.B = dataframe_B
 			self.deduplication = False
 
+			if self.A.index.name == None or self.B.index.name == None:
+				raise ValueError('Specify an index name for each file.')
+
+			if self.A.index.name == self.B.index.name:
+				raise ValueError('ValueError: Overlapping index names %s.' % self.A.index.name)
+
+		# Deduplication of one dataset
 		else:
 			self.deduplication = True
 
-		self.suffixes = suffixes
+			if self.A.index.name == None:
+				raise ValueError('Specify an index name.')
 
 		self.n_pairs = 0
 
 	def index(self, index_func, *args, **kwargs):
-		""" Creating an index. 
+		""" Create an index. 
 
-
-		:return: A DataFrame with MultiIndex
-		:rtype: standardise.DataFrame
+		:return: MultiIndex
+		:rtype: pandas.MultiIndex
 		"""	
 
-		if self.deduplication:
+		# If not deduplication, make pairs of records with one record from the first dataset and one of the second dataset
+		if not self.deduplication:
 
-			A = self.A.copy()
-			# A.index.is_monotonic & B.index.is_monotonic
-			A['dedupe_col'] = A.reset_index().index.values
-			B = A.copy()
+			pairs = index_func(self.A, self.B, *args, **kwargs)
 
-		else:
-			A = self.A
-			B = self.B
+		# If deduplication, remove the record pairs that are already included. For example: (a1, a1), (a1, a2), (a2, a1), (a2, a2) results in (a1, a2) or (a2, a1)
+		elif self.deduplication:
 
-		pairs = index_func(A,B, suffixes=self.suffixes, *args, **kwargs)
+			B = self.A.copy()
+			B.index.name = str(self.A.index.name) + '_'
 
-		self.n_pairs = len(pairs.index)
+			pairs = index_func(self.A, B, *args, **kwargs)
 
-		if self.deduplication:
+			factorize_index_level_values = pd.factorize(
+				list(pairs.get_level_values(self.A.index.name)) + list(pairs.get_level_values(B.index.name))
+				)[0]
 
-			pairs = pairs[pairs['dedupe_col' + self.suffixes[0]]<pairs['dedupe_col' + self.suffixes[1]]]
-			del pairs['dedupe_col' + self.suffixes[0]]
-			del pairs['dedupe_col' + self.suffixes[1]]
+			dedupe_index_boolean = factorize_index_level_values[:len(factorize_index_level_values)/2] < factorize_index_level_values[len(factorize_index_level_values)/2:]
 
-		if pairs.index.is_unique:
-			return pairs 
-		else:
-			print "The index is not unique."
+			pairs = pairs[dedupe_index_boolean]
+
+		return pairs
 
 	def block(self, *args, **kwargs):
 		"""Return a blocking index. 
