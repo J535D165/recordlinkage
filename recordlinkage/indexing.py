@@ -22,56 +22,25 @@ def _blockindex(A, B, on=None, left_on=None, right_on=None):
 
 	return pairs.index
 
-def _sortedneighbourhood(A, B, column, window=3, sorted_index=None, suffixes=('_A', '_B'), blocking_on=[], left_blocking_on=[], right_blocking_on=[]):
+def _sortedneighbourhood(A, B, column, window=3, sorted_index=None, on=[], left_on=[], right_on=[]):
 
-	# Build a sorted index or use inserted.
-	if sorted_index is None:
+	factors = np.sort(np.unique(np.append(A[column].values, B[column].values)))
+	factors = factors[~np.isnan(factors)] # Remove possible np.nan values. They are not replaced in the next step.
+	factors_label = np.arange(len(factors))
 
-		set_A = set(A[column].unique())
-		set_B = set(B[column].unique())
-
-		sorted_index = sorted(list(set.union(set_A, set_B)))
-
-	else:
-		# Check if sorted index is valid.
-		sorted_index = sorted(sorted_index)
-
-	sorted_df = pd.DataFrame(sorted_index, columns=['sn'])
-
-	for w in range(-window, window+1):
-		sorted_df['sorted_neighbour_%s' % w] = sorted_df.index.values+w
-
-	w_indices = list(sorted_df)
-	w_indices.remove('sn')
-
-	sorted_df[(sorted_df[w_indices] < 0) | (sorted_df[w_indices] > len(sorted_df)-1) ] = np.nan
-
-	A_sorted = A.merge(sorted_df, how='left', left_on=column, right_on='sn', left_index=True).set_index(A.index.values)
-	B_sorted = B.merge(sorted_df, how='left', left_on=column, right_on='sn', left_index=True).set_index(B.index.values)
-
-	A_sorted['index' + suffixes[0]] = A_sorted.index.values
-	B_sorted['index' + suffixes[1]] = B_sorted.index.values
+	sorted_df_A = pd.DataFrame({column:A[column].replace(factors, factors_label), A.index.name: A.index.values})
+	sorted_df_B = pd.DataFrame({column:B[column].replace(factors, factors_label), B.index.name: B.index.values})
 
 	pairs_concat = None
 
-	for sn_col in w_indices:
+	for w in range(-window, window+1):
 
-		left_on = blocking_on + left_blocking_on + ['sorted_neighbour_0']
-		right_on = blocking_on + right_blocking_on + [sn_col]
+		pairs = sorted_df_A.merge(pd.DataFrame({column:sorted_df_B[column]+w, B.index.name: B.index.values}), on=column, how='inner').set_index([A.index.name, B.index.name])
 
-		pairs = A_sorted.merge(B_sorted, how='inner', right_on=right_on, left_on=left_on, suffixes=suffixes)
-		pairs.set_index(['index' + suffixes[0], 'index' + suffixes[1]], inplace=True)
+		# Append pairs to existing ones. PANDAS BUG workaround
+		pairs_concat = pairs.index if pairs_concat is None else pairs.index.append(pairs_concat)
 
-		if not pairs.empty:
-
-			try:
-				pairs_concat = pairs_concat.append(pairs)
-			except Exception:
-				pairs_concat = pairs 
-
-	set_cols = set([cola+suffixes[0] for cola in list(A)] + [colb+suffixes[1] for colb in list(B)] + list(A) + list(B))
-
-	return pairs_concat[list(set_cols.intersection(set(list(pairs_concat))))].copy()
+	return pairs_concat
 
 class Pairs(object):
 	""" Pairs class is used to make pairs of records to analyse in the comparison step. """	
