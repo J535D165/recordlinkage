@@ -5,6 +5,7 @@ import numpy as np
 
 def _fullindex(A, B):
 
+	# merge_col is used to make a full index.
 	A_merge = pd.DataFrame({'merge_col':1, A.index.name: A.index.values})
 	B_merge = pd.DataFrame({'merge_col':1, B.index.name: B.index.values})
 
@@ -12,15 +13,12 @@ def _fullindex(A, B):
 
 	return pairs.index
 
-def _blockindex(A, B, on=[], left_on=[], right_on=[]):
+def _blockindex(A, B, on=None, left_on=None, right_on=None):
 
-	A_merge = A[on+left_on].copy()
-	A_merge[A.index.name] = A.index.values
+	if on:
+		left_on, right_on = on, on
 
-	B_merge = B[on+left_on].copy()
-	B_merge[B.index.name] = B.index.values
-
-	pairs = A_merge.merge(B_merge, how='inner', on=columns, left_on=left_on, right_on=right_on).set_index([A.index.name, B.index.name])
+	pairs = A[left_on].reset_index().merge(B[right_on].reset_index(), how='inner', left_on=left_on, right_on=right_on).set_index([A.index.name, B.index.name])
 
 	return pairs.index
 
