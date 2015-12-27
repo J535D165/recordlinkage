@@ -111,16 +111,16 @@ class Pairs(object):
 
 		:param columns: A column name or a list of column names. These columns are used to block on. 
 
-		:return: A DataFrame with MultiIndex
-		:rtype: standardise.DataFrame
+		:return: A MultiIndex
+		:rtype: pandas.MultiIndex
 		"""		
 		return self.index(_blockindex, *args, **kwargs)
 
 	def full(self, *args, **kwargs):
 		"""Return a Full index. In case of linking two dataframes of length N and M, the number of pairs is N*M. In case of deduplicating a dataframe with N records, the number of pairs is N*(N-1)/2. 
 
-		:return: A DataFrame with MultiIndex
-		:rtype: standardise.DataFrame
+		:return: A MultiIndex
+		:rtype: pandas.MultiIndex
 		"""
 		return self.index(_fullindex, *args, **kwargs)
 
@@ -134,8 +134,8 @@ class Pairs(object):
 		:param left_blocking_on: Additional columns in the left dataframe to use standard blocking on. 
 		:param right_blocking_on: Additional columns in the right dataframe to use standard blocking on. 
 
-		:return: A DataFrame with MultiIndex
-		:rtype: standardise.DataFrame
+		:return: A MultiIndex
+		:rtype: pandas.MultiIndex
 		"""
 		return self.index(_sortedneighbourhood, *args, **kwargs)
 
@@ -146,8 +146,8 @@ class Pairs(object):
 		:param len_block_B: The length of a block of records in dataframe B.
 		:param columns: A column name or a list of column names. These columns are used to block on. 
 
-		:return: A DataFrame with MultiIndex
-		:rtype: standardise.DataFrame
+		:return: A MultiIndex
+		:rtype: pandas.MultiIndex
 		"""		
 		return self.iterindex(_blockindex, *args, **kwargs)
 
@@ -156,8 +156,8 @@ class Pairs(object):
 
 		:param len_block_A: The lenght of a block of records in dataframe A. 
 		:param len_block_B: The length of a block of records in dataframe B.
-		:return: A DataFrame with MultiIndex
-		:rtype: standardise.DataFrame
+		:return: A MultiIndex
+		:rtype: pandas.MultiIndex
 		"""
 		return self.iterindex(_fullindex, *args, **kwargs)
 
@@ -173,8 +173,8 @@ class Pairs(object):
 		:param left_blocking_on: Additional columns in the left dataframe to use standard blocking on. 
 		:param right_blocking_on: Additional columns in the right dataframe to use standard blocking on. 
 
-		:return: A DataFrame with MultiIndex
-		:rtype: standardise.DataFrame
+		:return: A MultiIndex
+		:rtype: pandas.MultiIndex
 		"""
 		return self.iterindex(_sortedneighbourhood, *args, **kwargs)
 
@@ -185,8 +185,8 @@ class Pairs(object):
 		:param len_block_A: The lenght of a block of records in dataframe A. 
 		:param len_block_B: The length of a block of records in dataframe B.
 
-		:return: A DataFrame with MultiIndex
-		:rtype: standardise.DataFrame
+		:return: A MultiIndex
+		:rtype: pandas.MultiIndex
 		"""
 		if self.deduplication:
 			A = self.A.copy()
