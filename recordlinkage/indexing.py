@@ -61,12 +61,18 @@ class Pairs(object):
 			if self.A.index.name == self.B.index.name:
 				raise ValueError('ValueError: Overlapping index names %s.' % self.A.index.name)
 
+			if not self.A.index.is_unique or not self.B.index.is_unique:
+				raise ValueError('The given dataframe has not a unique index.')
+
 		# Deduplication of one dataset
 		else:
 			self.deduplication = True
 
 			if self.A.index.name == None:
 				raise ValueError('Specify an index name.')
+
+			if not self.A.index.is_unique:
+				raise ValueError('The given dataframe has not a unique index.')
 
 		self.n_pairs = 0
 
