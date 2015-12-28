@@ -205,17 +205,18 @@ class Pairs(object):
 			len_block_A = len(self.A) if len_block_A is None else len_block_A
 			len_block_B = len(self.B) if len_block_B is None else len_block_B
 
-			blocks = [(x,y) for x in np.arange(0, len(self.A), len_block_A) for y in np.arange(0, len(self.B), len_block_B) ]
+			blocks = [(a,b, a+len_block_A, b+len_block_B) for a in np.arange(0, len(self.A), len_block_A) for b in np.arange(0, len(self.B), len_block_B) ]
 
 		elif self.deduplication:
 			# If block size is None, then use the full length of the dataframe
 			len_block_A = len(self.A) if len_block_A is None else len_block_A
 			
-			blocks = [(x,x) for x in np.arange(0, len(self.A), len_block_A)]
+			blocks = [(a,a, a+len_block_A, a+len_block_B) for x in np.arange(0, len(self.A), len_block_A)]
 
 		for bl in blocks:
 
-			pairs_block_class = Pairs(self.A[bl[0]:(bl[0]+len_block_A)], self.B[bl[1]:(bl[1]+len_block_B)])
+			# For deplication, do not make a new class but modify index such that we can index a subset. 
+			pairs_block_class = Pairs(self.A[bl[0]:bl[2]], self.B[bl[1]:bl[3]])
 
 			pairs_block = pairs_block_class.index(index_func, *args, **kwargs)
 
