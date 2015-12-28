@@ -230,6 +230,9 @@ class Pairs(object):
 			
 			blocks = [(a,a, a+len_block_A, a+len_block_B) for x in np.arange(0, len(self.A), len_block_A)]
 
+		# Reset the number of pairs counter
+		self.n_pairs = 0
+
 		for bl in blocks:
 
 			# For deplication, do not make a new class but slice such that we can index a subset. 
@@ -237,6 +240,7 @@ class Pairs(object):
 
 			pairs_block = pairs_block_class.index(index_func, *args, **kwargs)
 
+			self.n_pairs += len(pairs_block)
 			yield pairs_block
 
 	def reduction_ratio(self, n_pairs=None):
