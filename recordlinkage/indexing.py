@@ -22,9 +22,14 @@ def _blockindex(A, B, on=None, left_on=None, right_on=None):
 
 	return pairs.index
 
-def _sortedneighbourhood(A, B, column, window=3, sorted_index=None, on=[], left_on=[], right_on=[]):
+def _sortedneighbourhood(A, B, column, window=3, sorting_key_values=None, on=[], left_on=[], right_on=[]):
 
-	factors = np.sort(np.unique(np.append(A[column].values, B[column].values)))
+	# sorting_key_values is the terminology in Data Matching [Christen, 2012]
+	if sorting_key_values is not None:
+		factors = np.sort(np.unique(np.array(sorting_key_values)))
+	else:
+		factors = np.sort(np.unique(np.append(A[column].values, B[column].values)))
+	
 	factors = factors[~np.isnan(factors)] # Remove possible np.nan values. They are not replaced in the next step.
 	factors_label = np.arange(len(factors))
 
@@ -176,46 +181,45 @@ class Pairs(object):
 		:return: A MultiIndex
 		:rtype: pandas.MultiIndex
 		"""
-		return self.iterindex(_sortedneighbourhood, *args, **kwargs)
+		column = args[2] # The argument after the two block size values
 
-	def iterindex(self, index_func, len_block_A, len_block_B, *args, **kwargs):
+		# The unique values of both dataframes are passed as an argument. 
+		sorting_key_values = np.sort(np.unique(np.append(self.A[column].values, self.B[column].values)))
+
+		return self.iterindex(_sortedneighbourhood, *args, sorting_key_values=sorting_key_values, **kwargs)
+
+	def iterindex(self, index_func, len_block_A=None, len_block_B=None, *args, **kwargs):
 		"""Iterative function that returns records pairs based on a user-defined indexing function. The number of iterations can be adjusted to prevent memory problems.  
 
 		:param index_func: A user defined indexing funtion.
 		:param len_block_A: The lenght of a block of records in dataframe A. 
-		:param len_block_B: The length of a block of records in dataframe B.
+		:param len_block_B: The length of a block of records in dataframe B (only used when linking two datasets).
 
 		:return: A MultiIndex
 		:rtype: pandas.MultiIndex
 		"""
-		if self.deduplication:
-			A = self.A.copy()
-			A['dedupe_col'] = A.reset_index().index.values
-			B = A.copy()
-		else:
-			A = self.A
-			B = self.B
 
-		if len_block_A is None:
-			len_block_A = len(A)
-		elif len_block_B is None:
-			len_block_B = len(B)
-		else:
-			pass
+		if not self.deduplication:
 
-		blocks = [(x,y) for x in np.arange(0, len(A), len_block_A) for y in np.arange(0, len(B), len_block_B) ]
+			# If block size is None, then use the full length of the dataframe
+			len_block_A = len(self.A) if len_block_A is None else len_block_A
+			len_block_B = len(self.B) if len_block_B is None else len_block_B
+
+			blocks = [(x,y) for x in np.arange(0, len(self.A), len_block_A) for y in np.arange(0, len(self.B), len_block_B) ]
+
+		elif self.deduplication:
+			# If block size is None, then use the full length of the dataframe
+			len_block_A = len(self.A) if len_block_A is None else len_block_A
+			
+			blocks = [(x,x) for x in np.arange(0, len(self.A), len_block_A)]
 
 		for bl in blocks:
 
-			pairs_subset_class = Pairs(A[bl[0]:(bl[0]+len_block_A)].copy(), B[bl[1]:(bl[1]+len_block_B)].copy(), suffixes=self.suffixes)
-			pairs_subset = pairs_subset_class.index(index_func, *args, **kwargs)
+			pairs_block_class = Pairs(self.A[bl[0]:(bl[0]+len_block_A)], self.B[bl[1]:(bl[1]+len_block_B)])
 
-			if self.deduplication:
-				pairs_subset = pairs_subset[pairs_subset['dedupe_col' + self.suffixes[0]]<pairs_subset['dedupe_col' + self.suffixes[1]]]
-				del pairs_subset['dedupe_col' + self.suffixes[0]]
-				del pairs_subset['dedupe_col' + self.suffixes[1]]
+			pairs_block = pairs_block_class.index(index_func, *args, **kwargs)
 
-			yield pairs_subset
+			yield pairs_block
 
 	def reduction_ratio(self):
 		""" Compute the relative reduction of records pairs as the result of indexing. 
