@@ -240,7 +240,9 @@ class Pairs(object):
 
 			pairs_block = pairs_block_class.index(index_func, *args, **kwargs)
 
+			# Count the number of pairs
 			self.n_pairs += len(pairs_block)
+			
 			yield pairs_block
 
 	def reduction_ratio(self, n_pairs=None):

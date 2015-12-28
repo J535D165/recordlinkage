@@ -6,8 +6,10 @@ import numpy as np
 class Compare(object):
 	"""A class to make comparing of records fields easier. It can be used to compare fields of the record pairs. """
 
-	def __init__(self, pairs=None, store_to_memory=True, store_to_csv=None, store_to_hdf=None):
+	def __init__(self, A=None, B=None, pairs=None):
 
+		self.A = A
+		self.B = B
 		self.pairs = pairs
 
 		self.comparison_vectors = None
@@ -92,31 +94,31 @@ class Compare(object):
 
 	def compare(self, comp_func, *args, **kwargs):
 		"""Compare the records given. 
-
+		
 		:param comp_func: A list, dict or tuple of comparison tuples. Each tuple contains a comparison function, the fields to compare and the arguments. 
-
+		
 		:return: A DataFrame with compared variables.
 		:rtype: standardise.DataFrame
 		"""
-
+		
 		if isinstance(comp_func, (list, dict, tuple)):
-
+			
 			for t in comp_func:
 				# func is a tuple of args and kwargs
-
+				
 				func = t[0]
 				args_func = t[1]
 				kwargs_func = t[2]
-
+				
 				self._append(self._compare_column(func, *args_func, **kwargs_func))
-
+				
 		else:
-
+			
 			name = kwargs.pop('name', None)
 			self._append(comp_func(*args, **kwargs), name=name)
-
+			
 		return self.comparison_vectors
-
+		
 	def _append(self, comp_vect, name=None, store=True, *args, **kwargs):
 
 		if store:
@@ -128,19 +130,7 @@ class Compare(object):
 			except:
 				self.comparison_vectors = pd.DataFrame(comp_vect)
 
-		return self.comparison_vectors	
-
-	def _store_to_hdf(file_path):
-
-		pass
-
-	def _store_to_csv(file_path):
-
-		pass
-
-	def _store_intern():
-
-		pass
+		return self.comparison_vectors
 
 def _missing(s1, s2):
 
