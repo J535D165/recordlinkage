@@ -3,6 +3,13 @@ from __future__ import division
 import pandas as pd
 import numpy as np
 
+def _randomindex(A,B, N_pairs, random_state=None):
+
+	random_index_A = np.random.choice(A.index.values, N_pairs)
+	random_index_B = np.random.choice(B.index.values, N_pairs)
+
+	return pd.MultiIndex.from_tuples(zip(random_index_A, random_index_B), names=[A.index.name, B.index.name])
+
 def _fullindex(A, B):
 
 	# merge_col is used to make a full index.
@@ -110,6 +117,14 @@ class Pairs(object):
 			pairs = pairs[dedupe_index_boolean]
 
 		return pairs
+
+	def random(self, *args, **kwargs):
+		"""Return a random index. 
+
+		:return: A MultiIndex
+		:rtype: pandas.MultiIndex
+		"""		
+		return self.index(_blockindex, *args, **kwargs)
 
 	def block(self, *args, **kwargs):
 		"""Return a blocking index. 
