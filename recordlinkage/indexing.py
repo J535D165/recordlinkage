@@ -116,6 +116,8 @@ class Pairs(object):
 
 			pairs = pairs[dedupe_index_boolean]
 
+		self.n_pairs = len(pairs)
+
 		return pairs
 
 	def random(self, *args, **kwargs):
@@ -230,21 +232,35 @@ class Pairs(object):
 
 		for bl in blocks:
 
-			# For deplication, do not make a new class but modify index such that we can index a subset. 
+			# For deplication, do not make a new class but slice such that we can index a subset. 
 			pairs_block_class = Pairs(self.A[bl[0]:bl[2]], self.B[bl[1]:bl[3]])
 
 			pairs_block = pairs_block_class.index(index_func, *args, **kwargs)
 
 			yield pairs_block
 
-	def reduction_ratio(self):
+	def reduction_ratio(self, n_pairs=None):
 		""" Compute the relative reduction of records pairs as the result of indexing. 
 
 		:return: Value between 0 and 1
 		:rtype: float
 		"""
 
-		n_full_pairs = (len(self.A)*(len(self.B)-1))/2 if self.deduplication else len(self.A)*len(self.B)
+		if self.deduplication:
+			return self._reduction_ratio_deduplication(n_pairs=n_pairs)
+		else:
+			return self._reduction_ratio_linking(n_pairs=n_pairs)
 
-		return 1-self.n_pairs/n_full_pairs
+	def _reduction_ratio_deduplication(self, n_pairs=None):
+
+		max_pairs = (len(self.A)*(len(self.B)-1))/2
+
+		return 1-self.n_pairs/max_pairs
+
+	def _reduction_ratio_linking(self, n_pairs=None):
+
+		max_pairs = len(self.A)*len(self.B)
+
+		return 1-self.n_pairs/max_pairs
+
 
