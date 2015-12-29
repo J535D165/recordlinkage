@@ -14,7 +14,7 @@ class Compare(object):
 		self.B = B
 		self.pairs = pairs
 
-		self.comparison_vectors = pd.DataFrame(index=pairs)
+		self.vectors = pd.DataFrame(index=pairs)
 
 	def exact(self, s1, s2, *args, **kwargs):
 		"""
@@ -132,7 +132,7 @@ class Compare(object):
 			name = kwargs.pop('name', None)
 			self._append(comp_func(*args, **kwargs), name=name)
 
-		return self.comparison_vectors
+		return self.vectors
 
 	def _append(self, comp_vect, name=None, store=True, *args, **kwargs):
 
@@ -140,9 +140,9 @@ class Compare(object):
 
 			comp_vect.name = name
 
-			self.comparison_vectors[name] = np.array(comp_vect)
+			self.vectors[name] = np.array(comp_vect)
 
-		return self.comparison_vectors
+		return self.vectors
 
 	def _index_data(self, *args, **kwargs):
 		""" 
