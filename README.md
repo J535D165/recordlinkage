@@ -74,6 +74,3 @@ It is not possible to install the package with ``pip``. You can download or clon
 python setup.py install
 ```
 The license for this record linkage tool is GPLv3.
-
-## Background
-
