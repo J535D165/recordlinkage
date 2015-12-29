@@ -37,7 +37,7 @@ class Compare(object):
 
 		return self.compare(exact, s1, s2, *args, **kwargs)
 
-	def numerical(self, *args, **kwargs):
+	def numerical(self, s1, s2, *args, **kwargs):
 		"""
 		numerical(s1, s2, window, missing_value=0)
 
@@ -53,7 +53,10 @@ class Compare(object):
 
 		"""
 
-		return self.compare(window_numerical, *args, **kwargs)
+		s1 = self._index_data(s1, dataframe=self.A)
+		s2 = self._index_data(s2, dataframe=self.B)
+
+		return self.compare(window_numerical, s1, s2, *args, **kwargs)
 
 	def fuzzy(self, s1, s2, *args, **kwargs):
 		"""
@@ -78,7 +81,7 @@ class Compare(object):
 
 		return self.compare(fuzzy, s1, s2, *args, **kwargs)
 
-	def geo(self, *args, **kwargs):
+	def geo(self, X1, Y1, X2, Y2, *args, **kwargs):
 		"""
 		geo(X1, Y1, X2, Y2, radius=20, disagreement_value = -1, missing_value=-1)
 
@@ -97,7 +100,12 @@ class Compare(object):
 		:rtype: pandas.Series
 		"""
 
-		return self.compare(compare_geo, *args, **kwargs)
+		X1 = self._index_data(X1, dataframe=self.A)
+		Y1 = self._index_data(Y1, dataframe=self.A)
+		X2 = self._index_data(X2, dataframe=self.B)
+		Y2 = self._index_data(Y2, dataframe=self.B)
+
+		return self.compare(compare_geo, X1, Y1, X2, Y2, *args, **kwargs)
 
 	def compare(self, comp_func, *args, **kwargs):
 		"""Compare the records given. 
@@ -288,10 +296,6 @@ def window(s1, s2, window, missing_value=0, disagreement_value=0, sim_func=None)
 
 	return compare
 
-def math_window(s1, s2, sim_func):
-
-	return 
-
 def bin_compare_geq(cat1, cat2, missing_value=0):
 
 	# compare
@@ -311,8 +315,3 @@ def compare_levels(s1, s2, freq, split=np.array([1, 5, 10, 20, 50, 100, np.inf])
 		comp.loc[(comp < split[sp+1]) & (comp >= split[sp])] = split[sp]
 
 	return comp
-
-class CompareException(Exception):
-	pass
-
-
