@@ -11,35 +11,36 @@ Import the ``recordlinkage`` module that contains all important tools for the li
 
 ```python
 import recordlinkage
+import pandas
 ```
 Consider that we have two datasets with personal information. Load these datasets into a pandas dataframe.
 ```python 
-dfA = pd.DataFrame(YOUR_FIRST_DATASET)
-dfB = pd.DataFrame(YOUR_SECOND_DATASET)
+dfA = pandas.DataFrame(YOUR_FIRST_DATASET)
+dfB = pandas.DataFrame(YOUR_SECOND_DATASET)
 ```
 
-Next, we make pairs of records. Each pair contains one record of ``censusdataA`` and one record of ``censusdataB``. The number of record pairs can be large, therefore required that the record pairs are identical on the surname. 
+Next, we are going to decide which record pairs are interesting to evaluate fully. This is done by making a ``pandas.core.index.MultiIndex``.
 
 ```python
 index = recordlinkage.Index(dfA, dfB)
-pairs = index.block('surname')
-```
-For each record pair, we compare the records. 
-```python
-compare = recordlinkage.Compare()
-
-compare.exact(pairs['name_A'], pairs['name_B'])
-compare.exact(pairs['sex_A'], pairs['sex_B'])
-compare.exact(pairs['dob_A'], pairs['dob_B'])
-compare.exact(pairs['street_A'], pairs['street_B'])
-compare.exact(pairs['place_A'], pairs['place_B'])
-compare.exact(pairs['haircolor_A'], pairs['haircolor_B'])
+candidate_links = index.block('surname')
 ```
 
-The result of the comparison is found in 
-
+For each record pair, we compare the records from both dataframes.
 ```python
-compare.comparison_vectors
+compare = recordlinkage.Compare(candidate_links, dfA, dfB)
+
+compare.fuzzy('name', 'name', method='jarowinkler', threshold=0.85)
+compare.exact('sex', 'gender')
+compare.exact('dob', 'date_of_birth')
+compare.fuzzy('streetname', 'streetname', method='damerau_levenshtein', threshold=0.7)
+compare.exact('place', 'placename')
+compare.exact('haircolor', 'haircolor', missing_value=9)
+```
+
+At each point, you can get the comparison vectors by the following attribute:
+```python
+compare.vectors
 ```
 
 ```python
