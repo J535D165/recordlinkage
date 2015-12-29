@@ -58,7 +58,7 @@ The main features of the **recordlinkage** package are:
   - Fellegi and Sunter (1969) classifier implemented
   - Expectation-Conditional Maximisation algoritm implemented to estimate parameters for the Fellegi and Sunter framework
 
-## Dependencies
+## Dependencies, installation and license
 The following packages are required. You probably have it already ;)
 - [NumPy](http://www.numpy.org): 1.7.0 or higher
 - [Pandas](https://github.com/pydata/pandas): 0.17.0 or higher
@@ -67,16 +67,12 @@ The following packages are optional
 - [jellyfish](https://github.com/jamesturk/jellyfish): Needed for approximate string comparison. Version 0.5.0 or higher.
 - [matplotlib](http://matplotlib.sourceforge.net/): Plotting graphs.
 
-
-##Install 
 It is not possible to install the package with ``pip``. You can download or clone the **recordlinkage** project and install it in the normal way
 
 ```sh
 python setup.py install
 ```
-
-## License
-GPLv3
+The license for this record linkage tool is GPLv3.
 
 ## Background
 
