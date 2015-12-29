@@ -3,155 +3,146 @@ from __future__ import division
 import pandas as pd
 import numpy as np
 
-def _fullindex(A, B, suffixes=('_A', '_B')):
+def _randomindex(A,B, N_pairs, random_state=None):
 
-	A['pair_col'] = 1
-	B['pair_col'] = 1
+	random_index_A = np.random.choice(A.index.values, N_pairs)
+	random_index_B = np.random.choice(B.index.values, N_pairs)
 
-	A['index' + suffixes[0]] = A.index.values
-	B['index' + suffixes[1]] = B.index.values
+	return pd.MultiIndex.from_tuples(zip(random_index_A, random_index_B), names=[A.index.name, B.index.name])
 
-	pairs = A.merge(B, how='inner', on='pair_col', suffixes=suffixes).set_index(['index' + suffixes[0], 'index' + suffixes[1]])
+def _fullindex(A, B):
 
-	del pairs['pair_col']
-	del A['pair_col']
-	del B['pair_col']
-	del A['index' + suffixes[0]]
-	del B['index' + suffixes[1]]
+	# merge_col is used to make a full index.
+	A_merge = pd.DataFrame({'merge_col':1, A.index.name: A.index.values})
+	B_merge = pd.DataFrame({'merge_col':1, B.index.name: B.index.values})
 
-	return pairs
+	pairs = A_merge.merge(B_merge, how='inner', on='merge_col').set_index([A.index.name, B.index.name])
 
-def _blockindex(A, B, columns, suffixes=('_A', '_B')):
+	return pairs.index
 
-	A['index' + suffixes[0]] = A.index.values
-	B['index' + suffixes[1]] = B.index.values
+def _blockindex(A, B, on=None, left_on=None, right_on=None):
 
-	pairs = A.merge(B, how='inner', on=columns, suffixes=suffixes).set_index(['index' + suffixes[0], 'index' + suffixes[1]])
+	if on:
+		left_on, right_on = on, on
 
-	del A['index' + suffixes[0]]
-	del B['index' + suffixes[1]]
+	pairs = A[left_on].reset_index().merge(B[right_on].reset_index(), how='inner', left_on=left_on, right_on=right_on).set_index([A.index.name, B.index.name])
 
-	return pairs
+	return pairs.index
 
-def _sortedneighbourhood(A, B, column, window=3, sorted_index=None, suffixes=('_A', '_B'), blocking_on=[], left_blocking_on=[], right_blocking_on=[]):
+def _sortedneighbourhood(A, B, column, window=3, sorting_key_values=None, on=[], left_on=[], right_on=[]):
 
-	# Build a sorted index or use inserted.
-	if sorted_index is None:
-
-		set_A = set(A[column].unique())
-		set_B = set(B[column].unique())
-
-		sorted_index = sorted(list(set.union(set_A, set_B)))
-
+	# sorting_key_values is the terminology in Data Matching [Christen, 2012]
+	if sorting_key_values is not None:
+		factors = np.sort(np.unique(np.array(sorting_key_values)))
 	else:
-		# Check if sorted index is valid.
-		sorted_index = sorted(sorted_index)
+		factors = np.sort(np.unique(np.append(A[column].values, B[column].values)))
+	
+	factors = factors[~np.isnan(factors)] # Remove possible np.nan values. They are not replaced in the next step.
+	factors_label = np.arange(len(factors))
 
-	sorted_df = pd.DataFrame(sorted_index, columns=['sn'])
-
-	for w in range(-window, window+1):
-		sorted_df['sorted_neighbour_%s' % w] = sorted_df.index.values+w
-
-	w_indices = list(sorted_df)
-	w_indices.remove('sn')
-
-	sorted_df[(sorted_df[w_indices] < 0) | (sorted_df[w_indices] > len(sorted_df)-1) ] = np.nan
-
-	A_sorted = A.merge(sorted_df, how='left', left_on=column, right_on='sn', left_index=True).set_index(A.index.values)
-	B_sorted = B.merge(sorted_df, how='left', left_on=column, right_on='sn', left_index=True).set_index(B.index.values)
-
-	A_sorted['index' + suffixes[0]] = A_sorted.index.values
-	B_sorted['index' + suffixes[1]] = B_sorted.index.values
+	sorted_df_A = pd.DataFrame({column:A[column].replace(factors, factors_label), A.index.name: A.index.values})
+	sorted_df_B = pd.DataFrame({column:B[column].replace(factors, factors_label), B.index.name: B.index.values})
 
 	pairs_concat = None
 
-	for sn_col in w_indices:
+	for w in range(-window, window+1):
 
-		left_on = blocking_on + left_blocking_on + ['sorted_neighbour_0']
-		right_on = blocking_on + right_blocking_on + [sn_col]
+		pairs = sorted_df_A.merge(pd.DataFrame({column:sorted_df_B[column]+w, B.index.name: B.index.values}), on=column, how='inner').set_index([A.index.name, B.index.name])
 
-		pairs = A_sorted.merge(B_sorted, how='inner', right_on=right_on, left_on=left_on, suffixes=suffixes)
-		pairs.set_index(['index' + suffixes[0], 'index' + suffixes[1]], inplace=True)
+		# Append pairs to existing ones. PANDAS BUG workaround
+		pairs_concat = pairs.index if pairs_concat is None else pairs.index.append(pairs_concat)
 
-		if not pairs.empty:
-
-			try:
-				pairs_concat = pairs_concat.append(pairs)
-			except Exception:
-				pairs_concat = pairs 
-
-	set_cols = set([cola+suffixes[0] for cola in list(A)] + [colb+suffixes[1] for colb in list(B)] + list(A) + list(B))
-
-	return pairs_concat[list(set_cols.intersection(set(list(pairs_concat))))].copy()
-
+	return pairs_concat
 
 class Pairs(object):
 	""" Pairs class is used to make pairs of records to analyse in the comparison step. """	
 
-	def __init__(self, dataframe_A, dataframe_B=None, suffixes=('_A', '_B')):
+	def __init__(self, dataframe_A, dataframe_B=None):
 
 		self.A = dataframe_A
 
+		# Linking two datasets
 		if dataframe_B is not None:
+
 			self.B = dataframe_B
 			self.deduplication = False
 
+			if self.A.index.name == None or self.B.index.name == None:
+				raise ValueError('Specify an index name for each file.')
+
+			if self.A.index.name == self.B.index.name:
+				raise ValueError('ValueError: Overlapping index names %s.' % self.A.index.name)
+
+			if not self.A.index.is_unique or not self.B.index.is_unique:
+				raise ValueError('The given dataframe has not a unique index.')
+
+		# Deduplication of one dataset
 		else:
 			self.deduplication = True
 
-		self.suffixes = suffixes
+			if self.A.index.name == None:
+				raise ValueError('Specify an index name.')
+
+			if not self.A.index.is_unique:
+				raise ValueError('The given dataframe has not a unique index.')
 
 		self.n_pairs = 0
 
 	def index(self, index_func, *args, **kwargs):
-		""" Creating an index. 
+		""" Create an index. 
 
-
-		:return: A DataFrame with MultiIndex
-		:rtype: standardise.DataFrame
+		:return: MultiIndex
+		:rtype: pandas.MultiIndex
 		"""	
 
-		if self.deduplication:
+		# If not deduplication, make pairs of records with one record from the first dataset and one of the second dataset
+		if not self.deduplication:
 
-			A = self.A.copy()
-			# A.index.is_monotonic & B.index.is_monotonic
-			A['dedupe_col'] = A.reset_index().index.values
-			B = A.copy()
+			pairs = index_func(self.A, self.B, *args, **kwargs)
 
-		else:
-			A = self.A
-			B = self.B
+		# If deduplication, remove the record pairs that are already included. For example: (a1, a1), (a1, a2), (a2, a1), (a2, a2) results in (a1, a2) or (a2, a1)
+		elif self.deduplication:
 
-		pairs = index_func(A,B, suffixes=self.suffixes, *args, **kwargs)
+			B = self.A.copy()
+			B.index.name = str(self.A.index.name) + '_'
 
-		self.n_pairs = len(pairs.index)
+			pairs = index_func(self.A, B, *args, **kwargs)
 
-		if self.deduplication:
+			factorize_index_level_values = pd.factorize(
+				list(pairs.get_level_values(self.A.index.name)) + list(pairs.get_level_values(B.index.name))
+				)[0]
 
-			pairs = pairs[pairs['dedupe_col' + self.suffixes[0]]<pairs['dedupe_col' + self.suffixes[1]]]
-			del pairs['dedupe_col' + self.suffixes[0]]
-			del pairs['dedupe_col' + self.suffixes[1]]
+			dedupe_index_boolean = factorize_index_level_values[:len(factorize_index_level_values)/2] < factorize_index_level_values[len(factorize_index_level_values)/2:]
 
-		if pairs.index.is_unique:
-			return pairs 
-		else:
-			print "The index is not unique."
+			pairs = pairs[dedupe_index_boolean]
+
+		self.n_pairs = len(pairs)
+
+		return pairs
+
+	def random(self, *args, **kwargs):
+		"""Return a random index. 
+
+		:return: A MultiIndex
+		:rtype: pandas.MultiIndex
+		"""		
+		return self.index(_blockindex, *args, **kwargs)
 
 	def block(self, *args, **kwargs):
 		"""Return a blocking index. 
 
 		:param columns: A column name or a list of column names. These columns are used to block on. 
 
-		:return: A DataFrame with MultiIndex
-		:rtype: standardise.DataFrame
+		:return: A MultiIndex
+		:rtype: pandas.MultiIndex
 		"""		
 		return self.index(_blockindex, *args, **kwargs)
 
 	def full(self, *args, **kwargs):
 		"""Return a Full index. In case of linking two dataframes of length N and M, the number of pairs is N*M. In case of deduplicating a dataframe with N records, the number of pairs is N*(N-1)/2. 
 
-		:return: A DataFrame with MultiIndex
-		:rtype: standardise.DataFrame
+		:return: A MultiIndex
+		:rtype: pandas.MultiIndex
 		"""
 		return self.index(_fullindex, *args, **kwargs)
 
@@ -165,8 +156,8 @@ class Pairs(object):
 		:param left_blocking_on: Additional columns in the left dataframe to use standard blocking on. 
 		:param right_blocking_on: Additional columns in the right dataframe to use standard blocking on. 
 
-		:return: A DataFrame with MultiIndex
-		:rtype: standardise.DataFrame
+		:return: A MultiIndex
+		:rtype: pandas.MultiIndex
 		"""
 		return self.index(_sortedneighbourhood, *args, **kwargs)
 
@@ -177,8 +168,8 @@ class Pairs(object):
 		:param len_block_B: The length of a block of records in dataframe B.
 		:param columns: A column name or a list of column names. These columns are used to block on. 
 
-		:return: A DataFrame with MultiIndex
-		:rtype: standardise.DataFrame
+		:return: A MultiIndex
+		:rtype: pandas.MultiIndex
 		"""		
 		return self.iterindex(_blockindex, *args, **kwargs)
 
@@ -187,8 +178,8 @@ class Pairs(object):
 
 		:param len_block_A: The lenght of a block of records in dataframe A. 
 		:param len_block_B: The length of a block of records in dataframe B.
-		:return: A DataFrame with MultiIndex
-		:rtype: standardise.DataFrame
+		:return: A MultiIndex
+		:rtype: pandas.MultiIndex
 		"""
 		return self.iterindex(_fullindex, *args, **kwargs)
 
@@ -204,58 +195,78 @@ class Pairs(object):
 		:param left_blocking_on: Additional columns in the left dataframe to use standard blocking on. 
 		:param right_blocking_on: Additional columns in the right dataframe to use standard blocking on. 
 
-		:return: A DataFrame with MultiIndex
-		:rtype: standardise.DataFrame
+		:return: A MultiIndex
+		:rtype: pandas.MultiIndex
 		"""
-		return self.iterindex(_sortedneighbourhood, *args, **kwargs)
+		column = args[2] # The argument after the two block size values
 
-	def iterindex(self, index_func, len_block_A, len_block_B, *args, **kwargs):
+		# The unique values of both dataframes are passed as an argument. 
+		sorting_key_values = np.sort(np.unique(np.append(self.A[column].values, self.B[column].values)))
+
+		return self.iterindex(_sortedneighbourhood, *args, sorting_key_values=sorting_key_values, **kwargs)
+
+	def iterindex(self, index_func, len_block_A=None, len_block_B=None, *args, **kwargs):
 		"""Iterative function that returns records pairs based on a user-defined indexing function. The number of iterations can be adjusted to prevent memory problems.  
 
 		:param index_func: A user defined indexing funtion.
 		:param len_block_A: The lenght of a block of records in dataframe A. 
-		:param len_block_B: The length of a block of records in dataframe B.
+		:param len_block_B: The length of a block of records in dataframe B (only used when linking two datasets).
 
-		:return: A DataFrame with MultiIndex
-		:rtype: standardise.DataFrame
+		:return: A MultiIndex
+		:rtype: pandas.MultiIndex
 		"""
-		if self.deduplication:
-			A = self.A.copy()
-			A['dedupe_col'] = A.reset_index().index.values
-			B = A.copy()
-		else:
-			A = self.A
-			B = self.B
 
-		if len_block_A is None:
-			len_block_A = len(A)
-		elif len_block_B is None:
-			len_block_B = len(B)
-		else:
-			pass
+		if not self.deduplication:
 
-		blocks = [(x,y) for x in np.arange(0, len(A), len_block_A) for y in np.arange(0, len(B), len_block_B) ]
+			# If block size is None, then use the full length of the dataframe
+			len_block_A = len(self.A) if len_block_A is None else len_block_A
+			len_block_B = len(self.B) if len_block_B is None else len_block_B
+
+			blocks = [(a,b, a+len_block_A, b+len_block_B) for a in np.arange(0, len(self.A), len_block_A) for b in np.arange(0, len(self.B), len_block_B) ]
+
+		elif self.deduplication:
+			# If block size is None, then use the full length of the dataframe
+			len_block_A = len(self.A) if len_block_A is None else len_block_A
+			
+			blocks = [(a,a, a+len_block_A, a+len_block_B) for x in np.arange(0, len(self.A), len_block_A)]
+
+		# Reset the number of pairs counter
+		self.n_pairs = 0
 
 		for bl in blocks:
 
-			pairs_subset_class = Pairs(A[bl[0]:(bl[0]+len_block_A)].copy(), B[bl[1]:(bl[1]+len_block_B)].copy(), suffixes=self.suffixes)
-			pairs_subset = pairs_subset_class.index(index_func, *args, **kwargs)
+			# For deplication, do not make a new class but slice such that we can index a subset. 
+			pairs_block_class = Pairs(self.A[bl[0]:bl[2]], self.B[bl[1]:bl[3]])
 
-			if self.deduplication:
-				pairs_subset = pairs_subset[pairs_subset['dedupe_col' + self.suffixes[0]]<pairs_subset['dedupe_col' + self.suffixes[1]]]
-				del pairs_subset['dedupe_col' + self.suffixes[0]]
-				del pairs_subset['dedupe_col' + self.suffixes[1]]
+			pairs_block = pairs_block_class.index(index_func, *args, **kwargs)
 
-			yield pairs_subset
+			# Count the number of pairs
+			self.n_pairs += len(pairs_block)
+			
+			yield pairs_block
 
-	def reduction_ratio(self):
+	def reduction_ratio(self, n_pairs=None):
 		""" Compute the relative reduction of records pairs as the result of indexing. 
 
 		:return: Value between 0 and 1
 		:rtype: float
 		"""
 
-		n_full_pairs = (len(self.A)*(len(self.B)-1))/2 if self.deduplication else len(self.A)*len(self.B)
+		if self.deduplication:
+			return self._reduction_ratio_deduplication(n_pairs=n_pairs)
+		else:
+			return self._reduction_ratio_linking(n_pairs=n_pairs)
 
-		return 1-self.n_pairs/n_full_pairs
+	def _reduction_ratio_deduplication(self, n_pairs=None):
+
+		max_pairs = (len(self.A)*(len(self.B)-1))/2
+
+		return 1-self.n_pairs/max_pairs
+
+	def _reduction_ratio_linking(self, n_pairs=None):
+
+		max_pairs = len(self.A)*len(self.B)
+
+		return 1-self.n_pairs/max_pairs
+
 

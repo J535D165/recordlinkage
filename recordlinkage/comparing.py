@@ -3,18 +3,22 @@ from __future__ import division
 import pandas as pd
 import numpy as np
 
+from utils import _check_index_uniqueness
+
 class Compare(object):
 	"""A class to make comparing of records fields easier. It can be used to compare fields of the record pairs. """
 
-	def __init__(self, pairs=None, store_to_memory=True, store_to_csv=None, store_to_hdf=None):
+	def __init__(self, pairs=None, A=None, B=None):
 
+		self.A = A
+		self.B = B
 		self.pairs = pairs
 
-		self.comparison_vectors = None
+		self.vectors = pd.DataFrame(index=pairs)
 
-	def exact(self, *args, **kwargs):
+	def exact(self, s1, s2, *args, **kwargs):
 		"""
-		exact(s1, s2, missing_value=0, output='any')
+		exact(s1, s2, missing_value=0, disagreement_value=0, output='any', return_agreement_values=False):
 
 		Compare the record pairs exactly.
 
@@ -28,10 +32,12 @@ class Compare(object):
 		:rtype: pandas.Series
 
 		"""
+		s1 = self._index_data(s1, dataframe=self.A)
+		s2 = self._index_data(s2, dataframe=self.B)
 
-		return self.compare(exact, *args, **kwargs)
+		return self.compare(exact, s1, s2, *args, **kwargs)
 
-	def numerical(self, *args, **kwargs):
+	def numerical(self, s1, s2, *args, **kwargs):
 		"""
 		numerical(s1, s2, window, missing_value=0)
 
@@ -47,9 +53,12 @@ class Compare(object):
 
 		"""
 
-		return self.compare(window_numerical, *args, **kwargs)
+		s1 = self._index_data(s1, dataframe=self.A)
+		s2 = self._index_data(s2, dataframe=self.B)
 
-	def fuzzy(self, *args, **kwargs):
+		return self.compare(window_numerical, s1, s2, *args, **kwargs)
+
+	def fuzzy(self, s1, s2, *args, **kwargs):
 		"""
 		fuzzy(s1, s2, method='levenshtein', threshold=None, missing_value=0)
 
@@ -67,9 +76,12 @@ class Compare(object):
 		Note: For this function is the package 'jellyfish' required. 
 
 		"""
-		return self.compare(fuzzy, *args, **kwargs)
+		s1 = self._index_data(s1, dataframe=self.A)
+		s2 = self._index_data(s2, dataframe=self.B)
 
-	def geo(self, *args, **kwargs):
+		return self.compare(fuzzy, s1, s2, *args, **kwargs)
+
+	def geo(self, X1, Y1, X2, Y2, *args, **kwargs):
 		"""
 		geo(X1, Y1, X2, Y2, radius=20, disagreement_value = -1, missing_value=-1)
 
@@ -88,7 +100,12 @@ class Compare(object):
 		:rtype: pandas.Series
 		"""
 
-		return self.compare(compare_geo, *args, **kwargs)
+		X1 = self._index_data(X1, dataframe=self.A)
+		Y1 = self._index_data(Y1, dataframe=self.A)
+		X2 = self._index_data(X2, dataframe=self.B)
+		Y2 = self._index_data(Y2, dataframe=self.B)
+
+		return self.compare(compare_geo, X1, Y1, X2, Y2, *args, **kwargs)
 
 	def compare(self, comp_func, *args, **kwargs):
 		"""Compare the records given. 
@@ -115,7 +132,7 @@ class Compare(object):
 			name = kwargs.pop('name', None)
 			self._append(comp_func(*args, **kwargs), name=name)
 
-		return self.comparison_vectors
+		return self.vectors
 
 	def _append(self, comp_vect, name=None, store=True, *args, **kwargs):
 
@@ -123,28 +140,39 @@ class Compare(object):
 
 			comp_vect.name = name
 
-			try: 
-				self.comparison_vectors[name] = pd.Series(comp_vect)
-			except:
-				self.comparison_vectors = pd.DataFrame(comp_vect)
+			self.vectors[name] = np.array(comp_vect)
 
-		return self.comparison_vectors	
+		return self.vectors
 
-	def _store_to_hdf(file_path):
+	def _index_data(self, *args, **kwargs):
+		""" 
+		This internal function is used to transform an index and a dataframe into a reindexed dataframe or series. If already a Series or DataFrame is passed, nothing is done. 
+		"""
 
-		pass
+		# Python 2 hack
+		if 'dataframe' in kwargs.keys():
+			dataframe = kwargs['dataframe']
+		else:
+			raise NameError("name 'dataframe' is not defined")
 
-	def _store_to_csv(file_path):
+		# Check if dataframe name is not changed since making an index. Weird.
+		if dataframe.index.name not in self.pairs.names:
+			raise ValueError('The index name of the DataFrame is not found in the levels of the index.')
 
-		pass
+		# _check_index_uniqueness(dataframe)
 
-	def _store_intern():
+		if all(x in list(dataframe) for x in args):
+			data = dataframe.loc[:,args].ix[self.pairs.get_level_values(dataframe.index.name)]
+			
+			return data[args[0]] if len(args) == 1 else (data[arg] for arg in args)
+		
+		else:
+			# No labels passed, maybe series or dataframe passed? Let's try...
+			return args[0] if len(args) == 1 else args
 
-		pass
+def _missing(*args):
 
-def _missing(s1, s2):
-
-	return (pd.DataFrame(s1).isnull().all(axis=1) | pd.DataFrame(s2).isnull().all(axis=1))
+	return np.all(np.isnan(np.concatenate([np.array(pd.DataFrame(arg)) for arg in args], axis=1)), axis=1)
 
 def exact(s1, s2, missing_value=0, disagreement_value=0, output='any', return_agreement_values=False):
 	"""
@@ -268,10 +296,6 @@ def window(s1, s2, window, missing_value=0, disagreement_value=0, sim_func=None)
 
 	return compare
 
-def math_window(s1, s2, sim_func):
-
-	return 
-
 def bin_compare_geq(cat1, cat2, missing_value=0):
 
 	# compare
@@ -291,8 +315,3 @@ def compare_levels(s1, s2, freq, split=np.array([1, 5, 10, 20, 50, 100, np.inf])
 		comp.loc[(comp < split[sp+1]) & (comp >= split[sp])] = split[sp]
 
 	return comp
-
-class CompareException(Exception):
-	pass
-
-
