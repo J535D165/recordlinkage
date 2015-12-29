@@ -3,20 +3,22 @@ from __future__ import division
 import pandas as pd
 import numpy as np
 
+from utils import _check_index_uniqueness
+
 class Compare(object):
 	"""A class to make comparing of records fields easier. It can be used to compare fields of the record pairs. """
 
-	def __init__(self, A=None, B=None, pairs=None):
+	def __init__(self, pairs=None, A=None, B=None):
 
 		self.A = A
 		self.B = B
 		self.pairs = pairs
 
-		self.comparison_vectors = None
+		self.comparison_vectors = pd.DataFrame(index=pairs)
 
-	def exact(self, *args, **kwargs):
+	def exact(self, s1, s2, *args, **kwargs):
 		"""
-		exact(s1, s2, missing_value=0, output='any')
+		exact(s1, s2, missing_value=0, disagreement_value=0, output='any', return_agreement_values=False):
 
 		Compare the record pairs exactly.
 
@@ -30,8 +32,10 @@ class Compare(object):
 		:rtype: pandas.Series
 
 		"""
+		s1 = self._index_data(s1, dataframe=self.A)
+		s2 = self._index_data(s2, dataframe=self.B)
 
-		return self.compare(exact, *args, **kwargs)
+		return self.compare(exact, s1, s2, *args, **kwargs)
 
 	def numerical(self, *args, **kwargs):
 		"""
@@ -51,7 +55,7 @@ class Compare(object):
 
 		return self.compare(window_numerical, *args, **kwargs)
 
-	def fuzzy(self, *args, **kwargs):
+	def fuzzy(self, s1, s2, *args, **kwargs):
 		"""
 		fuzzy(s1, s2, method='levenshtein', threshold=None, missing_value=0)
 
@@ -69,7 +73,10 @@ class Compare(object):
 		Note: For this function is the package 'jellyfish' required. 
 
 		"""
-		return self.compare(fuzzy, *args, **kwargs)
+		s1 = self._index_data(s1, dataframe=self.A)
+		s2 = self._index_data(s2, dataframe=self.B)
+
+		return self.compare(fuzzy, s1, s2, *args, **kwargs)
 
 	def geo(self, *args, **kwargs):
 		"""
@@ -94,47 +101,70 @@ class Compare(object):
 
 	def compare(self, comp_func, *args, **kwargs):
 		"""Compare the records given. 
-		
+
 		:param comp_func: A list, dict or tuple of comparison tuples. Each tuple contains a comparison function, the fields to compare and the arguments. 
-		
+
 		:return: A DataFrame with compared variables.
 		:rtype: standardise.DataFrame
 		"""
-		
+
 		if isinstance(comp_func, (list, dict, tuple)):
-			
+
 			for t in comp_func:
 				# func is a tuple of args and kwargs
-				
+
 				func = t[0]
 				args_func = t[1]
 				kwargs_func = t[2]
-				
+
 				self._append(self._compare_column(func, *args_func, **kwargs_func))
-				
+
 		else:
-			
+
 			name = kwargs.pop('name', None)
 			self._append(comp_func(*args, **kwargs), name=name)
-			
+
 		return self.comparison_vectors
-		
+
 	def _append(self, comp_vect, name=None, store=True, *args, **kwargs):
 
 		if store:
 
 			comp_vect.name = name
 
-			try: 
-				self.comparison_vectors[name] = pd.Series(comp_vect)
-			except:
-				self.comparison_vectors = pd.DataFrame(comp_vect)
+			self.comparison_vectors[name] = np.array(comp_vect)
 
 		return self.comparison_vectors
 
-def _missing(s1, s2):
+	def _index_data(self, *args, **kwargs):
+		""" 
+		This internal function is used to transform an index and a dataframe into a reindexed dataframe or series. If already a Series or DataFrame is passed, nothing is done. 
+		"""
 
-	return (pd.DataFrame(s1).isnull().all(axis=1) | pd.DataFrame(s2).isnull().all(axis=1))
+		# Python 2 hack
+		if 'dataframe' in kwargs.keys():
+			dataframe = kwargs['dataframe']
+		else:
+			raise NameError("name 'dataframe' is not defined")
+
+		# Check if dataframe name is not changed since making an index. Weird.
+		if dataframe.index.name not in self.pairs.names:
+			raise ValueError('The index name of the DataFrame is not found in the levels of the index.')
+
+		# _check_index_uniqueness(dataframe)
+
+		if all(x in list(dataframe) for x in args):
+			data = dataframe.loc[:,args].ix[self.pairs.get_level_values(dataframe.index.name)]
+			
+			return data[args[0]] if len(args) == 1 else (data[arg] for arg in args)
+		
+		else:
+			# No labels passed, maybe series or dataframe passed? Let's try...
+			return args[0] if len(args) == 1 else args
+
+def _missing(*args):
+
+	return np.all(np.isnan(np.concatenate([np.array(pd.DataFrame(arg)) for arg in args], axis=1)), axis=1)
 
 def exact(s1, s2, missing_value=0, disagreement_value=0, output='any', return_agreement_values=False):
 	"""
