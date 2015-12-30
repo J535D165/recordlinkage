@@ -1,5 +1,7 @@
 # recordlinkage
 
+## Package is currently under re-developed. Do not use it. 
+
 This package, **recordlinkage**, is a Python package to link records in or between datasources. The package provides a set of additonal tools needed for record linkage such as indexing methods and similarity measures. The package is developed for research and linking of small or medium sized files. 
 
 This project is inspired on the **Freely Extensible Biomedical Record Linkage (FEBRL)** project, which is a great project. This project takes advence of the **pandas** package. This flexible and powerful data analysis and manipulation library for Python makes the record linkage process much easier. 
