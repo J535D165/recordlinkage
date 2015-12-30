@@ -1,6 +1,6 @@
 # recordlinkage
 
-## Package is currently under re-developed. Do not use it. 
+## Package is being re-developed. Advice: do not use it. 
 
 This package, **recordlinkage**, is a Python package to link records in or between datasources. The package provides a set of additonal tools needed for record linkage such as indexing methods and similarity measures. The package is developed for research and linking of small or medium sized files. 
 
