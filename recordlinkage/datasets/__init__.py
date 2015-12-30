@@ -27,11 +27,15 @@ except Exception:
 
 def load_censusA():
 
-	return pd.read_csv('recordlinkage/datasets/data/personaldata1000A.csv', sep=';', index_col='record_id', encoding='utf-8')
+	df = pd.read_csv('recordlinkage/datasets/data/personaldata1000A.csv', sep=';', index_col='record_id', encoding='utf-8')
+	df.index.name = 'index_A'
+	return df
 
 def load_censusB():
 
-	return pd.read_csv('recordlinkage/datasets/data/personaldata1000B.csv', sep=';', index_col='record_id', encoding='utf-8')
+	df = pd.read_csv('recordlinkage/datasets/data/personaldata1000B.csv', sep=';', index_col='record_id', encoding='utf-8')
+	df.index.name = 'index_B'
+	return df
 
 MISSING_DICT  = {
 	'first_name': 0.02,
