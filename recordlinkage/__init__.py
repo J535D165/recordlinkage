@@ -3,8 +3,6 @@
 from standardise import *
 from indexing import *
 from comparing import *
-
-from estimation import *
 from classifier import *
 
 from ._version import get_versions
