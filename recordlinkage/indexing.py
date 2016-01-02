@@ -31,13 +31,18 @@ def _blockindex(A, B, on=None, left_on=None, right_on=None):
 
 def _sortedneighbourhood(A, B, column, window=3, sorting_key_values=None, on=[], left_on=[], right_on=[]):
 
+	# Check if window is an odd number
+	if not bool(window % 2):
+		raise ValueError('The given window length is not an odd integer.')
+
 	# sorting_key_values is the terminology in Data Matching [Christen, 2012]
-	if sorting_key_values is not None:
-		factors = np.sort(np.unique(np.array(sorting_key_values)))
-	else:
-		factors = np.sort(np.unique(np.append(A[column].values, B[column].values)))
-	
-	factors = factors[~np.isnan(factors)] # Remove possible np.nan values. They are not replaced in the next step.
+	if sorting_key_values is None:
+		sorting_key_values = A[column].append(B[column])
+
+	factors = pd.Series(pd.Series(sorting_key_values).unique())
+	factors.sort_values(inplace=True)
+
+	factors = factors[factors.notnull()].values # Remove possible np.nan values. They are not replaced in the next step.
 	factors_label = np.arange(len(factors))
 
 	sorted_df_A = pd.DataFrame({column:A[column].replace(factors, factors_label), A.index.name: A.index.values})
@@ -45,7 +50,10 @@ def _sortedneighbourhood(A, B, column, window=3, sorting_key_values=None, on=[],
 
 	pairs_concat = None
 
-	for w in range(-window, window+1):
+	# Internal window size
+	_window = int((window-1)/2)
+
+	for w in range(-_window, _window+1):
 
 		pairs = sorted_df_A.merge(pd.DataFrame({column:sorted_df_B[column]+w, B.index.name: B.index.values}), on=column, how='inner').set_index([A.index.name, B.index.name])
 
