@@ -79,7 +79,7 @@ class Pairs(object):
 				raise ValueError('Specify an index name for each file.')
 
 			if self.A.index.name == self.B.index.name:
-				raise ValueError('ValueError: Overlapping index names %s.' % self.A.index.name)
+				raise ValueError('Overlapping index names %s.' % self.A.index.name)
 
 			if not self.A.index.is_unique or not self.B.index.is_unique:
 				raise ValueError('The given dataframe has not a unique index.')
