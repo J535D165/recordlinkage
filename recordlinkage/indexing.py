@@ -260,10 +260,13 @@ class Pairs(object):
 		:rtype: float
 		"""
 
+		if not n_pairs:
+			n_pairs = self.n_pairs
+
 		if self.deduplication:
-			return self._reduction_ratio_deduplication(n_pairs=n_pairs)
+			return self._reduction_ratio_deduplication(n_pairs)
 		else:
-			return self._reduction_ratio_linking(n_pairs=n_pairs)
+			return self._reduction_ratio_linking(n_pairs)
 
 	def _reduction_ratio_deduplication(self, n_pairs=None):
 
