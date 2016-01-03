@@ -134,7 +134,7 @@ class Pairs(object):
 		:return: A MultiIndex
 		:rtype: pandas.MultiIndex
 		"""		
-		return self.index(_random, *args, **kwargs)
+		return self.index(_randomindex, *args, **kwargs)
 
 	def block(self, *args, **kwargs):
 		"""Return a blocking index. 

@@ -56,6 +56,17 @@ class TestIndexing(unittest.TestCase):
         # Check if index is unique
         self.assertTrue(pairs.is_unique)
 
+    def test_random_index_unique(self):
+
+        df1 = pd.DataFrame({'name':['Bob', 'Anne', 'Micheal']}, index=pd.Index(['001', '002', '003'], name='index_A'))
+        df2 = pd.DataFrame({'name':['Bob', 'Anne', 'Micheal']}, index=pd.Index(['001', '002', '003'], name='index_B'))
+
+        index = recordlinkage.Pairs(df1, df2)
+        pairs = index.random(5)
+
+        # Check if index is unique
+        self.assertTrue(pairs.is_unique)
+
     def test_full_index_datasets(self):
 
         dfA = datasets.load_censusA()
@@ -70,7 +81,7 @@ class TestIndexing(unittest.TestCase):
         # Check is number of pairs is correct
         self.assertEqual(len(pairs), len(dfA)*len(dfB))
 
-    def test_full_block_datasets(self):
+    def test_block_index_datasets(self):
 
         dfA = datasets.load_censusA()
         dfB = datasets.load_censusB()
@@ -81,7 +92,7 @@ class TestIndexing(unittest.TestCase):
         # Check if index is unique
         self.assertTrue(pairs.is_unique)
 
-    def test_full_sorted_datasets(self):
+    def test_sorted_index_datasets(self):
 
         dfA = datasets.load_censusA()
         dfB = datasets.load_censusB()
@@ -91,6 +102,20 @@ class TestIndexing(unittest.TestCase):
 
         # Check if index is unique
         self.assertTrue(pairs.is_unique)
+
+    def test_random_index_datasets(self):
+
+        dfA = datasets.load_censusA()
+        dfB = datasets.load_censusB()
+
+        index = recordlinkage.Pairs(dfA, dfB)
+        pairs = index.random(1000)
+
+        # Check if index is unique
+        self.assertTrue(pairs.is_unique)
+
+        # Check is number of pairs is correct
+        self.assertEqual(len(pairs), 1000)
 
     def test_blocking_special_case_of_sorting(self):
 
