@@ -10,7 +10,9 @@ def _randomindex(A,B, N_pairs, random_state=None):
 	random_index_A = np.random.choice(A.index.values, N_pairs)
 	random_index_B = np.random.choice(B.index.values, N_pairs)
 
-	return pd.MultiIndex.from_tuples(zip(random_index_A, random_index_B), names=[A.index.name, B.index.name])
+	index = pd.MultiIndex.from_tuples(zip(random_index_A, random_index_B), names=[A.index.name, B.index.name])
+
+	return index.drop_duplicates()
 
 def _fullindex(A, B):
 
