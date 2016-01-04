@@ -172,7 +172,7 @@ class Compare(object):
 
 def _missing(*args):
 
-	return np.all(np.concatenate([np.array(pd.DataFrame(arg).isnull()) for arg in args], axis=1), axis=1)
+	return np.any(np.concatenate([np.array(pd.DataFrame(arg).isnull()) for arg in args], axis=1), axis=1)
 
 def exact(s1, s2, missing_value=0, disagreement_value=0, output='any', return_agreement_values=False):
 	"""
