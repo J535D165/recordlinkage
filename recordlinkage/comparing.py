@@ -127,12 +127,14 @@ class Compare(object):
 
 				self._append(self._compare_column(func, *args_func, **kwargs_func))
 
+			return self.vectors
+
 		else:
 
 			name = kwargs.pop('name', None)
 			self._append(comp_func(*args, **kwargs), name=name)
 
-		return self.vectors
+			return self.vectors[name]
 
 	def _append(self, comp_vect, name=None, store=True, *args, **kwargs):
 
@@ -157,9 +159,7 @@ class Compare(object):
 
 		# Check if dataframe name is not changed since making an index. Weird.
 		if dataframe.index.name not in self.pairs.names:
-			raise ValueError('The index name of the DataFrame is not found in the levels of the index.')
-
-		# _check_index_uniqueness(dataframe)
+			raise IndexError('The index name of the DataFrame is not found in the levels of the index.')
 
 		if all(x in list(dataframe) for x in args):
 			data = dataframe.loc[:,args].ix[self.pairs.get_level_values(dataframe.index.name)]
@@ -172,7 +172,7 @@ class Compare(object):
 
 def _missing(*args):
 
-	return np.all(np.isnan(np.concatenate([np.array(pd.DataFrame(arg)) for arg in args], axis=1)), axis=1)
+	return np.all(np.concatenate([np.array(pd.DataFrame(arg).isnull()) for arg in args], axis=1), axis=1)
 
 def exact(s1, s2, missing_value=0, disagreement_value=0, output='any', return_agreement_values=False):
 	"""
@@ -217,7 +217,7 @@ def exact(s1, s2, missing_value=0, disagreement_value=0, output='any', return_ag
 	# Only for missing values
 	compare[_missing(df1, df2)] = missing_value
 
-	return compare
+	return pd.Series(compare)
 
 def window_numerical(s1, s2, window, missing_value=0):
 
