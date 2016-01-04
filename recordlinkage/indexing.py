@@ -100,6 +100,8 @@ class Pairs(object):
 
 		self.n_pairs = 0
 
+		self._index_factors = None
+
 	def index(self, index_func, *args, **kwargs):
 		""" Create an index. 
 
@@ -120,11 +122,15 @@ class Pairs(object):
 
 			pairs = index_func(self.A, B, *args, **kwargs)
 
-			factorize_index_level_values = pd.factorize(
-				list(pairs.get_level_values(self.A.index.name)) + list(pairs.get_level_values(B.index.name))
-				)[0]
+			if self._index_factors:
+				dedupe_index_boolean = pairs.replace(self._index_factors[0], self._index_factors[1]) < pairs.replace(self._index_factors[0], self._index_factors[1])
 
-			dedupe_index_boolean = factorize_index_level_values[:len(factorize_index_level_values)/2] < factorize_index_level_values[len(factorize_index_level_values)/2:]
+			else:
+				factorize_index_level_values = pd.factorize(
+					list(pairs.get_level_values(self.A.index.name)) + list(pairs.get_level_values(B.index.name))
+					)[0]
+
+				dedupe_index_boolean = factorize_index_level_values[:len(factorize_index_level_values)/2] < factorize_index_level_values[len(factorize_index_level_values)/2:]
 
 			pairs = pairs[dedupe_index_boolean]
 
@@ -228,7 +234,7 @@ class Pairs(object):
 		:rtype: pandas.MultiIndex
 		"""
 
-		if not self.deduplication:
+		if not self.deduplication: # Linking
 
 			# If block size is None, then use the full length of the dataframe
 			len_block_A = len(self.A) if len_block_A is None else len_block_A
@@ -240,15 +246,19 @@ class Pairs(object):
 			# If block size is None, then use the full length of the dataframe
 			len_block_A = len(self.A) if len_block_A is None else len_block_A
 			
-			blocks = [(a,a, a+len_block_A, a+len_block_B) for x in np.arange(0, len(self.A), len_block_A)]
+			blocks = [(a,a, a+len_block_A, a+len_block_A) for a in np.arange(0, len(self.A), len_block_A)]
 
 		# Reset the number of pairs counter
 		self.n_pairs = 0
 
 		for bl in blocks:
+	
+			if not self.deduplication: # Linking
+				pairs_block_class = Pairs(self.A[bl[0]:bl[2]], self.B[bl[1]:bl[3]])
 
-			# For deplication, do not make a new class but slice such that we can index a subset. 
-			pairs_block_class = Pairs(self.A[bl[0]:bl[2]], self.B[bl[1]:bl[3]])
+			else: # Deduplication
+				pairs_block_class = Pairs(self.A[bl[0]:bl[2]])
+				pairs_block_class._index_factors = (self.A.index.values, np.arange(len(self.A.index)))				
 
 			pairs_block = pairs_block_class.index(index_func, *args, **kwargs)
 
