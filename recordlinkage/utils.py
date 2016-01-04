@@ -29,7 +29,5 @@ def check_type(func):
 
 	return wrapped
 
-def _check_index_uniqueness(dataframe_or_series):
-
-	if not dataframe_or_series.index.is_unique:
-		raise ValueError("The index values of %s '%s' are not unique. This is required.", (type(dataframe_or_series), dataframe_or_series))
+class IndexError(Exception):
+	pass

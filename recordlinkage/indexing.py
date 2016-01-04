@@ -3,6 +3,8 @@ from __future__ import division
 import pandas as pd
 import numpy as np
 
+from utils import *
+
 def _randomindex(A,B, N_pairs, random_state=None):
 
 	random_index_A = np.random.choice(A.index.values, N_pairs)
@@ -76,23 +78,23 @@ class Pairs(object):
 			self.deduplication = False
 
 			if self.A.index.name == None or self.B.index.name == None:
-				raise ValueError('Specify an index name for each file.')
+				raise IndexError('DataFrame has no index name.')
 
 			if self.A.index.name == self.B.index.name:
-				raise ValueError('Overlapping index names %s.' % self.A.index.name)
+				raise IndexError("Identical index name '{}' for both dataframes.".format(self.A.index.name))
 
 			if not self.A.index.is_unique or not self.B.index.is_unique:
-				raise ValueError('The given dataframe has not a unique index.')
+				raise IndexError('DataFrame index is not unique.')
 
 		# Deduplication of one dataset
 		else:
 			self.deduplication = True
 
 			if self.A.index.name == None:
-				raise ValueError('Specify an index name.')
+				raise IndexError('DataFrame has no index name.')
 
 			if not self.A.index.is_unique:
-				raise ValueError('The given dataframe has not a unique index.')
+				raise IndexError('DataFrame index is not unique.')
 
 		self.n_pairs = 0
 
