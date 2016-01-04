@@ -38,23 +38,31 @@ class TestCompare(unittest.TestCase):
 
         comp = recordlinkage.Compare(TEST_INDEX, TEST_DATA_1, TEST_DATA_2)
 
+        # Missing values
+        result = comp.exact('name', 'name', name='y_name')
+        expected = pd.Series([0,0,0,0,0,1], index=TEST_INDEX, name='y_name')
+
+        pdt.assert_series_equal(result, expected)
         # Missing values as 0
         result = comp.exact('name', 'name', missing_value=0, name='y_name')
         expected = pd.Series([0,0,0,0,0,1], index=TEST_INDEX, name='y_name')
 
-        pdt.assert_series_equal(expected, result)
+        pdt.assert_series_equal(result, expected)
 
-        # # Missing values as np.nan
-        result = comp.exact('name', 'name', missing_value=9, name='y_name')
+        # Missing values as np.nan
+        result = comp.exact('name', 'name', missing_value=np.nan, name='y_name')
         expected = pd.Series([np.nan,0,np.nan,0,0,1], index=TEST_INDEX, name='y_name')
 
-        print result
-        pdt.assert_series_equal(expected, result)
+        pdt.assert_series_equal(result, expected)
 
-        # pdt.assert_series_equal(expected, result)
+        # Missing values as np.nan
+        result = comp.exact('name', 'name', missing_value=9, name='y_name')
+        expected = pd.Series([9,0,9,0,0,1], index=TEST_INDEX, name='y_name')
 
-        # # Missing values 0 and disagreement as 2
-        # result = comp.exact(s1, s2, disagreement_value=2, missing_value=0)
-        # expected = pd.Series([1,2,2,1,1,1,0])
+        pdt.assert_series_equal(result, expected)
 
-        # pdt.assert_series_equal(expected, result)
+        # Missing values 0 and disagreement as 2
+        result = comp.exact('name', 'name', disagreement_value=2, missing_value=0, name='y_name')
+        expected = pd.Series([0,2,0,2,2,1], index=TEST_INDEX, name='y_name')
+
+        pdt.assert_series_equal(result, expected)
