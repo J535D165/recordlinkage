@@ -67,7 +67,7 @@ class TestIndexing(unittest.TestCase):
         # Check if index is unique
         self.assertTrue(pairs.is_unique)
 
-    def test_full_index_datasets(self):
+    def test_full_index_linking(self):
 
         dfA = datasets.load_censusA()
         dfB = datasets.load_censusB()
@@ -81,7 +81,7 @@ class TestIndexing(unittest.TestCase):
         # Check is number of pairs is correct
         self.assertEqual(len(pairs), len(dfA)*len(dfB))
 
-    def test_block_index_datasets(self):
+    def test_block_index_linking(self):
 
         dfA = datasets.load_censusA()
         dfB = datasets.load_censusB()
@@ -92,7 +92,7 @@ class TestIndexing(unittest.TestCase):
         # Check if index is unique
         self.assertTrue(pairs.is_unique)
 
-    def test_sorted_index_datasets(self):
+    def test_sorted_index_linking(self):
 
         dfA = datasets.load_censusA()
         dfB = datasets.load_censusB()
@@ -103,7 +103,7 @@ class TestIndexing(unittest.TestCase):
         # Check if index is unique
         self.assertTrue(pairs.is_unique)
 
-    def test_random_index_datasets(self):
+    def test_random_index_linking(self):
 
         dfA = datasets.load_censusA()
         dfB = datasets.load_censusB()
@@ -115,7 +115,7 @@ class TestIndexing(unittest.TestCase):
         self.assertTrue(pairs.is_unique)
 
         # Check is number of pairs is correct
-        self.assertEqual(len(pairs), 1000)
+        self.assertTrue(len(pairs) <= 1000)
 
     def test_blocking_special_case_of_sorting(self):
 
@@ -136,6 +136,57 @@ class TestIndexing(unittest.TestCase):
         
         # The length of the union should be the same as the length of bl or sn.
         self.assertEqual(len(union), len(sn))
+
+    def test_full_iter_index_linking(self):
+
+        dfA = datasets.load_censusA()
+        dfB = datasets.load_censusB()
+
+        index = recordlinkage.Pairs(dfA, dfB)
+        pairs_single = index.full()
+
+        n_pairs_iter = 0
+        for pairs in index.iterfull():
+            n_pairs_iter += n_pairs_iter + len(pairs)
+
+            # Check if index is unique
+            self.assertTrue(pairs.is_unique)
+
+        self.assertEqual(len(pairs_single), n_pairs_iter)
+
+        # Check is number of pairs is correct
+        self.assertEqual(n_pairs_iter, len(dfA)*len(dfB))
+
+    def test_full_iter_index_deduplication(self):
+
+        dfA = datasets.load_censusA()
+
+        index = recordlinkage.Pairs(dfA)
+        pairs_single = index.full()
+
+        n_pairs_iter = 0
+        for pairs in index.iterfull():
+            n_pairs_iter += n_pairs_iter + len(pairs)
+
+            # Check if index is unique
+            self.assertTrue(pairs.is_unique)
+
+        self.assertEqual(len(pairs_single), n_pairs_iter)
+
+        # Check is number of pairs is correct
+        self.assertEqual(n_pairs_iter, (len(dfA)-1)*len(dfA)/2)
+
+    def test_reduction_ratio(self):
+
+        dfA = datasets.load_censusA()
+        dfB = datasets.load_censusB()
+
+        index = recordlinkage.Pairs(dfA, dfB)
+        pairs = index.full()
+
+        rr = index.reduction_ratio()
+
+        self.assertEqual(rr, 0)
 
 
 
