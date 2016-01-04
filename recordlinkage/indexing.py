@@ -123,7 +123,10 @@ class Pairs(object):
 			pairs = index_func(self.A, B, *args, **kwargs)
 
 			if self._index_factors:
-				dedupe_index_boolean = pairs.replace(self._index_factors[0], self._index_factors[1]) < pairs.replace(self._index_factors[0], self._index_factors[1])
+				factorized_index_A = pd.Series(pairs.get_level_values(self.A.index.name).values).replace(self._index_factors[0], self._index_factors[1])
+				factorized_index_B = pd.Series(pairs.get_level_values(B.index.name).values).replace(self._index_factors[0], self._index_factors[1])
+				
+				dedupe_index_boolean = factorized_index_A < factorized_index_B
 
 			else:
 				factorize_index_level_values = pd.factorize(
