@@ -28,12 +28,17 @@ Comparing record pairs
 .. autoclass:: Compare
 	:members:
 
-Estimating parameters
----------------------
+Classification algorithms 
+-------------------------
 
-.. automodule:: estimation
+.. automodule:: classifier
 
-.. autoclass:: ECMEstimate
+.. autoclass:: Classifier
 	:members:
-	:inherited-members:
-	:private-members:
+
+.. autoclass:: KMeansClassifier
+	:members:
+
+.. autoclass:: LogisticRegressionClassifier
+	:members:
+
