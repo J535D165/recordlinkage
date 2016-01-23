@@ -29,76 +29,6 @@ http://pandas.pydata.org/.
     dfA = load_censusA()
     dfB = load_censusB()
 
-
-::
-
-
-    ---------------------------------------------------------------------------
-
-    IOError                                   Traceback (most recent call last)
-
-    <ipython-input-2-3c88f020febd> in <module>()
-    ----> 1 dfA = load_censusA()
-          2 dfB = load_censusB()
-
-
-    /Users/jonathandebruin/anaconda/lib/python2.7/site-packages/recordlinkage-0.0.4+79.g9ef16c3.dirty-py2.7.egg/recordlinkage/datasets/__init__.pyc in load_censusA()
-         28 def load_censusA():
-         29 
-    ---> 30         df = pd.read_csv('recordlinkage/datasets/data/personaldata1000A.csv', sep=';', index_col='record_id', encoding='utf-8')
-         31         df.index.name = 'index_A'
-         32         return df
-
-
-    /Users/jonathandebruin/anaconda/lib/python2.7/site-packages/pandas/io/parsers.pyc in parser_f(filepath_or_buffer, sep, dialect, compression, doublequote, escapechar, quotechar, quoting, skipinitialspace, lineterminator, header, index_col, names, prefix, skiprows, skipfooter, skip_footer, na_values, true_values, false_values, delimiter, converters, dtype, usecols, engine, delim_whitespace, as_recarray, na_filter, compact_ints, use_unsigned, low_memory, buffer_lines, warn_bad_lines, error_bad_lines, keep_default_na, thousands, comment, decimal, parse_dates, keep_date_col, dayfirst, date_parser, memory_map, float_precision, nrows, iterator, chunksize, verbose, encoding, squeeze, mangle_dupe_cols, tupleize_cols, infer_datetime_format, skip_blank_lines)
-        496                     skip_blank_lines=skip_blank_lines)
-        497 
-    --> 498         return _read(filepath_or_buffer, kwds)
-        499 
-        500     parser_f.__name__ = name
-
-
-    /Users/jonathandebruin/anaconda/lib/python2.7/site-packages/pandas/io/parsers.pyc in _read(filepath_or_buffer, kwds)
-        273 
-        274     # Create the parser.
-    --> 275     parser = TextFileReader(filepath_or_buffer, **kwds)
-        276 
-        277     if (nrows is not None) and (chunksize is not None):
-
-
-    /Users/jonathandebruin/anaconda/lib/python2.7/site-packages/pandas/io/parsers.pyc in __init__(self, f, engine, **kwds)
-        588             self.options['has_index_names'] = kwds['has_index_names']
-        589 
-    --> 590         self._make_engine(self.engine)
-        591 
-        592     def _get_options_with_defaults(self, engine):
-
-
-    /Users/jonathandebruin/anaconda/lib/python2.7/site-packages/pandas/io/parsers.pyc in _make_engine(self, engine)
-        729     def _make_engine(self, engine='c'):
-        730         if engine == 'c':
-    --> 731             self._engine = CParserWrapper(self.f, **self.options)
-        732         else:
-        733             if engine == 'python':
-
-
-    /Users/jonathandebruin/anaconda/lib/python2.7/site-packages/pandas/io/parsers.pyc in __init__(self, src, **kwds)
-       1101         kwds['allow_leading_cols'] = self.index_col is not False
-       1102 
-    -> 1103         self._reader = _parser.TextReader(src, **kwds)
-       1104 
-       1105         # XXX
-
-
-    pandas/parser.pyx in pandas.parser.TextReader.__cinit__ (pandas/parser.c:3246)()
-
-
-    pandas/parser.pyx in pandas.parser.TextReader._setup_parser_source (pandas/parser.c:6111)()
-
-
-    IOError: File recordlinkage/datasets/data/personaldata1000A.csv does not exist
-
-
 Making record pairs
 -------------------
 
@@ -128,6 +58,15 @@ the number of records in ``dfB``.
 .. code:: python
 
     len(dfA)*len(dfB) == len(pairs)
+
+
+
+
+.. parsed-literal::
+
+    True
+
+
 
 Many of the record pairs do not belong to the same person. In case of
 one-to-one matching, the largest number of matches should be the number
@@ -185,6 +124,157 @@ comparison vectors are:
 .. code:: python
 
     compare_cl.vectors.head(10)
+
+
+
+
+.. raw:: html
+
+    <div>
+    <table border="1" class="dataframe">
+      <thead>
+        <tr style="text-align: right;">
+          <th></th>
+          <th></th>
+          <th>first_name</th>
+          <th>last_name</th>
+          <th>sex</th>
+          <th>birthdate</th>
+          <th>city</th>
+          <th>street_address</th>
+          <th>job</th>
+          <th>email</th>
+        </tr>
+        <tr>
+          <th>index_A</th>
+          <th>index_B</th>
+          <th></th>
+          <th></th>
+          <th></th>
+          <th></th>
+          <th></th>
+          <th></th>
+          <th></th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th rowspan="10" valign="top">1000000</th>
+          <th>1000000</th>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+        </tr>
+        <tr>
+          <th>1000001</th>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+        </tr>
+        <tr>
+          <th>1000002</th>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+        </tr>
+        <tr>
+          <th>1000003</th>
+          <td>0</td>
+          <td>0</td>
+          <td>1</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+        </tr>
+        <tr>
+          <th>1000004</th>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+        </tr>
+        <tr>
+          <th>1000005</th>
+          <td>0</td>
+          <td>0</td>
+          <td>1</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+        </tr>
+        <tr>
+          <th>1000006</th>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+        </tr>
+        <tr>
+          <th>1000007</th>
+          <td>0</td>
+          <td>0</td>
+          <td>1</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+        </tr>
+        <tr>
+          <th>1000008</th>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+        </tr>
+        <tr>
+          <th>1000009</th>
+          <td>0</td>
+          <td>0</td>
+          <td>1</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+
+
 
 .. code:: python
 

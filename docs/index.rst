@@ -5,9 +5,9 @@ Ready to start linking records? For deduplication or linking between datasets? T
 
 .. toctree::
 
-   intro_example
-
    link_two_dataframes 
+
+   linking
 
    reference
 
