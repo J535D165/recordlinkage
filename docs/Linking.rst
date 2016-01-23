@@ -1,8 +1,4 @@
 
-Test example!
-=============
-
-
 .. code:: python
 
     %cd -q ..

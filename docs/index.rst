@@ -7,7 +7,7 @@ Ready to start linking records? For deduplication or linking between datasets? T
 
    intro_example
 
-   Linking 
+   link_two_dataframes 
 
    reference
 
