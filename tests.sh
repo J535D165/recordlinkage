@@ -1,3 +1,5 @@
+# Run in terminal with: sh tests.sh
+
 nosetests
 
 cd docs/
