@@ -7,8 +7,8 @@ setup(
 	cmdclass=versioneer.get_cmdclass(),
   	author="Jonathan de Bruin",
 	platforms="any",
-	description="A tool written in Python to link and/or deduplicate small or medium sized record files.",
+	description="A tool to link or deduplicate small or medium sized datasets.",
 	url="https://github.com/J535D165/recordlinkage",
 	install_requires=["pandas", "numpy", "jellyfish"],
-	packages=["recordlinkage"]
+	packages=["recordlinkage", "recordlinkage.standardise", "recordlinkage.datasets"]
 	)
