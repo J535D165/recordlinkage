@@ -3,7 +3,7 @@ from __future__ import division
 import pandas as pd
 import numpy as np
 
-from utils import *
+from indexing import IndexError
 
 class Compare(object):
 	"""A class to make comparing of records fields easier. It can be used to compare fields of the record pairs. """
