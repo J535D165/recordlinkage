@@ -3,8 +3,6 @@ from __future__ import division
 import pandas as pd
 import numpy as np
 
-from utils import *
-
 def _randomindex(A,B, N_pairs, random_state=None):
 
 	random_index_A = np.random.choice(A.index.values, N_pairs)
@@ -296,5 +294,8 @@ class Pairs(object):
 		max_pairs = len(self.A)*len(self.B)
 
 		return 1-self.n_pairs/max_pairs
+
+class IndexError(Exception):
+	pass
 
 
