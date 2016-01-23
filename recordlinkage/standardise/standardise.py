@@ -1,6 +1,7 @@
 from __future__ import division
+from __future__ import absolute_import
 
-from utils import check_type
+from .utils import check_type
 
 import logging
 

@@ -28,6 +28,3 @@ def check_type(func):
 		return result
 
 	return wrapped
-
-class IndexError(Exception):
-	pass
