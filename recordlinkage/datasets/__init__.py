@@ -27,17 +27,13 @@ except Exception:
 
 def load_censusA():
 
-	fp = os.path.join(os.path.dirname(__file__), 'data', 'personaldata1000A.csv')
-
-	df = pd.read_csv(fp, sep=';', index_col='record_id', encoding='utf-8')
+	df = pd.read_csv('recordlinkage/datasets/data/personaldata1000A.csv', sep=';', index_col='record_id', encoding='utf-8')
 	df.index.name = 'index_A'
 	return df
 
 def load_censusB():
 
-	fp = os.path.join(os.path.dirname(__file__), 'data', 'personaldata1000B.csv')
-
-	df = pd.read_csv(fp, sep=';', index_col='record_id', encoding='utf-8')
+	df = pd.read_csv('recordlinkage/datasets/data/personaldata1000B.csv', sep=';', index_col='record_id', encoding='utf-8')
 	df.index.name = 'index_B'
 	return df
 

@@ -1,4 +1,4 @@
-from setuptools import setup, find_packages
+from setuptools import setup
 import versioneer
 
 setup(
@@ -6,13 +6,9 @@ setup(
 	version=versioneer.get_version(),
 	cmdclass=versioneer.get_cmdclass(),
   	author="Jonathan de Bruin",
-  	author_email="jonathandebruinhome@gmail.com",
 	platforms="any",
 	description="A tool to link or deduplicate small or medium sized datasets.",
 	url="https://github.com/J535D165/recordlinkage",
 	install_requires=["pandas", "numpy", "jellyfish"],
-	packages=['recordlinkage', 'recordlinkage.datasets', 'recordlinkage.standardise'],
-	include_package_data=True,
-	package_dir={'recordlinkage': 'recordlinkage'},
-	package_data={'recordlinkage': ['datasets/data/*.csv']},
-)
+	packages=["recordlinkage", "recordlinkage.standardise", "recordlinkage.datasets"]
+	)
