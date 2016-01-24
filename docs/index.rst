@@ -7,6 +7,8 @@ Ready to start linking records? For deduplication or linking between datasets? T
 
    link_two_dataframes 
 
+   advanced_indexing
+
    linking
 
    reference
