@@ -268,7 +268,7 @@ class Pairs(object):
 			
 			yield pairs_block
 
-	def reduction_ratio(self, n_pairs=None):
+	def reduction(self, n_pairs=None):
 		""" Compute the relative reduction of records pairs as the result of indexing. 
 
 		:return: Value between 0 and 1
