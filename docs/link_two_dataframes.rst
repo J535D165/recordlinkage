@@ -101,14 +101,18 @@ documentation for details about sorted neighbourd indexing.
 Comparing record pairs
 ----------------------
 
-Now we now have a large set of record pairs. To compare Each record pair
-is compared on some attributes both record have in common.
+Each record pair is a candidate match. To classify the candidate record
+pairs into matches and non-matches, compare the records on all
+attributes both records have in common. The ``recordlinkage`` module has
+a class named ``Compare``. This class is used to compare the records.
+The following code shows how to compare attributes.
 
 .. code:: python
 
     compare_cl = recordlinkage.Compare(pairs, dfA, dfB)
+    
     compare_cl.exact('first_name', 'first_name', name='first_name')
-    compare_cl.exact('last_name', 'last_name', name='last_name')
+    compare_cl.fuzzy('last_name', 'last_name', name='last_name', method='jarowinkler', threshold=0.85)
     compare_cl.exact('sex', 'sex', name='sex')
     compare_cl.exact('birthdate', 'birthdate', name='birthdate')
     compare_cl.exact('city', 'city', name='city')
