@@ -151,23 +151,22 @@ class Compare(object):
 		This internal function is used to transform an index and a dataframe into a reindexed dataframe or series. If already a Series or DataFrame is passed, nothing is done. 
 		"""
 
-		# Python 2 hack
-		if 'dataframe' in kwargs.keys():
-			dataframe = kwargs['dataframe']
-		else:
-			raise NameError("name 'dataframe' is not defined")
+		dataframe = kwargs['dataframe']
 
-		# Check if dataframe name is not changed since making an index. Weird.
-		if dataframe.index.name not in self.pairs.names:
-			raise IndexError('The index name of the DataFrame is not found in the levels of the index.')
+		# # Check if dataframe name is not changed since making an index. Weird.
+		# if dataframe.index.name not in self.pairs.names:
+		# 	raise IndexError('The index name of the DataFrame is not found in the levels of the index.')
 
 		if all(x in list(dataframe) for x in args):
-			data = dataframe.loc[:,args].ix[self.pairs.get_level_values(dataframe.index.name)]
-			
+
+			data = dataframe.ix[self.pairs.get_level_values(dataframe.index.name), args]
+			data.set_index(self.pairs, inplace=True)
+
 			return data[args[0]] if len(args) == 1 else (data[arg] for arg in args)
 		
 		else:
 			# No labels passed, maybe series or dataframe passed? Let's try...
+			# This is a trick to return tuples
 			return args[0] if len(args) == 1 else args
 
 def _missing(*args):
@@ -273,9 +272,9 @@ def fuzzy(s1,s2, method='levenshtein', threshold=None, missing_value=0):
 		comp = approx
 
 	# Only for missing values
-	compare[_missing(s1, s2)] = missing_value
+	comp[_missing(s1, s2)] = missing_value
 
-	return compare
+	return comp
 
 def window(s1, s2, window, missing_value=0, disagreement_value=0, sim_func=None):
 
