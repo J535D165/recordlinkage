@@ -101,7 +101,7 @@ class Pairs(object):
 		self._index_factors = None
 
 	def index(self, index_func, *args, **kwargs):
-		""" Create an index. 
+		""" Method to make record pairs from one or two dataframes. Each record pair contains two records. 
 
 		:return: MultiIndex
 		:rtype: pandas.MultiIndex
@@ -140,7 +140,7 @@ class Pairs(object):
 		return pairs
 
 	def random(self, *args, **kwargs):
-		"""Return a random index. 
+		""" Make an index of random record pairs. 
 
 		:return: A MultiIndex
 		:rtype: pandas.MultiIndex
@@ -148,7 +148,7 @@ class Pairs(object):
 		return self.index(_randomindex, *args, **kwargs)
 
 	def block(self, *args, **kwargs):
-		"""Return a blocking index. 
+		""" Make an index were one or more specified attributes are identical.
 
 		:param columns: A column name or a list of column names. These columns are used to block on. 
 
@@ -158,7 +158,7 @@ class Pairs(object):
 		return self.index(_blockindex, *args, **kwargs)
 
 	def full(self, *args, **kwargs):
-		"""Return a Full index. In case of linking two dataframes of length N and M, the number of pairs is N*M. In case of deduplicating a dataframe with N records, the number of pairs is N*(N-1)/2. 
+		""" Make an index with all possible record pairs. In case of linking two dataframes of length N and M, the number of pairs is N*M. In case of deduplicating a dataframe with N records, the number of pairs is N*(N-1)/2. 
 
 		:return: A MultiIndex
 		:rtype: pandas.MultiIndex
