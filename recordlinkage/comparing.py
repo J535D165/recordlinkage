@@ -132,11 +132,17 @@ class Compare(object):
 		else:
 
 			name = kwargs.pop('name', None)
-			self._append(comp_func(*args, **kwargs), name=name)
+			store = kwargs.pop('store', True)
 
-			return self.vectors[name]
+			c = comp_func(*args, **kwargs)
+			self._append(c, name=name, store=store)
 
-	def _append(self, comp_vect, name=None, store=True, *args, **kwargs):
+			if store:
+				return self.vectors[name]
+			else: 
+				return c
+
+	def _append(self, comp_vect, name=None, store=True):
 
 		if store:
 
