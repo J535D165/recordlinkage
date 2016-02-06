@@ -98,6 +98,8 @@ def phonetic(s, method, encoding='utf-8'):
     except ImportError:
         print "Install jellyfish to use string encoding."
 
+    s = clean(s, replace_by_none='[^\-\_A-Za-z0-9]+')
+
     if method == 'soundex':
         return s.str.upper().str.decode(encoding).apply(lambda x: jellyfish.soundex(x) if pd.notnull(x) else np.nan)
 

@@ -70,7 +70,7 @@ class TestStandardise(unittest.TestCase):
     def test_encode_nysiis(self):
 
         values = pd.Series([np.nan, 'John', 'Mary Ann', 'billy', 'Jonathan', 'Gretha', 'Micheal', 'Sjors'])
-        expected = pd.Series([np.nan, 'JAN', 'MARY AN', 'BALY', 'JANATAN', 'GRAT', 'MACAL', 'SJAR'])
+        expected = pd.Series([np.nan, 'JAN', 'MARYAN', 'BALY', 'JANATAN', 'GRAT', 'MACAL', 'SJAR'])
 
         phon = recordlinkage.phonetic(values, 'nysiis')
 
