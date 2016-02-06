@@ -116,31 +116,25 @@ class Compare(object):
 		:rtype: standardise.DataFrame
 		"""
 
-		if isinstance(comp_func, (list, dict, tuple)):
+		store = kwargs.pop('store', True)
+
+		if isinstance(comp_func, (list, tuple)):
 
 			for t in comp_func:
-				# func is a tuple of args and kwargs
 
-				func = t[0]
-				args_func = t[1]
-				kwargs_func = t[2]
-
-				self._append(self._compare_column(func, *args_func, **kwargs_func))
+				self._append(self.compare(t), store=store)
 
 			return self.vectors
 
 		else:
 
+			# Name argument
 			name = kwargs.pop('name', None)
-			store = kwargs.pop('store', True)
 
 			c = comp_func(*args, **kwargs)
 			self._append(c, name=name, store=store)
 
-			if store:
-				return self.vectors[name]
-			else: 
-				return c
+			return c
 
 	def _append(self, comp_vect, name=None, store=True):
 
@@ -148,9 +142,7 @@ class Compare(object):
 
 			comp_vect.name = name
 
-			self.vectors[name] = np.array(comp_vect)
-
-		return self.vectors
+			self.vectors[name] = comp_vect
 
 	def _index_data(self, *args, **kwargs):
 		""" 
