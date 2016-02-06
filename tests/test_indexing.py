@@ -184,7 +184,7 @@ class TestIndexing(unittest.TestCase):
         index = recordlinkage.Pairs(dfA, dfB)
         pairs = index.full()
 
-        rr = index.reduction_ratio()
+        rr = index.reduction()
 
         self.assertEqual(rr, 0)
 
