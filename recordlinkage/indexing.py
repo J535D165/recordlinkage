@@ -115,25 +115,12 @@ class Pairs(object):
 		# If deduplication, remove the record pairs that are already included. For example: (a1, a1), (a1, a2), (a2, a1), (a2, a2) results in (a1, a2) or (a2, a1)
 		elif self.deduplication:
 
-			B = self.A.copy()
-			B.index.name = str(self.A.index.name) + '_'
+			B = pd.DataFrame(self.A, index=pd.Index(self.A.index, name=str(self.A.index.name) + '_'))
 
 			pairs = index_func(self.A, B, *args, **kwargs)
 
-			if self._index_factors:
-				factorized_index_A = pd.Series(pairs.get_level_values(self.A.index.name).values).replace(self._index_factors[0], self._index_factors[1])
-				factorized_index_B = pd.Series(pairs.get_level_values(B.index.name).values).replace(self._index_factors[0], self._index_factors[1])
-				
-				dedupe_index_boolean = factorized_index_A < factorized_index_B
-
-			else:
-				factorize_index_level_values = pd.factorize(
-					list(pairs.get_level_values(self.A.index.name)) + list(pairs.get_level_values(B.index.name))
-					)[0]
-
-				dedupe_index_boolean = factorize_index_level_values[:len(factorize_index_level_values)/2] < factorize_index_level_values[len(factorize_index_level_values)/2:]
-
-			pairs = pairs[dedupe_index_boolean]
+			# Remove all double pairs!
+			pairs = pairs[pairs.get_level_values(0) < pairs.get_level_values(1)]
 
 		self.n_pairs = len(pairs)
 
@@ -235,33 +222,32 @@ class Pairs(object):
 		:rtype: pandas.MultiIndex
 		"""
 
-		if not self.deduplication: # Linking
-
-			# If block size is None, then use the full length of the dataframe
-			len_block_A = len(self.A) if len_block_A is None else len_block_A
-			len_block_B = len(self.B) if len_block_B is None else len_block_B
-
-			blocks = [(a,b, a+len_block_A, b+len_block_B) for a in np.arange(0, len(self.A), len_block_A) for b in np.arange(0, len(self.B), len_block_B) ]
-
-		elif self.deduplication:
-			# If block size is None, then use the full length of the dataframe
-			len_block_A = len(self.A) if len_block_A is None else len_block_A
+		# If block size is None, then use the full length of the dataframe
+		
+		if self.deduplication:
+			len_block_A = len_block_A if len_block_A else len(self.A) 
 			
-			blocks = [(a,a, a+len_block_A, a+len_block_A) for a in np.arange(0, len(self.A), len_block_A)]
+			blocks = [(a,a, a+len_block_A, a+len_block_A) for a in np.arange(0, len(self.A), len_block_A) for a in np.arange(0, len(self.A), len_block_A) ]
+
+		else:
+			len_block_A = len_block_A if len_block_A else len(self.A) 
+			len_block_B = len_block_B if len_block_B else len(self.B) 
+			
+			blocks = [(a,b, a+len_block_A, b+len_block_B) for a in np.arange(0, len(self.A), len_block_A) for b in np.arange(0, len(self.B), len_block_B) ]
 
 		# Reset the number of pairs counter
 		self.n_pairs = 0
 
 		for bl in blocks:
+
+			if self.deduplication: # Deduplication
+				pairs_block_class = Pairs(self.A[bl[0]:bl[2]], pd.DataFrame(self.A, index=pd.Index(self.A.index, name=self.A.index.name + '_')))
+				pairs_block = pairs_block_class.index(index_func, *args, **kwargs)
+				pairs_block = pairs_block[pairs_block.get_level_values(0) < pairs_block.get_level_values(1)]
 	
-			if not self.deduplication: # Linking
+			else:
 				pairs_block_class = Pairs(self.A[bl[0]:bl[2]], self.B[bl[1]:bl[3]])
-
-			else: # Deduplication
-				pairs_block_class = Pairs(self.A[bl[0]:bl[2]])
-				pairs_block_class._index_factors = (self.A.index.values, np.arange(len(self.A.index)))				
-
-			pairs_block = pairs_block_class.index(index_func, *args, **kwargs)
+				pairs_block = pairs_block_class.index(index_func, *args, **kwargs)
 
 			# Count the number of pairs
 			self.n_pairs += len(pairs_block)
