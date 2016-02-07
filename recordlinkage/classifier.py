@@ -9,8 +9,7 @@ warnings.simplefilter(action = "ignore", category = FutureWarning)
 
 import em_algorithm_
 
-from sklearn import cluster, linear_model
-from sklearn import naive_bayes
+from sklearn import cluster, linear_model, naive_bayes, svm
 
 class Classifier(object):
 	""" Base class for classification of records pairs. This class contains methods for training the classifier. Distinguish different types of training, such as supervised and unsupervised learning."""
@@ -148,6 +147,27 @@ class BernoulliNBClassifier(Classifier):
 		probs = self.classifier.predict_proba(vectors.as_matrix())
 
 		return pd.DataFrame(probs, columns=column_labels, index=vectors.index)
+
+class SVMClassifier(Classifier):
+
+	def __init__(self, *args, **kwargs):
+		super(self.__class__, self).__init__(*args, **kwargs)
+
+		self.classifier = svm.LinearSVC()
+
+	def learn(self, vectors, match_index):
+
+		train_series = pd.Series(False, index=vectors.index)
+		train_series.loc[match_index & vectors.index] = True
+
+		self.classifier.fit(vectors.as_matrix(), np.array(train_series))
+
+	def predict(self, vectors):
+		
+		prediction = self.classifier.predict(vectors.as_matrix())
+		prediction_bool = prediction.astype(bool)
+
+		return vectors.index[prediction_bool], vectors.index[~prediction_bool]
 
 class ExpectationMaximisationClassifier(Classifier):
 	"""Expectation Maximisation classifier in combination with Fellegi and Sunter model"""
