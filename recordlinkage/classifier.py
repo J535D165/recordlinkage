@@ -10,6 +10,7 @@ warnings.simplefilter(action = "ignore", category = FutureWarning)
 import em_algorithm_
 
 from sklearn import cluster, linear_model
+from sklearn import naive_bayes
 
 class Classifier(object):
 	""" Base class for classification of records pairs. This class contains methods for training the classifier. Distinguish different types of training, such as supervised and unsupervised learning."""
@@ -29,25 +30,25 @@ class Classifier(object):
 		""" Predict class of comparison vectors """
 		pass
 	
-	def get_params(self, key):
-		""" Get the parameters """
-		pass
+	# def get_params(self, key):
+	# 	""" Get the parameters """
+	# 	pass
 
-	def match_probability(self):
+	def prob(self):
 		""" Get the probability of being a true link for each comparison vector """
 
-		raise AttributeError("class %s has no method 'match_probability()' " % self.__name__)
+		raise AttributeError("class %s has no method 'prob()' " % self.__name__)
 
-	def set_params(self, key, value):
-		""" Set the parameters """
+	# def set_params(self, key, value):
+	# 	""" Set the parameters """
 
-		self._params[key] = value
+	# 	self._params[key] = value
 
-	def false_positive_probability(self, vectors):
-		pass
+	# def false_positive_probability(self, vectors):
+	# 	pass
 
-	def false_negative_probability(self, vectors):
-		pass
+	# def false_negative_probability(self, vectors):
+	# 	pass
 
 class KMeansClassifier(Classifier):
 	""" 
@@ -110,8 +111,43 @@ class LogisticRegressionClassifier(Classifier):
 	def predict(self, vectors):
 		
 		prediction = self.classifier.predict(vectors.as_matrix())
+		prediction_bool = prediction.astype(bool)
 
-		return pd.Series(prediction, index=vectors.index, name='classification')
+		return vectors.index[prediction_bool], vectors.index[~prediction_bool]
+
+	def prob(self, vectors, column_labels=['prob_link', 'prob_nonlink']):
+		probs = self.classifier.predict_proba(vectors.as_matrix())
+
+		return pd.DataFrame(probs, columns=column_labels, index=vectors.index)
+
+class BernoulliNBClassifier(Classifier):
+
+	def __init__(self, *args, **kwargs):
+		super(self.__class__, self).__init__(*args, **kwargs)
+
+		self.classifier = naive_bayes.BernoulliNB()
+
+	def learn(self, vectors, match_index):
+
+		train_series = pd.Series(False, index=vectors.index)
+		train_series.loc[match_index & vectors.index] = True
+
+		# print self.class
+		self.classifier.fit(vectors.as_matrix(), np.array(train_series))
+
+		# return pd.Series(self.classifier.labels_, index=vectors.index, name='classification')
+
+	def predict(self, vectors):
+		
+		prediction = self.classifier.predict(vectors.as_matrix())
+		prediction_bool = prediction.astype(bool)
+
+		return vectors.index[prediction_bool], vectors.index[~prediction_bool]
+
+	def prob(self, vectors, column_labels=['prob_link', 'prob_nonlink']):
+		probs = self.classifier.predict_proba(vectors.as_matrix())
+
+		return pd.DataFrame(probs, columns=column_labels, index=vectors.index)
 
 class ExpectationMaximisationClassifier(Classifier):
 	"""Expectation Maximisation classifier in combination with Fellegi and Sunter model"""
@@ -154,7 +190,7 @@ class ExpectationMaximisationClassifier(Classifier):
 
 		return self._classify(vectors, *args, **kwargs)
 
-	def match_probability(self, vectors, *args, **kwargs):
+	def prob(self, vectors, *args, **kwargs):
 
 		return self._classify(vectors, *args, **kwargs)
 

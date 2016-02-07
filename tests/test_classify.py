@@ -32,3 +32,14 @@ class TestClassify(unittest.TestCase):
         logis.learn(train_df, match_index)
         logis.predict(y)
 
+    def test_bernoulli_naive_bayes(self):
+
+        y, match_index = generate.simulate_features()
+
+        train_df_matches = y.ix[match_index].sample(500)
+        train_df_nonmatches = y.ix[y.index - match_index].sample(1500)
+        train_df = train_df_matches.append(train_df_nonmatches)
+
+        bernb = recordlinkage.BernoulliNBClassifier()
+        bernb.learn(train_df.round(), train_df_matches.index)
+        bernb.predict(y.round())
