@@ -1,6 +1,6 @@
 
-import pandas as pd
-import numpy as np
+import pandas
+import numpy
 
 import os
 
@@ -9,11 +9,37 @@ try:
 except Exception:
 	print 'Faker is not installed. Therefore, the functionalities of this module are limited.'
 
+def _krebsregister_block(block):
+
+	fp_i = os.path.join(os.path.dirname(__file__), 'data', 'krebsregister', 'block_{}.csv'.format(block))
+
+	data_block = pandas.read_csv(fp_i, index_col=['id_1', 'id_2'], na_values='?')
+	data_block.columns = ['cmp_firstname1', 'cmp_firstname2', 'cmp_lastname1', 'cmp_lastname2', 'cmp_sex', 'cmp_birthday', 'cmp_birthmonth', 'cmp_birthyear', 'cmp_zipcode', 'is_match']
+	data_block.index.names = ['id1', 'id2']
+	return data_block.sample(n=len(data_block), replace=False, random_state=100+block)
+
+def krebsregister_cmp_data(block=1):
+
+	if type(block) == list:
+
+		data = None
+
+		for bl in block:
+			data = pandas.concat([data, _krebsregister_block(bl)])
+	else:
+
+		data = _krebsregister_block(block)
+
+	match_index = data.index[data['is_match']]
+	del data['is_match']
+
+	return data, match_index
+
 def load_censusA():
 
 	fp = os.path.join(os.path.dirname(__file__), 'data', 'personaldata1000A.csv')
 
-	df = pd.read_csv(fp, sep=';', index_col='record_id', encoding='utf-8')
+	df = pandas.read_csv(fp, sep=';', index_col='record_id', encoding='utf-8')
 	df.index.name = 'index_A'
 	return df
 
@@ -21,7 +47,7 @@ def load_censusB():
 
 	fp = os.path.join(os.path.dirname(__file__), 'data', 'personaldata1000B.csv')
 
-	df = pd.read_csv(fp, sep=';', index_col='record_id', encoding='utf-8')
+	df = pandas.read_csv(fp, sep=';', index_col='record_id', encoding='utf-8')
 	df.index.name = 'index_B'
 	return df
 
@@ -64,8 +90,8 @@ def addmissingvalues(df, missing_dict=MISSING_DICT):
 		if col in missing_dict.keys():
 
 			# Make a random sample of values to replace. 
-			to_replace = np.random.choice([True, False], len(df), p=[missing_dict[col], 1-missing_dict[col]])
-			df.loc[to_replace, col] = np.nan
+			to_replace = numpy.random.choice([True, False], len(df), p=[missing_dict[col], 1-missing_dict[col]])
+			df.loc[to_replace, col] = numpy.nan
 
 	return df
 
@@ -78,7 +104,7 @@ def addsubstitutions(df, subs_dict=SUBS_DICT):
 		if col in subs_dict.keys():
 
 			# Make a random sample of values to replace. 
-			to_replace = np.random.choice([True, False], len(df), p=[subs_dict[col], 1-subs_dict[col]])
+			to_replace = numpy.random.choice([True, False], len(df), p=[subs_dict[col], 1-subs_dict[col]])
 
 			# Special case when for first name
 			if col == 'first_name':
@@ -114,7 +140,7 @@ def fakeperson():
 
 	person = {}
 
-	if np.random.random() < 0.5:
+	if numpy.random.random() < 0.5:
 		person['first_name'] = fake.first_name_male()
 		person['sex'] = 'M'
 	else:
@@ -137,13 +163,13 @@ def dataset(N, df=None, matches=None):
 	if df is None:
 
 		# Create a dataframe with fake personal information
-		df_persons = pd.DataFrame([fakeperson() for _ in range(0, N)])
+		df_persons = pandas.DataFrame([fakeperson() for _ in range(0, N)])
 
 		# Set an entity id for each created record. 
-		df_persons['entity_id'] = np.arange(1, N+1).astype(object)
+		df_persons['entity_id'] = numpy.arange(1, N+1).astype(object)
 
 		# Reset the index of the dataframe. Start at 1e6
-		df_persons.set_index(np.arange(1e6, 1e6+N).astype(np.int64), inplace=True)
+		df_persons.set_index(numpy.arange(1e6, 1e6+N).astype(numpy.int64), inplace=True)
 		df_persons.index.name = 'record_id'
 
 		# Return the dataframe
@@ -156,17 +182,17 @@ def dataset(N, df=None, matches=None):
 			raise ValueError("The number of matches is higher than the number of records N.")
 
 		# Create a dataframe with fake personal information
-		df_persons = pd.DataFrame([fakeperson() for _ in range(0, len_df)])
+		df_persons = pandas.DataFrame([fakeperson() for _ in range(0, len_df)])
 
 		# Set an entity id for each created record. 
 		max_entity_id = max(df['entity_id'])
-		df_persons['entity_id'] = np.arange(max_entity_id+1, max_entity_id+len_df+ 1).astype(object)
+		df_persons['entity_id'] = numpy.arange(max_entity_id+1, max_entity_id+len_df+ 1).astype(object)
 
 		# Dataframe
-		df_persons = df.sample(matches).append(pd.DataFrame([fakeperson() for _ in range(0, len_df)]))
+		df_persons = df.sample(matches).append(pandas.DataFrame([fakeperson() for _ in range(0, len_df)]))
 
 		# Reset the index of the dataframe. Start at 1e6
-		df_persons.set_index(np.arange(1e6, 1e6+N).astype(np.int64), inplace=True)
+		df_persons.set_index(numpy.arange(1e6, 1e6+N).astype(numpy.int64), inplace=True)
 		df_persons.index.name = 'record_id'
 
 		# Add substituations.
