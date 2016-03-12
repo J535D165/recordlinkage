@@ -8,13 +8,15 @@ from indexing import IndexError
 class Compare(object):
 	"""A class to make comparing of records fields easier. It can be used to compare fields of the record pairs. """
 
-	def __init__(self, pairs=None, A=None, B=None):
+	def __init__(self, pairs, A=None, B=None):
 
 		self.A = A
 		self.B = B
 		self.pairs = pairs
 
 		self.vectors = pd.DataFrame(index=pairs)
+
+		self.ndim = self._compute_dimension(pairs)
 
 	def exact(self, s1, s2, *args, **kwargs):
 		"""
@@ -32,8 +34,6 @@ class Compare(object):
 		:rtype: pandas.Series
 
 		"""
-		s1 = self._index_data(s1, dataframe=self.A)
-		s2 = self._index_data(s2, dataframe=self.B)
 
 		return self.compare(exact, s1, s2, *args, **kwargs)
 
@@ -52,9 +52,6 @@ class Compare(object):
 		:rtype: pandas.Series
 
 		"""
-
-		s1 = self._index_data(s1, dataframe=self.A)
-		s2 = self._index_data(s2, dataframe=self.B)
 
 		return self.compare(window_numerical, s1, s2, *args, **kwargs)
 
@@ -76,8 +73,6 @@ class Compare(object):
 		Note: For this function is the package 'jellyfish' required. 
 
 		"""
-		s1 = self._index_data(s1, dataframe=self.A)
-		s2 = self._index_data(s2, dataframe=self.B)
 
 		return self.compare(fuzzy, s1, s2, *args, **kwargs)
 
@@ -100,72 +95,82 @@ class Compare(object):
 		:rtype: pandas.Series
 		"""
 
-		X1 = self._index_data(X1, dataframe=self.A)
-		Y1 = self._index_data(Y1, dataframe=self.A)
-		X2 = self._index_data(X2, dataframe=self.B)
-		Y2 = self._index_data(Y2, dataframe=self.B)
+		return self.compare(compare_geo, (X1, Y1), (X2, Y2), *args, **kwargs)
 
-		return self.compare(compare_geo, X1, Y1, X2, Y2, *args, **kwargs)
-
-	def compare(self, comp_func, *args, **kwargs):
+	def compare(self, comp_func, data_a, data_b, *args, **kwargs):
 		"""Compare the records given. 
 
-		:param comp_func: A list, dict or tuple of comparison tuples. Each tuple contains a comparison function, the fields to compare and the arguments. 
+		:param comp_func: A comparison function. This function can be a built-in function or a user defined comparison function.
 
-		:return: A DataFrame with compared variables.
+		:return: The DataFrame Compare.vectors
 		:rtype: standardise.DataFrame
 		"""
 
+		args = list(args)
+		name = kwargs.pop('name', None)
 		store = kwargs.pop('store', True)
 
-		if isinstance(comp_func, (list, tuple)):
+		print name
 
-			for t in comp_func:
+		# Sample the data and add it to the arguments.
+		if not isinstance(data_b, (tuple, list)):
+			data_b = [data_b]
 
-				self._append(self.compare(t), store=store)
+		if not isinstance(data_a, (tuple, list)):
+			data_a = [data_a]
 
-			return self.vectors
+		for db in reversed(data_b):
+			args.insert(0, self._resample(self._getcol(db, self.B), 1))
 
-		else:
+		for da in reversed(data_a):
+			args.insert(0, self._resample(self._getcol(da, self.A), 0))
 
-			# Name argument
-			name = kwargs.pop('name', None)
+		# print args
+		c = comp_func(*tuple(args), **kwargs)
 
-			c = comp_func(*args, **kwargs)
-			self._append(c, name=name, store=store)
+		# Add the comparison result
+		self._append(c, name=name, store=store)
 
-			return c
+		return c
+
+	def batchcompare(self, list_of_comp_funcs):
+
+		raise NotImplementedError()
 
 	def _append(self, comp_vect, name=None, store=True):
 
 		if store:
 
 			comp_vect.name = name
-
 			self.vectors[name] = comp_vect
 
-	def _index_data(self, *args, **kwargs):
+	def _getcol(self, label_or_column, dataframe):
 		""" 
 		This internal function is used to transform an index and a dataframe into a reindexed dataframe or series. If already a Series or DataFrame is passed, nothing is done. 
 		"""
+		try:
+			return dataframe[label_or_column]
 
-		dataframe = kwargs['dataframe']
+		except Exception:
+			return label_or_column
 
-		# # Check if dataframe name is not changed since making an index. Weird.
-		# if dataframe.index.name not in self.pairs.names:
-		# 	raise IndexError('The index name of the DataFrame is not found in the levels of the index.')
+	def _resample(self, s, level_i):
 
-		if all(x in list(dataframe) for x in args):
+		data = s.ix[self.pairs.get_level_values(level_i)]
+		data.index = self.pairs
 
-			data = dataframe.ix[self.pairs.get_level_values(dataframe.index.name), args]
-			data.set_index(self.pairs, inplace=True)
+		return data
 
-			return data[args[0]] if len(args) == 1 else (data[arg] for arg in args)
-		
+	def _compute_dimension(self, pairs):
+		'''
+		Internal function to compute the dimension of the comparison. Deduplication returns 1 and linking 2 dataframes returns 2.
+		'''
+
+		# duplication
+		if len(pairs.names) == 2 and pairs.names[0] == pairs.names[1]:
+			return 1
 		else:
-			# No labels passed, maybe series or dataframe passed? Let's try...
-			# This is a trick to return tuples
-			return args[0] if len(args) == 1 else args
+			return len(pairs.names)
 
 def _missing(*args):
 
