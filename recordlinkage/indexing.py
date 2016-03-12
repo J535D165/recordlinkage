@@ -121,6 +121,7 @@ class Pairs(object):
 
 			# Remove all double pairs!
 			pairs = pairs[pairs.get_level_values(0) < pairs.get_level_values(1)]
+			pairs.names = [self.A, self.A]
 
 		self.n_pairs = len(pairs)
 
