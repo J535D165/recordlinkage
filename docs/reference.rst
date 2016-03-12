@@ -5,17 +5,19 @@ standardise data
 ----------------
 
 .. automodule:: standardise
-
-.. autoclass:: StandardSeries
 	:members:
 
-.. autoclass:: StandardDataFrame
+.. automodule:: standardise.cleaning
+	:members:
+
+.. automodule:: standardise.encoding
 	:members:
 
 Make record pairs
 -----------------
 
 .. automodule:: indexing
+	:members:
 
 .. autoclass:: Pairs
 	:members:
@@ -32,6 +34,7 @@ Classification algorithms
 -------------------------
 
 .. automodule:: classifier
+	:members:
 
 .. autoclass:: Classifier
 	:members:
@@ -42,3 +45,8 @@ Classification algorithms
 .. autoclass:: LogisticRegressionClassifier
 	:members:
 
+Datasets
+--------
+
+.. automodule:: datasets
+	:members:

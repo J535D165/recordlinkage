@@ -84,7 +84,7 @@ method can be used in the ``recordlinkage`` module.
 
 .. code:: python
 
-    pcl.block('first_name');
+    pairs = pcl.block('first_name')
 
 The argument 'first\_name' is the blocking variable. This variable has
 to be the name of a column in ``dfA`` and ``dfB``. It is possible to
@@ -164,115 +164,124 @@ comparison vectors are:
       </thead>
       <tbody>
         <tr>
-          <th rowspan="10" valign="top">1000000</th>
           <th>1000000</th>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-        </tr>
-        <tr>
-          <th>1000001</th>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
+          <th>1000349</th>
+          <td>1</td>
+          <td>1</td>
+          <td>1</td>
+          <td>1</td>
+          <td>1</td>
+          <td>1</td>
+          <td>1</td>
+          <td>1</td>
         </tr>
         <tr>
           <th>1000002</th>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
+          <th>1000027</th>
+          <td>1</td>
+          <td>1</td>
+          <td>1</td>
+          <td>1</td>
+          <td>1</td>
+          <td>1</td>
           <td>0</td>
           <td>0</td>
         </tr>
         <tr>
           <th>1000003</th>
-          <td>0</td>
-          <td>0</td>
+          <th>1000404</th>
+          <td>1</td>
+          <td>1</td>
+          <td>1</td>
+          <td>1</td>
           <td>1</td>
           <td>0</td>
           <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
+          <td>1</td>
         </tr>
         <tr>
           <th>1000004</th>
+          <th>1000691</th>
+          <td>1</td>
+          <td>1</td>
+          <td>1</td>
+          <td>1</td>
+          <td>1</td>
           <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
+          <td>1</td>
+          <td>1</td>
         </tr>
         <tr>
           <th>1000005</th>
-          <td>0</td>
-          <td>0</td>
+          <th>1000411</th>
+          <td>1</td>
+          <td>1</td>
+          <td>1</td>
+          <td>1</td>
+          <td>1</td>
           <td>1</td>
           <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
+          <td>1</td>
         </tr>
         <tr>
           <th>1000006</th>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-        </tr>
-        <tr>
-          <th>1000007</th>
-          <td>0</td>
-          <td>0</td>
+          <th>1000301</th>
           <td>1</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
+          <td>1</td>
+          <td>1</td>
+          <td>1</td>
+          <td>1</td>
+          <td>1</td>
+          <td>1</td>
+          <td>1</td>
         </tr>
         <tr>
           <th>1000008</th>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
-          <td>0</td>
+          <th>1000644</th>
+          <td>1</td>
+          <td>1</td>
+          <td>1</td>
+          <td>1</td>
+          <td>1</td>
+          <td>1</td>
+          <td>1</td>
+          <td>1</td>
         </tr>
         <tr>
           <th>1000009</th>
-          <td>0</td>
-          <td>0</td>
+          <th>1000676</th>
+          <td>1</td>
+          <td>1</td>
+          <td>1</td>
+          <td>1</td>
+          <td>1</td>
+          <td>1</td>
           <td>1</td>
           <td>0</td>
+        </tr>
+        <tr>
+          <th>1000010</th>
+          <th>1000112</th>
+          <td>1</td>
+          <td>1</td>
+          <td>1</td>
+          <td>1</td>
+          <td>1</td>
+          <td>1</td>
+          <td>1</td>
           <td>0</td>
+        </tr>
+        <tr>
+          <th>1000011</th>
+          <th>1000173</th>
+          <td>1</td>
+          <td>1</td>
+          <td>1</td>
+          <td>1</td>
+          <td>1</td>
+          <td>1</td>
           <td>0</td>
-          <td>0</td>
-          <td>0</td>
+          <td>1</td>
         </tr>
       </tbody>
     </table>

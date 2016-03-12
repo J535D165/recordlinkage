@@ -22,6 +22,8 @@ import shlex
 #sys.path.insert(0, os.path.abspath('.'))
 
 sys.path.insert(0, os.path.abspath('../recordlinkage'))
+# sys.path.insert(0, os.path.abspath('../recordlinkage/standardise'))
+# sys.path.insert(0, os.path.abspath('../recordlinkage/datasets'))
 
 
 # -- General configuration ------------------------------------------------
