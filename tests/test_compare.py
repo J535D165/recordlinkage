@@ -27,42 +27,66 @@ TEST_DATA_2 = pd.DataFrame([
     index=pd.Index([1,2,3,4,5], name='index_df2')
     )
 
-TEST_INDEX = pd.MultiIndex.from_tuples(
+TEST_INDEX_LINKING = pd.MultiIndex.from_tuples(
     zip([1,1,2,3,4,5], [2,4,3,5,5,1]), 
     names=[TEST_DATA_1.index.name, TEST_DATA_2.index.name])
+
+TEST_INDEX_DEDUP = pd.MultiIndex.from_tuples(
+    zip([1,1,2,3,4,5], [2,4,3,5,5,1]), 
+    names=[TEST_DATA_1.index.name, TEST_DATA_1.index.name])
 
 
 class TestCompare(unittest.TestCase):
 
-    def test_exact_two_series(self):
+    def test_link_exact_basic(self):
 
-        comp = recordlinkage.Compare(TEST_INDEX, TEST_DATA_1, TEST_DATA_2)
+        comp = recordlinkage.Compare(TEST_INDEX_LINKING, TEST_DATA_1, TEST_DATA_2)
 
         # Missing values
         result = comp.exact('name', 'name', name='y_name')
-        expected = pd.Series([0,0,0,0,0,1], index=TEST_INDEX, name='y_name')
+        expected = pd.Series([0,0,0,0,0,1], index=TEST_INDEX_LINKING, name='y_name')
 
         pdt.assert_series_equal(result, expected)
+
+    def test_link_exact_missing(self):
+
+        comp = recordlinkage.Compare(TEST_INDEX_LINKING, TEST_DATA_1, TEST_DATA_2)
+
         # Missing values as 0
         result = comp.exact('name', 'name', missing_value=0, name='y_name')
-        expected = pd.Series([0,0,0,0,0,1], index=TEST_INDEX, name='y_name')
+        expected = pd.Series([0,0,0,0,0,1], index=TEST_INDEX_LINKING, name='y_name')
 
         pdt.assert_series_equal(result, expected)
 
         # Missing values as np.nan
         result = comp.exact('name', 'name', missing_value=np.nan, name='y_name')
-        expected = pd.Series([np.nan,0,np.nan,0,0,1], index=TEST_INDEX, name='y_name')
+        expected = pd.Series([np.nan,0,np.nan,0,0,1], index=TEST_INDEX_LINKING, name='y_name')
 
         pdt.assert_series_equal(result, expected)
 
         # Missing values as np.nan
         result = comp.exact('name', 'name', missing_value=9, name='y_name')
-        expected = pd.Series([9,0,9,0,0,1], index=TEST_INDEX, name='y_name')
+        expected = pd.Series([9,0,9,0,0,1], index=TEST_INDEX_LINKING, name='y_name')
 
         pdt.assert_series_equal(result, expected)
+
+    def test_link_exact_disagree(self):
+
+        comp = recordlinkage.Compare(TEST_INDEX_LINKING, TEST_DATA_1, TEST_DATA_2)
 
         # Missing values 0 and disagreement as 2
         result = comp.exact('name', 'name', disagreement_value=2, missing_value=0, name='y_name')
-        expected = pd.Series([0,2,0,2,2,1], index=TEST_INDEX, name='y_name')
+        expected = pd.Series([0,2,0,2,2,1], index=TEST_INDEX_LINKING, name='y_name')
 
         pdt.assert_series_equal(result, expected)
+
+    def test_dedup_exact_basic(self):
+        
+        comp = recordlinkage.Compare(TEST_INDEX_DEDUP, TEST_DATA_1, TEST_DATA_1)
+
+        # Missing values
+        result = comp.exact('name', 'name', name='y_name')
+        expected = pd.Series([0,0,0,0,0,1], index=TEST_INDEX_DEDUP, name='y_name')
+
+        pdt.assert_series_equal(result, expected)
+       
