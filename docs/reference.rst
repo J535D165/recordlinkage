@@ -45,6 +45,12 @@ Classification algorithms
 .. autoclass:: LogisticRegressionClassifier
 	:members:
 
+Evaluation 
+----------
+
+.. automodule:: measures
+	:members:
+
 Datasets
 --------
 
