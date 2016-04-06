@@ -1,7 +1,7 @@
 # Run in terminal with: sh build.sh
 
 cd docs/
-ipython nbconvert --to rst ../examples/*.ipynb
+jupyter nbconvert --to rst ../examples/*.ipynb
 
 make html
 
