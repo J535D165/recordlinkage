@@ -12,7 +12,10 @@ import em_algorithm_
 from sklearn import cluster, linear_model, naive_bayes, svm
 
 class Classifier(object):
-	""" Base class for classification of records pairs. This class contains methods for training the classifier. Distinguish different types of training, such as supervised and unsupervised learning."""
+	""" Base class for classification of records pairs. 
+
+	This class contains methods for training the classifier. Distinguish different types of training, such as supervised and unsupervised learning.
+	"""
 
 	def __init__(self):
 
@@ -21,36 +24,54 @@ class Classifier(object):
 		# The actual classifier. Maybe this is slightly strange because of inheritance.
 		self.classifier = None
 
-	def learn(self):
-		""" Train the classifer. Sometimes this is done with training data."""
-		pass
+	def learn(self, comparison_vectors, match_index=None):
+		""" Train the classifer. 
+
+		In case of supervised learning, the second argument can be used to label the matches (1) and non-matches (0).
+
+		"""
+
+		raise NotImplementedError("Class %s has no method 'learn()' " % self.__name__)
 
 	def predict(self, comparison_vectors):
-		""" Predict class of comparison vectors """
-		pass
-	
-	# def get_params(self, key):
-	# 	""" Get the parameters """
-	# 	pass
+		""" Predict the class for a set of comparison vectors.
 
-	def prob(self):
-		""" Get the probability of being a true link for each comparison vector """
+		"""
 
-		raise AttributeError("class %s has no method 'prob()' " % self.__name__)
+		raise NotImplementedError("Class %s has no method 'predict()' " % self.__name__)
 
-	# def set_params(self, key, value):
-	# 	""" Set the parameters """
+	def prob(self, comparison_vectors):
+		""" Estimate the probability of being a match.
 
-	# 	self._params[key] = value
+		The method computes the probability for each given record pair of being a match. The probability of a non-match is 1 minus the result. This method is not implemented for all classifiers (for example K-means clustering).
 
-	# def false_positive_probability(self, vectors):
-	# 	pass
+		"""
 
-	# def false_negative_probability(self, vectors):
-	# 	pass
+		raise NotImplementedError("Class %s has no method 'prob()' " % self.__name__)
+
+class DeterministicClassifier(Classifier):
+	""" Base class for deterministic classification of records pairs. 
+
+	This class contains methods for training the classifier. Distinguish different types of training, such as supervised and unsupervised learning.
+	"""
+
+	def __init__(self):
+
+		self._params = {}
+
+class ProbabilisticClassifier(Classifier):
+	""" Base class for probabilistic classification of records pairs. 
+
+	This class contains methods for training the classifier. Distinguish different types of training, such as supervised and unsupervised learning.
+	"""
+
+	def __init__(self):
+
+		self._params = {}
 
 class KMeansClassifier(Classifier):
-	""" 
+	""" A K-means recordli 
+
 	A clusterings algorithm to classify the given record pairs into matches and non-matches.
 	"""
 	def __init__(self, *args, **kwargs):
@@ -59,12 +80,13 @@ class KMeansClassifier(Classifier):
 		self.classifier = cluster.KMeans(n_clusters=2, n_init=1)
 
 	def learn(self, vectors):
-		"""
-		Train the classifier. No labels are needed. 
+		""" Train the K-means classifier. 
+
+		The K-means classifier is unsupervised and therefore does not need labels. The K-means classifier classifies the data into two sets of links and non-links. The starting point of the cluster centers are 0.05 for the non-matches and 0.95 for the matches.
 
 		:param vectors: A dataframe with comparison vectors.  
 
-		:return: A pandas Series with the labels 1:matches and 0:non-matches.
+		:return: A pandas Series with the labels 1 (for the matches) and 0 (for the non-matches). 
 		:rtype: pandas.Series
 
 		"""
@@ -74,15 +96,16 @@ class KMeansClassifier(Classifier):
 		# print self.class
 		self.classifier.fit(vectors.as_matrix())
 
-		# return pd.Series(self.classifier.labels_, index=vectors.index, name='classification')
+		return self
 
 	def predict(self, vectors):
-		"""
-		Predict the class of a set of comparison vectors. Training the classifier first is required.
+		""" Predict the class for a set of comparison vectors. 
+
+		After training the classifiers, this method can be used to classify comparison vectors for which the class is unknown. 
 
 		:param vectors: A dataframe with comparison vectors.  
 
-		:return: A pandas Series with the labels 1:matches and 0:non-matches.
+		:return: A pandas Series with the labels 1 (for the matches) and 0 (for the non-matches). 
 		:rtype: pandas.Series
 
 		"""		
@@ -90,7 +113,7 @@ class KMeansClassifier(Classifier):
 
 		return pd.Series(prediction, index=vectors.index, name='classification')
 
-class LogisticRegressionClassifier(Classifier):
+class LogisticRegressionClassifier(DeterministicClassifier):
 
 	def __init__(self, *args, **kwargs):
 		super(self.__class__, self).__init__(*args, **kwargs)
@@ -102,24 +125,22 @@ class LogisticRegressionClassifier(Classifier):
 		train_series = pd.Series(False, index=vectors.index)
 		train_series.loc[match_index & vectors.index] = True
 
-		# print self.class
 		self.classifier.fit(vectors.as_matrix(), np.array(train_series))
 
-		# return pd.Series(self.classifier.labels_, index=vectors.index, name='classification')
+		return self
 
 	def predict(self, vectors):
 		
 		prediction = self.classifier.predict(vectors.as_matrix())
-		prediction_bool = prediction.astype(bool)
 
-		return vectors.index[prediction_bool], vectors.index[~prediction_bool]
+		return vectors.index[prediction.astype(bool)]
 
-	def prob(self, vectors, column_labels=['prob_link', 'prob_nonlink']):
+	def prob(self, vectors):
 		probs = self.classifier.predict_proba(vectors.as_matrix())
 
-		return pd.DataFrame(probs, columns=column_labels, index=vectors.index)
+		return pd.Series(probs[0,:], index=vectors.index)
 
-class BernoulliNBClassifier(Classifier):
+class BernoulliNBClassifier(ProbabilisticClassifier):
 
 	def __init__(self, *args, **kwargs):
 		super(self.__class__, self).__init__(*args, **kwargs)
@@ -131,22 +152,20 @@ class BernoulliNBClassifier(Classifier):
 		train_series = pd.Series(False, index=vectors.index)
 		train_series.loc[match_index & vectors.index] = True
 
-		# print self.class
 		self.classifier.fit(vectors.as_matrix(), np.array(train_series))
 
-		# return pd.Series(self.classifier.labels_, index=vectors.index, name='classification')
+		return self
 
 	def predict(self, vectors):
 		
 		prediction = self.classifier.predict(vectors.as_matrix())
-		prediction_bool = prediction.astype(bool)
 
-		return vectors.index[prediction_bool], vectors.index[~prediction_bool]
+		return vectors.index[prediction.astype(bool)]
 
-	def prob(self, vectors, column_labels=['prob_link', 'prob_nonlink']):
+	def prob(self, vectors):
 		probs = self.classifier.predict_proba(vectors.as_matrix())
 
-		return pd.DataFrame(probs, columns=column_labels, index=vectors.index)
+		return pd.Series(probs[0,:], index=vectors.index)
 
 class SVMClassifier(Classifier):
 
@@ -162,75 +181,46 @@ class SVMClassifier(Classifier):
 
 		self.classifier.fit(vectors.as_matrix(), np.array(train_series))
 
+		return self
+
 	def predict(self, vectors):
 		
 		prediction = self.classifier.predict(vectors.as_matrix())
-		prediction_bool = prediction.astype(bool)
 
-		return vectors.index[prediction_bool], vectors.index[~prediction_bool]
+		return vectors.index[prediction.astype(bool)]
 
-class ExpectationMaximisationClassifier(Classifier):
+class BernoulliEMClassifier(ProbabilisticClassifier):
 	"""Expectation Maximisation classifier in combination with Fellegi and Sunter model"""
 	
-	def __init__(self, method='ecm', random_decisions=False, p_init=None, *args, **kwargs):
+	def __init__(self, *args, **kwargs):
 		super(self.__class__, self).__init__(*args, **kwargs)
 
-		self.method = method
-		self.random_decisions = random_decisions
-		self.p_init = p_init
+		self.classifier = em_algorithm_.ECMEstimate()
 
-		if method == 'ecm':
-			self.classifier = em_algorithm_.ECMEstimate()
-		else:
-			raise ValueError("Method '%s' is unknown." % method)
+	def learn(self, vectors, params_init=None):
 
-	def learn(self, vectors):
-
-		# No initial parameters
-		if self.p_init==None:
-
-			# The chosen method is ecm
-			if self.method == 'ecm':
-
-				default_params = {
-					'p': 0.05,
-					'm': {feature: {0: 0.1, 1:0.9} for feature in list(vectors)},
-					'u': {feature: {0: 0.9, 1:0.1} for feature in list(vectors)}
-				}
-
-		self.classifier.p_init = default_params
+		# Default parameters
+		if not params_init:
+			params_init = {
+				'p': 0.05,
+				'm': {feature: {0: 0.1, 1:0.9} for feature in list(vectors)},
+				'u': {feature: {0: 0.9, 1:0.1} for feature in list(vectors)}
+			}
+			
+		self.classifier.p_init = params_init
 
 		# Start training the classifier
-		self.classifier.estimate(vectors)
+		self.classifier.train(vectors)
 
-		# Compute
-		return self._classify(vectors)
+		return self
 
 	def predict(self, vectors, *args, **kwargs):
 
-		return self._classify(vectors, *args, **kwargs)
+		return self.classifier.predict_proba(vectors.as_matrix(), *args, **kwargs)
 
-	def prob(self, vectors, *args, **kwargs):
+	def prob(self, vectors):
+		
+		probs = self.classifier.predict_proba(vectors.as_matrix())
 
-		return self._classify(vectors, *args, **kwargs)
+		return pd.Series(probs[0,:], index=vectors.index)
 
-	def _classify(self, vectors, p_match=None, p_nonmatch=None):
-
-		vectors_unique, vector_counts = self.classifier._count_vectors(vectors)
-
-		prob_vectors_unique = self.classifier._expectation(vectors_unique)
-
-		N_match = np.floor(len(vectors)*self.classifier.p_init['p'])
-
-		if not (vector_counts.sort_values(ascending=True).cumsum() == N_match).any():
-			p_match = prob_vectors_unique[prob_vectors_unique > p_match]
-
-		if not (vector_counts.cumsum(ascending=False) == N_match).any():
-			p_nonmatch = prob_vectors_unique[prob_vectors_unique > p_nonmatch].tail(1)
-
-		p_vectors = self.classifier._expectation(vectors)
-
-		prediction = (p_vectors > p_match).astype(int)
-		prediction.loc[(p_vectors < p_match) & (p_vectors > p_nonmatch)] = 9 # Unknown
-
-		return pd.Series(prediction, index=vectors.index, name='classification')
