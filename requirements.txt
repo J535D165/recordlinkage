@@ -1,0 +1,3 @@
+###### Requirements ######
+pandas
+numpy
