@@ -1,12 +1,10 @@
 # recordlinkage
 
-## Package is being re-developed. Advice: do not use it. 
+This *recordlinkage* package is a library to link records in or between data sources. The package provides most of the tools needed for record linkage. The package contains indexing methods, functions to compare records and classifiers. The package is developed for research and linking of small or medium sized files. 
 
-This package, **recordlinkage**, is a Python package to link records in or between datasources. The package provides a set of additonal tools needed for record linkage such as indexing methods and similarity measures. The package is developed for research and linking of small or medium sized files. 
+This project is inspired by the **Freely Extensible Biomedical Record Linkage (FEBRL)** project, which is a great project. This project has one big difference, it uses ``pandas`` and ``numpy`` for data handling and computations. The use of ``pandas``, a flexible and powerful data analysis and manipulation library for Python,  makes the record linkage process much easier. A lot of built in ``pandas`` methods can be used to integrate your record linkage directly into existing data manipulation projects.  
 
-This project is inspired on the **Freely Extensible Biomedical Record Linkage (FEBRL)** project, which is a great project. This project takes advence of the **pandas** package. This flexible and powerful data analysis and manipulation library for Python makes the record linkage process much easier. 
-
-One of the aims of this project is to make it easy to implement your own extensions for your own projects. Extensions like custom indeixng methods and data comparison methods. 
+One of the aims of this project is to make an extensible record linkage framework. It is easy to include your own indexing algorithms, comparison/similarity measures and classifiers. 
 
 ## Simple linking example
 Import the ``recordlinkage`` module that contains all important tools for the linking of records. Also import two **pandas** dataframes with example data named ``censusdataA`` and ``censusdataB``. 
