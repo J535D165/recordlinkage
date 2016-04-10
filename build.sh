@@ -4,6 +4,7 @@
 cd docs/
 jupyter nbconvert --to rst ../examples/*.ipynb
 
+make clean
 make html
 make latexpdf
 
