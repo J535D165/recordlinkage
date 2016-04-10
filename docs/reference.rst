@@ -4,19 +4,20 @@ Reference
 standardise data
 ----------------
 
-.. automodule:: standardise
+.. automodule:: recordlinkage.standardise
 	:members:
 
-.. automodule:: standardise.cleaning
+.. automodule:: recordlinkage.standardise.cleaning
 	:members:
 
-.. automodule:: standardise.encoding
+.. automodule:: recordlinkage.standardise.encoding
 	:members:
+
 
 Make record pairs
 -----------------
 
-.. automodule:: indexing
+.. automodule:: recordlinkage.indexing
 	:members:
 
 .. autoclass:: Pairs
@@ -25,7 +26,7 @@ Make record pairs
 Comparing record pairs
 ----------------------
 
-.. automodule:: comparing
+.. automodule:: recordlinkage.comparing
 
 .. autoclass:: Compare
 	:members:
@@ -33,7 +34,7 @@ Comparing record pairs
 Classification algorithms 
 -------------------------
 
-.. automodule:: classifier
+.. automodule:: recordlinkage.classifier
 	:members:
 
 .. autoclass:: Classifier
@@ -47,12 +48,14 @@ Classification algorithms
 
 Evaluation 
 ----------
+Evaluation of classifications plays an important role in record linkage. 
 
-.. automodule:: measures
+.. automodule:: recordlinkage.measures
 	:members:
 
 Datasets
 --------
 
-.. automodule:: datasets
-	:members:
+This package contains some example datasets that can be used for experiments. For example a dataset of comparison vectors and their labels for a cancer research. It is also possible to generate fake datasets. 
+
+.. autofunction:: recordlinkage.datasets.krebsregister_cmp_data
