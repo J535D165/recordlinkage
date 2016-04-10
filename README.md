@@ -19,7 +19,7 @@ dfA = pandas.DataFrame(YOUR_FIRST_DATASET)
 dfB = pandas.DataFrame(YOUR_SECOND_DATASET)
 ```
 
-Next, we are going to decide which record pairs are interesting to evaluate fully. This is done by making a ``pandas.core.index.MultiIndex``.
+Next, we are going to decide which record pairs are interesting to evaluate fully. This is done by making a ``pandas.MultiIndex``.
 
 ```python
 index = recordlinkage.Index(dfA, dfB)
@@ -54,19 +54,17 @@ The main features of the **recordlinkage** package are:
 
   - Clean and standardise data
   - Make pairs of records with several indexing methods such as **blocking** and **sorted neighbourhood indexing**
-  - Compare characteristics with a large number of comparison functions
-  - Approximate string comparison methods such as jaro-winkler distance and levenshtein distance 
-  - Fellegi and Sunter (1969) classifier implemented
-  - Expectation-Conditional Maximisation algoritm implemented to estimate parameters for the Fellegi and Sunter framework
+  - Compare records with a large number of comparison and similarity functions (for example: the jaro-winkler and levenshtein distance)
+  - Several classifications algorithms, both supervised and unsupervised algorithms. 
 
 ## Dependencies, installation and license
 The following packages are required. You probably have it already ;)
-- [NumPy](http://www.numpy.org): 1.7.0 or higher
-- [Pandas](https://github.com/pydata/pandas): 0.17.0 or higher
+- [numpy](http://www.numpy.org): 1.7.0 or higher
+- [pandas](https://github.com/pydata/pandas): 0.17.0 or higher
+- [sklearn](http://scikit-learn.org/)
 
-The following packages are optional
+The following packages are recommanded
 - [jellyfish](https://github.com/jamesturk/jellyfish): Needed for approximate string comparison. Version 0.5.0 or higher.
-- [matplotlib](http://matplotlib.sourceforge.net/): Plotting graphs.
 
 It is not possible to install the package with ``pip``. You can download or clone the **recordlinkage** project and install it in the normal way
 
