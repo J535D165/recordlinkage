@@ -10,7 +10,7 @@ setup(
 	platforms="any",
 	description="A tool to link or deduplicate small or medium sized datasets.",
 	url="https://github.com/J535D165/recordlinkage",
-	install_requires=["pandas", "numpy", "jellyfish"],
+	install_requires=["pandas", "numpy", "sklearn"],
 	packages=['recordlinkage', 'recordlinkage.datasets', 'recordlinkage.standardise'],
 	include_package_data=True,
 	package_dir={'recordlinkage': 'recordlinkage'},
