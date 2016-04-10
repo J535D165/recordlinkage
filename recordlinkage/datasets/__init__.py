@@ -4,8 +4,6 @@ import numpy
 
 import os
 
-from make_datasets import _krebsregister_block
-
 try:
 	from faker import Faker
 except ImportError:
