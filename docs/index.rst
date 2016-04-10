@@ -14,8 +14,3 @@ Ready to start linking records? For deduplication or linking between datasets? T
 
 
 
-Reference 
-=========
-
-* :ref:`genindex`
-
