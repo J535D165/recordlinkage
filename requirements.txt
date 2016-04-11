@@ -1,5 +1,4 @@
 ###### Requirements ######
 numpy >= 1.7.1
 pandas >= 0.16.0
-scipy >= 0.9
-sklearn
+scipy
