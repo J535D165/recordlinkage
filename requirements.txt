@@ -1,5 +1,0 @@
-###### Requirements ######
-numpy >= 1.7.1
-pandas >= 0.16.0
-scipy
-sklearn
