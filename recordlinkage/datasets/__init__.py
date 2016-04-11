@@ -9,9 +9,11 @@ try:
 except ImportError:
 	print ('Faker is not installed. Therefore, the functionalities of this module are limited.')
 
-def krebsregister_cmp_data(block=1):
+def krebsregister_cmp_data(*args, **kwargs):
 
 	"""
+	krebsregister_cmp_data(block=1)
+
 	This dataset of comparison patterns was obtained in a epidemiological
 	cancer study in Germany. The comparison patterns were created by the
 	Institute for Medical Biostatistics, Epidemiology and Informatics (IMBEI)
@@ -53,7 +55,7 @@ def krebsregister_cmp_data(block=1):
 
 	try:
 		from rldatasets import krebsregister_cmp_data
-		return krebsregister_cmp_data(block=1)
+		return krebsregister_cmp_data(*args, **kwargs)
 
 	except ImportError:
 		print("Install recordlinkage-datasets to use this dataset.")
