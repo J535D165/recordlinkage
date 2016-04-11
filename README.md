@@ -70,7 +70,7 @@ The main features of the **recordlinkage** package are:
   - Several classifications algorithms, both supervised and unsupervised algorithms. 
 
 ## Documentation, dependencies, installation and license
-The most recent documentation can be found at [http://recordlinkage.readthedocs.org/en/latest/](recordlinkage.readthedocs.org).
+The most recent documentation can be found at [recordlinkage.readthedocs.org](http://recordlinkage.readthedocs.org/en/latest/).
 
 The following packages are required. You probably have it already ;)
 - [numpy](http://www.numpy.org): 1.7.0 or higher

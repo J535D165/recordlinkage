@@ -106,7 +106,7 @@ Documentation, dependencies, installation and license
 -----------------------------------------------------
 
 The most recent documentation can be found at
-`http://recordlinkage.readthedocs.org/en/latest/ <recordlinkage.readthedocs.org>`__.
+`recordlinkage.readthedocs.org <http://recordlinkage.readthedocs.org/en/latest/>`__.
 
 The following packages are required. You probably have it already ;)
 
