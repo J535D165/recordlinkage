@@ -9,10 +9,54 @@ try:
 except ImportError:
 	print ('Faker is not installed. Therefore, the functionalities of this module are limited.')
 
-try:
-	from rldatasets import *
-except ImportError:
-	pass
+def krebsregister_cmp_data(block=1):
+
+	"""
+	This dataset of comparison patterns was obtained in a epidemiological
+	cancer study in Germany. The comparison patterns were created by the
+	Institute for Medical Biostatistics, Epidemiology and Informatics (IMBEI)
+	and the University Medical Center of Johannes Gutenberg University
+	(Mainz, Germany). The dataset is available for research online.
+
+		*"The records represent individual data including first and  family
+		name, sex, date of birth and postal code, which were collected through
+		iterative insertions in the course of several years. The comparison
+		patterns in this data set are based on a sample of 100.000 records
+		dating from 2005 to 2008. Data pairs were classified as "match" or
+		"non-match" during  an extensive manual review where several
+		documentarists were involved.  The resulting classification formed the
+		basis for assessing the quality of the registry's own record linkage
+		procedure.*
+
+		*In order to limit the amount of patterns a blocking procedure was
+		applied, which selects only record pairs that meet specific agreement
+		conditions. The results of the following six blocking iterations were
+		merged together:* 
+
+		1. *Phonetic equality of first name and family name, equality of date of birth.*
+		2. *Phonetic equality of first name, equality of day of birth.*
+		3. *Phonetic equality of first name, equality of month of birth.*
+		4. *Phonetic equality of first name, equality of year of birth.*
+		5. *Equality of complete date of birth.*
+		6. *Phonetic equality of family name, equality of sex.*
+
+		*This procedure resulted in 5.749.132 record pairs, of which 20.931 are
+		matches. The data set is split into 10 blocks of (approximately) equal
+		size and ratio of matches to non-matches."*
+
+	:param block: An integer or a list with integers between 1 and 10. The blocks are the blocks explained in the description.
+
+	:return: A data frame with comparison vectors and a multi index with the indices of the matches.  
+	:rtype: (pandas.DataFrame, pandas.MultiIndex)
+
+	"""
+
+	try:
+		from rldatasets import krebsregister_cmp_data
+		return krebsregister_cmp_data(block=1)
+
+	except ImportError:
+		print("Install recordlinkage-datasets to use this dataset.")
 
 def load_censusA():
 
