@@ -1,26 +1,20 @@
 from __future__ import division
 
-import pandas as pd
-import numpy as np
+import pandas
+import numpy
 
 def _randomindex(A,B, N_pairs, random_state=None):
 
-	random_index_A = np.random.choice(A.index.values, N_pairs)
-	random_index_B = np.random.choice(B.index.values, N_pairs)
+	random_index_A = numpy.random.choice(A.index.values, N_pairs)
+	random_index_B = numpy.random.choice(B.index.values, N_pairs)
 
-	index = pd.MultiIndex.from_tuples(zip(random_index_A, random_index_B), names=[A.index.name, B.index.name])
+	index = pandas.MultiIndex.from_tuples(zip(random_index_A, random_index_B), names=[A.index.name, B.index.name])
 
 	return index.drop_duplicates()
 
 def _fullindex(A, B):
 
-	# merge_col is used to make a full index.
-	A_merge = pd.DataFrame({'merge_col':1, A.index.name: A.index.values})
-	B_merge = pd.DataFrame({'merge_col':1, B.index.name: B.index.values})
-
-	pairs = A_merge.merge(B_merge, how='inner', on='merge_col').set_index([A.index.name, B.index.name])
-
-	return pairs.index
+	return pandas.MultiIndex.from_product([A.index.values, B.index.values], names=[A.index.name, B.index.name])
 
 def _blockindex(A, B, on=None, left_on=None, right_on=None):
 
@@ -41,14 +35,14 @@ def _sortedneighbourhood(A, B, column, window=3, sorting_key_values=None, on=[],
 	if sorting_key_values is None:
 		sorting_key_values = A[column].append(B[column])
 
-	factors = pd.Series(pd.Series(sorting_key_values).unique())
+	factors = pandas.Series(pandas.Series(sorting_key_values).unique())
 	factors.sort_values(inplace=True)
 
-	factors = factors[factors.notnull()].values # Remove possible np.nan values. They are not replaced in the next step.
-	factors_label = np.arange(len(factors))
+	factors = factors[factors.notnull()].values # Remove possible numpy.nan values. They are not replaced in the next step.
+	factors_label = numpy.arange(len(factors))
 
-	sorted_df_A = pd.DataFrame({column:A[column].replace(factors, factors_label), A.index.name: A.index.values})
-	sorted_df_B = pd.DataFrame({column:B[column].replace(factors, factors_label), B.index.name: B.index.values})
+	sorted_df_A = pandas.DataFrame({column:A[column].replace(factors, factors_label), A.index.name: A.index.values})
+	sorted_df_B = pandas.DataFrame({column:B[column].replace(factors, factors_label), B.index.name: B.index.values})
 
 	pairs_concat = None
 
@@ -57,7 +51,7 @@ def _sortedneighbourhood(A, B, column, window=3, sorting_key_values=None, on=[],
 
 	for w in range(-_window, _window+1):
 
-		pairs = sorted_df_A.merge(pd.DataFrame({column:sorted_df_B[column]+w, B.index.name: B.index.values}), on=column, how='inner').set_index([A.index.name, B.index.name])
+		pairs = sorted_df_A.merge(pandas.DataFrame({column:sorted_df_B[column]+w, B.index.name: B.index.values}), on=column, how='inner').set_index([A.index.name, B.index.name])
 
 		# Append pairs to existing ones. PANDAS BUG workaround
 		pairs_concat = pairs.index if pairs_concat is None else pairs.index.append(pairs_concat)
@@ -115,7 +109,7 @@ class Pairs(object):
 		# If deduplication, remove the record pairs that are already included. For example: (a1, a1), (a1, a2), (a2, a1), (a2, a2) results in (a1, a2) or (a2, a1)
 		elif self.deduplication:
 
-			B = pd.DataFrame(self.A, index=pd.Index(self.A.index, name=str(self.A.index.name) + '_'))
+			B = pandas.DataFrame(self.A, index=pandas.Index(self.A.index, name=str(self.A.index.name) + '_'))
 
 			pairs = index_func(self.A, B, *args, **kwargs)
 
@@ -208,7 +202,7 @@ class Pairs(object):
 		column = args[2] # The argument after the two block size values
 
 		# The unique values of both dataframes are passed as an argument. 
-		sorting_key_values = np.sort(np.unique(np.append(self.A[column].values, self.B[column].values)))
+		sorting_key_values = numpy.sort(numpy.unique(numpy.append(self.A[column].values, self.B[column].values)))
 
 		return self.iterindex(_sortedneighbourhood, *args, sorting_key_values=sorting_key_values, **kwargs)
 
@@ -228,13 +222,13 @@ class Pairs(object):
 		if self.deduplication:
 			len_block_A = len_block_A if len_block_A else len(self.A) 
 			
-			blocks = [(a,a, a+len_block_A, a+len_block_A) for a in np.arange(0, len(self.A), len_block_A) for a in np.arange(0, len(self.A), len_block_A) ]
+			blocks = [(a,a, a+len_block_A, a+len_block_A) for a in numpy.arange(0, len(self.A), len_block_A) for a in numpy.arange(0, len(self.A), len_block_A) ]
 
 		else:
 			len_block_A = len_block_A if len_block_A else len(self.A) 
 			len_block_B = len_block_B if len_block_B else len(self.B) 
 			
-			blocks = [(a,b, a+len_block_A, b+len_block_B) for a in np.arange(0, len(self.A), len_block_A) for b in np.arange(0, len(self.B), len_block_B) ]
+			blocks = [(a,b, a+len_block_A, b+len_block_B) for a in numpy.arange(0, len(self.A), len_block_A) for b in numpy.arange(0, len(self.B), len_block_B) ]
 
 		# Reset the number of pairs counter
 		self.n_pairs = 0
@@ -242,7 +236,7 @@ class Pairs(object):
 		for bl in blocks:
 
 			if self.deduplication: # Deduplication
-				pairs_block_class = Pairs(self.A[bl[0]:bl[2]], pd.DataFrame(self.A, index=pd.Index(self.A.index, name=self.A.index.name + '_')))
+				pairs_block_class = Pairs(self.A[bl[0]:bl[2]], pandas.DataFrame(self.A, index=pandas.Index(self.A.index, name=self.A.index.name + '_')))
 				pairs_block = pairs_block_class.index(index_func, *args, **kwargs)
 				pairs_block = pairs_block[pairs_block.get_level_values(0) < pairs_block.get_level_values(1)]
 	
