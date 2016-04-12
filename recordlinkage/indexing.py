@@ -3,14 +3,34 @@ from __future__ import division
 import pandas
 import numpy
 
-def _randomindex(A,B, N_pairs, random_state=None):
+def _randomindex(A,B, n_pairs):
 
-	random_index_A = numpy.random.choice(A.index.values, N_pairs)
-	random_index_B = numpy.random.choice(B.index.values, N_pairs)
+	if n_pairs <= 0 and type(n_pairs) is not int:
+		raise ValueError("n_pairs must be an positive integer")
 
-	index = pandas.MultiIndex.from_tuples(zip(random_index_A, random_index_B), names=[A.index.name, B.index.name])
+	if n_pairs < 0.25*len(A)*len(B):
 
-	return index.drop_duplicates()
+		n_count = 0
+
+		while n_count < n_pairs:
+
+			random_index_A = numpy.random.choice(A.index.values, n_pairs-n_count)
+			random_index_B = numpy.random.choice(B.index.values, n_pairs-n_count)
+
+			sub_ind = pandas.MultiIndex.from_arrays([random_index_A, random_index_B], names=[A.index.name, B.index.name])
+
+			ind = sub_ind if n_count == 0 else ind.append(sub_ind)
+			ind = ind.drop_duplicates()
+
+			n_count = len(ind)
+
+		return ind
+
+	else:
+
+		full_index = _fullindex(A,B)
+
+		return full_index[numpy.random.choice(numpy.arange(len(full_index)), n_pairs, replace=False)]
 
 def _fullindex(A, B):
 
@@ -59,7 +79,11 @@ def _sortedneighbourhood(A, B, column, window=3, sorting_key_values=None, on=[],
 	return pairs_concat
 
 class Pairs(object):
-	""" Pairs class is used to make pairs of records to analyse in the comparison step. """	
+	""" 
+
+	Pairs class is used to make pairs of records to analyse in the comparison step. 
+
+	"""	
 
 	def __init__(self, dataframe_A, dataframe_B=None):
 
@@ -122,7 +146,18 @@ class Pairs(object):
 		return pairs
 
 	def random(self, *args, **kwargs):
-		""" Make an index of random record pairs. 
+		""" 
+		random(A,B, n_pairs)
+
+		Make an index of randomly selected record pairs. 
+
+		:param A: The first DataFrame. 
+		:param B: The second DataFrame.
+		:param n_pairs: The number of record pairs to return. The integer n_pairs should satisfy 0 < n_pairs <= len(A)*len(B).
+
+		:type A: pandas.DataFrame
+		:type B: pandas.DataFrame
+		:type n_pairs: int
 
 		:return: A MultiIndex
 		:rtype: pandas.MultiIndex
@@ -130,9 +165,22 @@ class Pairs(object):
 		return self.index(_randomindex, *args, **kwargs)
 
 	def block(self, *args, **kwargs):
-		""" Make an index were one or more specified attributes are identical.
+		""" 
+		block(A, B, on=None, left_on=None, right_on=None)
 
-		:param columns: A column name or a list of column names. These columns are used to block on. 
+		Make an index of record pairs agreeing on one or more specified attributes.
+
+		:param A: The first DataFrame. 
+		:param B: The second DataFrame.
+		:param on: A column name or a list of column names. These columns are used to block on. 
+		:param left_on: A column name or a list of column names of dataframe A. These columns are used to block on. 
+		:param right_on: A column name or a list of column names of dataframe B. These columns are used to block on. 
+
+		:type A: pandas.DataFrame
+		:type B: pandas.DataFrame
+		:type on: label
+		:type left_on: label
+		:type right_on: label
 
 		:return: A MultiIndex
 		:rtype: pandas.MultiIndex
@@ -140,7 +188,16 @@ class Pairs(object):
 		return self.index(_blockindex, *args, **kwargs)
 
 	def full(self, *args, **kwargs):
-		""" Make an index with all possible record pairs. In case of linking two dataframes of length N and M, the number of pairs is N*M. In case of deduplicating a dataframe with N records, the number of pairs is N*(N-1)/2. 
+		""" 
+		full(A, B)
+
+		Make an index with all possible record pairs. In case of linking two dataframes (A and B), the number of pairs is len(A)*len(B). In case of deduplicating a dataframe A, the number of pairs is len(A)*(len(A)-1)/2. 
+
+		:param A: The first DataFrame. 
+		:param B: The second DataFrame.
+
+		:type A: pandas.DataFrame
+		:type B: pandas.DataFrame
 
 		:return: A MultiIndex
 		:rtype: pandas.MultiIndex
@@ -148,14 +205,28 @@ class Pairs(object):
 		return self.index(_fullindex, *args, **kwargs)
 
 	def sortedneighbourhood(self, *args, **kwargs):
-		"""Return a Sorted Neighbourhood index.  
+		"""
+		sortedneighbourhood(A, B, sorting_key, window=3, sorting_key_values=None, on=[], left_on=[], right_on=[])
 
-		:param column: Specify the column to make a sorted index. 
+		Create a Sorted Neighbourhood index. 
+
+		:param A: The first DataFrame. 
+		:param B: The second DataFrame.
+		:param sorting_key: Specify the column to make a sorted index. 
 		:param window: The width of the window, default is 3. 
-		:param suffixes: The suffixes to extend the column names with. 
-		:param blocking_on: Additional columns to use standard blocking on. 
-		:param left_blocking_on: Additional columns in the left dataframe to use standard blocking on. 
-		:param right_blocking_on: Additional columns in the right dataframe to use standard blocking on. 
+		:param sorting_key_values: A list of sorting key values (optional).
+		:param on: Additional columns to use standard blocking on. 
+		:param left_on: Additional columns in the left dataframe to use standard blocking on. 
+		:param right_on: Additional columns in the right dataframe to use standard blocking on. 
+
+		:type A: pandas.DataFrame
+		:type B: pandas.DataFrame
+		:type sorting_key: label 
+		:type window: int
+		:type sorting_key_values: array
+		:type on: label
+		:type left_on: label
+		:type right_on: label 
 
 		:return: A MultiIndex
 		:rtype: pandas.MultiIndex
