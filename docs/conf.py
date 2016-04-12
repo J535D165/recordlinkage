@@ -294,3 +294,9 @@ texinfo_domain_indices = False
 
 # If true, do not generate a @detailmenu in the "Top" node's menu.
 #texinfo_no_detailmenu = False
+
+# -- Additional options ---------------------------------------------------
+
+autodoc_member_order = 'bysource' 
+
+
