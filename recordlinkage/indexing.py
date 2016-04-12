@@ -153,7 +153,7 @@ class Pairs(object):
 
 		Make an index with all possible record pairs. In case of linking two dataframes (A and B), the number of pairs is len(A)*len(B). In case of deduplicating a dataframe A, the number of pairs is len(A)*(len(A)-1)/2. 
 
-		:return: A MultiIndex
+		:return: The index of the candidate record pairs
 		:rtype: pandas.MultiIndex
 		"""
 		return self.index(_fullindex, *args, **kwargs)
@@ -172,7 +172,7 @@ class Pairs(object):
 		:type left_on: label
 		:type right_on: label
 
-		:return: A MultiIndex
+		:return: The index of the candidate record pairs
 		:rtype: pandas.MultiIndex
 		"""		
 		return self.index(_blockindex, *args, **kwargs)
@@ -197,7 +197,7 @@ class Pairs(object):
 		:type left_on: label
 		:type right_on: label 
 
-		:return: A MultiIndex
+		:return: The index of the candidate record pairs
 		:rtype: pandas.MultiIndex
 		"""
 		return self.index(_sortedneighbourhood, *args, **kwargs)
@@ -212,7 +212,7 @@ class Pairs(object):
 
 		:type n_pairs: int
 
-		:return: A MultiIndex
+		:return: The index of the candidate record pairs
 		:rtype: pandas.MultiIndex
 		"""		
 		return self.index(_randomindex, *args, **kwargs)
@@ -226,7 +226,7 @@ class Pairs(object):
 		:param len_block_a: The length of a block of records in dataframe A. 
 		:param len_block_b: The length of a block of records in dataframe B (only used when linking two datasets).
 
-		:return: A MultiIndex
+		:return: The index of the candidate record pairs
 		:rtype: pandas.MultiIndex
 		"""
 		
@@ -272,7 +272,7 @@ class Pairs(object):
 		:type len_block_a: int
 		:type len_block_b: int
 
-		:return: A MultiIndex
+		:return: The index of the candidate record pairs
 		:rtype: pandas.MultiIndex
 		"""
 		return self.iterindex(_fullindex, *args, **kwargs)
@@ -297,7 +297,7 @@ class Pairs(object):
 
 		:param columns: A column name or a list of column names. These columns are used to block on. 
 
-		:return: A MultiIndex
+		:return: The index of the candidate record pairs
 		:rtype: pandas.MultiIndex
 		"""		
 		return self.iterindex(_blockindex, *args, **kwargs)
@@ -326,7 +326,7 @@ class Pairs(object):
 		:type left_on: label
 		:type right_on: label 
 
-		:return: A MultiIndex
+		:return: The index of the candidate record pairs
 		:rtype: pandas.MultiIndex
 		"""
 		column = args[2] # The argument after the two block size values
