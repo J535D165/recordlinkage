@@ -18,7 +18,6 @@ Make record pairs
 -----------------
 
 .. automodule:: recordlinkage.indexing
-	:members:
 
 .. autoclass:: Pairs
 	:members:
