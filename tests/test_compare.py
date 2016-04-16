@@ -75,7 +75,7 @@ class TestCompare(unittest.TestCase):
         comp = recordlinkage.Compare(TEST_INDEX_LINKING, TEST_DATA_1, TEST_DATA_2)
 
         # Missing values 0 and disagreement as 2
-        result = comp.exact('name', 'name', disagreement_value=2, missing_value=0, name='y_name')
+        result = comp.exact('name', 'name', disagree_value=2, missing_value=0, name='y_name')
         expected = pd.Series([0,2,0,2,2,1], index=TEST_INDEX_LINKING, name='y_name')
 
         pdt.assert_series_equal(result, expected)
@@ -88,5 +88,12 @@ class TestCompare(unittest.TestCase):
         result = comp.exact('name', 'name', name='y_name')
         expected = pd.Series([0,0,0,0,0,1], index=TEST_INDEX_DEDUP, name='y_name')
 
+
         pdt.assert_series_equal(result, expected)
        
+    def test_fuzzy_does_not_exist(self):
+        
+        comp = recordlinkage.Compare(TEST_INDEX_DEDUP, TEST_DATA_1, TEST_DATA_1)
+
+        self.assertRaises(ValueError, comp.fuzzy, 'name', 'name', name='y_name', method='unknown_algorithm')
+
