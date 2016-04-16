@@ -1,7 +1,8 @@
-Welcome to the documentation of the Record Linkage Toolkit!
-===========================================================
 
-Ready to start linking records? For deduplication or linking between datasets? The following contents will be discussed:
+.. include:: README.rst
+
+Overview
+--------
 
 .. toctree::
 
@@ -13,9 +14,4 @@ Ready to start linking records? For deduplication or linking between datasets? T
 
 
 
-
-Reference 
-=========
-
-* :ref:`genindex`
 

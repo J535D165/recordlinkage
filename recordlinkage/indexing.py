@@ -1,37 +1,51 @@
 from __future__ import division
 
-import pandas as pd
-import numpy as np
+import pandas
+import numpy
 
-def _randomindex(A,B, N_pairs, random_state=None):
+def _randomindex(df_a,df_b, n_pairs):
 
-	random_index_A = np.random.choice(A.index.values, N_pairs)
-	random_index_B = np.random.choice(B.index.values, N_pairs)
+	if n_pairs <= 0 and type(n_pairs) is not int:
+		raise ValueError("n_pairs must be an positive integer")
 
-	index = pd.MultiIndex.from_tuples(zip(random_index_A, random_index_B), names=[A.index.name, B.index.name])
+	if n_pairs < 0.25*len(df_a)*len(df_b):
 
-	return index.drop_duplicates()
+		n_count = 0
 
-def _fullindex(A, B):
+		while n_count < n_pairs:
 
-	# merge_col is used to make a full index.
-	A_merge = pd.DataFrame({'merge_col':1, A.index.name: A.index.values})
-	B_merge = pd.DataFrame({'merge_col':1, B.index.name: B.index.values})
+			random_index_a = numpy.random.choice(df_a.index.values, n_pairs-n_count)
+			random_index_b = numpy.random.choice(df_b.index.values, n_pairs-n_count)
 
-	pairs = A_merge.merge(B_merge, how='inner', on='merge_col').set_index([A.index.name, B.index.name])
+			sub_ind = pandas.MultiIndex.from_arrays([random_index_a, random_index_b], names=[df_a.index.name, df_b.index.name])
 
-	return pairs.index
+			ind = sub_ind if n_count == 0 else ind.append(sub_ind)
+			ind = ind.drop_duplicates()
 
-def _blockindex(A, B, on=None, left_on=None, right_on=None):
+			n_count = len(ind)
+
+		return ind
+
+	else:
+
+		full_index = _fullindex(df_a,df_b)
+
+		return full_index[numpy.random.choice(numpy.arange(len(full_index)), n_pairs, replace=False)]
+
+def _fullindex(df_a, df_b):
+
+	return pandas.MultiIndex.from_product([df_a.index.values, df_b.index.values], names=[df_a.index.name, df_b.index.name])
+
+def _blockindex(df_a, df_b, on=None, left_on=None, right_on=None):
 
 	if on:
 		left_on, right_on = on, on
 
-	pairs = A[left_on].reset_index().merge(B[right_on].reset_index(), how='inner', left_on=left_on, right_on=right_on).set_index([A.index.name, B.index.name])
+	pairs = df_a[left_on].reset_index().merge(df_b[right_on].reset_index(), how='inner', left_on=left_on, right_on=right_on).set_index([df_a.index.name, df_b.index.name])
 
 	return pairs.index
 
-def _sortedneighbourhood(A, B, column, window=3, sorting_key_values=None, on=[], left_on=[], right_on=[]):
+def _sortedneighbourhood(df_a, df_b, column, window=3, sorting_key_values=None, on=[], left_on=[], right_on=[]):
 
 	# Check if window is an odd number
 	if not bool(window % 2):
@@ -39,16 +53,16 @@ def _sortedneighbourhood(A, B, column, window=3, sorting_key_values=None, on=[],
 
 	# sorting_key_values is the terminology in Data Matching [Christen, 2012]
 	if sorting_key_values is None:
-		sorting_key_values = A[column].append(B[column])
+		sorting_key_values = df_a[column].append(df_b[column])
 
-	factors = pd.Series(pd.Series(sorting_key_values).unique())
+	factors = pandas.Series(pandas.Series(sorting_key_values).unique())
 	factors.sort_values(inplace=True)
 
-	factors = factors[factors.notnull()].values # Remove possible np.nan values. They are not replaced in the next step.
-	factors_label = np.arange(len(factors))
+	factors = factors[factors.notnull()].values # Remove possible numpy.nan values. They are not replaced in the next step.
+	factors_label = numpy.arange(len(factors))
 
-	sorted_df_A = pd.DataFrame({column:A[column].replace(factors, factors_label), A.index.name: A.index.values})
-	sorted_df_B = pd.DataFrame({column:B[column].replace(factors, factors_label), B.index.name: B.index.values})
+	sorted_df_A = pandas.DataFrame({column:df_a[column].replace(factors, factors_label), df_a.index.name: df_a.index.values})
+	sorted_df_B = pandas.DataFrame({column:df_b[column].replace(factors, factors_label), df_b.index.name: df_b.index.values})
 
 	pairs_concat = None
 
@@ -57,7 +71,7 @@ def _sortedneighbourhood(A, B, column, window=3, sorting_key_values=None, on=[],
 
 	for w in range(-_window, _window+1):
 
-		pairs = sorted_df_A.merge(pd.DataFrame({column:sorted_df_B[column]+w, B.index.name: B.index.values}), on=column, how='inner').set_index([A.index.name, B.index.name])
+		pairs = sorted_df_A.merge(pandas.DataFrame({column:sorted_df_B[column]+w, df_b.index.name: df_b.index.values}), on=column, how='inner').set_index([df_a.index.name, df_b.index.name])
 
 		# Append pairs to existing ones. PANDAS BUG workaround
 		pairs_concat = pairs.index if pairs_concat is None else pairs.index.append(pairs_concat)
@@ -65,40 +79,46 @@ def _sortedneighbourhood(A, B, column, window=3, sorting_key_values=None, on=[],
 	return pairs_concat
 
 class Pairs(object):
-	""" Pairs class is used to make pairs of records to analyse in the comparison step. """	
+	""" 
 
-	def __init__(self, dataframe_A, dataframe_B=None):
+	Pairs class is used to make pairs of records to analyse in the comparison step. 
 
-		self.A = dataframe_A
+	"""	
+
+	def __init__(self, df_a, df_b=None):
+
+		self.df_a = df_a
 
 		# Linking two datasets
-		if dataframe_B is not None:
+		if df_b is not None:
 
-			self.B = dataframe_B
+			self.df_b = df_b
 			self.deduplication = False
 
-			if self.A.index.name == None or self.B.index.name == None:
+			if self.df_a.index.name == None or self.df_b.index.name == None:
 				raise IndexError('DataFrame has no index name.')
 
-			if self.A.index.name == self.B.index.name:
-				raise IndexError("Identical index name '{}' for both dataframes.".format(self.A.index.name))
+			if self.df_a.index.name == self.df_b.index.name:
+				raise IndexError("Identical index name '{}' for both dataframes.".format(self.df_a.index.name))
 
-			if not self.A.index.is_unique or not self.B.index.is_unique:
+			if not self.df_a.index.is_unique or not self.df_b.index.is_unique:
 				raise IndexError('DataFrame index is not unique.')
 
 		# Deduplication of one dataset
 		else:
 			self.deduplication = True
 
-			if self.A.index.name == None:
+			if self.df_a.index.name == None:
 				raise IndexError('DataFrame has no index name.')
 
-			if not self.A.index.is_unique:
+			if not self.df_a.index.is_unique:
 				raise IndexError('DataFrame index is not unique.')
 
 		self.n_pairs = 0
 
 		self._index_factors = None
+
+	# -- Index methods ------------------------------------------------------
 
 	def index(self, index_func, *args, **kwargs):
 		""" Method to make record pairs from one or two dataframes. Each record pair contains two records. 
@@ -110,131 +130,116 @@ class Pairs(object):
 		# If not deduplication, make pairs of records with one record from the first dataset and one of the second dataset
 		if not self.deduplication:
 
-			pairs = index_func(self.A, self.B, *args, **kwargs)
+			pairs = index_func(self.df_a, self.df_b, *args, **kwargs)
 
 		# If deduplication, remove the record pairs that are already included. For example: (a1, a1), (a1, a2), (a2, a1), (a2, a2) results in (a1, a2) or (a2, a1)
 		elif self.deduplication:
 
-			B = pd.DataFrame(self.A, index=pd.Index(self.A.index, name=str(self.A.index.name) + '_'))
+			B = pandas.DataFrame(self.df_a, index=pandas.Index(self.df_a.index, name=str(self.df_a.index.name) + '_'))
 
-			pairs = index_func(self.A, B, *args, **kwargs)
+			pairs = index_func(self.df_a, B, *args, **kwargs)
 
 			# Remove all double pairs!
 			pairs = pairs[pairs.get_level_values(0) < pairs.get_level_values(1)]
-			pairs.names = [self.A, self.A]
+			pairs.names = [self.df_a, self.df_a]
 
 		self.n_pairs = len(pairs)
 
 		return pairs
 
-	def random(self, *args, **kwargs):
-		""" Make an index of random record pairs. 
-
-		:return: A MultiIndex
-		:rtype: pandas.MultiIndex
-		"""		
-		return self.index(_randomindex, *args, **kwargs)
-
-	def block(self, *args, **kwargs):
-		""" Make an index were one or more specified attributes are identical.
-
-		:param columns: A column name or a list of column names. These columns are used to block on. 
-
-		:return: A MultiIndex
-		:rtype: pandas.MultiIndex
-		"""		
-		return self.index(_blockindex, *args, **kwargs)
-
 	def full(self, *args, **kwargs):
-		""" Make an index with all possible record pairs. In case of linking two dataframes of length N and M, the number of pairs is N*M. In case of deduplicating a dataframe with N records, the number of pairs is N*(N-1)/2. 
+		""" 
+		full()
 
-		:return: A MultiIndex
+		Make an index with all possible record pairs. In case of linking two dataframes (A and B), the number of pairs is len(A)*len(B). In case of deduplicating a dataframe A, the number of pairs is len(A)*(len(A)-1)/2. 
+
+		:return: The index of the candidate record pairs
 		:rtype: pandas.MultiIndex
 		"""
 		return self.index(_fullindex, *args, **kwargs)
 
+	def block(self, *args, **kwargs):
+		""" 
+		block(on=None, left_on=None, right_on=None)
+
+		Make an index of record pairs agreeing on one or more specified attributes.
+
+		:param on: A column name or a list of column names. These columns are used to block on. 
+		:param left_on: A column name or a list of column names of dataframe A. These columns are used to block on. 
+		:param right_on: A column name or a list of column names of dataframe B. These columns are used to block on. 
+
+		:type on: label
+		:type left_on: label
+		:type right_on: label
+
+		:return: The index of the candidate record pairs
+		:rtype: pandas.MultiIndex
+		"""		
+		return self.index(_blockindex, *args, **kwargs)
+
 	def sortedneighbourhood(self, *args, **kwargs):
-		"""Return a Sorted Neighbourhood index.  
+		"""
+		sortedneighbourhood(sorting_key, window=3, sorting_key_values=None, on=[], left_on=[], right_on=[])
 
-		:param column: Specify the column to make a sorted index. 
+		Create a Sorted Neighbourhood index. 
+
+		:param sorting_key: Specify the column to make a sorted index. 
 		:param window: The width of the window, default is 3. 
-		:param suffixes: The suffixes to extend the column names with. 
-		:param blocking_on: Additional columns to use standard blocking on. 
-		:param left_blocking_on: Additional columns in the left dataframe to use standard blocking on. 
-		:param right_blocking_on: Additional columns in the right dataframe to use standard blocking on. 
+		:param sorting_key_values: A list of sorting key values (optional).
+		:param on: Additional columns to use standard blocking on. 
+		:param left_on: Additional columns in the left dataframe to use standard blocking on. 
+		:param right_on: Additional columns in the right dataframe to use standard blocking on. 
 
-		:return: A MultiIndex
+		:type sorting_key: label 
+		:type window: int
+		:type sorting_key_values: array
+		:type on: label
+		:type left_on: label
+		:type right_on: label 
+
+		:return: The index of the candidate record pairs
 		:rtype: pandas.MultiIndex
 		"""
 		return self.index(_sortedneighbourhood, *args, **kwargs)
 
-	def iterblock(self, *args, **kwargs):
-		"""Iterative function that returns a part of a blocking index.
+	def random(self, *args, **kwargs):
+		""" 
+		random(n_pairs)
 
-		:param len_block_A: The lenght of a block of records in dataframe A. 
-		:param len_block_B: The length of a block of records in dataframe B.
-		:param columns: A column name or a list of column names. These columns are used to block on. 
+		Make an index of randomly selected record pairs. 
 
-		:return: A MultiIndex
+		:param n_pairs: The number of record pairs to return. The integer n_pairs should satisfy 0 < n_pairs <= len(A)*len(B).
+
+		:type n_pairs: int
+
+		:return: The index of the candidate record pairs
 		:rtype: pandas.MultiIndex
 		"""		
-		return self.iterindex(_blockindex, *args, **kwargs)
+		return self.index(_randomindex, *args, **kwargs)
 
-	def iterfull(self, *args, **kwargs):
-		"""Iterative function that returns a part of a full index. 
+	# -- Iterative index methods ----------------------------------------------
 
-		:param len_block_A: The lenght of a block of records in dataframe A. 
-		:param len_block_B: The length of a block of records in dataframe B.
-		:return: A MultiIndex
-		:rtype: pandas.MultiIndex
-		"""
-		return self.iterindex(_fullindex, *args, **kwargs)
-
-	def itersortedneighbourhood(self, *args, **kwargs):
-		"""Iterative function that returns a records pairs based on a sorted neighbourhood index. The number of iterations can be adjusted to prevent memory problems.  
-
-		:param len_block_A: The lenght of a block of records in dataframe A. 
-		:param len_block_B: The length of a block of records in dataframe B.
-		:param column: Specify the column to make a sorted index. 
-		:param window: The width of the window, default is 3. 
-		:param suffixes: The suffixes to extend the column names with. 
-		:param blocking_on: Additional columns to use standard blocking on. 
-		:param left_blocking_on: Additional columns in the left dataframe to use standard blocking on. 
-		:param right_blocking_on: Additional columns in the right dataframe to use standard blocking on. 
-
-		:return: A MultiIndex
-		:rtype: pandas.MultiIndex
-		"""
-		column = args[2] # The argument after the two block size values
-
-		# The unique values of both dataframes are passed as an argument. 
-		sorting_key_values = np.sort(np.unique(np.append(self.A[column].values, self.B[column].values)))
-
-		return self.iterindex(_sortedneighbourhood, *args, sorting_key_values=sorting_key_values, **kwargs)
-
-	def iterindex(self, index_func, len_block_A=None, len_block_B=None, *args, **kwargs):
+	def iterindex(self, index_func, len_block_a=None, len_block_b=None, *args, **kwargs):
 		"""Iterative function that returns records pairs based on a user-defined indexing function. The number of iterations can be adjusted to prevent memory problems.  
 
-		:param index_func: A user defined indexing funtion.
-		:param len_block_A: The lenght of a block of records in dataframe A. 
-		:param len_block_B: The length of a block of records in dataframe B (only used when linking two datasets).
+		:param index_func: A user defined indexing function.
+		:param len_block_a: The length of a block of records in dataframe A. 
+		:param len_block_b: The length of a block of records in dataframe B (only used when linking two datasets).
 
-		:return: A MultiIndex
+		:return: The index of the candidate record pairs
 		:rtype: pandas.MultiIndex
 		"""
-
-		# If block size is None, then use the full length of the dataframe
 		
 		if self.deduplication:
-			len_block_A = len_block_A if len_block_A else len(self.A) 
+			len_block_a = len_block_a if len_block_a else len(self.df_a) 
 			
-			blocks = [(a,a, a+len_block_A, a+len_block_A) for a in np.arange(0, len(self.A), len_block_A) for a in np.arange(0, len(self.A), len_block_A) ]
+			blocks = [(a,a, a+len_block_a, a+len_block_a) for a in numpy.arange(0, len(self.df_a), len_block_a) for a in numpy.arange(0, len(self.df_a), len_block_a) ]
 
 		else:
-			len_block_A = len_block_A if len_block_A else len(self.A) 
-			len_block_B = len_block_B if len_block_B else len(self.B) 
+			len_block_a = len_block_a if len_block_a else len(self.df_a) 
+			len_block_b = len_block_b if len_block_b else len(self.df_b) 
 			
-			blocks = [(a,b, a+len_block_A, b+len_block_B) for a in np.arange(0, len(self.A), len_block_A) for b in np.arange(0, len(self.B), len_block_B) ]
+			blocks = [(a,b, a+len_block_a, b+len_block_b) for a in numpy.arange(0, len(self.df_a), len_block_a) for b in numpy.arange(0, len(self.df_b), len_block_b) ]
 
 		# Reset the number of pairs counter
 		self.n_pairs = 0
@@ -242,12 +247,12 @@ class Pairs(object):
 		for bl in blocks:
 
 			if self.deduplication: # Deduplication
-				pairs_block_class = Pairs(self.A[bl[0]:bl[2]], pd.DataFrame(self.A, index=pd.Index(self.A.index, name=self.A.index.name + '_')))
+				pairs_block_class = Pairs(self.df_a[bl[0]:bl[2]], pandas.DataFrame(self.df_a, index=pandas.Index(self.df_a.index, name=self.df_a.index.name + '_')))
 				pairs_block = pairs_block_class.index(index_func, *args, **kwargs)
 				pairs_block = pairs_block[pairs_block.get_level_values(0) < pairs_block.get_level_values(1)]
 	
 			else:
-				pairs_block_class = Pairs(self.A[bl[0]:bl[2]], self.B[bl[1]:bl[3]])
+				pairs_block_class = Pairs(self.df_a[bl[0]:bl[2]], self.df_b[bl[1]:bl[3]])
 				pairs_block = pairs_block_class.index(index_func, *args, **kwargs)
 
 			# Count the number of pairs
@@ -255,8 +260,92 @@ class Pairs(object):
 			
 			yield pairs_block
 
+	def iterfull(self, *args, **kwargs):
+		"""
+		iterfull(len_block_a=None, len_block_b=None)
+
+		Iterative function that returns a part of a full index. 
+
+		:param len_block_a: The length of a block of records in dataframe A. The integer len_block_a should satisfy 0 > len_block_a.
+		:param len_block_b: The length of a block of records in dataframe B. The integer len_block_b should satisfy 0 > len_block_b.
+
+		:type len_block_a: int
+		:type len_block_b: int
+
+		:return: The index of the candidate record pairs
+		:rtype: pandas.MultiIndex
+		"""
+		return self.iterindex(_fullindex, *args, **kwargs)
+
+	def iterblock(self, *args, **kwargs):
+		"""
+		iterblock(len_block_a=None, len_block_b=None, on=None, left_on=None, right_on=None)
+
+		Iterative function that returns a part of a blocking index.
+
+		:param len_block_a: The length of a block of records in dataframe A. The integer len_block_a should satisfy 0 > len_block_a.
+		:param len_block_b: The length of a block of records in dataframe B. The integer len_block_b should satisfy 0 > len_block_b.
+		:param on: A column name or a list of column names. These columns are used to block on. 
+		:param left_on: A column name or a list of column names of dataframe A. These columns are used to block on. 
+		:param right_on: A column name or a list of column names of dataframe B. These columns are used to block on. 
+
+		:type len_block_a: int
+		:type len_block_b: int
+		:type on: label
+		:type left_on: label
+		:type right_on: label
+
+		:param columns: A column name or a list of column names. These columns are used to block on. 
+
+		:return: The index of the candidate record pairs
+		:rtype: pandas.MultiIndex
+		"""		
+		return self.iterindex(_blockindex, *args, **kwargs)
+
+	def itersortedneighbourhood(self, *args, **kwargs):
+		"""
+		itersortedneighbourhood(len_block_a=None, len_block_b=None, sorting_key, window=3, sorting_key_values=None, on=[], left_on=[], right_on=[])
+
+		Iterative function that returns a records pairs based on a sorted neighbourhood index. The number of iterations can be adjusted to prevent memory problems.  
+
+		:param len_block_a: The length of a block of records in dataframe A. The integer len_block_a should satisfy 0 > len_block_a.
+		:param len_block_b: The length of a block of records in dataframe B. The integer len_block_b should satisfy 0 > len_block_b.
+		:param sorting_key: Specify the column to make a sorted index. 
+		:param window: The width of the window, default is 3. 
+		:param sorting_key_values: A list of sorting key values (optional).
+		:param on: Additional columns to use standard blocking on. 
+		:param left_on: Additional columns in the left dataframe to use standard blocking on. 
+		:param right_on: Additional columns in the right dataframe to use standard blocking on. 
+
+		:type len_block_a: int
+		:type len_block_b: int
+		:type sorting_key: label 
+		:type window: int
+		:type sorting_key_values: array
+		:type on: label
+		:type left_on: label
+		:type right_on: label 
+
+		:return: The index of the candidate record pairs
+		:rtype: pandas.MultiIndex
+		"""
+		column = args[2] # The argument after the two block size values
+
+		# The unique values of both dataframes are passed as an argument. 
+		sorting_key_values = numpy.sort(numpy.unique(numpy.append(self.df_a[column].values, self.df_b[column].values)))
+
+		return self.iterindex(_sortedneighbourhood, *args, sorting_key_values=sorting_key_values, **kwargs)
+
+	# -- Tools for indexing ----------------------------------------------
+
 	def reduction(self, n_pairs=None):
-		""" Compute the relative reduction of records pairs as the result of indexing. 
+		""" 
+
+		Compute the relative reduction of records pairs as the result of indexing. 
+
+		:param n_pairs: The number of record pairs.
+
+		:type n_pairs: int
 
 		:return: Value between 0 and 1
 		:rtype: float
@@ -270,15 +359,17 @@ class Pairs(object):
 		else:
 			return self._reduction_ratio_linking(n_pairs)
 
+	# -- Internal index methods ----------------------------------------------
+
 	def _reduction_ratio_deduplication(self, n_pairs=None):
 
-		max_pairs = (len(self.A)*(len(self.B)-1))/2
+		max_pairs = (len(self.df_a)*(len(self.df_b)-1))/2
 
 		return 1-self.n_pairs/max_pairs
 
 	def _reduction_ratio_linking(self, n_pairs=None):
 
-		max_pairs = len(self.A)*len(self.B)
+		max_pairs = len(self.df_a)*len(self.df_b)
 
 		return 1-self.n_pairs/max_pairs
 

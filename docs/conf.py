@@ -15,15 +15,17 @@
 import sys
 import os
 import shlex
+import mock
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-#sys.path.insert(0, os.path.abspath('.'))
+sys.path.insert(0, os.path.abspath('..'))
+# sys.path.insert(0, os.path.abspath('../recordlinkage'))
 
-sys.path.insert(0, os.path.abspath('../recordlinkage'))
-# sys.path.insert(0, os.path.abspath('../recordlinkage/standardise'))
-# sys.path.insert(0, os.path.abspath('../recordlinkage/datasets'))
+MOCK_MODULES = ['numpy', 'scipy', 'pandas', 'sklearn']
+for mod_name in MOCK_MODULES:
+	sys.modules[mod_name] = mock.Mock()
 
 import recordlinkage
 
@@ -292,3 +294,9 @@ texinfo_domain_indices = False
 
 # If true, do not generate a @detailmenu in the "Top" node's menu.
 #texinfo_no_detailmenu = False
+
+# -- Additional options ---------------------------------------------------
+
+autodoc_member_order = 'bysource' 
+
+

@@ -4,16 +4,16 @@ import numpy
 
 import os
 
-from make_datasets import _krebsregister_block
-
 try:
 	from faker import Faker
-except Exception:
-	print 'Faker is not installed. Therefore, the functionalities of this module are limited.'
+except ImportError:
+	print ('Faker is not installed. Therefore, the functionalities of this module are limited.')
 
-def krebsregister_cmp_data(block=1):
+def krebsregister_cmp_data(*args, **kwargs):
 
 	"""
+	krebsregister_cmp_data(block=1)
+
 	This dataset of comparison patterns was obtained in a epidemiological
 	cancer study in Germany. The comparison patterns were created by the
 	Institute for Medical Biostatistics, Epidemiology and Informatics (IMBEI)
@@ -53,20 +53,12 @@ def krebsregister_cmp_data(block=1):
 
 	"""
 
-	if type(block) == list:
+	try:
+		from rldatasets import krebsregister_cmp_data
+		return krebsregister_cmp_data(*args, **kwargs)
 
-		data = None
-
-		for bl in block:
-			data = pandas.concat([data, _krebsregister_block(bl)])
-	else:
-
-		data = _krebsregister_block(block)
-
-	match_index = data.index[data['is_match']]
-	del data['is_match']
-
-	return data, match_index
+	except ImportError:
+		print("Install recordlinkage-datasets to use this dataset.")
 
 def load_censusA():
 

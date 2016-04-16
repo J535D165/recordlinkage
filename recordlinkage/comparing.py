@@ -20,7 +20,7 @@ class Compare(object):
 
 	def exact(self, s1, s2, *args, **kwargs):
 		"""
-		exact(s1, s2, missing_value=0, disagreement_value=0, output='any', return_agreement_values=False):
+		exact(s1, s2, missing_value=0, disagreement_value=0, output='any', return_agreement_values=False)
 
 		Compare the record pairs exactly.
 
