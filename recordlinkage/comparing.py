@@ -92,16 +92,21 @@ class Compare(object):
 
 	def exact(self, s1, s2, *args, **kwargs):
 		"""
-		exact(s1, s2, agree_value=False, disagree_value=0, missing_value=0, output='any')
+		exact(s1, s2, agree_value=1, disagree_value=0, missing_value=0)
 
 		Compare the record pairs exactly.
 
 		:param s1: Series or DataFrame to compare all fields. 
 		:param s2: Series or DataFrame to compare all fields. 
-		:param agree_value: If agree_value is True, each agreeing comparison returns the value instead of 1. Default False.		
+		:param agree_value: The value when two records are identical. Default 1. If 'values' is passed, then the value of the record pair is passed. 	
 		:param disagree_value: The value when two records are not identical.
 		:param missing_value: The value for a comparison with a missing value. Default 0.
-		:param output: Default 'any'. This holds only for comparing dataframes.
+
+		:type s1: label, pandas.Series
+		:type s2: label, pandas.Series
+		:type agree_value: numpy.dtype
+		:type disagree_value: numpy.dtype
+		:type missing_value: numpy.dtype
 
 		:return: A Series with comparison values.
 		:rtype: pandas.Series
@@ -211,7 +216,7 @@ def _missing(*args):
 
 	return np.any(np.concatenate([np.array(pandas.DataFrame(arg).isnull()) for arg in args], axis=1), axis=1)
 
-def _compare_exact(s1, s2, agree_value=1, disagree_value=0, missing_value=0, output='any'):
+def _compare_exact(s1, s2, agree_value=1, disagree_value=0, missing_value=0):
 
 	if agree_value == 'value':
 		compare = s1.copy()
