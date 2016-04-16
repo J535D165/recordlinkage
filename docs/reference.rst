@@ -1,8 +1,12 @@
-Reference
-=========
+API Reference
+=============
 
-standardise data
-----------------
+This page contains the class, method and functions documentation of the ``recordlinkage`` package. 
+
+Standardising
+-------------
+
+Clean and standardise your data before you start linking records. Remove special tokens or phonetically encode names. Install ``jellyfish`` to use phonetic encoding of names. 
 
 .. automodule:: recordlinkage.standardise
 	:members:
@@ -14,16 +18,20 @@ standardise data
 	:members:
 
 
-Make record pairs
------------------
+Indexing
+--------
+
+This class can be used to make pairs of records, also called candidate record pairs. There are several smart indexing functions available. 
 
 .. automodule:: recordlinkage.indexing
 
 .. autoclass:: Pairs
 	:members:
 
-Comparing record pairs
-----------------------
+Comparing
+---------
+
+The following class and methods can be used to compare records pairs. String similarity algorithms are available when ``jellyfish`` is installed. 
 
 .. automodule:: recordlinkage.comparing
 
@@ -47,7 +55,7 @@ Classification algorithms
 
 Evaluation 
 ----------
-Evaluation of classifications plays an important role in record linkage. 
+Evaluation of classifications plays an important role in record linkage. Express your classification quality in terms accuracy, recall and F-score based on ``true positives``, ``false positives``, ``true negatives`` and ``false negatives``. 
 
 .. automodule:: recordlinkage.measures
 	:members:
