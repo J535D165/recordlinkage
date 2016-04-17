@@ -108,14 +108,15 @@ class ProbabilisticClassifier(Classifier):
 
 class KMeansClassifier(Classifier):
 	""" 
+	KMeansClassifier()
 
 	The K-means clusterings algorithm to classify the given record pairs into matches and non-
 	matches. 
 
 	.. note::
 
-	   There are way better methods for linking records than the k-means clustering algorithm.
-	   However, this algorithm does not need trainings data and is useful to do an initial guess.
+		There are way better methods for linking records than the k-means clustering algorithm.
+		However, this algorithm does not need trainings data and is useful to do an initial guess.
 
 	"""
 
@@ -150,7 +151,8 @@ class KMeansClassifier(Classifier):
 	def predict(self, comparison_vectors):
 		""" Predict the class for a set of comparison vectors. 
 
-		After training the classifiers, this method can be used to classify comparison vectors for which the class is unknown. 
+		After training the classifiers, this method can be used to classify comparison vectors for
+		which the class is unknown.
 
 		:param comparison_vectors: The dataframe with comparison vectors. 
 		:type comparison_vectors: pandas.DataFrame
@@ -159,119 +161,273 @@ class KMeansClassifier(Classifier):
 		:rtype: pandas.Series
 
 		"""
-		
+
 		prediction = self.classifier.predict(comparison_vectors.as_matrix())
 
 		return pd.Series(prediction, index=comparison_vectors.index, name='classification')
 
 class LogisticRegressionClassifier(DeterministicClassifier):
+	""" 
+	LogisticRegressionClassifier()
 
+	Logistic regression to classify the given record pairs into matches and non-
+	matches. 
+
+	"""
 	def __init__(self, *args, **kwargs):
 		super(self.__class__, self).__init__(*args, **kwargs)
 
 		self.classifier = linear_model.LogisticRegression()
 
-	def learn(self, vectors, match_index):
+	def learn(self, comparison_vectors, match_index):
+		""" 
 
-		train_series = pd.Series(False, index=vectors.index)
-		train_series.loc[match_index & vectors.index] = True
+		Train the Logistic Regression classifier. 
 
-		self.classifier.fit(vectors.as_matrix(), np.array(train_series))
+		:param comparison_vectors: The dataframe with comparison vectors. 
+		:type comparison_vectors: pandas.DataFrame
+
+		:return: A pandas Series with the labels 1 (for the matches) and 0 (for the non-matches). 
+		:rtype: pandas.Series
+
+		"""
+		train_series = pd.Series(False, index=comparison_vectors.index)
+		train_series.loc[match_index & comparison_vectors.index] = True
+
+		self.classifier.fit(comparison_vectors.as_matrix(), np.array(train_series))
 
 		return self
 
-	def predict(self, vectors):
-		
-		prediction = self.classifier.predict(vectors.as_matrix())
+	def predict(self, comparison_vectors):
+		""" 
 
-		return vectors.index[prediction.astype(bool)]
+		Classify a set of record pairs based on their comparison vectors into matches, non-matches
+		and possible matches. The classifier has to be trained to call this method. 
 
-	def prob(self, vectors):
-		probs = self.classifier.predict_proba(vectors.as_matrix())
+		:param comparison_vectors: The dataframe with comparison vectors. 
+		:type comparison_vectors: pandas.DataFrame
 
-		return pd.Series(probs[0,:], index=vectors.index)
+		:return: A pandas Series with the labels 1 (for the matches) and 0 (for the non-matches). 
+		:rtype: pandas.Series
+
+		"""
+		prediction = self.classifier.predict(comparison_vectors.as_matrix())
+
+		return comparison_vectors.index[prediction.astype(bool)]
+
+	def prob(self, comparison_vectors):
+		""" 
+
+		Estimate the probability for each record pairs of being a match.
+
+		The method computes the probability for each given record pair of being a match. The
+		probability of a non-match is 1 minus the result. This method is not implemented for all
+		classifiers (for example K-means clustering).
+
+		:param comparison_vectors: The dataframe with comparison vectors. 
+		:type comparison_vectors: pandas.DataFrame
+
+		:return: A pandas Series with pandas.MultiIndex with the probability of being a match. 
+		:rtype: pandas.Series
+		"""
+		probs = self.classifier.predict_proba(comparison_vectors.as_matrix())
+
+		return pd.Series(probs[0,:], index=comparison_vectors.index)
 
 class BernoulliNBClassifier(ProbabilisticClassifier):
+	""" 
+	BernoulliNBClassifier()
 
+	Bernoulli Naive Bayes classifier to classify the given record pairs into matches and non-
+	matches. 
+
+	"""
 	def __init__(self, *args, **kwargs):
 		super(self.__class__, self).__init__(*args, **kwargs)
 
 		self.classifier = naive_bayes.BernoulliNB()
 
-	def learn(self, vectors, match_index):
+	def learn(self, comparison_vectors, match_index):
+		""" 
 
-		train_series = pd.Series(False, index=vectors.index)
-		train_series.loc[match_index & vectors.index] = True
+		Train the Bernoulli Naive Bayes classifier. 
 
-		self.classifier.fit(vectors.as_matrix(), np.array(train_series))
+		:param comparison_vectors: The dataframe with comparison vectors. 
+		:type comparison_vectors: pandas.DataFrame
+
+		:return: A pandas Series with the labels 1 (for the matches) and 0 (for the non-matches). 
+		:rtype: pandas.Series
+
+		"""
+		train_series = pd.Series(False, index=comparison_vectors.index)
+		train_series.loc[match_index & comparison_vectors.index] = True
+
+		self.classifier.fit(comparison_vectors.as_matrix(), np.array(train_series))
 
 		return self
 
-	def predict(self, vectors):
-		
-		prediction = self.classifier.predict(vectors.as_matrix())
+	def predict(self, comparison_vectors):
+		""" 
 
-		return vectors.index[prediction.astype(bool)]
+		Classify a set of record pairs based on their comparison vectors into matches, non-matches
+		and possible matches. The classifier has to be trained to call this method. 
 
-	def prob(self, vectors):
-		probs = self.classifier.predict_proba(vectors.as_matrix())
+		:param comparison_vectors: The dataframe with comparison vectors. 
+		:type comparison_vectors: pandas.DataFrame
 
-		return pd.Series(probs[0,:], index=vectors.index)
+		:return: A pandas Series with the labels 1 (for the matches) and 0 (for the non-matches). 
+		:rtype: pandas.Series
+
+		"""
+		prediction = self.classifier.predict(comparison_vectors.as_matrix())
+
+		return comparison_vectors.index[prediction.astype(bool)]
+
+	def prob(self, comparison_vectors):
+		""" 
+
+		Estimate the probability for each record pairs of being a match.
+
+		The method computes the probability for each given record pair of being a match. The
+		probability of a non-match is 1 minus the result. This method is not implemented for all
+		classifiers (for example K-means clustering).
+
+		:param comparison_vectors: The dataframe with comparison vectors. 
+		:type comparison_vectors: pandas.DataFrame
+
+		:return: A pandas Series with pandas.MultiIndex with the probability of being a match. 
+		:rtype: pandas.Series
+		"""
+
+		probs = self.classifier.predict_proba(comparison_vectors.as_matrix())
+
+		return pd.Series(probs[0,:], index=comparison_vectors.index)
 
 class SVMClassifier(Classifier):
+	""" 
+	SVMClassifier()
 
+	Linear Support Vector Machine classifier to classify the given record pairs into matches and non-
+	matches. 
+	
+	"""
 	def __init__(self, *args, **kwargs):
 		super(self.__class__, self).__init__(*args, **kwargs)
 
 		self.classifier = svm.LinearSVC()
 
-	def learn(self, vectors, match_index):
+	def learn(self, comparison_vectors, match_index):
+		""" 
 
-		train_series = pd.Series(False, index=vectors.index)
-		train_series.loc[match_index & vectors.index] = True
+		Train the SVM classifier. 
 
-		self.classifier.fit(vectors.as_matrix(), np.array(train_series))
+		:param comparison_vectors: The dataframe with comparison vectors. 
+		:type comparison_vectors: pandas.DataFrame
+
+		:return: A pandas Series with the labels 1 (for the matches) and 0 (for the non-matches). 
+		:rtype: pandas.Series
+
+		"""
+		train_series = pd.Series(False, index=comparison_vectors.index)
+		train_series.loc[match_index & comparison_vectors.index] = True
+
+		self.classifier.fit(comparison_vectors.as_matrix(), np.array(train_series))
 
 		return self
 
-	def predict(self, vectors):
-		
-		prediction = self.classifier.predict(vectors.as_matrix())
+	def predict(self, comparison_vectors):
+		""" 
 
-		return vectors.index[prediction.astype(bool)]
+		Classify a set of record pairs based on their comparison vectors into matches, non-matches
+		and possible matches. The classifier has to be trained to call this method. 
+
+		:param comparison_vectors: The dataframe with comparison vectors. 
+		:type comparison_vectors: pandas.DataFrame
+
+		:return: A pandas Series with the labels 1 (for the matches) and 0 (for the non-matches). 
+		:rtype: pandas.Series
+
+		"""
+		prediction = self.classifier.predict(comparison_vectors.as_matrix())
+
+		return comparison_vectors.index[prediction.astype(bool)]
 
 class BernoulliEMClassifier(ProbabilisticClassifier):
-	"""Expectation Maximisation classifier in combination with Fellegi and Sunter model"""
+	"""
+
+	Expectation Maximisation classifier in combination with Fellegi and Sunter model.
+
+	This is a probabilistic record linkage algorithm. 
+
+	"""
 	
 	def __init__(self, *args, **kwargs):
 		super(self.__class__, self).__init__(*args, **kwargs)
 
 		self.classifier = em_algorithm_.ECMEstimate()
 
-	def learn(self, vectors, params_init=None):
+	def learn(self, comparison_vectors, params_init=None):
+		""" 
 
+		Train the Bernoulli Expectation-Maximisation classifier. This method is well-known as the
+		ECM-algorithm implementation in the context of record linkage.
+
+		:param comparison_vectors: The dataframe with comparison vectors. 
+		:param params_init: A dictionary with initial parameters of the ECM algorithm (optional).
+
+		:type comparison_vectors: pandas.DataFrame
+		:type params_init: dict
+
+		:return: A pandas Series with the labels 1 (for the matches) and 0 (for the non-matches). 
+		:rtype: pandas.Series
+
+		"""
 		# Default parameters
 		if not params_init:
 			params_init = {
 				'p': 0.05,
-				'm': {feature: {0: 0.1, 1:0.9} for feature in list(vectors)},
-				'u': {feature: {0: 0.9, 1:0.1} for feature in list(vectors)}
+				'm': {feature: {0: 0.1, 1:0.9} for feature in list(comparison_vectors)},
+				'u': {feature: {0: 0.9, 1:0.1} for feature in list(comparison_vectors)}
 			}
 			
 		self.classifier.p_init = params_init
 
 		# Start training the classifier
-		self.classifier.train(vectors)
+		self.classifier.train(comparison_vectors)
 
 		return self
 
-	def predict(self, vectors, *args, **kwargs):
+	def predict(self, comparison_vectors, *args, **kwargs):
+		""" 
 
-		return self.classifier.predict_proba(vectors.as_matrix(), *args, **kwargs)
+		Classify a set of record pairs based on their comparison vectors into matches, non-matches
+		and possible matches. The classifier has to be trained to call this method. 
 
-	def prob(self, vectors):
-		
-		probs = self.classifier.predict_proba(vectors.as_matrix())
+		:param comparison_vectors: The dataframe with comparison vectors. 
+		:type comparison_vectors: pandas.DataFrame
 
-		return pd.Series(probs[0,:], index=vectors.index)
+		:return: A pandas Series with the labels 1 (for the matches) and 0 (for the non-matches). 
+		:rtype: pandas.Series
+
+		"""
+		return self.classifier.predict_proba(comparison_vectors.as_matrix(), *args, **kwargs)
+
+	def prob(self, comparison_vectors):
+		""" 
+
+		Estimate the probability for each record pairs of being a match.
+
+		The method computes the probability for each given record pair of being a match. The
+		probability of a non-match is 1 minus the result. This method is not implemented for all
+		classifiers (for example K-means clustering).
+
+		:param comparison_vectors: The dataframe with comparison vectors. 
+		:type comparison_vectors: pandas.DataFrame
+
+		:return: A pandas Series with pandas.MultiIndex with the probability of being a match. 
+		:rtype: pandas.Series
+		"""
+		probs = self.classifier.predict_proba(comparison_vectors.as_matrix())
+
+		return pd.Series(probs[0,:], index=comparison_vectors.index)
 
