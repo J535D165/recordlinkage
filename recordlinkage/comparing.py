@@ -81,10 +81,14 @@ class Compare(object):
 		:param comp_func: A comparison function. This function can be a built-in function or a user defined comparison function.
 		:param data_a: The labels, Series or DataFrame to compare.
 		:param data_b: The labels, Series or DataFrame to compare.
+		:param name: The name of the feature and the name of the column.
+		:param store: Store the result in the dataframe.
 
 		:type comp_func: function
 		:type data_a: label, pandas.Series, pandas.DataFrame
 		:type data_b: label, pandas.Series, pandas.DataFrame
+		:type name: label
+		:type store: boolean
 
 		:return: The DataFrame Compare.vectors
 		:rtype: standardise.DataFrame
@@ -115,7 +119,7 @@ class Compare(object):
 
 	def exact(self, s1, s2, *args, **kwargs):
 		"""
-		exact(s1, s2, agree_value=1, disagree_value=0, missing_value=0)
+		exact(s1, s2, agree_value=1, disagree_value=0, missing_value=0, name=None, store=True)
 
 		Compare the record pairs exactly.
 
@@ -124,12 +128,16 @@ class Compare(object):
 		:param agree_value: The value when two records are identical. Default 1. If 'values' is passed, then the value of the record pair is passed. 	
 		:param disagree_value: The value when two records are not identical.
 		:param missing_value: The value for a comparison with a missing value. Default 0.
+		:param name: The name of the feature and the name of the column.
+		:param store: Store the result in the dataframe.
 
 		:type s1: label, pandas.Series
 		:type s2: label, pandas.Series
 		:type agree_value: numpy.dtype
 		:type disagree_value: numpy.dtype
 		:type missing_value: numpy.dtype
+		:type name: label
+		:type store: boolean
 
 		:return: A Series with comparison values.
 		:rtype: pandas.Series
@@ -140,7 +148,7 @@ class Compare(object):
 
 	def numerical(self, s1, s2, *args, **kwargs):
 		"""
-		numerical(s1, s2, window, missing_value=0)
+		numerical(s1, s2, window, missing_value=0, name=None, store=True)
 
 		Compare numerical values with a tolerance window.
 
@@ -148,6 +156,11 @@ class Compare(object):
 		:param s2: Series or DataFrame to compare all fields. 
 		:param missing_value: The value for a comparison with a missing value. Default 0.
 		:param window: The window size. Can be a tuple with two values or a single number. 
+		:param name: The name of the feature and the name of the column.
+		:param store: Store the result in the dataframe.
+
+		:type name: label
+		:type store: boolean
 
 		:return: A Series with comparison values.
 		:rtype: pandas.Series
@@ -158,7 +171,7 @@ class Compare(object):
 
 	def fuzzy(self, s1, s2, *args, **kwargs):
 		"""
-		fuzzy(s1, s2, method='levenshtein', threshold=None, missing_value=0)
+		fuzzy(s1, s2, method='levenshtein', threshold=None, missing_value=0, name=None, store=True)
 
 		Compare string values with a similarity approximation. 
 
@@ -167,7 +180,12 @@ class Compare(object):
 		:param method: A approximate string comparison method. Options are ['jaro', 'jarowinkler', 'levenshtein', 'damerau_levenshtein']. Default: 'levenshtein'
 		:param threshold: A threshold value. All approximate string comparisons higher or equal than this threshold are 1. Otherwise 0.  
 		:param missing_value: The value for a comparison with a missing value. Default 0.
+		:param name: The name of the feature and the name of the column.
+		:param store: Store the result in the dataframe.
 
+		:type name: label
+		:type store: boolean
+		
 		:return: A Series with similarity values. Values equal or between 0 and 1.
 		:rtype: pandas.Series
 
@@ -179,7 +197,7 @@ class Compare(object):
 
 	def geo(self, x1, y1, x2, y2, *args, **kwargs):
 		"""
-		geo(x1, y1, x2, y2, radius=20, disagree_value = -1, missing_value=-1)
+		geo(x1, y1, x2, y2, radius=20, disagree_value = -1, missing_value=-1, name=None, store=True)
 
 		Compare geometric coordinates with a tolerance window.
 
@@ -189,9 +207,12 @@ class Compare(object):
 		:param y2: Series with Y-coordinates
 		:param missing_value: The value for a comparison with a missing value. Default -1.
 		:param disagree_value: The value for a disagreeing comparison. Default -1.
+		:param name: The name of the feature and the name of the column.
+		:param store: Store the result in the dataframe.
 
-		:param compare_method: levestein
-
+		:type name: label
+		:type store: boolean
+		
 		:return: A Series with comparison values.
 		:rtype: pandas.Series
 		"""
