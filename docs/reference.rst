@@ -38,8 +38,10 @@ The ``Compare`` class and its methods can be used to compare records pairs. Seve
 .. autoclass:: Compare
 	:members:
 
-Classification algorithms 
--------------------------
+Classification
+--------------
+
+Classification is the step in the record linkage process were record pairs are classified into matches, non-matches and possible matches. Classification algorithms can be supervised or unsupervised (rougly speaking: with or without training data). Many of the algorithms need trainings data to classify the record pairs. Trainings data is data for which is known whether it is a match or not.  
 
 .. automodule:: recordlinkage.classifier
 	:members:
