@@ -15,20 +15,20 @@ import pandas
 ```
 For examples, you try to link two datasets with personal information like name, sex and date of birth. Load these datasets into a pandas ``DataFrame``.
 ```python 
-dfA = pandas.DataFrame(YOUR_FIRST_DATASET)
-dfB = pandas.DataFrame(YOUR_SECOND_DATASET)
+df_a = pandas.DataFrame(YOUR_FIRST_DATASET)
+df_b = pandas.DataFrame(YOUR_SECOND_DATASET)
 ```
 
 Comparing all record can be computationally intensive. Therefore, we make smart set of candidate links with one of the built-in indexing techniques like **blocking**. Only records pairs that agree on the surname are included. 
 
 ```python
-index = recordlinkage.Index(dfA, dfB)
+index = recordlinkage.Index(df_a, df_b)
 candidate_links = index.block('surname')
 ```
 
 For each candidate link, compare the pair of records with the Compare class and the available comparison/similarity functions.
 ```python
-compare = recordlinkage.Compare(candidate_links, dfA, dfB)
+compare = recordlinkage.Compare(candidate_links, df_a, df_b)
 
 compare.fuzzy('name', 'name', method='jarowinkler', threshold=0.85)
 compare.exact('sex', 'gender')
