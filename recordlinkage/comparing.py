@@ -8,10 +8,11 @@ from indexing import IndexError
 class Compare(object):
 	""" 
 
-	This class can be used to compare the attributes of candidate record pairs. This class has
-	several methods to compare data. 
+	Class to compare the attributes of candidate record pairs. The ``Compare`` class has several
+	methods to compare data such as string similarity measures, numerical metrics and exact
+	comparison methods.
 
-	:param pairs: The candidate record pairs. 
+	:param pairs: A MultiIndex of candidate record pairs. 
 	:param df_a: The first dataframe. 
 	:param df_b: The second dataframe.
 
@@ -22,28 +23,50 @@ class Compare(object):
 	:returns: A compare class
 	:rtype: recordlinkage.Compare
 
+	:var pairs: The candidate record pairs.
+	:var df_a: The first DataFrame.
+	:var df_b: The second DataFrame.
+	:var vectors: The DataFrame with comparison data.
+
+	:vartype pairs: pandas.MultiIndex
+	:vartype df_a: pandas.DataFrame
+	:vartype df_b: pandas.DataFrame
+	:vartype vectors: pandas.DataFrame
+
 	:Example:
 
-	>>> comp = recordlinkage.Compare(candidate_pairs, census_data_1980, census_data_1990)
-	>>> comp.fuzzy('first_name', 'name', method='jarowinkler')
-	>>> comp.fuzzy('lastname', 'lastname', method='jarowinkler')
-	>>> comp.exact('dateofbirth', 'dob')
-	>>> comp.exact('sex', 'sex')
-	>>> comp.fuzzy('address', 'address', method='levenshtein')
-	>>> comp.exact('place', 'place')
-	>>> comp.numerical('income', 'income')
-	>>>
-	>>> print(comp.vectors.head())
+		In the following example, the record pairs of two historical datasets with census data are
+		compared. The datasets are named ``census_data_1980`` and ``census_data_1990``. The
+		``candidate_pairs`` are the record pairs to compare. The record pairs are compared on the
+		first name, last name, sex, date of birth, address, place, and income.
 
+		>>> comp = recordlinkage.Compare(
+			candidate_pairs, census_data_1980, census_data_1990
+			)
+		>>> comp.fuzzy('first_name', 'name', method='jarowinkler')
+		>>> comp.fuzzy('lastname', 'lastname', method='jarowinkler')
+		>>> comp.exact('dateofbirth', 'dob')
+		>>> comp.exact('sex', 'sex')
+		>>> comp.fuzzy('address', 'address', method='levenshtein')
+		>>> comp.exact('place', 'place')
+		>>> comp.numerical('income', 'income')
+		>>> print(comp.vectors.head())
 
-	 """
+		The attribute ``vectors`` is the DataFrame with the comparison data. It can be called whenever
+		you want.
+
+	"""
 
 	def __init__(self, pairs, df_a=None, df_b=None):
 
+		# The dataframes
 		self.df_a = df_a
 		self.df_b = df_b
+
+		# The candidate record pairs
 		self.pairs = pairs
 
+		# The resulting data
 		self.vectors = pandas.DataFrame(index=pairs)
 
 		# self.ndim = self._compute_dimension(pairs)
@@ -154,16 +177,16 @@ class Compare(object):
 
 		return self.compare(_compare_fuzzy, s1, s2, *args, **kwargs)
 
-	def geo(self, X1, Y1, X2, Y2, *args, **kwargs):
+	def geo(self, x1, y1, x2, y2, *args, **kwargs):
 		"""
-		geo(X1, Y1, X2, Y2, radius=20, disagree_value = -1, missing_value=-1)
+		geo(x1, y1, x2, y2, radius=20, disagree_value = -1, missing_value=-1)
 
 		Compare geometric coordinates with a tolerance window.
 
-		:param X1: Series with X-coordinates
-		:param Y1: Series with Y-coordinates
-		:param X2: Series with X-coordinates
-		:param Y2: Series with Y-coordinates
+		:param x1: Series with X-coordinates
+		:param y1: Series with Y-coordinates
+		:param x2: Series with X-coordinates
+		:param y2: Series with Y-coordinates
 		:param missing_value: The value for a comparison with a missing value. Default -1.
 		:param disagree_value: The value for a disagreeing comparison. Default -1.
 
@@ -173,7 +196,7 @@ class Compare(object):
 		:rtype: pandas.Series
 		"""
 
-		return self.compare(_compare_geo, (X1, Y1), (X2, Y2), *args, **kwargs)
+		return self.compare(_compare_geo, (x1, y1), (x2, y2), *args, **kwargs)
 
 	def batchcompare(self, list_of_comp_funcs):
 		"""
@@ -244,15 +267,15 @@ def _compare_numerical(s1, s2, window, missing_value=0):
 
 	return compare
 
-def _compare_geo(X1, Y1, X2, Y2, radius=None, missing_value=np.nan):
+def _compare_geo(x1, y1, x2, y2, radius=None, missing_value=np.nan):
 
 	try:
 		from scipy.spatial import distance
 	except ImportError:
 		raise ImportError('Could not import scipy.spatial')
 
-	coord_1 = np.append([X1],[Y1], axis=0).T
-	coord_2 = np.append([X2],[Y2], axis=0).T
+	coord_1 = np.append([x1],[y1], axis=0).T
+	coord_2 = np.append([x2],[y2], axis=0).T
 
 	d = distance.cdist(coord_1, coord_2, 'cityblock')
 
@@ -285,7 +308,7 @@ def _compare_fuzzy(s1,s2, method='levenshtein', threshold=None, missing_value=0)
 		approx = 1 - approx
 
 	else:
-		raise ValueError('Algorithm {} not found.'.format(method))
+		raise ValueError("""Algorithm '{}'' not found.""".format(method))
 
 	if threshold is not None:
 		comp = (approx >= threshold).astype(int)

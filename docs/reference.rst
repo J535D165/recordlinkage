@@ -31,7 +31,7 @@ This class can be used to make pairs of records, also called candidate record pa
 Comparing
 ---------
 
-The following class and methods can be used to compare records pairs. String similarity algorithms are available when ``jellyfish`` is installed. 
+The ``Compare`` class and its methods can be used to compare records pairs. Several comparison methods are included such as string similarity measures, numerical measures and distance measures. The string similarity algorithms are available when ``jellyfish`` is installed (pip install jellyfish). 
 
 .. automodule:: recordlinkage.comparing
 
