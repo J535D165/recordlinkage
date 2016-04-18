@@ -143,9 +143,6 @@ class KMeansClassifier(Classifier):
 		# Set the start point of the classifier. 
 		self.classifier.init = np.array([[0.05]*len(list(comparison_vectors)),[0.95]*len(list(comparison_vectors))])
 
-		# print self.class
-		# print self.classifier.fit_predict(comparison_vectors.as_matrix())
-
 		return pd.Series(
 			self.classifier.fit_predict(comparison_vectors.as_matrix()), 
 			index=comparison_vectors.index, 
