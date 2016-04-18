@@ -44,7 +44,7 @@ class Classifier(object):
 
 		"""
 
-		raise NotImplementedError("Class %s has no method 'learn()' " % self.__name__)
+		raise NotImplementedError("Class {} has no method 'learn()' ".format(self.__name__))
 
 	def predict(self, comparison_vectors):
 		""" 
@@ -60,7 +60,7 @@ class Classifier(object):
 
 		"""
 
-		raise NotImplementedError("Class %s has no method 'predict()' " % self.__name__)
+		raise NotImplementedError("Class {} has no method 'predict()' ".format(self.__name__))
 
 	def prob(self, comparison_vectors):
 		""" 
@@ -78,7 +78,21 @@ class Classifier(object):
 		:rtype: pandas.Series
 		"""
 
-		raise NotImplementedError("Class %s has no method 'prob()' " % self.__name__)
+		raise NotImplementedError("Class {} has no method 'prob()' ".format(self.__name__))
+
+	def _return_result(self, result, return_type='index', comparison_vectors=None):
+
+		if type(result) != np.ndarray:
+			raise ValueError("numpy.ndarray expected.")
+
+		if return_type == 'index':
+			return comparison_vectors.index[result.astype(bool)]
+		elif return_type == 'series':
+			return pd.Series(result, index=comparison_vectors.index, name='classification')
+		elif return_type == 'array':
+			return result
+		else:
+			raise ValueError("return_type {} unknown. Choose 'index', 'series' or 'array'".format(return_type))
 
 class DeterministicClassifier(Classifier):
 	""" 
@@ -125,7 +139,7 @@ class KMeansClassifier(Classifier):
 
 		self.classifier = cluster.KMeans(n_clusters=2, n_init=1)
 
-	def learn(self, comparison_vectors):
+	def learn(self, comparison_vectors, return_type='index'):
 		""" 
 
 		Train the K-means classifier. The K-means classifier is unsupervised and therefore does not
@@ -133,39 +147,45 @@ class KMeansClassifier(Classifier):
 		links. The starting point of the cluster centers are 0.05 for the non-matches and 0.95 for
 		the matches.
 
-		:param comparison_vectors: The dataframe with comparison vectors. 
-		:type comparison_vectors: pandas.DataFrame
+		:param comparison_vectors: The dataframe with comparison vectors.  
+		:param return_type: The format to return the classification result. The argument value 'index' will return the pandas.MultiIndex of the matches. The argument value 'series' will return a pandas.Series with zeros (distinct) and ones (matches). The argument value 'array' will return a numpy.ndarray with zeros and ones. 
 
-		:return: A pandas Series with the labels 1 (for the matches) and 0 (for the non-matches). 
-		:rtype: pandas.Series
+		:type comparison_vectors: pandas.DataFrame
+		:type return_type: string 
+
+		:return: The prediction (see also the argument 'return_type')
+		:rtype: pandas.MultiIndex, pandas.Series or numpy.ndarray
 
 		"""
+
 		# Set the start point of the classifier. 
 		self.classifier.init = np.array([[0.05]*len(list(comparison_vectors)),[0.95]*len(list(comparison_vectors))])
 
-		return pd.Series(
-			self.classifier.fit_predict(comparison_vectors.as_matrix()), 
-			index=comparison_vectors.index, 
-			name='classification'
-			)
+		# Fit and predict
+		prediction = self.classifier.fit_predict(comparison_vectors.as_matrix())
 
-	def predict(self, comparison_vectors):
+		return self._return_result(prediction, return_type, comparison_vectors)
+
+	def predict(self, comparison_vectors, return_type='index'):
 		""" Predict the class for a set of comparison vectors. 
 
 		After training the classifiers, this method can be used to classify comparison vectors for
 		which the class is unknown.
 
-		:param comparison_vectors: The dataframe with comparison vectors. 
-		:type comparison_vectors: pandas.DataFrame
+		:param comparison_vectors: The dataframe with comparison vectors.  
+		:param return_type: The format to return the classification result. The argument value 'index' will return the pandas.MultiIndex of the matches. The argument value 'series' will return a pandas.Series with zeros (distinct) and ones (matches). The argument value 'array' will return a numpy.ndarray with zeros and ones. 
 
-		:return: A pandas Series with the labels 1 (for the matches) and 0 (for the non-matches). 
-		:rtype: pandas.Series
+		:type comparison_vectors: pandas.DataFrame
+		:type return_type: string 
+
+		:return: The prediction (see also the argument 'return_type')
+		:rtype: pandas.MultiIndex, pandas.Series or numpy.ndarray
 
 		"""
 
 		prediction = self.classifier.predict(comparison_vectors.as_matrix())
 
-		return pd.Series(prediction, index=comparison_vectors.index, name='classification')
+		return self._return_result(prediction, return_type, comparison_vectors)
 
 class LogisticRegressionClassifier(DeterministicClassifier):
 	""" 
