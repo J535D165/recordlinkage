@@ -1,5 +1,7 @@
 # measures.py
 
+from __future__ import division
+
 import numpy
 
 def true_positives(true_match_index, matches_index):
