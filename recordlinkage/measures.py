@@ -60,12 +60,23 @@ def false_negatives(true_match_index, matches_index):
 	return len(true_match_index - matches_index)
 
 def confusion_matrix(true_match_index, matches_index, pairs):
-	""" Return the confusion matrix.
+	""" 
+
+	Compute the confusion matrix. The confusion matrix has the following shape:
+
+	+---------------------+-----------------------+----------------------+
+	|                     |  Predicted Positive   | Predicted Negatives  |
+	+=====================+=======================+======================+
+	| **True Positive**   | True Positives (TP)   | False Negatives (FN) |
+	+---------------------+-----------------------+----------------------+
+	| **True Negative**   | False Positives (FP)  | True Negatives (TN)  |
+	+---------------------+-----------------------+----------------------+
 
 	The confusion matrix is used to compute measures like precision and recall.
 
 	:param true_match_index: The golden/true links.  
 	:param match_index: The classified links.  
+	:param pairs: The number of record pairs analysed.  
 
 	:return: 
 	:rtype: numpy.array
