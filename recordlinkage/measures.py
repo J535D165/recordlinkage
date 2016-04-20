@@ -5,12 +5,16 @@ from __future__ import division
 import numpy
 
 def true_positives(true_match_index, matches_index):
-	""" The number of true positives.
+	""" 
 
-	Return the number of correctly classified links.
+	Return the number of correctly classified links, also called the number of
+	True Positives (TP).
 
 	:param true_match_index: The golden/true links.  
 	:param match_index: The classified links.  
+
+	:type true_match_index: pandas.MultiIndex
+	:type match_index: pandas.MultiIndex
 
 	:return: The number of correctly classified links. 
 	:rtype: int
@@ -19,13 +23,20 @@ def true_positives(true_match_index, matches_index):
 	return len(true_match_index & matches_index)
 
 def true_negatives(true_match_index, matches_index, n_pairs):
-	""" The number of true negatives.
+	""" 
 
-	Return the number of correctly classified non-links.
+	Return the number of correctly classified non-links, also called the
+	number of True Negatives (TN).
 
 	:param true_match_index: The golden/true links.  
 	:param match_index: The classified links.  
+	:param n_pairs: The number of candidate record pairs/ The number of record pairs analysed.
 
+	:type true_match_index: pandas.MultiIndex
+	:type match_index: pandas.MultiIndex
+	:type n_pairs: int
+
+	
 	:return: The number of correctly classified non-links. 
 	:rtype: int
 	"""	
@@ -36,12 +47,19 @@ def true_negatives(true_match_index, matches_index, n_pairs):
 	return n_pairs - len(true_match_index | matches_index)
 
 def false_positives(true_match_index, matches_index):
-	""" The number of false positives.
+	""" 
+
+	Return the number of predicted links, while the record pairs belong to
+	different entities. This values is known as the number of False Positives
+	(FP).
 
 	:param true_match_index: The golden/true links.  
 	:param match_index: The classified links.  
 
-	:return: 
+	:type true_match_index: pandas.MultiIndex
+	:type match_index: pandas.MultiIndex
+	
+	:return: The number of false positives.
 	:rtype: int
 	"""	
 
@@ -49,20 +67,29 @@ def false_positives(true_match_index, matches_index):
 	return len(matches_index - true_match_index)
 
 def false_negatives(true_match_index, matches_index):
-	""" The number of false negatives.
+	""" 
+
+	Return the number of predicted non-links, while the record pairs belong to
+	the same entity. This values is known as the number of False Negatives
+	(FN).
 
 	:param true_match_index: The golden/true links.  
 	:param match_index: The classified links.  
 
-	:return: 
+	:type true_match_index: pandas.MultiIndex
+	:type match_index: pandas.MultiIndex
+	
+	:return: The number of false negatives.
 	:rtype: int
+
 	"""	
 	return len(true_match_index - matches_index)
 
-def confusion_matrix(true_match_index, matches_index, pairs):
+def confusion_matrix(true_match_index, matches_index, n_pairs):
 	""" 
 
-	Compute the confusion matrix. The confusion matrix has the following shape:
+	Compute the confusion matrix. The confusion matrix is of the following
+	form:
 
 	+---------------------+-----------------------+----------------------+
 	|                     |  Predicted Positive   | Predicted Negatives  |
@@ -76,9 +103,13 @@ def confusion_matrix(true_match_index, matches_index, pairs):
 
 	:param true_match_index: The golden/true links.  
 	:param match_index: The classified links.  
-	:param pairs: The number of record pairs analysed.  
+	:param n_pairs: The number of record pairs analysed.  
 
-	:return: 
+	:type true_match_index: pandas.MultiIndex
+	:type match_index: pandas.MultiIndex
+	:type n_pairs: int
+
+	:return: The confusion matrix with TP, TN, FN, FP values.
 	:rtype: numpy.array
 	"""	
 
