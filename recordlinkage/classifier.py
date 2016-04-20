@@ -27,17 +27,20 @@ class Classifier(object):
 		# The actual classifier. Maybe this is slightly strange because of inheritance.
 		self.classifier = None
 
-	def learn(self, comparison_vectors, match_index=None):
+	def learn(self, comparison_vectors, match_index=None, return_type='index'):
 		""" 
 
 		Train the classifer. In case of supervised learning, the second argument can be used to
 		label the matches (1) and non-matches (0).
 
-		:param comparison_vectors: The dataframe with comparison vectors. 
-		:param match_index: The index of the matches. 
+		:param comparison_vectors: The dataframe with comparison vectors.  
+		:param return_type: The format to return the classification result. The argument value 
+			'index' will return the pandas.MultiIndex of the matches. The argument value 'series' 
+			will return a pandas.Series with zeros (distinct) and ones (matches). The argument 
+			value 'array' will return a numpy.ndarray with zeros and ones. 
 
 		:type comparison_vectors: pandas.DataFrame
-		:type match_index: pandas.MultiIndex
+		:type return_type: string 
 
 		:return: A pandas Series with the labels 1 (for the matches) and 0 (for the non-matches). 
 		:rtype: pandas.Series
@@ -46,14 +49,20 @@ class Classifier(object):
 
 		raise NotImplementedError("Class {} has no method 'learn()' ".format(self.__name__))
 
-	def predict(self, comparison_vectors):
+	def predict(self, comparison_vectors, return_type='index'):
 		""" 
 
 		Classify a set of record pairs based on their comparison vectors into matches, non-matches
 		and possible matches. The classifier has to be trained to call this method. 
 
-		:param comparison_vectors: The dataframe with comparison vectors. 
+		:param comparison_vectors: The dataframe with comparison vectors.  
+		:param return_type: The format to return the classification result. The argument value 
+			'index' will return the pandas.MultiIndex of the matches. The argument value 'series' 
+			will return a pandas.Series with zeros (distinct) and ones (matches). The argument 
+			value 'array' will return a numpy.ndarray with zeros and ones. 
+
 		:type comparison_vectors: pandas.DataFrame
+		:type return_type: string 
 
 		:return: A pandas Series with the labels 1 (for the matches) and 0 (for the non-matches). 
 		:rtype: pandas.Series
@@ -81,16 +90,29 @@ class Classifier(object):
 		raise NotImplementedError("Class {} has no method 'prob()' ".format(self.__name__))
 
 	def _return_result(self, result, return_type='index', comparison_vectors=None):
+		"""
+
+		Internal function to return different formatted classification
+		results. 
+
+		"""
 
 		if type(result) != np.ndarray:
 			raise ValueError("numpy.ndarray expected.")
 
+		# return the pandas.MultiIndex
 		if return_type == 'index':
 			return comparison_vectors.index[result.astype(bool)]
+
+		# return a pandas.Series
 		elif return_type == 'series':
 			return pd.Series(result, index=comparison_vectors.index, name='classification')
+
+		# return a numpy.ndarray
 		elif return_type == 'array':
 			return result
+
+		# return_type not known
 		else:
 			raise ValueError("return_type {} unknown. Choose 'index', 'series' or 'array'".format(return_type))
 
@@ -197,7 +219,7 @@ class LogisticRegressionClassifier(DeterministicClassifier):
 	""" 
 	LogisticRegressionClassifier()
 
-	Logistic regression to classify the given record pairs into matches and non-
+	Use logistic regression to classify candidate record pairs into matches and non-
 	matches. 
 
 	"""
