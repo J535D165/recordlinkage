@@ -8,7 +8,7 @@ from recordlinkage.standardise import clean, value_occurence, phonetic
 import numpy as np
 import pandas as pd
 
-class TestStandardise(unittest.TestCase):
+class TestCleaningStandardise(unittest.TestCase):
 
     def test_clean(self):
 
@@ -55,9 +55,9 @@ class TestStandardise(unittest.TestCase):
         values = pd.Series([np.nan, np.nan, 'str1', 'str1', 'str1', 'str1', 'str2', 'str3', 'str3', 'str1'])
         expected = pd.Series([2,2,5,5,5,5,1,2,2,5])
 
-        counter = value_occurence(values)
+        pdt.assert_series_equal(value_occurence(values), expected)
 
-        pdt.assert_series_equal(counter, expected)
+class TestEncodingStandardise(unittest.TestCase):
 
     def test_encode_soundex(self):
 
@@ -76,4 +76,3 @@ class TestStandardise(unittest.TestCase):
         phon = phonetic(values, 'nysiis')
 
         pdt.assert_series_equal(phon, expected)
-
