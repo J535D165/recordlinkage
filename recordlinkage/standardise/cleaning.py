@@ -76,4 +76,4 @@ def value_occurence(s):
 
     value_count = s.fillna('NAN')
 
-    return value_count.groupby(by=value_count.values).transform('count')
+    return value_count.groupby(by=value_count).transform('count')
