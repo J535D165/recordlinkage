@@ -117,7 +117,7 @@ def confusion_matrix(true_match_index, matches_index, n_pairs):
 	tp = true_positives(true_match_index, matches_index)
 
 	# True negatives
-	tn = true_negatives(true_match_index, matches_index, pairs)
+	tn = true_negatives(true_match_index, matches_index, n_pairs)
 
 	# False positives
 	fp = false_positives(true_match_index, matches_index)
