@@ -78,6 +78,16 @@ class Compare(object):
 		the record pair. The data is compared with the compare function. The built-in methods also
 		use this function.
 
+		:Example:
+
+			Consider ``comp`` is a Compare instance. The code
+
+			>>> comp.exact('first_name', 'name')
+
+			is the same as
+
+			>>> comp.compare(recordlinkage._compare_exact, 'first_name', 'name')
+
 		:param comp_func: A comparison function. This function can be a built-in function or a user defined comparison function.
 		:param data_a: The labels, Series or DataFrame to compare.
 		:param data_b: The labels, Series or DataFrame to compare.
