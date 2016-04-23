@@ -52,19 +52,19 @@ def clean(s, lower=True, replace_by_none='[^ \-\_A-Za-z0-9]+', replace_by_whites
 
     return s
 
-def clean_phonenumbers(s, country='USA'):
-    """ Clean string formatted phonenumbers into string of intergers. 
+# def clean_phonenumbers(s, country='USA'):
+#     """ Clean string formatted phonenumbers into string of intergers. 
 
-    :return: A Series with cleaned phonenumbers.
-    :rtype: pandas.Series
-    """
+#     :return: A Series with cleaned phonenumbers.
+#     :rtype: pandas.Series
+#     """
 
-    s = s.astype(str)
+#     s = s.astype(str)
 
-    # Remove all special tokens
-    s = s.str.replace('[^0-9]+', '')
+#     # Remove all special tokens
+#     s = s.str.replace('[^0-9]+', '')
 
-    return s
+#     return s
 
 def value_occurence(s):
     """
