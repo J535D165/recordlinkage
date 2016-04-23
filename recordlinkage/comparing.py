@@ -98,7 +98,7 @@ class Compare(object):
 		:type data_a: label, pandas.Series, pandas.DataFrame
 		:type data_b: label, pandas.Series, pandas.DataFrame
 		:type name: label
-		:type store: boolean
+		:type store: boolean, default True
 
 		:return: The DataFrame Compare.vectors
 		:rtype: standardise.DataFrame
@@ -147,7 +147,7 @@ class Compare(object):
 		:type disagree_value: numpy.dtype
 		:type missing_value: numpy.dtype
 		:type name: label
-		:type store: boolean
+		:type store: boolean, default True
 
 		:return: A Series with comparison values.
 		:rtype: pandas.Series
@@ -170,7 +170,7 @@ class Compare(object):
 		:param store: Store the result in the dataframe.
 
 		:type name: label
-		:type store: boolean
+		:type store: boolean, default True
 
 		:return: A Series with comparison values.
 		:rtype: pandas.Series
@@ -194,7 +194,7 @@ class Compare(object):
 		:param store: Store the result in the dataframe.
 
 		:type name: label
-		:type store: boolean
+		:type store: boolean, default True
 		
 		:return: A Series with similarity values. Values equal or between 0 and 1.
 		:rtype: pandas.Series
@@ -221,7 +221,7 @@ class Compare(object):
 		:param store: Store the result in the dataframe.
 
 		:type name: label
-		:type store: boolean
+		:type store: boolean, default True
 		
 		:return: A Series with comparison values.
 		:rtype: pandas.Series
