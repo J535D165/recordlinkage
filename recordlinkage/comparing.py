@@ -339,7 +339,7 @@ def _compare_fuzzy(s1,s2, method='levenshtein', threshold=None, missing_value=0)
 		approx = 1 - approx
 
 	else:
-		raise ValueError("""Algorithm '{}'' not found.""".format(method))
+		raise ValueError("""Algorithm '{}' not found.""".format(method))
 
 	if threshold is not None:
 		comp = (approx >= threshold).astype(int)
