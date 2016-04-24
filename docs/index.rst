@@ -5,12 +5,16 @@ Overview
 --------
 
 .. toctree::
+	:maxdepth: 2
 
-   link_two_dataframes 
+	examples/link_two_dataframes.ipynb
+	examples/advanced_indexing.ipynb
+	examples/classifiers.ipynb
 
-   advanced_indexing
+.. toctree::
+	:maxdepth: 2
 
-   reference
+	reference
 
 
 
