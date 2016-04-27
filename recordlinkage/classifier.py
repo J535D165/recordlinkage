@@ -226,7 +226,7 @@ class LogisticRegressionClassifier(DeterministicClassifier):
 	def __init__(self, *args, **kwargs):
 		super(self.__class__, self).__init__(*args, **kwargs)
 
-		self.classifier = linear_model.LogisticRegression()
+		self.classifier_ = linear_model.LogisticRegression()
 
 	def learn(self, comparison_vectors, match_index, return_type='index'):
 		""" 
@@ -249,7 +249,7 @@ class LogisticRegressionClassifier(DeterministicClassifier):
 		train_series = pd.Series(False, index=comparison_vectors.index)
 		train_series.loc[match_index & comparison_vectors.index] = True
 
-		self.classifier.fit(comparison_vectors.as_matrix(), np.array(train_series))
+		self.classifier_.fit(comparison_vectors.as_matrix(), np.array(train_series))
 
 		return self.predict(comparison_vectors, return_type)
 
@@ -272,7 +272,7 @@ class LogisticRegressionClassifier(DeterministicClassifier):
 		:rtype: pandas.Series
 
 		"""
-		prediction = self.classifier.predict(comparison_vectors.as_matrix())
+		prediction = self.classifier_.predict(comparison_vectors.as_matrix())
 
 		return self._return_result(prediction, return_type, comparison_vectors)
 
@@ -291,7 +291,7 @@ class LogisticRegressionClassifier(DeterministicClassifier):
 		:return: A pandas Series with pandas.MultiIndex with the probability of being a match. 
 		:rtype: pandas.Series
 		"""
-		probs = self.classifier.predict_proba(comparison_vectors.as_matrix())
+		probs = self.classifier_.predict_proba(comparison_vectors.as_matrix())
 
 		return pd.Series(probs[0,:], index=comparison_vectors.index)
 
@@ -479,13 +479,20 @@ class BernoulliEMClassifier(ProbabilisticClassifier):
 				'm': {feature: {0: 0.1, 1:0.9} for feature in list(comparison_vectors)},
 				'u': {feature: {0: 0.9, 1:0.1} for feature in list(comparison_vectors)}
 			}
-			
+		
 		self.classifier.p_init = params_init
 
 		# Start training the classifier
-		self.classifier.train(comparison_vectors)
+		prediction = self.classifier.train(comparison_vectors)
 
-		return self
+		return prediction
+
+		# train_series = pd.Series(False, index=comparison_vectors.index)
+		# train_series.loc[match_index & comparison_vectors.index] = True
+
+		# self.classifier.fit(comparison_vectors.as_matrix(), np.array(train_series))
+
+		# return self.predict(comparison_vectors, return_type)
 
 	def predict(self, comparison_vectors, return_type='index', *args, **kwargs):
 		""" 
@@ -506,7 +513,10 @@ class BernoulliEMClassifier(ProbabilisticClassifier):
 		:rtype: pandas.Series
 
 		"""
-		return self.classifier.predict_proba(comparison_vectors.as_matrix(), *args, **kwargs)
+
+		prediction = self.classifier.predict(comparison_vectors.as_matrix())
+
+		return self._return_result(prediction, return_type, comparison_vectors)
 
 	def prob(self, comparison_vectors):
 		""" 
