@@ -9,9 +9,9 @@ import numpy
 
 class EMEstimate(object):
     
-    def __init__(self, max_iter=100, p_init=None, random_decisions=False):
+    def __init__(self, max_iter=100, init=None, random_decisions=False):
         
-        self.p_init = p_init
+        self.init = init # options 'jaro', 'random', dict
         self.max_iter = max_iter
         self.random_decisions = random_decisions
 
@@ -22,25 +22,38 @@ class EMEstimate(object):
         self._g = None
 
     def train(self, vectors, *args, **kwargs):
-        """Start the estimation of parameters with the iterative EM-algorithm. 
-
-        :param max_iter: An integer specifying the maximum number of iterations. Default maximum number of iterations is 100. 
         """
 
-        if not self._m and not self._u and not self._p:
-            self._m, self._u, self._p = self._quess_start_params(vectors)
+        Start the estimation of parameters with the iterative EM-algorithm. 
 
-        features_unique, feature_weights = self._count_vectors(vectors)
-
-        self._iteration = 0
+        :param max_iter: An integer specifying the maximum number of
+                        iterations. Default maximum number of iterations is 100.
         
-        while self._iteration < self.max_iter:
+        """
+
+        # Choose starting parameters.
+        if self.init is 'jaro':
+            self.params = self._quess_start_params(vectors)
+        elif self.init is 'random':
+            self.params = self._quess_start_params(vectors)
+        elif type(self.init) is dict:
+            self.init = self.params
+        else:
+            raise ValueError("init not known.")
+
+        iteration = 0
+
+        # Count vectors
+        vectors_unique, vector_counts = self._count_vectors(vectors)
+
+        # Iterate until converged
+        while iteration < self.max_iter:
             
             # Expectation step
-            g = self._expectation(features_unique)
+            g = self._expectation(vectors_unique)
 
             # Maximisation step
-            self._maximization(features_unique, feature_weights, g)
+            self._maximization(vectors_unique, vector_counts, g)
 
             # Stop iterating when probs are close to previous iteration
             if self._g is not None and numpy.allclose(g, self._g, atol=10e-5):
@@ -49,7 +62,9 @@ class EMEstimate(object):
             self._g = g
 
             # Increment counter
-            self._iteration += 1
+            iteration += 1
+
+        return 
 
     def _maximizion(self):
         
@@ -79,15 +94,33 @@ class EMEstimate(object):
 
         pass
 
-    def _count_vectors(self, samples):
+    def _count_vectors(self, vectors):
+        """
+        Internal function to group and count the vectors. 
 
-        samples_df = pd.DataFrame(samples)
+        :param vectors: The vectors to group and count
+        :type vectors: numpy.ndarray
+
+        :return: The grouped and counted vectors
+        :rtype: (numpy.ndarray, numpy.array)
+        """
+
+        vectors_df = pd.DataFrame(vectors)
         feature_combinations = samples_df.groupby(list(samples_df)).size()
 
-        return (pd.DataFrame(index=feature_combinations.index).reset_index().as_matrix(), feature_combinations.values)
+        # Return the vectors and their counts
+        return (feature_combinations.index.values, feature_combinations.values)
 
 class ECMEstimate(EMEstimate):
-    """ Algorithm to compute the Expectation/Conditional Maximisation algorithm in the context of record linkage. The algorithm is clearly described by Herzog, Schueren and Winkler in the book: Data Quality and Record Linkage Tehniques. The algorithm assumes that the comparison variables are mutually independent given the match status."""
+    """ 
+
+    Algorithm to compute the Expectation/Conditional Maximisation algorithm in
+    the context of record linkage. The algorithm is clearly described by
+    Herzog, Schueren and Winkler in the book: Data Quality and Record Linkage
+    Tehniques. The algorithm assumes that the comparison variables are
+    mutually independent given the match status.
+
+    """
 
     def __init__(self, *args, **kwargs):
         super(self.__class__, self).__init__(*args, **kwargs)
@@ -102,7 +135,9 @@ class ECMEstimate(EMEstimate):
         return _m, _u, _p
     
     def _maximization(self, samples, weights, prob):
-        """ Maximisation step of the ECM-algorithm. 
+        """ 
+
+        Maximisation step of the ECM-algorithm. 
 
         :param samples: Dataframe with comparison vectors. 
         :param weights: The number of times the comparison vectors samples occur. This frame needs to have the same index as samples. 
@@ -110,37 +145,60 @@ class ECMEstimate(EMEstimate):
 
         :return: A dict of marginal m-probabilities, a dict of marginal u-probabilities and the match prevalence. 
         :rtype: (dict, dict, float)
+
         """
 
-        for i in range(0, samples.shape[1]):
-            
-            for factor in numpy.unique(samples[:,i]):
-                
-                # Maximization of m
-                self._m[i][factor] = numpy.sum((prob*weights)[samples[:,i] == factor])/numpy.sum(prob*weights)
+        # numpy.apply_along_axis(my_func, 0, b)
 
-                # Maximization of u
-                self._u[i][factor] = numpy.sum((((1-prob)*weights)[samples[:,i] == factor]))/numpy.sum((1-prob)*weights)
+        # for i in range(0, samples.shape[1]):
+            
+        #     for factor in numpy.unique(samples[:,i]):
+
+        nd = [(i, factor)for i in range(0, samples.shape[1]) for factor in numpy.unique(samples[:,i])]
+
+        # m = [[column1, value1],
+        #     [column1, value2],
+        #     [column2, value1],
+        #     [column2, value2],
+        #     [column2, value3]
+        # ]
+
+        # Then apply
+
+        for i, factor in nd:
+                
+            # Maximization of m
+            self._m[i][factor] = numpy.sum((prob*weights)[samples[:,i] == factor])/numpy.inner(prob,weights)
+
+            # Maximization of u
+            self._u[i][factor] = numpy.sum((((1-prob)*weights)[samples[:,i] == factor]))/numpy.inner(1-prob,weights)
         
         # Maximization of p
-        self._p = numpy.sum(prob*weights)/numpy.sum(weights)
+        # self._p = numpy.sum(prob*weights)/numpy.sum(weights)
+        self._p = numpy.average(prob, weights=weights)
         
         return self._m, self._u, self._p
     
     def _expectation(self, samples):
-        """ Compute the expectation of the given comparison vectors. 
+        """ 
+
+        Compute the expectation of the given comparison vectors. 
 
         :return: A Series with the expectation.
         :rtype: pandas.Series
+
         """
 
         return self._p*self._prob_m(samples)/(self._p*self._prob_m(samples)+(1-self._p)*self._prob_u(samples)) 
 
     def _prob_m(self, samples):
-        """Compute the m-probability, P(comparison vector|M), for a dataframe with comparison vectors. 
+        """
+
+        Compute the m-probability, P(comparison vector|M), for a dataframe with comparison vectors. 
 
         :return: A Series with m-probabilities.
         :rtype: pandas.Series
+
         """
 
         newArray = numpy.zeros(samples.shape)
