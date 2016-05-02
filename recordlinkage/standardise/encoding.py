@@ -26,7 +26,7 @@ def phonetic(s, method, encoding='utf-8'):
     try:
         import jellyfish
     except ImportError:
-        print "Install jellyfish to use string encoding."
+        print ("Install jellyfish to use string encoding.")
 
     s = clean(s, replace_by_none='[^\-\_A-Za-z0-9]+')
 
@@ -57,7 +57,7 @@ def similar_values(s, threshold=0.8):
     try:
         import jellyfish
     except ImportError:
-        print "Install jellyfish to use string encoding."
+        print ("Install jellyfish to use string encoding.")
 
     replace_tuples = []
 
