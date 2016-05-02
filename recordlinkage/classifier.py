@@ -7,7 +7,7 @@ import logging
 import warnings
 warnings.simplefilter(action = "ignore", category = FutureWarning)
 
-import em_algorithm_
+import recordlinkage.em_algorithm_
 
 from sklearn import cluster, linear_model, naive_bayes, svm
 

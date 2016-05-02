@@ -8,7 +8,7 @@ import pandas as pd
 
 import itertools
 
-from cleaning import *
+from .cleaning import *
 
 def phonetic(s, method, encoding='utf-8'):
     """

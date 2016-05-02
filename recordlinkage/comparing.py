@@ -3,7 +3,7 @@ from __future__ import division
 import pandas
 import numpy as np
 
-from indexing import IndexError
+from .indexing import IndexError
 
 class Compare(object):
 	""" 

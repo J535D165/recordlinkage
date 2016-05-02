@@ -1,3 +1,3 @@
-from cleaning import *
-from encoding import *
+from .cleaning import *
+from .encoding import *
 
