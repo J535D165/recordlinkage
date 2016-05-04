@@ -27,12 +27,12 @@ TEST_DATA_2 = pd.DataFrame([
     index=pd.Index([1,2,3,4,5], name='index_df2')
     )
 
-TEST_INDEX_LINKING = pd.MultiIndex.from_tuples(
-    zip([1,1,2,3,4,5], [2,4,3,5,5,1]), 
+TEST_INDEX_LINKING = pd.MultiIndex.from_arrays(
+    [[1,1,2,3,4,5], [2,4,3,5,5,1]], 
     names=[TEST_DATA_1.index.name, TEST_DATA_2.index.name])
 
-TEST_INDEX_DEDUP = pd.MultiIndex.from_tuples(
-    zip([1,1,2,3,4,5], [2,4,3,5,5,1]), 
+TEST_INDEX_DEDUP = pd.MultiIndex.from_arrays(
+    [[1,1,2,3,4,5], [2,4,3,5,5,1]], 
     names=[TEST_DATA_1.index.name, TEST_DATA_1.index.name])
 
 
