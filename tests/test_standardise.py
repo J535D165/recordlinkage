@@ -61,8 +61,8 @@ class TestEncodingStandardise(unittest.TestCase):
 
     def test_encode_soundex(self):
 
-        values = pd.Series([np.nan, 'John', 'Mary Ann', 'billy', 'Jonathan', 'Gretha', 'Micheal', 'Sjors'])
-        expected = pd.Series([np.nan, 'J500', 'M650', 'B400', 'J535', 'G630', 'M240', 'S620'])
+        values = pd.Series([np.nan, u'John', u'Mary Ann', u'billy', u'Jonathan', u'Gretha', u'Micheal', u'Sjors'])
+        expected = pd.Series([np.nan, u'J500', u'M650', u'B400', u'J535', u'G630', u'M240', u'S620'])
 
         phon = phonetic(values, 'soundex')
 
@@ -70,8 +70,8 @@ class TestEncodingStandardise(unittest.TestCase):
 
     def test_encode_nysiis(self):
 
-        values = pd.Series([np.nan, 'John', 'Mary Ann', 'billy', 'Jonathan', 'Gretha', 'Micheal', 'Sjors'])
-        expected = pd.Series([np.nan, 'JAN', 'MARYAN', 'BALY', 'JANATAN', 'GRAT', 'MACAL', 'SJAR'])
+        values = pd.Series([np.nan, u'John', u'Mary Ann', u'billy', u'Jonathan', u'Gretha', u'Micheal', u'Sjors'])
+        expected = pd.Series([np.nan, u'JAN', u'MARYAN', u'BALY', u'JANATAN', u'GRAT', u'MACAL', u'SJAR'])
 
         phon = phonetic(values, 'nysiis')
 
