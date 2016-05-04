@@ -7,7 +7,7 @@ import logging
 import warnings
 warnings.simplefilter(action = "ignore", category = FutureWarning)
 
-import recordlinkage.em_algorithm_
+from .em_algorithm_ import ECMEstimate
 
 from sklearn import cluster, linear_model, naive_bayes, svm
 
@@ -205,160 +205,149 @@ class KMeansClassifier(Classifier):
 # DeterministicClassifier = LogisticRegressionClassifier
 
 class LogisticRegressionClassifier(Classifier):
-    """ 
-    LogisticRegressionClassifier(coefficients=None, intercept=None)
+	""" 
+	LogisticRegressionClassifier(coefficients=None, intercept=None)
 
-    Use logistic regression to classify candidate record pairs into matches and non-
-    matches. 
-    
-    :param coefficients: The coefficients of the logistic regression.
-    :param intercept: The interception value.
+	Use logistic regression to classify candidate record pairs into matches and non-
+	matches. 
 
-    :type coefficients: numpy.array
-    :type intercept: float
+	:param coefficients: The coefficients of the logistic regression.
+	:param intercept: The interception value.
 
-    :var coefficients: The coefficients of the logistic regression.
-    :var intercept: The interception value.
+	:type coefficients: numpy.array
+	:type intercept: float
 
-    :vartype coefficients: numpy.array
-    :vartype intercept: float
-    """
-    
-    def __init__(self, coefficients=None, intercept=None):
-        super(self.__class__, self).__init__()
+	:var coefficients: The coefficients of the logistic regression.
+	:var intercept: The interception value.
 
-        self.classifier_ = linear_model.LogisticRegression()
+	:vartype coefficients: numpy.array
+	:vartype intercept: float
+	"""
 
-        self.coefficients = coefficients
-        self.intercept = intercept
-        
-        self.classifier_.classes_ = np.array([False, True])
+	def __init__(self, coefficients=None, intercept=None):
+		super(self.__class__, self).__init__()
 
-    def __getattr__(self, name):
-        
-        # Get coefficients
-        if name is 'coefficients':
-            return self.classifier_.coef_ if hasattr(logreg.classifier_, 'coef_') else None
-            
-        # Get intercept
-        elif name is 'intercept':
-            return self.classifier_.intercept_[0] if hasattr(logreg.classifier_, 'intercept_') else None
-        
-        # Get attributes
-        else:
-            return object.__getattr__(self, name, value)
-    
-    def __setattr__(self, name, value):
-        
-        # Set attributes
-        if name is 'coefficients':
-            
-            if value is not None:
-                
-                # Check if array if numpy array
-                if type(value) is not np.ndarray:
-                    value = np.array(value)
+		self.classifier_ = linear_model.LogisticRegression()
 
-                self.classifier_.coef_ = np.array(value)
-                
-        # Set attributes
-        elif name is 'intercept':
-            
-            if value is not None:
-                
-                # Check if array if numpy array
-                if type(value) is not np.ndarray:
-                    value = np.array([value])
+		self.coefficients = coefficients
+		self.intercept = intercept
 
-                self.classifier_.intercept_ = value
-                
-        # Set attributes
-        else:
-            object.__setattr__(self, name, value)
+		self.classifier_.classes_ = np.array([False, True])
 
-    def learn(self, comparison_vectors, match_index, return_type='index'):
-        """ 
+	@property
+	def coefficients(self):
+		return self.classifier_.coef_ if hasattr(logreg.classifier_, 'coef_') else None
 
-        Train the Logistic Regression classifier. 
+	@property
+	def intercept(self):
+		return self.classifier_.intercept_[0] if hasattr(logreg.classifier_, 'intercept_') else None
 
-        :param comparison_vectors: The dataframe with comparison vectors.  
-        :param return_type: The format to return the classification result. The argument value 
-            'index' will return the pandas.MultiIndex of the matches. The argument value 'series' 
-            will return a pandas.Series with zeros (distinct) and ones (matches). The argument 
-            value 'array' will return a numpy.ndarray with zeros and ones. 
+	@coefficients.setter
+	def coefficients(self, value):
 
-        :type comparison_vectors: pandas.DataFrame
-        :type return_type: string 
+		if value is not None:
 
-        :return: A pandas Series with the labels 1 (for the matches) and 0 (for the non-matches). 
-        :rtype: pandas.Series
+			# Check if array if numpy array
+			if type(value) is not np.ndarray:
+				value = np.array(value)
 
-        """
-        train_series = pd.Series(False, index=comparison_vectors.index)
-        train_series.loc[match_index & comparison_vectors.index] = True
+			self.classifier_.coef_ = np.array(value)
 
-        self.classifier_.fit(comparison_vectors.as_matrix(), np.array(train_series))
-        
-        return self.predict(comparison_vectors, return_type)
-    
-    def predict(self, comparison_vectors, return_type='index'):
-        """ 
+	@intercept.setter
+	def intercept(self, value):
 
-        Classify a set of record pairs based on their comparison vectors into matches, non-matches
-        and possible matches. The classifier has to be trained to call this method. 
+		if value is not None:
 
-        :param comparison_vectors: The dataframe with comparison vectors.  
-        :param return_type: The format to return the classification result. The argument value 
-            'index' will return the pandas.MultiIndex of the matches. The argument value 'series' 
-            will return a pandas.Series with zeros (distinct) and ones (matches). The argument 
-            value 'array' will return a numpy.ndarray with zeros and ones. 
+			# Check if array if numpy array
+			if type(value) is not np.ndarray:
+				value = np.array([value])
 
-        :type comparison_vectors: pandas.DataFrame
-        :type return_type: string 
+			self.classifier_.intercept_ = value
 
-        :return: A pandas Series with the labels 1 (for the matches) and 0 (for the non-matches). 
-        :rtype: pandas.Series
+	def learn(self, comparison_vectors, match_index, return_type='index'):
+		""" 
 
-        """
-        prediction = self.classifier_.predict(comparison_vectors.as_matrix())
-        
-        return self._return_result(prediction, return_type, comparison_vectors)
+		Train the Logistic Regression classifier. 
 
-    def prob(self, comparison_vectors):
-        """ 
+		:param comparison_vectors: The dataframe with comparison vectors.  
+		:param return_type: The format to return the classification result. The argument value 
+			'index' will return the pandas.MultiIndex of the matches. The argument value 'series' 
+			will return a pandas.Series with zeros (distinct) and ones (matches). The argument 
+			value 'array' will return a numpy.ndarray with zeros and ones. 
 
-        Estimate the probability for each record pairs of being a match.
+		:type comparison_vectors: pandas.DataFrame
+		:type return_type: string 
 
-        The method computes the probability for each given record pair of being a match. The
-        probability of a non-match is 1 minus the result. This method is not implemented for all
-        classifiers (for example K-means clustering).
+		:return: A pandas Series with the labels 1 (for the matches) and 0 (for the non-matches). 
+		:rtype: pandas.Series
 
-        :param comparison_vectors: The dataframe with comparison vectors. 
-        :type comparison_vectors: pandas.DataFrame
+		"""
+		train_series = pd.Series(False, index=comparison_vectors.index)
+		train_series.loc[match_index & comparison_vectors.index] = True
 
-        :return: A pandas Series with pandas.MultiIndex with the probability of being a match. 
-        :rtype: pandas.Series
-        """
-        probs = self.classifier_.predict_proba(comparison_vectors.as_matrix())
+		self.classifier_.fit(comparison_vectors.as_matrix(), np.array(train_series))
 
-        return pd.Series(probs[0,:], index=comparison_vectors.index)
-    
-    def set_params(self, coefficients, intercept):
-        """
-        Set the coefficients of the logistic regression classifier. 
-        coefficients*features.T > intercept are matches, otherwise distinct record pairs. 
-        
-        :param coefficients: The coefficients of logistic regression
-        :param intercept: The interception value (matches are positive and non-matches negative)
-        
-        :type coefficients: numpy.array, list
-        :type coefficients: 
-        """
+		return self.predict(comparison_vectors, return_type)
 
-        self.coefficients = coefficients
-        self.intercept = intercept
-        
-        return
+	def predict(self, comparison_vectors, return_type='index'):
+		""" 
+
+		Classify a set of record pairs based on their comparison vectors into matches, non-matches
+		and possible matches. The classifier has to be trained to call this method. 
+
+		:param comparison_vectors: The dataframe with comparison vectors.  
+		:param return_type: The format to return the classification result. The argument value 
+			'index' will return the pandas.MultiIndex of the matches. The argument value 'series' 
+			will return a pandas.Series with zeros (distinct) and ones (matches). The argument 
+			value 'array' will return a numpy.ndarray with zeros and ones. 
+
+		:type comparison_vectors: pandas.DataFrame
+		:type return_type: string 
+
+		:return: A pandas Series with the labels 1 (for the matches) and 0 (for the non-matches). 
+		:rtype: pandas.Series
+
+		"""
+		prediction = self.classifier_.predict(comparison_vectors.as_matrix())
+
+		return self._return_result(prediction, return_type, comparison_vectors)
+
+	def prob(self, comparison_vectors):
+		""" 
+
+		Estimate the probability for each record pairs of being a match.
+
+		The method computes the probability for each given record pair of being a match. The
+		probability of a non-match is 1 minus the result. This method is not implemented for all
+		classifiers (for example K-means clustering).
+
+		:param comparison_vectors: The dataframe with comparison vectors. 
+		:type comparison_vectors: pandas.DataFrame
+
+		:return: A pandas Series with pandas.MultiIndex with the probability of being a match. 
+		:rtype: pandas.Series
+		"""
+		probs = self.classifier_.predict_proba(comparison_vectors.as_matrix())
+
+		return pd.Series(probs[0,:], index=comparison_vectors.index)
+
+	def set_params(self, coefficients, intercept):
+		"""
+		Set the coefficients of the logistic regression classifier. 
+		coefficients*features.T > intercept are matches, otherwise distinct record pairs. 
+
+		:param coefficients: The coefficients of logistic regression
+		:param intercept: The interception value (matches are positive and non-matches negative)
+
+		:type coefficients: numpy.array, list
+		:type coefficients: 
+		"""
+
+		self.coefficients = coefficients
+		self.intercept = intercept
+
+		return
+
 class BernoulliNBClassifier(ProbabilisticClassifier):
 	""" 
 	BernoulliNBClassifier()
@@ -513,7 +502,7 @@ class BernoulliEMClassifier(ProbabilisticClassifier):
 	def __init__(self, *args, **kwargs):
 		super(self.__class__, self).__init__(*args, **kwargs)
 
-		self.classifier = em_algorithm_.ECMEstimate()
+		self.classifier = ECMEstimate()
 
 	def learn(self, comparison_vectors, params_init=None, return_type='index'):
 		""" 
