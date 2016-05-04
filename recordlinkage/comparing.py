@@ -1,9 +1,16 @@
 from __future__ import division 
 
+import sys
+
 import pandas
 import numpy as np
 
 from .indexing import IndexError
+
+try:
+	import jellyfish
+except ImportError:
+	pass
 
 class Compare(object):
 	""" 
@@ -267,6 +274,7 @@ class Compare(object):
 		return data
 
 def _missing(*args):
+	""" Internal function to return the index of record pairs with missing values """
 
 	return np.any(np.concatenate([np.array(pandas.DataFrame(arg).isnull()) for arg in args], axis=1), axis=1)
 
@@ -315,12 +323,15 @@ def _compare_geo(x1, y1, x2, y2, radius=None, missing_value=np.nan):
 
 	return d 
 
+def _check_jellyfish():
+
+	if 'jellyfish' not in sys.modules:
+		raise ImportError("Install the module 'jellyfish' to use the following string metrics: 'jaro', 'jarowinkler', 'levenshtein' and 'damerau_levenshtein'.")
+
 def _compare_fuzzy(s1,s2, method='levenshtein', threshold=None, missing_value=0):
 
-	try:
-		import jellyfish
-	except ImportError:
-		raise ImportError("Install 'jellyfish' to use approximate string comparison.")
+	# Check jellyfish
+	_check_jellyfish()
 
 	series = pandas.concat([s1, s2], axis=1)
 
@@ -338,6 +349,12 @@ def _compare_fuzzy(s1,s2, method='levenshtein', threshold=None, missing_value=0)
 		approx = series.apply(lambda x: jellyfish.damerau_levenshtein_distance(x[0], x[1])/np.max([len(x[0]),len(x[1])]) if pandas.notnull(x[0]) and pandas.notnull(x[1]) else np.nan, axis=1)
 		approx = 1 - approx
 
+	elif method == 'qgram':
+		approx = qgram_similarity(s1, s2)
+
+	elif method == 'cosine':
+		approx = cosine_similarity(s1, s2)
+
 	else:
 		raise ValueError("""Algorithm '{}' not found.""".format(method))
 
@@ -350,3 +367,58 @@ def _compare_fuzzy(s1,s2, method='levenshtein', threshold=None, missing_value=0)
 	comp[_missing(s1, s2)] = missing_value
 
 	return comp
+
+def qgram_similarity(s1, s2, include_wb=True, ngram=(2,2)):
+
+	if len(s1) != len(s2):
+		raise ValueError('Arrays or Series have to be same length.')
+
+	# include word boundaries or not
+	analyzer = 'char_wb' if include_wb == True else 'char'
+
+	# The vectorizer
+	vectorizer = CountVectorizer(analyzer=analyzer, strip_accents='unicode', ngram_range=ngram)
+
+	try:
+		data = s1.append(s2).values # Strange performance increase
+	except Exception:
+		data = np.concatenate([s1, s2], axis=0)
+
+	vec_fit = vectorizer.fit_transform(data)
+
+	return _metric_sparse_euclidean(vec_fit[:len(s1)], vec_fit[len(s1):])
+
+def _metric_sparse_euclidean(u, v):
+	match_ngrams = u.minimum(v).sum(axis=1)
+	total_ngrams = np.maximum(u.sum(axis=1),v.sum(axis=1))
+
+	return np.true_divide(match_ngrams,total_ngrams).A1
+
+def cosinus_similarity(s1, s2, include_wb=True, ngram=(2,2)):
+
+	if len(s1) != len(s2):
+		raise ValueError('Arrays or Series have to be same length.')
+
+	# include word boundaries or not
+	analyzer = 'char_wb' if include_wb == True else 'char'
+
+	# The vectorizer
+	vectorizer = CountVectorizer(analyzer=analyzer, strip_accents='unicode', ngram_range=ngram)
+
+	try:
+		data = s1.append(s2).values # Strange performance increase
+	except Exception:
+		data = np.concatenate([s1, s2], axis=0)
+
+	vec_fit = vectorizer.fit_transform(data)
+
+	return _metric_sparse_cosine(vec_fit[:len(s1)], vec_fit[len(s1):])
+
+def _metric_sparse_cosine(u,v):
+
+	a = np.sqrt(u.multiply(u).sum(axis=1))
+	b = np.sqrt(v.multiply(v).sum(axis=1))
+
+	ab = v.multiply(u).sum(axis=1)
+
+	return np.divide(ab, np.multiply(a,b)).A1
