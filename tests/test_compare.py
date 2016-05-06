@@ -6,22 +6,22 @@ import numpy as np
 import pandas as pd
 
 TEST_DATA_1 = pd.DataFrame([
-    ['bob', 'smith', 10, 'new york'],
-    [np.nan, 'smith', 10, 'new york'],
-    ['bob2', 'smith', 10, 'new york'],
-    ['bob2', 'smith', 10, 'new york'],
-    ['bob', 'smith', np.nan, 'new york']
+    [u'bob', u'smith', 10, u'new york'],
+    [np.nan, u'smith', 10, u'new york'],
+    [u'bob2', u'smith', 10, u'new york'],
+    [u'bob2', u'smith', 10, u'new york'],
+    [u'bob', u'smith', np.nan, u'new york']
     ],
     columns=['name', 'lastname', 'age', 'place'],
     index=pd.Index([1,2,3,4,5], name='index_df1')
     )
 
 TEST_DATA_2 = pd.DataFrame([
-    ['bob', 'smith', 10, 'new york'],
-    [np.nan, 'smith', 10, 'new york'],
-    ['bob2', 'smith', 10, 'new york'],
-    ['bob2', 'smith', np.nan, 'new york'],
-    ['bob', 'smith', np.nan, 'new york']
+    [u'bob', u'smith', 10, u'new york'],
+    [np.nan, u'smith', 10, u'new york'],
+    [u'bob2', u'smith', 10, u'new york'],
+    [u'bob2', u'smith', np.nan, u'new york'],
+    [u'bob', u'smith', np.nan, u'new york']
     ],
     columns=['name', 'lastname', 'age', 'place'],
     index=pd.Index([1,2,3,4,5], name='index_df2')
@@ -88,7 +88,6 @@ class TestCompare(unittest.TestCase):
         result = comp.exact('name', 'name', name='y_name')
         expected = pd.Series([0,0,0,0,0,1], index=TEST_INDEX_DEDUP, name='y_name')
 
-
         pdt.assert_series_equal(result, expected)
        
     def test_fuzzy_does_not_exist(self):
@@ -96,4 +95,40 @@ class TestCompare(unittest.TestCase):
         comp = recordlinkage.Compare(TEST_INDEX_DEDUP, TEST_DATA_1, TEST_DATA_1)
 
         self.assertRaises(ValueError, comp.fuzzy, 'name', 'name', name='y_name', method='unknown_algorithm')
+
+    def test_fuzzy_same_labels(self):
+        
+        comp = recordlinkage.Compare(TEST_INDEX_DEDUP, TEST_DATA_1, TEST_DATA_1)
+
+        for alg in ['jaro', 'jaro_winkler', 'dameraulevenshtein', 'levenshtein', 'q_gram', 'cosine']:
+
+            print (alg)
+
+            # Missing values
+            result = comp.fuzzy('name', 'name', method=alg, missing_value=np.nan) # Change in future (should work without method)
+
+            print (result)
+
+            self.assertTrue(result.notnull().any())
+            self.assertTrue((result[result.notnull()] >= 0).all())
+            self.assertTrue((result[result.notnull()] <= 1).all())
+
+    def test_fuzzy_different_labels(self):
+        
+        comp = recordlinkage.Compare(TEST_INDEX_DEDUP, TEST_DATA_1, TEST_DATA_1)
+
+        for alg in ['jaro', 'jaro_winkler', 'dameraulevenshtein', 'levenshtein', 'q_gram', 'cosine']:
+
+            print (alg)
+
+            # Missing values
+            result = comp.fuzzy('name', 'lastname', method=alg, missing_value=np.nan) # Change in future (should work without method)
+            
+            print (result)
+
+            self.assertTrue(result.notnull().any())
+            self.assertTrue((result[result.notnull()] >= 0).all())
+            self.assertTrue((result[result.notnull()] <= 1).all())
+
+
 

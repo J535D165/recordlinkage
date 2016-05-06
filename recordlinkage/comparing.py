@@ -1,11 +1,13 @@
 from __future__ import division 
 
+from .indexing import IndexError
+
 import sys
 
 import pandas
 import numpy as np
 
-from .indexing import IndexError
+from sklearn.feature_extraction.text import CountVectorizer
 
 try:
 	import jellyfish
@@ -330,26 +332,19 @@ def _check_jellyfish():
 
 def _compare_fuzzy(s1,s2, method='levenshtein', threshold=None, missing_value=0):
 
-	# Check jellyfish
-	_check_jellyfish()
-
-	series = pandas.concat([s1, s2], axis=1)
-
 	if method == 'jaro':
-		approx = series.apply(lambda x: jellyfish.jaro_distance(x[0], x[1]) if pandas.notnull(x[0]) and pandas.notnull(x[1]) else np.nan, axis=1)
-	
-	elif method == 'jarowinkler':
-		approx = series.apply(lambda x: jellyfish.jaro_winkler(x[0], x[1]) if pandas.notnull(x[0]) and pandas.notnull(x[1]) else np.nan, axis=1)
-	
+		approx = jaro_similarity(s1, s2)
+
+	elif method in ['jarowinkler', 'jaro_winkler']:
+		approx = jarowinkler_similarity(s1, s2)
+
 	elif method == 'levenshtein':
-		approx = series.apply(lambda x: jellyfish.levenshtein_distance(x[0], x[1])/np.max([len(x[0]),len(x[1])]) if pandas.notnull(x[0]) and pandas.notnull(x[1]) else np.nan, axis=1)
-		approx = 1 - approx
+		approx = levenshtein_similarity(s1, s2)
 
-	elif method == 'damerau_levenshtein':
-		approx = series.apply(lambda x: jellyfish.damerau_levenshtein_distance(x[0], x[1])/np.max([len(x[0]),len(x[1])]) if pandas.notnull(x[0]) and pandas.notnull(x[1]) else np.nan, axis=1)
-		approx = 1 - approx
+	elif method in ['dameraulevenshtein', 'damerau_levenshtein']:
+		approx = damerau_levenshtein_similarity(s1, s2)
 
-	elif method == 'qgram':
+	elif method in ['qgram', 'q_gram']:
 		approx = qgram_similarity(s1, s2)
 
 	elif method == 'cosine':
@@ -368,6 +363,70 @@ def _compare_fuzzy(s1,s2, method='levenshtein', threshold=None, missing_value=0)
 
 	return comp
 
+def jaro_similarity(s1,s2):
+
+	# Check jellyfish
+	_check_jellyfish()
+
+	conc = pandas.concat([s1, s2], axis=1, ignore_index=True)
+
+	def jaro_apply(x):
+
+		try:
+			return jellyfish.jaro_distance(x[0],x[1])
+		except Exception:
+			return np.nan
+
+	return conc.apply(jaro_apply, axis=1)
+
+def jarowinkler_similarity(s1,s2):
+
+	# Check jellyfish
+	_check_jellyfish()
+	
+	conc = pandas.concat([s1, s2], axis=1, ignore_index=True)
+
+	def jaro_winkler_apply(x):
+
+		try:
+			return jellyfish.jaro_winkler(x[0],x[1])
+		except Exception:
+			return np.nan
+
+	return conc.apply(jaro_winkler_apply, axis=1)
+
+def levenshtein_similarity(s1,s2):
+
+	# Check jellyfish
+	_check_jellyfish()
+
+	conc = pandas.concat([s1, s2], axis=1, ignore_index=True)
+
+	def levenshtein_apply(x):
+
+		try:
+			return 1-jellyfish.levenshtein_distance(x[0], x[1])/np.max([len(x[0]),len(x[1])])
+		except Exception:
+			return np.nan
+
+	return conc.apply(levenshtein_apply, axis=1)
+
+def damerau_levenshtein_similarity(s1,s2):
+
+	# Check jellyfish
+	_check_jellyfish()
+
+	conc = pandas.concat([s1, s2], axis=1, ignore_index=True)
+
+	def damerau_levenshtein_apply(x):
+
+		try:
+			return 1-jellyfish.damerau_levenshtein_distance(x[0], x[1])/np.max([len(x[0]),len(x[1])])
+		except Exception:
+			return np.nan
+
+	return conc.apply(damerau_levenshtein_apply, axis=1)
+
 def qgram_similarity(s1, s2, include_wb=True, ngram=(2,2)):
 
 	if len(s1) != len(s2):
@@ -379,22 +438,19 @@ def qgram_similarity(s1, s2, include_wb=True, ngram=(2,2)):
 	# The vectorizer
 	vectorizer = CountVectorizer(analyzer=analyzer, strip_accents='unicode', ngram_range=ngram)
 
-	try:
-		data = s1.append(s2).values # Strange performance increase
-	except Exception:
-		data = np.concatenate([s1, s2], axis=0)
+	data = s1.append(s2).fillna('')
 
 	vec_fit = vectorizer.fit_transform(data)
+	
+	def _metric_sparse_euclidean(u, v):
+		match_ngrams = u.minimum(v).sum(axis=1)
+		total_ngrams = np.maximum(u.sum(axis=1),v.sum(axis=1))
+
+		return np.true_divide(match_ngrams,total_ngrams).A1
 
 	return _metric_sparse_euclidean(vec_fit[:len(s1)], vec_fit[len(s1):])
 
-def _metric_sparse_euclidean(u, v):
-	match_ngrams = u.minimum(v).sum(axis=1)
-	total_ngrams = np.maximum(u.sum(axis=1),v.sum(axis=1))
-
-	return np.true_divide(match_ngrams,total_ngrams).A1
-
-def cosinus_similarity(s1, s2, include_wb=True, ngram=(2,2)):
+def cosine_similarity(s1, s2, include_wb=True, ngram=(2,2)):
 
 	if len(s1) != len(s2):
 		raise ValueError('Arrays or Series have to be same length.')
@@ -405,20 +461,19 @@ def cosinus_similarity(s1, s2, include_wb=True, ngram=(2,2)):
 	# The vectorizer
 	vectorizer = CountVectorizer(analyzer=analyzer, strip_accents='unicode', ngram_range=ngram)
 
-	try:
-		data = s1.append(s2).values # Strange performance increase
-	except Exception:
-		data = np.concatenate([s1, s2], axis=0)
+	data = s1.append(s2).fillna('')
 
 	vec_fit = vectorizer.fit_transform(data)
 
+	def _metric_sparse_cosine(u,v):
+
+		a = np.sqrt(u.multiply(u).sum(axis=1))
+		b = np.sqrt(v.multiply(v).sum(axis=1))
+
+		ab = v.multiply(u).sum(axis=1)
+
+		return np.divide(ab, np.multiply(a,b)).A1
+
 	return _metric_sparse_cosine(vec_fit[:len(s1)], vec_fit[len(s1):])
 
-def _metric_sparse_cosine(u,v):
 
-	a = np.sqrt(u.multiply(u).sum(axis=1))
-	b = np.sqrt(v.multiply(v).sum(axis=1))
-
-	ab = v.multiply(u).sum(axis=1)
-
-	return np.divide(ab, np.multiply(a,b)).A1
