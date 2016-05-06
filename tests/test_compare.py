@@ -96,7 +96,7 @@ class TestCompare(unittest.TestCase):
 
         # Missing values
         result = comp.numerical('age', 'age', 2)
-        expected = pd.Series([1,1,1,0,0], index=TEST_INDEX_LINKING, name='y_name')
+        expected = pd.Series([1,1,1,0,0], index=TEST_INDEX_LINKING)
 
         pdt.assert_series_equal(result, expected)
 
@@ -116,7 +116,8 @@ class TestCompare(unittest.TestCase):
             print (alg)
 
             # Missing values
-            result = comp.fuzzy('name', 'name', method=alg, missing_value=np.nan) # Change in future (should work without method)
+            result = comp.fuzzy('name', 'name', method=alg, missing_value=np.nan) 
+            result = comp.fuzzy('name', 'name', alg, missing_value=np.nan) 
 
             print (result)
 
