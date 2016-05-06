@@ -118,8 +118,6 @@ class Compare(object):
 		name = kwargs.pop('name', None)
 		store = kwargs.pop('store', True)
 
-		print (name)
-
 		# Sample the data and add it to the arguments.
 		if not isinstance(data_b, (tuple, list)):
 			data_b = [data_b]
