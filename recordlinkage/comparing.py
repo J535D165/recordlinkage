@@ -227,7 +227,7 @@ class Compare(object):
 		"""
 		geo(x1, y1, x2, y2, radius=20, disagree_value = -1, missing_value=-1, name=None, store=True)
 
-		Compare geometric coordinates with a tolerance window.
+		[Experimental] Compare geometric coordinates with a tolerance window.
 
 		:param x1: Series with X-coordinates
 		:param y1: Series with Y-coordinates
