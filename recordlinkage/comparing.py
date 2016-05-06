@@ -284,12 +284,14 @@ def _compare_exact(s1, s2, agree_value=1, disagree_value=0, missing_value=0):
 
 	if agree_value == 'value':
 		compare = s1.copy()
-		compare[(s1.values != s2.values)] = disagree_value
+		compare[s1 != s2] = disagree_value
 
 	else:
-		compare = np.where(s1.values == s2.values, agree_value, disagree_value)
+		compare = np.where(s1 == s2, agree_value, disagree_value)
 		
 	compare = pandas.Series(compare, index=s1.index)
+
+	print (compare)
 
 	# Only when disagree value is not identical with the missing value
 	if disagree_value != missing_value:
