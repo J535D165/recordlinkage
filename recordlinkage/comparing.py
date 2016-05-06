@@ -203,7 +203,7 @@ class Compare(object):
 
 		:param s1: Series or DataFrame to compare all fields. 
 		:param s2: Series or DataFrame to compare all fields. 
-		:param method: A approximate string comparison method. Options are ['jaro', 'jarowinkler', 'levenshtein', 'damerau_levenshtein']. Default: 'levenshtein'
+		:param method: A approximate string comparison method. Options are ['jaro', 'jarowinkler', 'levenshtein', 'damerau_levenshtein', 'qgram', 'cosine']. Default: 'levenshtein'
 		:param threshold: A threshold value. All approximate string comparisons higher or equal than this threshold are 1. Otherwise 0.  
 		:param missing_value: The value for a comparison with a missing value. Default 0.
 		:param name: The name of the feature and the name of the column.
@@ -215,7 +215,7 @@ class Compare(object):
 		:return: A Series with similarity values. Values equal or between 0 and 1.
 		:rtype: pandas.Series
 
-		Note: For this function is the package 'jellyfish' required. 
+		Note: For som of these algorithms is the package 'jellyfish' required. Install it with ``pip install jellyfish``.
 
 		"""
 
