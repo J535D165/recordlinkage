@@ -80,7 +80,7 @@ class Compare(object):
 
 		# self.ndim = self._compute_dimension(pairs)
 
-	def compare(self, comp_func, data_a, data_b, name=None, store=True, *args, **kwargs):
+	def compare(self, comp_func, data_a, data_b, *args, **kwargs):
 		"""
 
 		Core method to compare records. This method takes a function and data from both records in
@@ -115,6 +115,11 @@ class Compare(object):
 
 		args = list(args)
 
+		name = kwargs.pop('name', None)
+		store = kwargs.pop('store', True)
+
+		print (name)
+
 		# Sample the data and add it to the arguments.
 		if not isinstance(data_b, (tuple, list)):
 			data_b = [data_b]
@@ -129,6 +134,10 @@ class Compare(object):
 			args.insert(0, self._resample(self._getcol(da, self.df_a), 0))
 
 		c = comp_func(*tuple(args), **kwargs)
+
+		# If it is a pandas Series, remove the name and replace it. 
+		if isinstance(c, (pandas.DataFrame, pandas.Series)):
+			c.name = name
 
 		# Store the result the comparison result
 		if store:
@@ -304,7 +313,7 @@ def _compare_numerical(s1, s2, window, missing_value=0):
 	if isinstance(window, (list, tuple)):
 		compare = (((s1-s2) <= window[1]) & ((s1-s2) >= window[0])).astype(int)
 	else:
-		compare = (((s1-s2) <= window) & ((s1-s2) >= window)).astype(int)
+		compare = (((s1-s2) <= window) & ((s1-s2) >= -window)).astype(int)
 
 	compare[_missing(s1, s2)] = missing_value 
 
