@@ -298,8 +298,6 @@ def _compare_exact(s1, s2, agree_value=1, disagree_value=0, missing_value=0):
 		
 	compare = pandas.Series(compare, index=s1.index)
 
-	print (compare)
-
 	# Only when disagree value is not identical with the missing value
 	if disagree_value != missing_value:
 		compare[_missing(s1, s2)] = missing_value
