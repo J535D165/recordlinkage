@@ -3,7 +3,7 @@ import unittest
 import pandas.util.testing as pdt
 
 import recordlinkage
-from recordlinkage.standardise import clean, value_occurence, phonetic
+from recordlinkage.standardise import clean, phonenumbers, value_occurence, phonetic
 
 import numpy as np
 import pandas as pd
@@ -46,6 +46,16 @@ class TestCleaningStandardise(unittest.TestCase):
         expected = pd.Series([np.nan, 'brats', 'brackets with'])
 
         clean_series = clean(values, remove_brackets=True)
+        
+        # Check if series are identical.
+        pdt.assert_series_equal(clean_series, expected)
+
+    def test_clean_phonenumbers(self):
+
+        values = pd.Series([np.nan, '0033612345678', '+1 201 123 4567', '+336-123 45678'])
+        expected = pd.Series([np.nan, '0033612345678', '+12011234567', '+33612345678'])
+
+        clean_series = phonenumbers(values)
         
         # Check if series are identical.
         pdt.assert_series_equal(clean_series, expected)
