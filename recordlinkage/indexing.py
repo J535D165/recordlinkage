@@ -3,6 +3,7 @@ from __future__ import division
 import pandas
 import numpy
 
+from recordlinkage.common import IndexError
 def _randomindex(df_a,df_b, n_pairs):
 
 	if n_pairs <= 0 and type(n_pairs) is not int:
@@ -373,7 +374,5 @@ class Pairs(object):
 
 		return 1-self.n_pairs/max_pairs
 
-class IndexError(Exception):
-	pass
 
 

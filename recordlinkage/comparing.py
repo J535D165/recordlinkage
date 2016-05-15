@@ -1,7 +1,5 @@
 from __future__ import division 
 
-from .indexing import IndexError
-
 import sys
 
 import pandas
@@ -13,6 +11,8 @@ try:
 	import jellyfish
 except ImportError:
 	pass
+
+from recordlinkage.common import _label_or_column, _resample
 
 class Compare(object):
 	""" 
@@ -126,10 +126,10 @@ class Compare(object):
 			data_a = [data_a]
 
 		for db in reversed(data_b):
-			args.insert(0, self._resample(self._getcol(db, self.df_b), 1))
+			args.insert(0, _resample(_label_or_column(db, self.df_b), self.pairs, 1))
 
 		for da in reversed(data_a):
-			args.insert(0, self._resample(self._getcol(da, self.df_a), 0))
+			args.insert(0, _resample(_label_or_column(da, self.df_a), self.pairs, 0))
 
 		c = comp_func(*tuple(args), **kwargs)
 
@@ -264,23 +264,6 @@ class Compare(object):
 			self.vectors[name] = comp_vect.values
 		else:
 			self.vectors[len(self.vectors)] = comp_vect
-
-	def _getcol(self, label_or_column, dataframe):
-		""" 
-		This internal function is used to transform an index and a dataframe into a reindexed dataframe or series. If already a Series or DataFrame is passed, nothing is done. 
-		"""
-		try:
-			return dataframe[label_or_column]
-
-		except Exception:
-			return label_or_column
-
-	def _resample(self, s, level_i):
-
-		data = s.ix[self.pairs.get_level_values(level_i)]
-		data.index = self.pairs
-
-		return data
 
 def _missing(*args):
 	""" Internal function to return the index of record pairs with missing values """
