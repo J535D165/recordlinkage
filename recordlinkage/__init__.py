@@ -8,7 +8,7 @@ from recordlinkage.standardise import *
 
 from .indexing import *
 from .comparing import *
-from .classifier import *
+from .classifiers import *
 from .measures import *
 
 
