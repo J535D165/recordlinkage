@@ -493,9 +493,9 @@ class SVMClassifier(Classifier):
 class BernoulliEMClassifier(ProbabilisticClassifier):
 	"""
 
-	Expectation Maximisation classifier in combination with Fellegi and Sunter model.
-
-	This is a probabilistic record linkage algorithm. 
+	[EXPERIMENTAL] Expectation/Conditional Maximisation algorithm used as
+	[classifier. This probabilistic record linkage algorithm is used in
+	[combination with Fellegi and Sunter model.
 
 	"""
 	
