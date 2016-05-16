@@ -11,22 +11,10 @@ from scipy.sparse import hstack, vstack
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 
 
-# class EMEstimate(object):
-    
-#     def __init__(self, max_iter=100, init=None, random_decisions=False):
-        
-#         self.init = init # options 'jaro', 'random', dict
-#         self.max_iter = max_iter
-#         self.random_decisions = random_decisions
+class EMEstimate(object):
+    pass
 
-#         self._p = None
-#         self._m = None
-#         self._u = None
-
-#         self._g = None
-
-
-class ECMEstimate(object):
+class ECMEstimate(EMEstimate):
     """ 
 
     Algorithm to compute the Expectation/Conditional Maximisation algorithm in
@@ -36,43 +24,40 @@ class ECMEstimate(object):
     mutually independent given the match status.
  
     :param max_iter: An integer specifying the maximum number of
-                    iterations. Default maximum number of iterations is 100.
+                    iterations. Default maximum number of iterations is 100. 
+                    If max_iter=-1, there is no maximum number of iterations. 
 
     :type max_iter: int
         
 
     """
 
-    def __init__(self, max_iter=100, init='jaro', random_decisions=False):
+    def __init__(self, max_iter=100, init='jaro'):
+        super(ECMEstimate, self).__init__()
 
         self.max_iter = max_iter
-        self.random_decisions = random_decisions
 
-    @property
-    def weights(self):
-
-        # [feature:{for } for i in np.unique(self.y_features)]
-        return numpy.log(self._m/self._u)
-
-    def train(self, vectors, *args, **kwargs):
+    def train(self, vectors):
         """
 
-        Start the estimation of parameters with the iterative EM-algorithm. 
+        Start the estimation of parameters with the iterative ECM-algorithm. 
 
         """
 
+        # If not np.ndarray, convert it
         vectors = numpy.array(vectors)
 
-        y = self.encode_vectors(vectors)
+        # One hot encoding
+        y = self._encode_vectors(vectors)
 
         self._m = 0+0.1+0.8*self.y_classes
         self._u = 1-0.1-0.8*self.y_classes
         self._p = 0.1
 
-        iteration = 0
+        self._iteration = 0
 
         # Iterate until converged
-        while iteration < self.max_iter:
+        while self._iteration < self.max_iter or self.max_iter == -1:
             
             prev_m, prev_u, prev_p = self._m, self._u, self._p
 
@@ -83,10 +68,12 @@ class ECMEstimate(object):
             self._m, self._u, self._p = self._maximization(y, g)
 
             # Increment counter
-            iteration += 1
+            self._iteration += 1
 
             # Stop iterating when parameters are close to previous iteration
-            if (numpy.allclose(prev_m, self._m, atol=10e-5) and numpy.allclose(prev_u, self._u, atol=10e-5) and numpy.allclose(prev_p, self._p, atol=10e-5)):
+            if (numpy.allclose(prev_m, self._m, atol=10e-5) and \
+                numpy.allclose(prev_u, self._u, atol=10e-5) and \
+                numpy.allclose(prev_p, self._p, atol=10e-5)):
                 break
 
         return 
@@ -97,10 +84,13 @@ class ECMEstimate(object):
         Maximisation step of the ECM-algorithm. 
 
         :param samples: Dataframe with comparison vectors. 
-        :param weights: The number of times the comparison vectors samples occur. This frame needs to have the same index as samples. 
+        :param weights: The number of times the comparison vectors 
+                        samples occur. This frame needs to have the 
+                        same index as samples. 
         :param prob: The expectation of comparison vector in samples.
 
-        :return: A dict of marginal m-probabilities, a dict of marginal u-probabilities and the match prevalence. 
+        :return: A dict of marginal m-probabilities, a dict of marginal 
+                        u-probabilities and the match prevalence. 
         :rtype: (dict, dict, float)
 
         """
@@ -129,7 +119,18 @@ class ECMEstimate(object):
 
         return p*m/(p*m+(1-p)*u) 
        
-    def encode_vectors(self, vectors):
+    def _encode_vectors(self, vectors):
+        """
+
+        Encode the feature vectors with one-hot-encoding.
+
+        :param vectors: The feature vectors
+        :type vectors: numpy.ndarray
+
+        :return: Sparse matrix with encoded features.
+        :rtype: scipy.coo_matrix
+
+        """
 
         n_samples, n_features = vectors.shape
 
@@ -153,12 +154,4 @@ class ECMEstimate(object):
 
         return hstack(data_enc)
 
-    # def predict_proba(self, samples):
-
-        # Use the trained le encoder to sample data
-
-    #     p_link = self._expectation(samples)
-    #     p_nonlink = 1-p_link
-
-    #     return numpy.array([p_link, p_nonlink])
 
