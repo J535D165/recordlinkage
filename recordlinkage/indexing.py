@@ -4,6 +4,8 @@ import pandas
 import numpy
 
 from recordlinkage.common import IndexError
+from recordlinkage.comparing import qgram_similarity
+
 def _randomindex(df_a,df_b, n_pairs):
 
 	if n_pairs <= 0 and type(n_pairs) is not int:
@@ -78,6 +80,17 @@ def _sortedneighbourhood(df_a, df_b, column, window=3, sorting_key_values=None, 
 		pairs_concat = pairs.index if pairs_concat is None else pairs.index.append(pairs_concat)
 
 	return pairs_concat
+
+def _qgram(df_a, df_b, on=None, left_on=None, right_on=None, threshold=0.8):
+
+	fi = _fullindex(df_a, df_b)
+
+	if on:
+		left_on, right_on = on, on
+
+	bool_index = (qgram_similarity(df_a.loc[fi.get_level_values(0), left_on], df_b.loc[fi.get_level_values(1), right_on]) >= threshold)
+
+	return fi[bool_index]
 
 class Pairs(object):
 	""" 
@@ -218,6 +231,28 @@ class Pairs(object):
 		"""		
 		return self.index(_randomindex, *args, **kwargs)
 
+
+	def qgram(self, *args, **kwargs):
+		""" 
+		qgram(on=None, left_on=None, right_on=None, threshold=0.8)
+
+		Use Q-gram string comparing metric to make an index.  
+
+		:param threshold: Record pairs with a similarity above the threshold are candidate record pairs.
+		:param on: A column name or a list of column names. These columns are used to index on. 
+		:param left_on: A column name or a list of column names of dataframe A. These columns are used to index on. 
+		:param right_on: A column name or a list of column names of dataframe B. These columns are used to index on. 
+
+		:type threshold: float
+		:type on: label
+		:type left_on: label
+		:type right_on: label
+
+		:return: The index of the candidate record pairs
+		:rtype: pandas.MultiIndex
+		"""		
+		return self.index(_qgram, *args, **kwargs)
+
 	# -- Iterative index methods ----------------------------------------------
 
 	def iterindex(self, index_func, len_block_a=None, len_block_b=None, *args, **kwargs):
@@ -337,42 +372,54 @@ class Pairs(object):
 
 		return self.iterindex(_sortedneighbourhood, *args, sorting_key_values=sorting_key_values, **kwargs)
 
+	def iterqgram(self, *args, **kwargs):
+		""" 
+		iterqgram(len_block_a=None, len_block_b=None, on=None, left_on=None, right_on=None, threshold=0.8)
+
+		Iterative function that returns Q-gram based index.  
+
+		:param len_block_a: The length of a block of records in dataframe A. The integer len_block_a should satisfy 0 > len_block_a.
+		:param len_block_b: The length of a block of records in dataframe B. The integer len_block_b should satisfy 0 > len_block_b.
+		:param threshold: Record pairs with a similarity above the threshold are candidate record pairs.
+		:param on: A column name or a list of column names. These columns are used to index on. 
+		:param left_on: A column name or a list of column names of dataframe A. These columns are used to index on. 
+		:param right_on: A column name or a list of column names of dataframe B. These columns are used to index on. 
+
+		:type len_block_a: int
+		:type len_block_b: int
+		:type threshold: float
+		:type on: label
+		:type left_on: label
+		:type right_on: label
+
+		:return: The index of the candidate record pairs
+		:rtype: pandas.MultiIndex
+		"""		
+		return self.index(_qgram, *args, **kwargs)
+
 	# -- Tools for indexing ----------------------------------------------
 
-	def reduction(self, n_pairs=None):
-		""" 
+	@property
+	def reduction(self):
+		# """ 
 
-		Compute the relative reduction of records pairs as the result of indexing. 
+		# The relative reduction of records pairs as the result of indexing. 
 
-		:param n_pairs: The number of record pairs.
+		# :param n_pairs: The number of record pairs.
 
-		:type n_pairs: int
+		# :type n_pairs: int
 
-		:return: Value between 0 and 1
-		:rtype: float
-		"""
-
-		if not n_pairs:
-			n_pairs = self.n_pairs
+		# :return: Value between 0 and 1
+		# :rtype: float
+		# """
 
 		if self.deduplication:
-			return self._reduction_ratio_deduplication(n_pairs)
+			max_pairs = (len(self.df_a)*(len(self.df_b)-1))/2
 		else:
-			return self._reduction_ratio_linking(n_pairs)
-
-	# -- Internal index methods ----------------------------------------------
-
-	def _reduction_ratio_deduplication(self, n_pairs=None):
-
-		max_pairs = (len(self.df_a)*(len(self.df_b)-1))/2
+			max_pairs = len(self.df_a)*len(self.df_b)
 
 		return 1-self.n_pairs/max_pairs
 
-	def _reduction_ratio_linking(self, n_pairs=None):
-
-		max_pairs = len(self.df_a)*len(self.df_b)
-
-		return 1-self.n_pairs/max_pairs
 
 
 
