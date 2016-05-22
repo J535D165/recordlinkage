@@ -1,9 +1,14 @@
 
+# futures
 from __future__ import division
 
+# defaults
 import time
 import copy
 
+from itertools import groupby
+
+# external
 import pandas as pd
 import numpy
 
@@ -32,10 +37,14 @@ class ECMEstimate(EMEstimate):
 
     """
 
-    def __init__(self, max_iter=100, init='jaro'):
+    def __init__(self, max_iter=100, init='jaro', m=None, u=None, p=None):
         super(ECMEstimate, self).__init__()
 
         self.max_iter = max_iter
+        self.init = init
+        self.m = m
+        self.u = u
+        self.p = p
 
     def train(self, vectors):
         """
@@ -48,11 +57,29 @@ class ECMEstimate(EMEstimate):
         vectors = numpy.array(vectors)
 
         # One hot encoding
-        y = self._encode_vectors(vectors)
+        y = self._fit_transform_vectors(vectors)
 
-        self._m = 0+0.1+0.8*self.y_classes
-        self._u = 1-0.1-0.8*self.y_classes
-        self._p = 0.1
+        # Convert m and u parameters into lists
+        # If init is list of numpy.array
+        if isinstance(self.init, (list, numpy.ndarray)): 
+            try:
+                self._m = numpy.array([self.m[cl][f] for cl, f in zip(self._classes, self._features)])
+                self._u = numpy.array([self.u[cl][f] for cl, f in zip(self._classes, self._features)])
+                self._p = self.p
+            except Exception:
+                raise ValueError("The parameters m and/or u are not correct. ")
+
+        # If init is 'jaro' 
+        elif self.init in ['jaro', 'auto']:
+
+            if numpy.all(numpy.in1d(self._features, [0, 1])):
+                raise ValueError("To use 'jaro' for start point estimation, the feature values must be valued 1 or 0. ")
+
+            self._m = 0.1+0.8*self._classes
+            self._u = 0.9-0.8*self._classes
+            self._p = 0.1
+        else:
+            raise ValueError("Method not known")
 
         self._iteration = 0
 
@@ -76,7 +103,12 @@ class ECMEstimate(EMEstimate):
                 numpy.allclose(prev_p, self._p, atol=10e-5)):
                 break
 
-        return 
+        # Store the values under 
+        self.m = [{t1:t2 for _, t1, t2 in group} for key, group in groupby(zip(self._features, self._classes, self._m), lambda x: x[0])]
+        self.u = [{t1:t2 for _, t1, t2 in group} for key, group in groupby(zip(self._features, self._classes, self._u), lambda x: x[0])]
+        self.p = self._p
+
+        return g
 
     def _maximization(self, y_enc, g):
         """ 
@@ -118,11 +150,11 @@ class ECMEstimate(EMEstimate):
         p = self._p
 
         return p*m/(p*m+(1-p)*u) 
-       
-    def _encode_vectors(self, vectors):
+        
+    def _fit_transform_vectors(self, vectors):
         """
 
-        Encode the feature vectors with one-hot-encoding.
+        Encode the feature vectors with one-hot-encoding. ONLY FOR INTERNAL USE. 
 
         :param vectors: The feature vectors
         :type vectors: numpy.ndarray
@@ -136,22 +168,50 @@ class ECMEstimate(EMEstimate):
 
         data_enc = []
 
-        self.y_features = numpy.array([])
-        self.y_classes = numpy.array([])
+        self._features = numpy.array([]) # Feature names
+        self._classes = numpy.array([]) # Feature values
+
+        self._label_encoders = [ LabelEncoder() for i in range(0, n_features)]
+        self._one_hot_encoders = [ OneHotEncoder() for i in range(0, n_features)]
 
         for i in range(0, n_features):
 
-            le = LabelEncoder()
-            enc = OneHotEncoder()
+            # scikit learn encoding
+            label_encoded = self._label_encoders[i].fit_transform(vectors[:,i]).reshape((-1,1))
+            data_enc_i = self._one_hot_encoders[i].fit_transform(label_encoded)
 
-            label_encoded = le.fit_transform(vectors[:,i]).reshape((-1,1))
-            data_enc_i = enc.fit_transform(label_encoded)
+            # Save the classes and features in numpy arrays
+            self._features = numpy.append(self._features, numpy.repeat(i, len(self._label_encoders[i].classes_))) # Feature names
+            self._classes = numpy.append(self._classes, self._label_encoders[i].classes_) # Feature values
 
-            self.y_classes = numpy.append(self.y_classes, le.classes_)
-            self.y_features = numpy.append(self.y_features, numpy.repeat(i, len(le.classes_)))
-
+            # Append the encoded data to the dataframe
             data_enc.append(data_enc_i)
 
         return hstack(data_enc)
 
+    def _transform_vectors(self, vectors):
+        """
+
+        Encode the feature vectors with one-hot-encoding.
+
+        :param vectors: The feature vectors
+        :type vectors: numpy.ndarray
+
+        :return: Sparse matrix with encoded features.
+        :rtype: scipy.coo_matrix
+
+        """
+
+        data_enc = []
+
+        for i in range(0, len(self._label_encoders)):
+
+            # scikit learn encoding
+            label_encoded = self._label_encoders[i].transform(vectors[:,i]).reshape((-1,1))
+            data_enc_i = self._one_hot_encoders[i].transform(label_encoded)
+
+            # Append the encoded data to the dataframe
+            data_enc.append(data_enc_i)
+
+        return hstack(data_enc)
 
