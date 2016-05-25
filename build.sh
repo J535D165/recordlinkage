@@ -6,6 +6,8 @@ virtualenv -p /usr/bin/python3.5 env/python3
 source env/python2/bin/activate
 pip install -r requirements.txt
 
+pip install mock nbsphinx
+
 nosetests
 
 deactivate
