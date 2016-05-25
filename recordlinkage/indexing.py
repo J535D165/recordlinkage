@@ -95,55 +95,48 @@ def _qgram(df_a, df_b, on=None, left_on=None, right_on=None, threshold=0.8):
 class Pairs(object):
 	""" 
 
-	Pairs class is used to make pairs of records to analyse in the comparison step. 
-	""" 
+	This class can be used to make record pairs. Multiple indexation methods can be used
+	to make a smart selection of record pairs. Indexation methods included:
 
-	Class to compare the attributes of candidate record pairs. The ``Compare`` class has several
-	methods to compare data such as string similarity measures, numerical metrics and exact
-	comparison methods.
+	- Full indexing
+	- Blocking
+	- Sorted Neighbourhood
+	- Random indexing
+	- Q-gram indexing
 
-	:param pairs: A MultiIndex of candidate record pairs. 
+	For more information about indexing and methods to reduce the number of
+	record pairs, see Christen 2012 [christen2012]_.
+
 	:param df_a: The first dataframe. 
 	:param df_b: The second dataframe.
 
-	:type pairs: pandas.MultiIndex
 	:type df_a: pandas.DataFrame
 	:type df_b: pandas.DataFrame
 
-	:returns: A compare class
-	:rtype: recordlinkage.Compare
+	:returns: Candidate links
+	:rtype: pandas.MultiIndex
 
-	:var pairs: The candidate record pairs.
 	:var df_a: The first DataFrame.
 	:var df_b: The second DataFrame.
-	:var vectors: The DataFrame with comparison data.
+	:var n_pairs: The number of candidate record pairs.
 
-	:vartype pairs: pandas.MultiIndex
 	:vartype df_a: pandas.DataFrame
 	:vartype df_b: pandas.DataFrame
-	:vartype vectors: pandas.DataFrame
+	:vartype n_pairs: int
 
 	:Example:
 
-		In the following example, the record pairs of two historical datasets with census data are
-		compared. The datasets are named ``census_data_1980`` and ``census_data_1990``. The
-		``candidate_pairs`` are the record pairs to compare. The record pairs are compared on the
-		first name, last name, sex, date of birth, address, place, and income.
+		In the following example, the record pairs are made for two historical
+		datasets with census data. The datasets are named ``census_data_1980``
+		and ``census_data_1990``. 
 
-		>>> comp = recordlinkage.Compare(
-			candidate_pairs, census_data_1980, census_data_1990
-			)
-		>>> comp.fuzzy('first_name', 'name', method='jarowinkler')
-		>>> comp.fuzzy('lastname', 'lastname', method='jarowinkler')
-		>>> comp.exact('dateofbirth', 'dob')
-		>>> comp.exact('sex', 'sex')
-		>>> comp.fuzzy('address', 'address', method='levenshtein')
-		>>> comp.exact('place', 'place')
-		>>> comp.numerical('income', 'income')
-		>>> print(comp.vectors.head())
+		>>> pcl = recordlinkage.Pairs(census_data_1980, census_data_1990)
+		>>> pcl.block('first_name')
 
-		The attribute ``vectors`` is the DataFrame with the comparison data. It can be called whenever
-		you want.
+	.. seealso::
+
+		.. [christen2012] Christen, 2012. Data Matching Concepts and Techniques for 
+					Record Linkage, Entity Resolution, and Duplicate Detection
 
 	"""
 
@@ -183,7 +176,13 @@ class Pairs(object):
 	# -- Index methods ------------------------------------------------------
 
 	def index(self, index_func, *args, **kwargs):
-		""" Method to make record pairs from one or two dataframes. Each record pair contains two records. 
+		""" 
+
+		Use a custom function to make record pairs of one or two dataframes.
+		Each function should return a pandas.MultiIndex with record pairs.
+
+		:param index_func: An indexing function
+		:type index_func: function
 
 		:return: MultiIndex
 		:rtype: pandas.MultiIndex
