@@ -3,7 +3,7 @@ from __future__ import division
 import pandas
 import numpy
 
-from recordlinkage.common import IndexError
+from recordlinkage.utils import IndexError
 from recordlinkage.comparing import qgram_similarity
 
 def _randomindex(df_a,df_b, n_pairs):
@@ -96,8 +96,56 @@ class Pairs(object):
 	""" 
 
 	Pairs class is used to make pairs of records to analyse in the comparison step. 
+	""" 
 
-	"""	
+	Class to compare the attributes of candidate record pairs. The ``Compare`` class has several
+	methods to compare data such as string similarity measures, numerical metrics and exact
+	comparison methods.
+
+	:param pairs: A MultiIndex of candidate record pairs. 
+	:param df_a: The first dataframe. 
+	:param df_b: The second dataframe.
+
+	:type pairs: pandas.MultiIndex
+	:type df_a: pandas.DataFrame
+	:type df_b: pandas.DataFrame
+
+	:returns: A compare class
+	:rtype: recordlinkage.Compare
+
+	:var pairs: The candidate record pairs.
+	:var df_a: The first DataFrame.
+	:var df_b: The second DataFrame.
+	:var vectors: The DataFrame with comparison data.
+
+	:vartype pairs: pandas.MultiIndex
+	:vartype df_a: pandas.DataFrame
+	:vartype df_b: pandas.DataFrame
+	:vartype vectors: pandas.DataFrame
+
+	:Example:
+
+		In the following example, the record pairs of two historical datasets with census data are
+		compared. The datasets are named ``census_data_1980`` and ``census_data_1990``. The
+		``candidate_pairs`` are the record pairs to compare. The record pairs are compared on the
+		first name, last name, sex, date of birth, address, place, and income.
+
+		>>> comp = recordlinkage.Compare(
+			candidate_pairs, census_data_1980, census_data_1990
+			)
+		>>> comp.fuzzy('first_name', 'name', method='jarowinkler')
+		>>> comp.fuzzy('lastname', 'lastname', method='jarowinkler')
+		>>> comp.exact('dateofbirth', 'dob')
+		>>> comp.exact('sex', 'sex')
+		>>> comp.fuzzy('address', 'address', method='levenshtein')
+		>>> comp.exact('place', 'place')
+		>>> comp.numerical('income', 'income')
+		>>> print(comp.vectors.head())
+
+		The attribute ``vectors`` is the DataFrame with the comparison data. It can be called whenever
+		you want.
+
+	"""
 
 	def __init__(self, df_a, df_b=None):
 

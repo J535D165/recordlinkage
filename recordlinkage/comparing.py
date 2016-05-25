@@ -12,7 +12,7 @@ try:
 except ImportError:
 	pass
 
-from recordlinkage.common import _label_or_column, _resample
+from recordlinkage.utils import _label_or_column, _resample
 
 class Compare(object):
 	""" 
