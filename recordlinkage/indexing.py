@@ -285,15 +285,15 @@ class Pairs(object):
 
 		Use Q-gram string comparing metric to make an index.  
 
-		:param threshold: Record pairs with a similarity above the threshold are candidate record pairs.
 		:param on: A column name or a list of column names. These columns are used to index on. 
 		:param left_on: A column name or a list of column names of dataframe A. These columns are used to index on. 
 		:param right_on: A column name or a list of column names of dataframe B. These columns are used to index on. 
+		:param threshold: Record pairs with a similarity above the threshold are candidate record pairs. [Default 0.8]
 
-		:type threshold: float
 		:type on: label
 		:type left_on: label
 		:type right_on: label
+		:type threshold: float
 
 		:return: The index of the candidate record pairs
 		:rtype: pandas.MultiIndex
