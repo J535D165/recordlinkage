@@ -15,6 +15,8 @@ Version 0.2
 - BernoulliNBClassifier is now named NaiveBayesClassifier. No changes to the algorithm.
 - Arguments order in compare functions corrected.
 - Function to clean phone numbers
+- Return the result of the classifier as index, numpy array or pandas series. 
+- Many bug fixes
 
 Version 0.1
 ===========
