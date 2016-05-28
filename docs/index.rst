@@ -15,6 +15,7 @@ Overview
 	:maxdepth: 2
 
 	reference
+	changelog
 
 
 
