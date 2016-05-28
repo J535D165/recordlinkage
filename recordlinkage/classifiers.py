@@ -336,7 +336,7 @@ class LogisticRegressionClassifier(Classifier):
 
 def BernoulliNBClassifier(*args, **kwargs):
 
-	raise DeprecationWarning("This function is renamed. Use NaiveBayesClassifier instead of BernoulliNBClassifier.")
+	raise DeprecationWarning("This class is renamed. Use NaiveBayesClassifier instead of BernoulliNBClassifier.")
 
 class NaiveBayesClassifier(Classifier):
 	""" 
