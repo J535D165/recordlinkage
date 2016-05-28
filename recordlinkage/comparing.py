@@ -1,9 +1,18 @@
 from __future__ import division 
 
+import sys
+
 import pandas
 import numpy as np
 
-from .indexing import IndexError
+from sklearn.feature_extraction.text import CountVectorizer
+
+try:
+	import jellyfish
+except ImportError:
+	pass
+
+from recordlinkage.utils import _label_or_column, _resample
 
 class Compare(object):
 	""" 
@@ -71,7 +80,7 @@ class Compare(object):
 
 		# self.ndim = self._compute_dimension(pairs)
 
-	def compare(self, comp_func, data_a, data_b, name=None, store=True, *args, **kwargs):
+	def compare(self, comp_func, data_a, data_b, *args, **kwargs):
 		"""
 
 		Core method to compare records. This method takes a function and data from both records in
@@ -106,6 +115,9 @@ class Compare(object):
 
 		args = list(args)
 
+		name = kwargs.pop('name', None)
+		store = kwargs.pop('store', True)
+
 		# Sample the data and add it to the arguments.
 		if not isinstance(data_b, (tuple, list)):
 			data_b = [data_b]
@@ -114,12 +126,16 @@ class Compare(object):
 			data_a = [data_a]
 
 		for db in reversed(data_b):
-			args.insert(0, self._resample(self._getcol(db, self.df_b), 1))
+			args.insert(0, _resample(_label_or_column(db, self.df_b), self.pairs, 1))
 
 		for da in reversed(data_a):
-			args.insert(0, self._resample(self._getcol(da, self.df_a), 0))
+			args.insert(0, _resample(_label_or_column(da, self.df_a), self.pairs, 0))
 
 		c = comp_func(*tuple(args), **kwargs)
+
+		# If it is a pandas Series, remove the name and replace it. 
+		if isinstance(c, (pandas.DataFrame, pandas.Series)):
+			c.name = name
 
 		# Store the result the comparison result
 		if store:
@@ -187,7 +203,7 @@ class Compare(object):
 
 		:param s1: Series or DataFrame to compare all fields. 
 		:param s2: Series or DataFrame to compare all fields. 
-		:param method: A approximate string comparison method. Options are ['jaro', 'jarowinkler', 'levenshtein', 'damerau_levenshtein']. Default: 'levenshtein'
+		:param method: A approximate string comparison method. Options are ['jaro', 'jarowinkler', 'levenshtein', 'damerau_levenshtein', 'qgram', 'cosine']. Default: 'levenshtein'
 		:param threshold: A threshold value. All approximate string comparisons higher or equal than this threshold are 1. Otherwise 0.  
 		:param missing_value: The value for a comparison with a missing value. Default 0.
 		:param name: The name of the feature and the name of the column.
@@ -199,7 +215,7 @@ class Compare(object):
 		:return: A Series with similarity values. Values equal or between 0 and 1.
 		:rtype: pandas.Series
 
-		Note: For this function is the package 'jellyfish' required. 
+		Note: For som of these algorithms is the package 'jellyfish' required. Install it with ``pip install jellyfish``.
 
 		"""
 
@@ -209,7 +225,7 @@ class Compare(object):
 		"""
 		geo(x1, y1, x2, y2, radius=20, disagree_value = -1, missing_value=-1, name=None, store=True)
 
-		Compare geometric coordinates with a tolerance window.
+		[Experimental] Compare geometric coordinates with a tolerance window.
 
 		:param x1: Series with X-coordinates
 		:param y1: Series with Y-coordinates
@@ -249,24 +265,8 @@ class Compare(object):
 		else:
 			self.vectors[len(self.vectors)] = comp_vect
 
-	def _getcol(self, label_or_column, dataframe):
-		""" 
-		This internal function is used to transform an index and a dataframe into a reindexed dataframe or series. If already a Series or DataFrame is passed, nothing is done. 
-		"""
-		try:
-			return dataframe[label_or_column]
-
-		except Exception:
-			return label_or_column
-
-	def _resample(self, s, level_i):
-
-		data = s.ix[self.pairs.get_level_values(level_i)]
-		data.index = self.pairs
-
-		return data
-
 def _missing(*args):
+	""" Internal function to return the index of record pairs with missing values """
 
 	return np.any(np.concatenate([np.array(pandas.DataFrame(arg).isnull()) for arg in args], axis=1), axis=1)
 
@@ -274,10 +274,10 @@ def _compare_exact(s1, s2, agree_value=1, disagree_value=0, missing_value=0):
 
 	if agree_value == 'value':
 		compare = s1.copy()
-		compare[(s1.values != s2.values)] = disagree_value
+		compare[s1 != s2] = disagree_value
 
 	else:
-		compare = np.where(s1.values == s2.values, agree_value, disagree_value)
+		compare = np.where(s1 == s2, agree_value, disagree_value)
 		
 	compare = pandas.Series(compare, index=s1.index)
 
@@ -292,7 +292,7 @@ def _compare_numerical(s1, s2, window, missing_value=0):
 	if isinstance(window, (list, tuple)):
 		compare = (((s1-s2) <= window[1]) & ((s1-s2) >= window[0])).astype(int)
 	else:
-		compare = (((s1-s2) <= window) & ((s1-s2) >= window)).astype(int)
+		compare = (((s1-s2) <= window) & ((s1-s2) >= -window)).astype(int)
 
 	compare[_missing(s1, s2)] = missing_value 
 
@@ -315,28 +315,30 @@ def _compare_geo(x1, y1, x2, y2, radius=None, missing_value=np.nan):
 
 	return d 
 
+def _check_jellyfish():
+
+	if 'jellyfish' not in sys.modules:
+		raise ImportError("Install the module 'jellyfish' to use the following string metrics: 'jaro', 'jarowinkler', 'levenshtein' and 'damerau_levenshtein'.")
+
 def _compare_fuzzy(s1,s2, method='levenshtein', threshold=None, missing_value=0):
 
-	try:
-		import jellyfish
-	except ImportError:
-		raise ImportError("Install 'jellyfish' to use approximate string comparison.")
-
-	series = pandas.concat([s1, s2], axis=1)
-
 	if method == 'jaro':
-		approx = series.apply(lambda x: jellyfish.jaro_distance(x[0], x[1]) if pandas.notnull(x[0]) and pandas.notnull(x[1]) else np.nan, axis=1)
-	
-	elif method == 'jarowinkler':
-		approx = series.apply(lambda x: jellyfish.jaro_winkler(x[0], x[1]) if pandas.notnull(x[0]) and pandas.notnull(x[1]) else np.nan, axis=1)
-	
-	elif method == 'levenshtein':
-		approx = series.apply(lambda x: jellyfish.levenshtein_distance(x[0], x[1])/np.max([len(x[0]),len(x[1])]) if pandas.notnull(x[0]) and pandas.notnull(x[1]) else np.nan, axis=1)
-		approx = 1 - approx
+		approx = jaro_similarity(s1, s2)
 
-	elif method == 'damerau_levenshtein':
-		approx = series.apply(lambda x: jellyfish.damerau_levenshtein_distance(x[0], x[1])/np.max([len(x[0]),len(x[1])]) if pandas.notnull(x[0]) and pandas.notnull(x[1]) else np.nan, axis=1)
-		approx = 1 - approx
+	elif method in ['jarowinkler', 'jaro_winkler']:
+		approx = jarowinkler_similarity(s1, s2)
+
+	elif method == 'levenshtein':
+		approx = levenshtein_similarity(s1, s2)
+
+	elif method in ['dameraulevenshtein', 'damerau_levenshtein']:
+		approx = damerau_levenshtein_similarity(s1, s2)
+
+	elif method in ['qgram', 'q_gram']:
+		approx = qgram_similarity(s1, s2)
+
+	elif method == 'cosine':
+		approx = cosine_similarity(s1, s2)
 
 	else:
 		raise ValueError("""Algorithm '{}' not found.""".format(method))
@@ -350,3 +352,118 @@ def _compare_fuzzy(s1,s2, method='levenshtein', threshold=None, missing_value=0)
 	comp[_missing(s1, s2)] = missing_value
 
 	return comp
+
+def jaro_similarity(s1,s2):
+
+	# Check jellyfish
+	_check_jellyfish()
+
+	conc = pandas.concat([s1, s2], axis=1, ignore_index=True)
+
+	def jaro_apply(x):
+
+		try:
+			return jellyfish.jaro_distance(x[0],x[1])
+		except Exception:
+			return np.nan
+
+	return conc.apply(jaro_apply, axis=1)
+
+def jarowinkler_similarity(s1,s2):
+
+	# Check jellyfish
+	_check_jellyfish()
+	
+	conc = pandas.concat([s1, s2], axis=1, ignore_index=True)
+
+	def jaro_winkler_apply(x):
+
+		try:
+			return jellyfish.jaro_winkler(x[0],x[1])
+		except Exception:
+			return np.nan
+
+	return conc.apply(jaro_winkler_apply, axis=1)
+
+def levenshtein_similarity(s1,s2):
+
+	# Check jellyfish
+	_check_jellyfish()
+
+	conc = pandas.concat([s1, s2], axis=1, ignore_index=True)
+
+	def levenshtein_apply(x):
+
+		try:
+			return 1-jellyfish.levenshtein_distance(x[0], x[1])/np.max([len(x[0]),len(x[1])])
+		except Exception:
+			return np.nan
+
+	return conc.apply(levenshtein_apply, axis=1)
+
+def damerau_levenshtein_similarity(s1,s2):
+
+	# Check jellyfish
+	_check_jellyfish()
+
+	conc = pandas.concat([s1, s2], axis=1, ignore_index=True)
+
+	def damerau_levenshtein_apply(x):
+
+		try:
+			return 1-jellyfish.damerau_levenshtein_distance(x[0], x[1])/np.max([len(x[0]),len(x[1])])
+		except Exception:
+			return np.nan
+
+	return conc.apply(damerau_levenshtein_apply, axis=1)
+
+def qgram_similarity(s1, s2, include_wb=True, ngram=(2,2)):
+
+	if len(s1) != len(s2):
+		raise ValueError('Arrays or Series have to be same length.')
+
+	# include word boundaries or not
+	analyzer = 'char_wb' if include_wb == True else 'char'
+
+	# The vectorizer
+	vectorizer = CountVectorizer(analyzer=analyzer, strip_accents='unicode', ngram_range=ngram)
+
+	data = s1.append(s2).fillna('')
+
+	vec_fit = vectorizer.fit_transform(data)
+	
+	def _metric_sparse_euclidean(u, v):
+		match_ngrams = u.minimum(v).sum(axis=1)
+		total_ngrams = np.maximum(u.sum(axis=1),v.sum(axis=1))
+
+		return np.true_divide(match_ngrams,total_ngrams).A1
+
+	return _metric_sparse_euclidean(vec_fit[:len(s1)], vec_fit[len(s1):])
+
+def cosine_similarity(s1, s2, include_wb=True, ngram=(2,2)):
+
+	if len(s1) != len(s2):
+		raise ValueError('Arrays or Series have to be same length.')
+
+	# include word boundaries or not
+	analyzer = 'char_wb' if include_wb == True else 'char'
+
+	# The vectorizer
+	vectorizer = CountVectorizer(analyzer=analyzer, strip_accents='unicode', ngram_range=ngram)
+
+	data = s1.append(s2).fillna('')
+
+	vec_fit = vectorizer.fit_transform(data)
+
+	def _metric_sparse_cosine(u,v):
+
+		a = np.sqrt(u.multiply(u).sum(axis=1))
+		b = np.sqrt(v.multiply(v).sum(axis=1))
+
+		ab = v.multiply(u).sum(axis=1)
+
+		return np.divide(ab, np.multiply(a,b)).A1
+
+	return _metric_sparse_cosine(vec_fit[:len(s1)], vec_fit[len(s1):])
+
+

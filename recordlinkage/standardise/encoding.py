@@ -10,18 +10,19 @@ import itertools
 
 from .cleaning import *
 
-def phonetic(s, method, encoding='utf-8'):
+def phonetic(s, method):
     """
     phonetic(method, encoding='utf-8')
 
     Phonetically encode the values in the Series. 
 
     :param method: The algorithm that is used to phonetically encode the values. The possible options are 'soundex' en 'nysiis'.
-    :param encoding: String values need to be in unicode. Default 'utf-8'
+    :type method: string
 
     :return: A Series with phonetic encoded values.
     :rtype: pandas.Series
     """
+
 
     try:
         import jellyfish
@@ -29,17 +30,15 @@ def phonetic(s, method, encoding='utf-8'):
         print ("Install jellyfish to use string encoding.")
 
     s = clean(s, replace_by_none='[^\-\_A-Za-z0-9]+')
-
+ 
     if method == 'soundex':
-        return s.str.upper().str.decode(encoding).apply(lambda x: jellyfish.soundex(x) if pd.notnull(x) else np.nan)
+        return s.str.upper().apply(lambda x: jellyfish.soundex(x) if pd.notnull(x) else np.nan)
 
     elif method == 'nysiis':
-        return s.str.upper().str.decode(encoding).apply(lambda x: jellyfish.nysiis(x) if pd.notnull(x) else np.nan)
+        return s.str.upper().apply(lambda x: jellyfish.nysiis(x) if pd.notnull(x) else np.nan)
 
     else:
         raise Exception("Phonetic encoding method not found")
-
-    return s
 
 def similar_values(s, threshold=0.8):
     """

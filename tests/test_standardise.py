@@ -3,7 +3,7 @@ import unittest
 import pandas.util.testing as pdt
 
 import recordlinkage
-from recordlinkage.standardise import clean, value_occurence, phonetic
+from recordlinkage.standardise import clean, phonenumbers, value_occurence, phonetic
 
 import numpy as np
 import pandas as pd
@@ -50,6 +50,16 @@ class TestCleaningStandardise(unittest.TestCase):
         # Check if series are identical.
         pdt.assert_series_equal(clean_series, expected)
 
+    def test_clean_phonenumbers(self):
+
+        values = pd.Series([np.nan, '0033612345678', '+1 201 123 4567', '+336-123 45678'])
+        expected = pd.Series([np.nan, '0033612345678', '+12011234567', '+33612345678'])
+
+        clean_series = phonenumbers(values)
+        
+        # Check if series are identical.
+        pdt.assert_series_equal(clean_series, expected)
+
     def test_value_occurence(self):
 
         values = pd.Series([np.nan, np.nan, 'str1', 'str1', 'str1', 'str1', 'str2', 'str3', 'str3', 'str1'])
@@ -61,8 +71,8 @@ class TestEncodingStandardise(unittest.TestCase):
 
     def test_encode_soundex(self):
 
-        values = pd.Series([np.nan, 'John', 'Mary Ann', 'billy', 'Jonathan', 'Gretha', 'Micheal', 'Sjors'])
-        expected = pd.Series([np.nan, 'J500', 'M650', 'B400', 'J535', 'G630', 'M240', 'S620'])
+        values = pd.Series([np.nan, u'John', u'Mary Ann', u'billy', u'Jonathan', u'Gretha', u'Micheal', u'Sjors'])
+        expected = pd.Series([np.nan, u'J500', u'M650', u'B400', u'J535', u'G630', u'M240', u'S620'])
 
         phon = phonetic(values, 'soundex')
 
@@ -70,8 +80,8 @@ class TestEncodingStandardise(unittest.TestCase):
 
     def test_encode_nysiis(self):
 
-        values = pd.Series([np.nan, 'John', 'Mary Ann', 'billy', 'Jonathan', 'Gretha', 'Micheal', 'Sjors'])
-        expected = pd.Series([np.nan, 'JAN', 'MARYAN', 'BALY', 'JANATAN', 'GRAT', 'MACAL', 'SJAR'])
+        values = pd.Series([np.nan, u'John', u'Mary Ann', u'billy', u'Jonathan', u'Gretha', u'Micheal', u'Sjors'])
+        expected = pd.Series([np.nan, u'JAN', u'MARYAN', u'BALY', u'JANATAN', u'GRAT', u'MACAL', u'SJAR'])
 
         phon = phonetic(values, 'nysiis')
 

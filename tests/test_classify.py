@@ -40,7 +40,7 @@ class TestClassify(unittest.TestCase):
         train_df_nonmatches = y.ix[y.index - match_index].sample(1500)
         train_df = train_df_matches.append(train_df_nonmatches)
 
-        bernb = recordlinkage.BernoulliNBClassifier()
+        bernb = recordlinkage.NaiveBayesClassifier()
         bernb.learn(train_df.round(), train_df_matches.index)
         bernb.predict(y.round())
 
@@ -56,7 +56,7 @@ class TestClassify(unittest.TestCase):
         svm.learn(train_df.round(), train_df_matches.index)
         svm.predict(y.round())
 
-    def test_em_bernoulli(self):
+    def test_em(self):
 
         y, match_index = generate.simulate_features()
 
@@ -64,6 +64,7 @@ class TestClassify(unittest.TestCase):
         train_df_nonmatches = y.ix[y.index - match_index].sample(1500)
         train_df = train_df_matches.append(train_df_nonmatches)
 
-        ecm = recordlinkage.BernoulliEMClassifier()
+        ecm = recordlinkage.ECMClassifier()
         ecm.learn(train_df.round())
         ecm.predict(y.round())
+        ecm.prob(y.round())

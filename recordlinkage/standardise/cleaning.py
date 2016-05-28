@@ -12,12 +12,20 @@ def clean(s, lower=True, replace_by_none='[^ \-\_A-Za-z0-9]+', replace_by_whites
     """
     clean(lower=True, replace_by_none='[^ \-\_A-Za-z0-9]+', replace_by_whitespace='[\-\_]', remove_brackets=True)
     
-    Remove special tokens from a series of strings. 
+    Clean a pandas Series with strings. Remove unwanted tokens and additional
+    whitespace.
 
+    :param s: A pandas.Series to clean.
     :param lower: Convert the strings in lowercase characters.
     :param replace_by_none: A regular expression that is replaced by ''.
     :param replace_by_whitespace: A regular expression that is replaced by a whitespace.
     :param remove_brackets: Remove all content between brackets and the brackets themselves. 
+
+    :type s: pandas.Series
+    :type lower: boolean
+    :type replace_by_none: string
+    :type replace_by_whitespace: string
+    :type remove_brackets: boolean
 
     :return: A cleaned Series of strings.
     :rtype: pandas.Series
@@ -52,19 +60,22 @@ def clean(s, lower=True, replace_by_none='[^ \-\_A-Za-z0-9]+', replace_by_whites
 
     return s
 
-# def clean_phonenumbers(s, country='USA'):
-#     """ Clean string formatted phonenumbers into string of intergers. 
+def phonenumbers(s):
+    """ 
 
-#     :return: A Series with cleaned phonenumbers.
-#     :rtype: pandas.Series
-#     """
+    Clean string formatted phonenumbers. 
 
-#     s = s.astype(str)
+    :param s: A pandas.Series to clean.
+    :type s: pandas.Series
 
-#     # Remove all special tokens
-#     s = s.str.replace('[^0-9]+', '')
+    :return: A Series with cleaned phonenumbers.
+    :rtype: pandas.Series
+    """
 
-#     return s
+    # Remove all special tokens
+    s = s.astype(object).str.replace('[^0-9+]+', '')
+
+    return s
 
 def value_occurence(s):
     """

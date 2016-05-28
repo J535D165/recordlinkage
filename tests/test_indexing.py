@@ -158,6 +158,17 @@ class TestIndexing(unittest.TestCase):
         # Check if index is unique
         self.assertTrue(pairs.is_unique)
 
+    def test_qgram_index_linking(self):
+
+        dfA = datasets.load_censusA()
+        dfB = datasets.load_censusB()
+
+        index = recordlinkage.Pairs(dfA, dfB)
+        pairs = index.qgram('last_name')
+
+        # Check if index is unique
+        self.assertTrue(pairs.is_unique)
+
     def test_sorted_index_linking(self):
 
         dfA = datasets.load_censusA()
@@ -237,7 +248,7 @@ class TestIndexing(unittest.TestCase):
         index = recordlinkage.Pairs(dfA, dfB)
         pairs = index.full()
 
-        rr = index.reduction()
+        rr = index.reduction
 
         self.assertEqual(rr, 0)
 

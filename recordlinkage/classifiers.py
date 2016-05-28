@@ -1,13 +1,12 @@
 # classifier.py
 
-import pandas as pd
-import numpy as np
+import pandas
+import numpy
 
-import logging
 import warnings
 warnings.simplefilter(action = "ignore", category = FutureWarning)
 
-import recordlinkage.em_algorithm_
+from recordlinkage.em_algorithms import ECMEstimate
 
 from sklearn import cluster, linear_model, naive_bayes, svm
 
@@ -40,7 +39,7 @@ class Classifier(object):
 			value 'array' will return a numpy.ndarray with zeros and ones. 
 
 		:type comparison_vectors: pandas.DataFrame
-		:type return_type: string 
+		:type return_type: 'index' (default), 'series', 'array' 
 
 		:return: A pandas Series with the labels 1 (for the matches) and 0 (for the non-matches). 
 		:rtype: pandas.Series
@@ -62,7 +61,7 @@ class Classifier(object):
 			value 'array' will return a numpy.ndarray with zeros and ones. 
 
 		:type comparison_vectors: pandas.DataFrame
-		:type return_type: string 
+		:type return_type: 'index' (default), 'series', 'array' 
 
 		:return: A pandas Series with the labels 1 (for the matches) and 0 (for the non-matches). 
 		:rtype: pandas.Series
@@ -97,7 +96,7 @@ class Classifier(object):
 
 		"""
 
-		if type(result) != np.ndarray:
+		if type(result) != numpy.ndarray:
 			raise ValueError("numpy.ndarray expected.")
 
 		# return the pandas.MultiIndex
@@ -106,7 +105,7 @@ class Classifier(object):
 
 		# return a pandas.Series
 		elif return_type == 'series':
-			return pd.Series(result, index=comparison_vectors.index, name='classification')
+			return pandas.Series(result, index=comparison_vectors.index, name='classification')
 
 		# return a numpy.ndarray
 		elif return_type == 'array':
@@ -115,32 +114,6 @@ class Classifier(object):
 		# return_type not known
 		else:
 			raise ValueError("return_type {} unknown. Choose 'index', 'series' or 'array'".format(return_type))
-
-class DeterministicClassifier(Classifier):
-	""" 
-
-	Base class for deterministic classification of records pairs. This class contains methods for
-	training the classifier. Distinguish different types of training, such as supervised and
-	unsupervised learning.
-
-	"""
-
-	def __init__(self):
-
-		self._params = {}
-
-class ProbabilisticClassifier(Classifier):
-	""" 
-
-	Base class for probabilistic classification of records pairs. This class contains methods for
-	training the classifier. Distinguish different types of training, such as supervised and
-	unsupervised learning.
-
-	"""
-
-	def __init__(self):
-
-		self._params = {}
 
 class KMeansClassifier(Classifier):
 	""" 
@@ -176,7 +149,7 @@ class KMeansClassifier(Classifier):
 			value 'array' will return a numpy.ndarray with zeros and ones. 
 
 		:type comparison_vectors: pandas.DataFrame
-		:type return_type: string 
+		:type return_type: 'index' (default), 'series', 'array' 
 
 		:return: The prediction (see also the argument 'return_type')
 		:rtype: pandas.MultiIndex, pandas.Series or numpy.ndarray
@@ -184,7 +157,7 @@ class KMeansClassifier(Classifier):
 		"""
 
 		# Set the start point of the classifier. 
-		self.classifier.init = np.array([[0.05]*len(list(comparison_vectors)),[0.95]*len(list(comparison_vectors))])
+		self.classifier.init = numpy.array([[0.05]*len(list(comparison_vectors)),[0.95]*len(list(comparison_vectors))])
 
 		# Fit and predict
 		prediction = self.classifier.fit_predict(comparison_vectors.as_matrix())
@@ -204,7 +177,7 @@ class KMeansClassifier(Classifier):
 			value 'array' will return a numpy.ndarray with zeros and ones. 
 
 		:type comparison_vectors: pandas.DataFrame
-		:type return_type: string 
+		:type return_type: 'index' (default), 'series', 'array' 
 
 		:return: The prediction (see also the argument 'return_type')
 		:rtype: pandas.MultiIndex, pandas.Series or numpy.ndarray
@@ -215,18 +188,67 @@ class KMeansClassifier(Classifier):
 
 		return self._return_result(prediction, return_type, comparison_vectors)
 
-class LogisticRegressionClassifier(DeterministicClassifier):
+# DeterministicClassifier = LogisticRegressionClassifier
+
+class LogisticRegressionClassifier(Classifier):
 	""" 
-	LogisticRegressionClassifier()
+	LogisticRegressionClassifier(coefficients=None, intercept=None)
 
 	Use logistic regression to classify candidate record pairs into matches and non-
 	matches. 
 
+	:param coefficients: The coefficients of the logistic regression.
+	:param intercept: The interception value.
+
+	:type coefficients: numpy.array
+	:type intercept: float
+
+	:var coefficients: The coefficients of the logistic regression.
+	:var intercept: The interception value.
+
+	:vartype coefficients: numpy.array
+	:vartype intercept: float
 	"""
-	def __init__(self, *args, **kwargs):
-		super(self.__class__, self).__init__(*args, **kwargs)
+
+	def __init__(self, coefficients=None, intercept=None):
+		super(self.__class__, self).__init__()
 
 		self.classifier_ = linear_model.LogisticRegression()
+
+		self.coefficients = coefficients
+		self.intercept = intercept
+
+		self.classifier_.classes_ = numpy.array([False, True])
+
+	@property
+	def coefficients(self):
+		return self.classifier_.coef_ if hasattr(logreg.classifier_, 'coef_') else None
+
+	@property
+	def intercept(self):
+		return self.classifier_.intercept_[0] if hasattr(logreg.classifier_, 'intercept_') else None
+
+	@coefficients.setter
+	def coefficients(self, value):
+
+		if value is not None:
+
+			# Check if array if numpy array
+			if type(value) is not numpy.ndarray:
+				value = numpy.array(value)
+
+			self.classifier_.coef_ = numpy.array(value)
+
+	@intercept.setter
+	def intercept(self, value):
+
+		if value is not None:
+
+			# Check if array if numpy array
+			if type(value) is not numpy.ndarray:
+				value = numpy.array([value])
+
+			self.classifier_.intercept_ = value
 
 	def learn(self, comparison_vectors, match_index, return_type='index'):
 		""" 
@@ -240,16 +262,16 @@ class LogisticRegressionClassifier(DeterministicClassifier):
 			value 'array' will return a numpy.ndarray with zeros and ones. 
 
 		:type comparison_vectors: pandas.DataFrame
-		:type return_type: string 
+		:type return_type: 'index' (default), 'series', 'array' 
 
 		:return: A pandas Series with the labels 1 (for the matches) and 0 (for the non-matches). 
 		:rtype: pandas.Series
 
 		"""
-		train_series = pd.Series(False, index=comparison_vectors.index)
+		train_series = pandas.Series(False, index=comparison_vectors.index)
 		train_series.loc[match_index & comparison_vectors.index] = True
 
-		self.classifier_.fit(comparison_vectors.as_matrix(), np.array(train_series))
+		self.classifier_.fit(comparison_vectors.as_matrix(), numpy.array(train_series))
 
 		return self.predict(comparison_vectors, return_type)
 
@@ -266,7 +288,7 @@ class LogisticRegressionClassifier(DeterministicClassifier):
 			value 'array' will return a numpy.ndarray with zeros and ones. 
 
 		:type comparison_vectors: pandas.DataFrame
-		:type return_type: string 
+		:type return_type: 'index' (default), 'series', 'array' 
 
 		:return: A pandas Series with the labels 1 (for the matches) and 0 (for the non-matches). 
 		:rtype: pandas.Series
@@ -293,11 +315,32 @@ class LogisticRegressionClassifier(DeterministicClassifier):
 		"""
 		probs = self.classifier_.predict_proba(comparison_vectors.as_matrix())
 
-		return pd.Series(probs[0,:], index=comparison_vectors.index)
+		return pandas.Series(probs[0,:], index=comparison_vectors.index)
 
-class BernoulliNBClassifier(ProbabilisticClassifier):
+	def set_params(self, coefficients, intercept):
+		"""
+		Set the coefficients of the logistic regression classifier. 
+		coefficients*features.T > intercept are matches, otherwise distinct record pairs. 
+
+		:param coefficients: The coefficients of logistic regression
+		:param intercept: The interception value (matches are positive and non-matches negative)
+
+		:type coefficients: numpy.array, list
+		:type coefficients: 
+		"""
+
+		self.coefficients = coefficients
+		self.intercept = intercept
+
+		return
+
+def BernoulliNBClassifier(*args, **kwargs):
+
+	raise DeprecationWarning("This function is renamed. Use NaiveBayesClassifier instead of BernoulliNBClassifier.")
+
+class NaiveBayesClassifier(Classifier):
 	""" 
-	BernoulliNBClassifier()
+	NaiveBayesClassifier()
 
 	Bernoulli Naive Bayes classifier to classify the given record pairs into matches and non-
 	matches. 
@@ -320,16 +363,16 @@ class BernoulliNBClassifier(ProbabilisticClassifier):
 			value 'array' will return a numpy.ndarray with zeros and ones. 
 
 		:type comparison_vectors: pandas.DataFrame
-		:type return_type: string 
+		:type return_type: 'index' (default), 'series', 'array' 
 
 		:return: A pandas Series with the labels 1 (for the matches) and 0 (for the non-matches). 
 		:rtype: pandas.Series
 
 		"""
-		train_series = pd.Series(False, index=comparison_vectors.index)
+		train_series = pandas.Series(False, index=comparison_vectors.index)
 		train_series.loc[match_index & comparison_vectors.index] = True
 
-		self.classifier.fit(comparison_vectors.as_matrix(), np.array(train_series))
+		self.classifier.fit(comparison_vectors.as_matrix(), numpy.array(train_series))
 
 		return self.predict(comparison_vectors, return_type)
 
@@ -346,7 +389,7 @@ class BernoulliNBClassifier(ProbabilisticClassifier):
 			value 'array' will return a numpy.ndarray with zeros and ones. 
 
 		:type comparison_vectors: pandas.DataFrame
-		:type return_type: string 
+		:type return_type: 'index' (default), 'series', 'array' 
 
 		:return: A pandas Series with the labels 1 (for the matches) and 0 (for the non-matches). 
 		:rtype: pandas.Series
@@ -374,7 +417,7 @@ class BernoulliNBClassifier(ProbabilisticClassifier):
 
 		probs = self.classifier.predict_proba(comparison_vectors.as_matrix())
 
-		return pd.Series(probs[0,:], index=comparison_vectors.index)
+		return pandas.Series(probs[0,:], index=comparison_vectors.index)
 
 class SVMClassifier(Classifier):
 	""" 
@@ -401,16 +444,16 @@ class SVMClassifier(Classifier):
 			value 'array' will return a numpy.ndarray with zeros and ones. 
 
 		:type comparison_vectors: pandas.DataFrame
-		:type return_type: string 
+		:type return_type: 'index' (default), 'series', 'array' 
 
 		:return: A pandas Series with the labels 1 (for the matches) and 0 (for the non-matches). 
 		:rtype: pandas.Series
 
 		"""
-		train_series = pd.Series(False, index=comparison_vectors.index)
+		train_series = pandas.Series(False, index=comparison_vectors.index)
 		train_series.loc[match_index & comparison_vectors.index] = True
 
-		self.classifier.fit(comparison_vectors.as_matrix(), np.array(train_series))
+		self.classifier.fit(comparison_vectors.as_matrix(), numpy.array(train_series))
 
 		return self.predict(comparison_vectors, return_type)
 
@@ -427,7 +470,7 @@ class SVMClassifier(Classifier):
 			value 'array' will return a numpy.ndarray with zeros and ones. 
 
 		:type comparison_vectors: pandas.DataFrame
-		:type return_type: string 
+		:type return_type: 'index' (default), 'series', 'array' 
 
 		:return: A pandas Series with the labels 1 (for the matches) and 0 (for the non-matches). 
 		:rtype: pandas.Series
@@ -437,24 +480,63 @@ class SVMClassifier(Classifier):
 
 		return self._return_result(prediction, return_type, comparison_vectors)
 
-class BernoulliEMClassifier(ProbabilisticClassifier):
+class FellegiSunter(Classifier):
+	""" 
+
+	Base class for probabilistic classification of records pairs with the
+	Fellegi and Sunter (1969) framework. 
+
 	"""
 
-	Expectation Maximisation classifier in combination with Fellegi and Sunter model.
+	def __init__(self, random_decision_rule=False):
 
-	This is a probabilistic record linkage algorithm. 
+		self.random_decision_rule = random_decision_rule
+
+	# def _params_valid(self):
+
+	# 	try: 
+	# 		# Check labels
+	# 		{self.u[col][label] for label in label_dict.iteritems() for col, label_dict in self.m.iteritems()}
+	# 		{self.m[col][label] for label in label_dict.iteritems() for col, label_dict in self.u.iteritems()}
+
+	# 		return True
+
+	# 	except Exception:
+	# 		return False
+
+	# @property
+	# def w(self):
+
+	# 	if _params_valid:
+	# 		return {col:{label:numpy.log(self.m[col][label]/self.u[col][label]) for label in label_dict.iteritems()} for col, label_dict in self.m.iteritems()}
+	# 	else:
+	# 		raise ValueError
+
+	def _decision_rule(self, probabilities, threshold, random_decision_rule=False):
+
+		if not self.random_decision_rule:
+			return (probabilities >= threshold).astype(int)
+		else:
+			raise NotImplementedError("Random decisions are not possible at the moment.")
+
+class ECMClassifier(FellegiSunter):
+	"""
+
+	[EXPERIMENTAL] Expectation/Conditional Maximisation algorithm used as
+	classifier. This probabilistic record linkage algorithm is used in
+	combination with Fellegi and Sunter model.
 
 	"""
 	
 	def __init__(self, *args, **kwargs):
 		super(self.__class__, self).__init__(*args, **kwargs)
 
-		self.classifier = em_algorithm_.ECMEstimate()
+		self.algorithm = ECMEstimate()
 
-	def learn(self, comparison_vectors, params_init=None, return_type='index'):
+	def learn(self, comparison_vectors, init='jaro', return_type='index'):
 		""" 
 
-		Train the Bernoulli Expectation-Maximisation classifier. This method is well-known as the
+		Train the Expectation-Maximisation classifier. This method is well-known as the
 		ECM-algorithm implementation in the context of record linkage.
 
 		:param comparison_vectors: The dataframe with comparison vectors. 
@@ -466,33 +548,21 @@ class BernoulliEMClassifier(ProbabilisticClassifier):
 
 		:type comparison_vectors: pandas.DataFrame
 		:type params_init: dict
-		:type return_type: string 
+		:type return_type: 'index' (default), 'series', 'array' 
 
 		:return: A pandas Series with the labels 1 (for the matches) and 0 (for the non-matches). 
 		:rtype: pandas.Series
 
 		"""
-		# Default parameters
-		if not params_init:
-			params_init = {
-				'p': 0.05,
-				'm': {feature: {0: 0.1, 1:0.9} for feature in list(comparison_vectors)},
-				'u': {feature: {0: 0.9, 1:0.1} for feature in list(comparison_vectors)}
-			}
-		
-		self.classifier.p_init = params_init
 
-		# Start training the classifier
-		prediction = self.classifier.train(comparison_vectors)
+		probs = self.algorithm.train(comparison_vectors.as_matrix())
 
-		return prediction
+		n_matches = int(self.algorithm.p*len(probs))
+		self.p_threshold = numpy.sort(probs)[len(probs)-n_matches]
 
-		# train_series = pd.Series(False, index=comparison_vectors.index)
-		# train_series.loc[match_index & comparison_vectors.index] = True
+		prediction = self._decision_rule(probs, self.p_threshold)
 
-		# self.classifier.fit(comparison_vectors.as_matrix(), np.array(train_series))
-
-		# return self.predict(comparison_vectors, return_type)
+		return self._return_result(prediction, return_type, comparison_vectors)
 
 	def predict(self, comparison_vectors, return_type='index', *args, **kwargs):
 		""" 
@@ -507,14 +577,24 @@ class BernoulliEMClassifier(ProbabilisticClassifier):
 			value 'array' will return a numpy.ndarray with zeros and ones. 
 
 		:type comparison_vectors: pandas.DataFrame
-		:type return_type: string 
+		:type return_type: 'index' (default), 'series', 'array' 
 
 		:return: A pandas Series with the labels 1 (for the matches) and 0 (for the non-matches). 
 		:rtype: pandas.Series
 
+		.. note::
+
+			Prediction is risky for this unsupervised learning method. Be
+			aware that the sample from the population is valid.
+
+
 		"""
 
-		prediction = self.classifier.predict(comparison_vectors.as_matrix())
+		enc_vectors = self.algorithm._transform_vectors(comparison_vectors.as_matrix())
+
+		probs = self.algorithm._expectation(enc_vectors)
+
+		prediction = self._decision_rule(probs, self.p_threshold)
 
 		return self._return_result(prediction, return_type, comparison_vectors)
 
@@ -533,7 +613,8 @@ class BernoulliEMClassifier(ProbabilisticClassifier):
 		:return: A pandas Series with pandas.MultiIndex with the probability of being a match. 
 		:rtype: pandas.Series
 		"""
-		probs = self.classifier.predict_proba(comparison_vectors.as_matrix())
 
-		return pd.Series(probs[0,:], index=comparison_vectors.index)
+		enc_vectors = self.algorithm._transform_vectors(comparison_vectors.as_matrix())
+
+		return pandas.Series(self.algorithm._expectation(enc_vectors), index=comparison_vectors.index)
 
