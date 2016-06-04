@@ -1,5 +1,10 @@
+import os
+
 from setuptools import setup, find_packages
 import versioneer
+
+def read(fname):
+	return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
 setup(
 	name="recordlinkage",
@@ -7,12 +12,20 @@ setup(
 	cmdclass=versioneer.get_cmdclass(),
   	author="Jonathan de Bruin",
   	author_email="jonathandebruinhome@gmail.com",
+
 	platforms="any",
-	description="A tool to link or deduplicate small or medium sized datasets.",
-	url="https://github.com/J535D165/recordlinkage",
+
+	# Description
+	description="A record linkage toolkit for linking and deduplication",
+	long_description=read('README.md'),
+
+	# Documentation
+	url="http://recordlinkage.readthedocs.io/",
+
 	install_requires=["numpy", "pandas", "scipy", "sklearn"],
 	packages=['recordlinkage', 'recordlinkage.datasets', 'recordlinkage.standardise'],
 	include_package_data=True,
 	package_dir={'recordlinkage': 'recordlinkage'},
 	package_data={'recordlinkage': ['datasets/data/*.csv']},
+	license='GNU'
 )
