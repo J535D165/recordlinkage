@@ -1,7 +1,8 @@
-recordlinkage
-=============
+***********
+The toolkit
+***********
 
-This **recordlinkage** package is a library to link records in or
+This **Record Linkage Toolkit** package is a library to link records in or
 between data sources. The package provides most of the tools needed for
 record linkage. The package contains indexing methods, functions to
 compare records and classifiers. The package is developed for research
@@ -20,8 +21,8 @@ One of the aims of this project is to make an extensible record linkage
 framework. It is easy to include your own indexing algorithms,
 comparison/similarity measures and classifiers.
 
-Basic linking example
----------------------
+How to link
+===========
 
 Import the ``recordlinkage`` module with all important tools for record
 linkage and import the data manipulation framework **pandas**.
@@ -90,9 +91,9 @@ and an example of unsupervised learning (the well known ECM-algorithm):
     ecm.learn(compare.vectors)
 
 Main Features
--------------
+=============
 
-The main features of the **recordlinkage** package are:
+The main features of the **Record Linkage Toolkit** package are:
 
 -  Clean and standardise data
 -  Make pairs of records with several indexing methods such as
@@ -102,30 +103,3 @@ The main features of the **recordlinkage** package are:
 -  Several classifications algorithms, both supervised and unsupervised
    algorithms.
 
-Documentation, dependencies, installation and license
------------------------------------------------------
-
-The most recent documentation can be found at
-`recordlinkage.readthedocs.org <http://recordlinkage.readthedocs.org/en/latest/>`__.
-
-The following packages are required. You probably have it already ;)
-
--  `numpy <http://www.numpy.org>`__: 1.7.0 or higher
--  `pandas <https://github.com/pydata/pandas>`__: 0.17.0 or higher
--  `scipy <https://www.scipy.org/>`__
--  `sklearn <http://scikit-learn.org/>`__
-
-The following packages are recommanded
-
--  `jellyfish <https://github.com/jamesturk/jellyfish>`__: Needed for
-   approximate string comparison. Version 0.5.0 or higher.
-
-It is not possible to install the package with ``pip`` (coming soon).
-You can download or clone the **recordlinkage** project and install it
-in the normal way
-
-.. code:: sh
-
-    python setup.py install
-
-The license for this record linkage tool is GPLv3.
