@@ -3,7 +3,7 @@ from ._version import get_versions
 __version__ = get_versions()['version']
 del get_versions
 
-__all__ = ['standardise']
+__all__ = ['standardise', 'datasets']
 
 # # Import important modules
 # from recordlinkage.standardise import *
