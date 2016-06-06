@@ -196,7 +196,7 @@ class Compare(object):
 		:type s1: label, pandas.Series
 		:type s2: label, pandas.Series
 		:type threshold: float, tuple of floats
-		:type method: string
+		:type method: 'step', 'linear' or 'squared'
 		:type missing_value: numpy.dtype
 		:type name: label
 		:type store: boolean, default True
