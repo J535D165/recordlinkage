@@ -81,9 +81,13 @@ The following packages are required. You probably have it already ;)
 The following packages are recommanded
 - [jellyfish](https://github.com/jamesturk/jellyfish): Needed for approximate string comparison. Version 0.5.0 or higher.
 
-It is not possible to install the package with ``pip`` (coming soon). You can download or clone the **recordlinkage** project and install it in the normal way
+Install the package with pip or conda
 
 ```sh
-python setup.py install
+pip install recordlinkage
+```
+or 
+```sh
+conda install recordlinkage
 ```
 The license for this record linkage tool is GPLv3.
