@@ -315,18 +315,18 @@ def _numeric_sim(s1, s2, threshold=None, method='step', missing_value=0):
 
 	# numeric linear functions
 	elif method == 'linear':
-		d = _linear_distance(s1,s2, a=a, b=b/threshold)
-		d[d >= threshold] = 1
+		d = 1-_linear_distance(s1,s2, a=a, b=b/threshold)
+		d[d < 0] = 0
 	# numeric squared function
 	elif method == 'squared':
-		d = _squared_distance(s1,s2, a=a, b=b/threshold)
-		d[d >= threshold] = 1
+		d = 1-_squared_distance(s1,s2, a=a, b=b/threshold)
+		d[d < 0] = 0
 	# numeric haversine (for coordinates)
 	elif method == 'haversine':
 		lat1, lng1 = s1
 		lat2, lng2 = s2
-		d = _haversine_distance(lat1, lng1, lat2, lng2)/threshold
-		d[d >= threshold] = 1
+		d = 1-_haversine_distance(lat1, lng1, lat2, lng2)/threshold
+		d[d < 0] = 0
 	else:
 		raise KeyError('The given algorithm is not found.')
 
