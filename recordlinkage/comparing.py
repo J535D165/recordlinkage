@@ -59,11 +59,11 @@ class Compare(object):
 		>>> comp = recordlinkage.Compare(
 			candidate_pairs, census_data_1980, census_data_1990
 			)
-		>>> comp.fuzzy('first_name', 'name', method='jarowinkler')
-		>>> comp.fuzzy('lastname', 'lastname', method='jarowinkler')
+		>>> comp.string('first_name', 'name', method='jarowinkler')
+		>>> comp.string('lastname', 'lastname', method='jarowinkler')
 		>>> comp.exact('dateofbirth', 'dob')
 		>>> comp.exact('sex', 'sex')
-		>>> comp.fuzzy('address', 'address', method='levenshtein')
+		>>> comp.string('address', 'address', method='levenshtein')
 		>>> comp.exact('place', 'place')
 		>>> comp.numeric('income', 'income')
 		>>> print(comp.vectors.head())
@@ -210,9 +210,9 @@ class Compare(object):
 		)
 		return self.compare(_numeric_sim, s1, s2, *args, **kwargs)
 
-	def fuzzy(self, s1, s2, *args, **kwargs):
+	def string(self, s1, s2, *args, **kwargs):
 		"""
-		fuzzy(s1, s2, method='levenshtein', threshold=None, missing_value=0, name=None, store=True)
+		string(s1, s2, method='levenshtein', threshold=None, missing_value=0, name=None, store=True)
 
 		Compare string values with a similarity approximation. 
 
@@ -234,6 +234,14 @@ class Compare(object):
 
 		"""
 
+		return self.compare(_string_sim, s1, s2, *args, **kwargs)
+
+	def fuzzy(self, s1, s2, *args, **kwargs):
+
+		warnings.warn(
+			"Use the method 'string' instead of 'fuzzy'",
+			PendingDeprecationWarning
+		)
 		return self.compare(_string_sim, s1, s2, *args, **kwargs)
 
 	def geo(self, lat1, lng1, lat2, lng2, *args, **kwargs):
