@@ -181,17 +181,23 @@ class Compare(object):
 
 	def numeric(self, s1, s2, *args, **kwargs):
 		"""
-		numeric(s1, s2, window, missing_value=0, name=None, store=True)
+		numeric(s1, s2, threshold=None, method='step', missing_value=0, name=None, store=True)
 
 		Compare numeric values. 
 
 		:param s1: Series or DataFrame to compare all fields. 
 		:param s2: Series or DataFrame to compare all fields. 
+		:param threshold: The threshold size. Can be a tuple with two values or a single number. 
+		:param method: The metric used. Options 'step', 'linear' or 'squared'. 
 		:param missing_value: The value for a comparison with a missing value. Default 0.
-		:param window: The window size. Can be a tuple with two values or a single number. 
 		:param name: The name of the feature and the name of the column.
 		:param store: Store the result in the dataframe.
 
+		:type s1: label, pandas.Series
+		:type s2: label, pandas.Series
+		:type threshold: float, tuple of floats
+		:type method: string
+		:type missing_value: numpy.dtype
 		:type name: label
 		:type store: boolean, default True
 
@@ -224,6 +230,11 @@ class Compare(object):
 		:param name: The name of the feature and the name of the column.
 		:param store: Store the result in the dataframe.
 
+		:type s1: label, pandas.Series
+		:type s2: label, pandas.Series
+		:type method: string
+		:type threshold: float, tuple of floats
+		:type missing_value: numpy.dtype
 		:type name: label
 		:type store: boolean, default True
 		
@@ -246,7 +257,7 @@ class Compare(object):
 
 	def geo(self, lat1, lng1, lat2, lng2, *args, **kwargs):
 		"""
-		geo(lat1, lng1, lat2, lng2, disagree_value = -1, missing_value=-1, name=None, store=True)
+		geo(lat1, lng1, lat2, lng2, threshold=None, method='step', missing_value=0, name=None, store=True)
 
 		[Experimental] Compare geometric WGS-coordinates with a tolerance window.
 
@@ -254,14 +265,22 @@ class Compare(object):
 		:param lng1: Series with Lng-coordinates
 		:param lat2: Series with Lat-coordinates
 		:param lng2: Series with Lng-coordinates
-		:param missing_value: The value for a comparison with a missing value. Default -1.
-		:param disagree_value: The value for a disagreeing comparison. Default -1.
+		:param threshold: The threshold size. Can be a tuple with two values or a single number. 
+		:param method: The metric used. Options 'step', 'linear' or 'squared'. 
+		:param missing_value: The value for a comparison with a missing value. Default 0.
 		:param name: The name of the feature and the name of the column.
 		:param store: Store the result in the dataframe.
 
+		:type lat1: pandas.Series, numpy.array, label/string
+		:type lng1: pandas.Series, numpy.array, label/string
+		:type lat2: pandas.Series, numpy.array, label/string
+		:type lng2: pandas.Series, numpy.array, label/string
+		:type threshold: float, tuple of floats
+		:type method: string
+		:type missing_value: numpy.dtype
 		:type name: label
 		:type store: boolean, default True
-		
+
 		:return: A Series with comparison values.
 		:rtype: pandas.Series
 		"""
