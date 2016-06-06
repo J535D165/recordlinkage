@@ -27,14 +27,12 @@ TEST_DATA_2 = pd.DataFrame([
 
 TEST_DATA_2.index.name = 'index_df2'
 
-TEST_INDEX_LINKING = pd.MultiIndex.from_arrays(
-    [np.arange(len(TEST_DATA_1)), np.arange(len(TEST_DATA_2))], 
-    names=[TEST_DATA_1.index.name, TEST_DATA_2.index.name])
-
 TEST_INDEX_DEDUP = pd.MultiIndex.from_arrays(
     [np.arange(len(TEST_DATA_1)), np.arange(len(TEST_DATA_1))], 
     names=[TEST_DATA_1.index.name, TEST_DATA_1.index.name])
 
+i_l = recordlinkage.Pairs(TEST_DATA_1, TEST_DATA_2)
+TEST_INDEX_LINKING = i_l.eye()
 
 class TestCompare(unittest.TestCase):
 
@@ -143,8 +141,8 @@ class TestCompare(unittest.TestCase):
             print (alg)
 
             # Missing values
-            result = comp.fuzzy('name', 'name', method=alg, missing_value=np.nan) 
-            result = comp.fuzzy('name', 'name', alg, missing_value=np.nan) 
+            result = comp.fuzzy('name', 'name', method=alg, missing_value=0) 
+            result = comp.fuzzy('name', 'name', alg, missing_value=0) 
 
             print (result)
 
@@ -161,7 +159,7 @@ class TestCompare(unittest.TestCase):
             print (alg)
 
             # Missing values
-            result = comp.fuzzy('name', 'name', method=alg, missing_value=np.nan) # Change in future (should work without method)
+            result = comp.fuzzy('name', 'name', method=alg, missing_value=0) # Change in future (should work without method)
             
             print (result)
 
