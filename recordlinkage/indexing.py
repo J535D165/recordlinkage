@@ -35,6 +35,10 @@ def _randomindex(df_a,df_b, n_pairs):
 
 		return full_index[numpy.random.choice(numpy.arange(len(full_index)), n_pairs, replace=False)]
 
+def _eye(df_a, df_b):
+
+	return pandas.MultiIndex.from_arrays([df_a.index.values, df_b.index.values], names=[df_a.index.name, df_b.index.name])
+
 def _fullindex(df_a, df_b):
 
 	return pandas.MultiIndex.from_product([df_a.index.values, df_b.index.values], names=[df_a.index.name, df_b.index.name])
@@ -299,6 +303,11 @@ class Pairs(object):
 		:rtype: pandas.MultiIndex
 		"""		
 		return self.index(_qgram, *args, **kwargs)
+
+	def eye(self, *args, **kwargs):
+		# Only for internal use
+
+		return self.index(_eye, *args, **kwargs)
 
 	# -- Iterative index methods ----------------------------------------------
 
