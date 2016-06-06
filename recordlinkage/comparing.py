@@ -1,6 +1,8 @@
 from __future__ import division 
 
 import sys
+import warnings
+
 
 import pandas
 import numpy as np
@@ -14,11 +16,16 @@ except ImportError:
 
 from recordlinkage.utils import _label_or_column, _resample
 
+def _check_jellyfish():
+
+	if 'jellyfish' not in sys.modules:
+		raise ImportError("Install the module 'jellyfish' to use the following string metrics: 'jaro', 'jarowinkler', 'levenshtein' and 'damerau_levenshtein'.")
+
 class Compare(object):
 	""" 
 
 	Class to compare the attributes of candidate record pairs. The ``Compare`` class has several
-	methods to compare data such as string similarity measures, numerical metrics and exact
+	methods to compare data such as string similarity measures, numeric metrics and exact
 	comparison methods.
 
 	:param pairs: A MultiIndex of candidate record pairs. 
@@ -58,7 +65,7 @@ class Compare(object):
 		>>> comp.exact('sex', 'sex')
 		>>> comp.fuzzy('address', 'address', method='levenshtein')
 		>>> comp.exact('place', 'place')
-		>>> comp.numerical('income', 'income')
+		>>> comp.numeric('income', 'income')
 		>>> print(comp.vectors.head())
 
 		The attribute ``vectors`` is the DataFrame with the comparison data. It can be called whenever
@@ -172,11 +179,11 @@ class Compare(object):
 
 		return self.compare(_compare_exact, s1, s2, *args, **kwargs)
 
-	def numerical(self, s1, s2, *args, **kwargs):
+	def numeric(self, s1, s2, *args, **kwargs):
 		"""
-		numerical(s1, s2, window, missing_value=0, name=None, store=True)
+		numeric(s1, s2, window, missing_value=0, name=None, store=True)
 
-		Compare numerical values with a tolerance window.
+		Compare numeric values. 
 
 		:param s1: Series or DataFrame to compare all fields. 
 		:param s2: Series or DataFrame to compare all fields. 
@@ -193,7 +200,15 @@ class Compare(object):
 
 		"""
 
-		return self.compare(_compare_numerical, s1, s2, *args, **kwargs)
+		return self.compare(_numeric_sim, s1, s2, *args, **kwargs)
+
+	def numerical(self, s1, s2, *args, **kwargs):
+
+		warnings.warn(
+			"Use the method 'numeric' instead of 'numerical'",
+			PendingDeprecationWarning
+		)
+		return self.compare(_numeric_sim, s1, s2, *args, **kwargs)
 
 	def fuzzy(self, s1, s2, *args, **kwargs):
 		"""
@@ -219,18 +234,18 @@ class Compare(object):
 
 		"""
 
-		return self.compare(_compare_fuzzy, s1, s2, *args, **kwargs)
+		return self.compare(_string_sim, s1, s2, *args, **kwargs)
 
-	def geo(self, x1, y1, x2, y2, *args, **kwargs):
+	def geo(self, lat1, lng1, lat2, lng2, *args, **kwargs):
 		"""
-		geo(x1, y1, x2, y2, radius=20, disagree_value = -1, missing_value=-1, name=None, store=True)
+		geo(lat1, lng1, lat2, lng2, disagree_value = -1, missing_value=-1, name=None, store=True)
 
-		[Experimental] Compare geometric coordinates with a tolerance window.
+		[Experimental] Compare geometric WGS-coordinates with a tolerance window.
 
-		:param x1: Series with X-coordinates
-		:param y1: Series with Y-coordinates
-		:param x2: Series with X-coordinates
-		:param y2: Series with Y-coordinates
+		:param lat1: Series with Lat-coordinates
+		:param lng1: Series with Lng-coordinates
+		:param lat2: Series with Lat-coordinates
+		:param lng2: Series with Lng-coordinates
 		:param missing_value: The value for a comparison with a missing value. Default -1.
 		:param disagree_value: The value for a disagreeing comparison. Default -1.
 		:param name: The name of the feature and the name of the column.
@@ -243,7 +258,7 @@ class Compare(object):
 		:rtype: pandas.Series
 		"""
 
-		return self.compare(_compare_geo, (x1, y1), (x2, y2), *args, **kwargs)
+		return self.compare(_geo_sim, (lat1, lng1), (lat2, lng2), *args, **kwargs)
 
 	def batchcompare(self, list_of_comp_funcs):
 		"""
@@ -287,40 +302,43 @@ def _compare_exact(s1, s2, agree_value=1, disagree_value=0, missing_value=0):
 
 	return compare
 
-def _compare_numerical(s1, s2, window, missing_value=0):
+def _numeric_sim(s1, s2, threshold=None, method='step', missing_value=0):
 
-	if isinstance(window, (list, tuple)):
-		compare = (((s1-s2) <= window[1]) & ((s1-s2) >= window[0])).astype(int)
+	threshold_left, threshold_right = threshold if isinstance(threshold, (list, tuple)) else (-threshold, threshold)
+
+	a=threshold_right-threshold_left
+	b=(threshold_right-threshold_left)/2
+
+	# numeric step functions
+	if method == 'step':
+		d = (_linear_distance(s1,s2, a=a, b=b) <= threshold).astype(int)
+
+	# numeric linear functions
+	elif method == 'linear':
+		d = _linear_distance(s1,s2, a=a, b=b/threshold)
+		d[d >= threshold] = 1
+	# numeric squared function
+	elif method == 'squared':
+		d = _squared_distance(s1,s2, a=a, b=b/threshold)
+		d[d >= threshold] = 1
+	# numeric haversine (for coordinates)
+	elif method == 'haversine':
+		lat1, lng1 = s1
+		lat2, lng2 = s2
+		d = _haversine_distance(lat1, lng1, lat2, lng2)/threshold
+		d[d >= threshold] = 1
 	else:
-		compare = (((s1-s2) <= window) & ((s1-s2) >= -window)).astype(int)
+		raise KeyError('The given algorithm is not found.')
 
-	compare[_missing(s1, s2)] = missing_value 
+	d.fillna(missing_value, inplace=True)
 
-	return compare
+	return d
 
-def _compare_geo(x1, y1, x2, y2, radius=None, missing_value=np.nan):
+def _geo_sim(lat1, lng1, lat2, lng2, *args, **kwargs):
 
-	try:
-		from scipy.spatial import distance
-	except ImportError:
-		raise ImportError('Could not import scipy.spatial')
+	return _numeric_sim((lat1, lng1), (lat2, lng2), *args, method='haversine', **kwargs)
 
-	coord_1 = np.append([x1],[y1], axis=0).T
-	coord_2 = np.append([x2],[y2], axis=0).T
-
-	d = distance.cdist(coord_1, coord_2, 'cityblock')
-
-	if not np.isnan(missing_value):
-		d[_missing(d)] = missing_value
-
-	return d 
-
-def _check_jellyfish():
-
-	if 'jellyfish' not in sys.modules:
-		raise ImportError("Install the module 'jellyfish' to use the following string metrics: 'jaro', 'jarowinkler', 'levenshtein' and 'damerau_levenshtein'.")
-
-def _compare_fuzzy(s1,s2, method='levenshtein', threshold=None, missing_value=0):
+def _string_sim(s1,s2, method='levenshtein', threshold=None, missing_value=0):
 
 	if method == 'jaro':
 		approx = jaro_similarity(s1, s2)
@@ -352,6 +370,35 @@ def _compare_fuzzy(s1,s2, method='levenshtein', threshold=None, missing_value=0)
 	comp[_missing(s1, s2)] = missing_value
 
 	return comp
+
+ 
+############ FUNCTIONS ##############
+
+############# DISTANCE ############## 
+
+def _linear_distance(s1, s2, a=0, b=1):
+
+	expr = 'abs(((s2-s1)-a)/b)'
+
+	return pandas.eval(expr)
+
+def _squared_distance(s1, s2, a=0, b=1):
+
+	expr = '((s2-s1)-a)**2/b**2'
+
+	return pandas.eval(expr)
+
+def _haversine_distance(lat1, lng1, lat2, lng2):
+
+	# degrees to radians conversion
+	to_rad = 1/360*np.pi*2
+
+	# numeric expression to use with numexpr package
+	expr = '2*6371*arcsin(sqrt((sin((lat2*to_rad-lat1*to_rad)/2))**2+cos(lat1*to_rad)*cos(lat2*to_rad)*(sin((lng2*to_rad-lng1*to_rad)/2))**2))'
+
+	return pandas.eval(expr)
+
+######### STRING SIMILARITY ######### 
 
 def jaro_similarity(s1,s2):
 

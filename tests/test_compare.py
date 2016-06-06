@@ -90,16 +90,43 @@ class TestCompare(unittest.TestCase):
 
         pdt.assert_series_equal(result, expected)
 
-    def test_numerical(self):
+    def test_numeric(self):
 
         comp = recordlinkage.Compare(TEST_INDEX_LINKING, TEST_DATA_1, TEST_DATA_2)
 
         # Missing values
-        result = comp.numerical('age', 'age', 2)
+        result = comp.numeric('age', 'age', 2)
         expected = pd.Series([1,1,1,0,0], index=TEST_INDEX_LINKING)
 
         pdt.assert_series_equal(result, expected)
 
+    def test_geo(self):
+
+        comp = recordlinkage.Compare(TEST_INDEX_LINKING, TEST_DATA_1, TEST_DATA_2)
+
+        # Missing values
+        result = comp.geo('age', 'age', 'age', 'age', 2)
+
+        self.assertTrue(result.notnull().any())
+        self.assertTrue((result[result.notnull()] >= 0).all())
+        self.assertTrue((result[result.notnull()] <= 1).all())
+
+    def test_numeric_batch(self):
+
+        comp = recordlinkage.Compare(TEST_INDEX_DEDUP, TEST_DATA_1, TEST_DATA_2)
+
+        for alg in ['step', 'linear', 'squared']:
+
+            print (alg)
+
+            # Missing values
+            result = comp.numeric('age', 'age', 2, method=alg)
+            
+            print (result)
+
+            self.assertTrue(result.notnull().any())
+            self.assertTrue((result[result.notnull()] >= 0).all())
+            self.assertTrue((result[result.notnull()] <= 1).all())
 
     def test_fuzzy_does_not_exist(self):
         
