@@ -348,10 +348,12 @@ def _numeric_sim(s1, s2, threshold=None, method='step', missing_value=0):
 	elif method == 'linear':
 		d = 1-_linear_distance(s1,s2, a=a, b=b/threshold)
 		d[d < 0] = 0
+
 	# numeric squared function
 	elif method == 'squared':
 		d = 1-_squared_distance(s1,s2, a=a, b=b/threshold)
 		d[d < 0] = 0
+
 	# numeric haversine (for coordinates)
 	elif method == 'haversine':
 		lat1, lng1 = s1
@@ -411,13 +413,13 @@ def _linear_distance(s1, s2, a=0, b=1):
 
 	expr = 'abs(((s2-s1)-a)/b)'
 
-	return pandas.eval(expr)
+	return pandas.eval(expr, engine=None)
 
 def _squared_distance(s1, s2, a=0, b=1):
 
 	expr = '((s2-s1)-a)**2/b**2'
 
-	return pandas.eval(expr)
+	return pandas.eval(expr, engine=None)
 
 def _haversine_distance(lat1, lng1, lat2, lng2):
 
@@ -427,7 +429,7 @@ def _haversine_distance(lat1, lng1, lat2, lng2):
 	# numeric expression to use with numexpr package
 	expr = '2*6371*arcsin(sqrt((sin((lat2*to_rad-lat1*to_rad)/2))**2+cos(lat1*to_rad)*cos(lat2*to_rad)*(sin((lng2*to_rad-lng1*to_rad)/2))**2))'
 
-	return pandas.eval(expr)
+	return pandas.eval(expr, engine=None)
 
 ######### STRING SIMILARITY ######### 
 
