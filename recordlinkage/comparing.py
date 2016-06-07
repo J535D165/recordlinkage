@@ -337,21 +337,21 @@ def _numeric_sim(s1, s2, threshold=None, method='step', missing_value=0):
 
 	threshold_left, threshold_right = threshold if isinstance(threshold, (list, tuple)) else (-threshold, threshold)
 
-	a=threshold_right-threshold_left
-	b=(threshold_right-threshold_left)/2
+	a=threshold_right+threshold_left
+	b=2/(threshold_right-threshold_left)
 
 	# numeric step functions
 	if method == 'step':
-		d = (_linear_distance(s1,s2, a=a, b=b) <= threshold).astype(int)
+		d = (_linear_distance(s1,s2, a=a, b=b) <= 1).astype(int)
 
 	# numeric linear functions
 	elif method == 'linear':
-		d = 1-_linear_distance(s1,s2, a=a, b=b/threshold)
+		d = 1-_linear_distance(s1,s2, a=a, b=b)
 		d[d < 0] = 0
 
 	# numeric squared function
 	elif method == 'squared':
-		d = 1-_squared_distance(s1,s2, a=a, b=b/threshold)
+		d = 1-_squared_distance(s1,s2, a=a, b=b)
 		d[d < 0] = 0
 
 	# numeric haversine (for coordinates)
@@ -411,10 +411,11 @@ def _string_sim(s1,s2, method='levenshtein', threshold=None, missing_value=0):
 
 def _linear_distance(s1, s2, a=0, b=1):
 
-	expr = 'abs(((s2-s1)-a)/b)'
+	expr = 'abs(((s2-s1)-a)*b)'
 
 	# PANDAS BUG?
 	# return pandas.eval(expr, engine=None)
+
 	try:
 		return pandas.eval(expr, engine='numexpr')
 	except ImportError:
@@ -422,7 +423,7 @@ def _linear_distance(s1, s2, a=0, b=1):
 
 def _squared_distance(s1, s2, a=0, b=1):
 
-	expr = '((s2-s1)-a)**2/b**2'
+	expr = '((s2-s1)-a)**2*b**2'
 
 	# PANDAS BUG?
 	# return pandas.eval(expr, engine=None)
