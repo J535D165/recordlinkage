@@ -437,7 +437,8 @@ class Pairs(object):
 		:param block_left_on: Additional columns in the left dataframe to use standard blocking on. 
 		:param block_right_on: Additional columns in the right dataframe to use standard blocking on. 
 
-		:type chunks: tuple, int		:type column: label 
+		:type chunks: tuple, int		
+		:type column: label 
 		:type window: int
 		:type sorting_key_values: array
 		:type block_on: label
