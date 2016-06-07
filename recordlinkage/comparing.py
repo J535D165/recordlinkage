@@ -413,13 +413,23 @@ def _linear_distance(s1, s2, a=0, b=1):
 
 	expr = 'abs(((s2-s1)-a)/b)'
 
-	return pandas.eval(expr, engine=None)
+	# PANDAS BUG?
+	# return pandas.eval(expr, engine=None)
+	try:
+		return pandas.eval(expr, engine='numexpr')
+	except ImportError:
+		return pandas.eval(expr, engine='python')
 
 def _squared_distance(s1, s2, a=0, b=1):
 
 	expr = '((s2-s1)-a)**2/b**2'
 
-	return pandas.eval(expr, engine=None)
+	# PANDAS BUG?
+	# return pandas.eval(expr, engine=None)
+	try:
+		return pandas.eval(expr, engine='numexpr')
+	except ImportError:
+		return pandas.eval(expr, engine='python')
 
 def _haversine_distance(lat1, lng1, lat2, lng2):
 
@@ -429,7 +439,12 @@ def _haversine_distance(lat1, lng1, lat2, lng2):
 	# numeric expression to use with numexpr package
 	expr = '2*6371*arcsin(sqrt((sin((lat2*to_rad-lat1*to_rad)/2))**2+cos(lat1*to_rad)*cos(lat2*to_rad)*(sin((lng2*to_rad-lng1*to_rad)/2))**2))'
 
-	return pandas.eval(expr, engine=None)
+	# PANDAS BUG?
+	# return pandas.eval(expr, engine=None)
+	try:
+		return pandas.eval(expr, engine='numexpr')
+	except ImportError:
+		return pandas.eval(expr, engine='python')
 
 ######### STRING SIMILARITY ######### 
 
