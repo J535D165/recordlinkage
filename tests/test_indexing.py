@@ -210,8 +210,10 @@ class TestIndexing(unittest.TestCase):
         pairs_single = index.full()
 
         n_pairs_iter = 0
-        for pairs in index.iterfull():
-            n_pairs_iter += n_pairs_iter + len(pairs)
+        for pairs in index.iterfull((100,200)):
+
+            print (len(pairs))
+            n_pairs_iter +=  len(pairs)
 
             # Check if index is unique
             self.assertTrue(pairs.is_unique)
@@ -229,8 +231,10 @@ class TestIndexing(unittest.TestCase):
         pairs_single = index.full()
 
         n_pairs_iter = 0
-        for pairs in index.iterfull():
-            n_pairs_iter += n_pairs_iter + len(pairs)
+        for pairs in index.iterfull((100,200)):
+
+            print (len(pairs))
+            n_pairs_iter += len(pairs)
 
             # Check if index is unique
             self.assertTrue(pairs.is_unique)

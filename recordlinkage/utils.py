@@ -48,4 +48,28 @@ def merge_dicts(*dict_args):
 		result.update(dictionary)
 	return result
 
+def split_or_pass(v):
+	"""
+	Make a tuple of a single value or return the tuple. 
+
+	:Example:
+
+		>>> v1, v2 = split_or_tuple(3)
+		v1 is 3 and v2 and 3
+
+		>>> v1, v2 = split_or_tuple((3,4))
+		v1 is 3 and v2 and 4
 	
+	"""
+
+	if isinstance(v, (tuple, list)):
+
+		if len(v) != 2:
+			raise ValueError('The number of elements in the list of tuple has to be 2. ')
+
+		return tuple(v)
+
+	else:
+		return (v,v)
+
+

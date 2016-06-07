@@ -3,7 +3,7 @@ from __future__ import division
 import pandas
 import numpy
 
-from recordlinkage.utils import IndexError, merge_dicts
+from recordlinkage.utils import IndexError, merge_dicts, split_or_pass
 from recordlinkage.comparing import qgram_similarity
 
 def _randomindex(df_a,df_b, n_pairs):
@@ -136,10 +136,12 @@ class Pairs(object):
 	:var df_a: The first DataFrame.
 	:var df_b: The second DataFrame.
 	:var n_pairs: The number of candidate record pairs.
+	:var reduction: The reduction ratio.
 
 	:vartype df_a: pandas.DataFrame
 	:vartype df_b: pandas.DataFrame
 	:vartype n_pairs: int
+	:vartype reduction: float
 
 	:Example:
 
@@ -324,27 +326,34 @@ class Pairs(object):
 
 	# -- Iterative index methods ----------------------------------------------
 
-	def iterindex(self, index_func, len_block_a=None, len_block_b=None, *args, **kwargs):
-		"""Iterative function that returns records pairs based on a user-defined indexing function. The number of iterations can be adjusted to prevent memory problems.  
+	def iterindex(self, index_func, chunks=(1000,1000), *args, **kwargs):
+		"""
+
+		Iterative function that returns records pairs based on a user-defined
+		indexing function. The number of iterations can be adjusted to prevent
+		memory problems.
 
 		:param index_func: A user defined indexing function.
-		:param len_block_a: The length of a block of records in dataframe A. 
-		:param len_block_b: The length of a block of records in dataframe B (only used when linking two datasets).
+		:param chunks: The number of records used to split up the data. First 
+					arugment of the tuple is the number of records in 
+					DataFrame 1 and the second argument is the number of records 
+					in DataFrame 2 (or 1 in case of deduplication). 
+
+		:type index_func: function
+		:type chunks: tuple, int
 
 		:return: The index of the candidate record pairs
 		:rtype: pandas.MultiIndex
 		"""
-		
-		if self.deduplication:
-			len_block_a = len_block_a if len_block_a else len(self.df_a) 
-			
-			blocks = [(a,a, a+len_block_a, a+len_block_a) for a in numpy.arange(0, len(self.df_a), len_block_a) for a in numpy.arange(0, len(self.df_a), len_block_a) ]
 
-		else:
-			len_block_a = len_block_a if len_block_a else len(self.df_a) 
-			len_block_b = len_block_b if len_block_b else len(self.df_b) 
-			
-			blocks = [(a,b, a+len_block_a, b+len_block_b) for a in numpy.arange(0, len(self.df_a), len_block_a) for b in numpy.arange(0, len(self.df_b), len_block_b) ]
+		len_block_a, len_block_b = split_or_pass(chunks)
+
+		len_block_a = len_block_a if len_block_a else len(self.df_a) 
+		len_block_b = len_block_b if len_block_b else len(self.df_b) 
+		len_a = len(self.df_a)
+		len_b = len(self.df_b) if not self.deduplication else len(self.df_a)
+
+		blocks = [(a,b, a+len_block_a, b+len_block_b) for a in numpy.arange(0, len_a, len_block_a) for b in numpy.arange(0, len_b, len_block_b)]
 
 		# Reset the number of pairs counter
 		self.n_pairs = 0
@@ -352,7 +361,9 @@ class Pairs(object):
 		for bl in blocks:
 
 			if self.deduplication: # Deduplication
-				pairs_block_class = Pairs(self.df_a[bl[0]:bl[2]], pandas.DataFrame(self.df_a, index=pandas.Index(self.df_a.index, name=self.df_a.index.name + '_')))
+
+				df_b = pandas.DataFrame(self.df_a, index=pandas.Index(self.df_a.index, name=self.df_a.index.name + '_'))
+				pairs_block_class = Pairs(self.df_a[bl[0]:bl[2]], df_b[bl[1]:bl[3]])
 				pairs_block = pairs_block_class.index(index_func, *args, **kwargs)
 				pairs_block = pairs_block[pairs_block.get_level_values(0) < pairs_block.get_level_values(1)]
 	
@@ -367,15 +378,16 @@ class Pairs(object):
 
 	def iterfull(self, *args, **kwargs):
 		"""
-		iterfull(len_block_a=None, len_block_b=None)
+		iterfull(chunks=(1000,1000))
 
 		Iterative function that returns a part of a full index. 
 
-		:param len_block_a: The length of a block of records in dataframe A. The integer len_block_a should satisfy 0 > len_block_a.
-		:param len_block_b: The length of a block of records in dataframe B. The integer len_block_b should satisfy 0 > len_block_b.
+		:param chunks: The number of records used to split up the data. First 
+					arugment of the tuple is the number of records in 
+					DataFrame 1 and the second argument is the number of records 
+					in DataFrame 2 (or 1 in case of deduplication). 
 
-		:type len_block_a: int
-		:type len_block_b: int
+		:type chunks: tuple, int
 
 		:return: The index of the candidate record pairs
 		:rtype: pandas.MultiIndex
@@ -384,18 +396,19 @@ class Pairs(object):
 
 	def iterblock(self, *args, **kwargs):
 		"""
-		iterblock(len_block_a=None, len_block_b=None, on=None, left_on=None, right_on=None)
+		iterblock(chunks=(1000,1000), on=None, left_on=None, right_on=None)
 
 		Iterative function that returns a part of a blocking index.
 
-		:param len_block_a: The length of a block of records in dataframe A. The integer len_block_a should satisfy 0 > len_block_a.
-		:param len_block_b: The length of a block of records in dataframe B. The integer len_block_b should satisfy 0 > len_block_b.
+		:param chunks: The number of records used to split up the data. First 
+					arugment of the tuple is the number of records in 
+					DataFrame 1 and the second argument is the number of records 
+					in DataFrame 2 (or 1 in case of deduplication). 
 		:param on: A column name or a list of column names. These columns are used to block on. 
 		:param left_on: A column name or a list of column names of dataframe A. These columns are used to block on. 
 		:param right_on: A column name or a list of column names of dataframe B. These columns are used to block on. 
 
-		:type len_block_a: int
-		:type len_block_b: int
+		:type chunks: tuple, int
 		:type on: label
 		:type left_on: label
 		:type right_on: label
@@ -409,12 +422,14 @@ class Pairs(object):
 
 	def itersortedneighbourhood(self, *args, **kwargs):
 		"""
-		itersortedneighbourhood(len_block_a=None, len_block_b=None, column, window=3, sorting_key_values=None, block_on=[], block_left_on=[], block_right_on=[])
+		itersortedneighbourhood(chunks=(1000,1000), column, window=3, sorting_key_values=None, block_on=[], block_left_on=[], block_right_on=[])
 
 		Iterative function that returns a records pairs based on a sorted neighbourhood index. The number of iterations can be adjusted to prevent memory problems.  
 
-		:param len_block_a: The length of a block of records in dataframe A. The integer len_block_a should satisfy 0 > len_block_a.
-		:param len_block_b: The length of a block of records in dataframe B. The integer len_block_b should satisfy 0 > len_block_b.
+		:param chunks: The number of records used to split up the data. First 
+					arugment of the tuple is the number of records in 
+					DataFrame 1 and the second argument is the number of records 
+					in DataFrame 2 (or 1 in case of deduplication). 
 		:param column: Specify the column to make a sorted index. 
 		:param window: The width of the window, default is 3. 
 		:param sorting_key_values: A list of sorting key values (optional).
@@ -422,9 +437,7 @@ class Pairs(object):
 		:param block_left_on: Additional columns in the left dataframe to use standard blocking on. 
 		:param block_right_on: Additional columns in the right dataframe to use standard blocking on. 
 
-		:type len_block_a: int
-		:type len_block_b: int
-		:type column: label 
+		:type chunks: tuple, int		:type column: label 
 		:type window: int
 		:type sorting_key_values: array
 		:type block_on: label
@@ -443,19 +456,19 @@ class Pairs(object):
 
 	def iterqgram(self, *args, **kwargs):
 		""" 
-		iterqgram(len_block_a=None, len_block_b=None, on=None, left_on=None, right_on=None, threshold=0.8)
+		iterqgram(chunks=(1000,1000), on=None, left_on=None, right_on=None, threshold=0.8)
 
 		Iterative function that returns Q-gram based index.  
 
-		:param len_block_a: The length of a block of records in dataframe A. The integer len_block_a should satisfy 0 > len_block_a.
-		:param len_block_b: The length of a block of records in dataframe B. The integer len_block_b should satisfy 0 > len_block_b.
+		:param chunks: The number of records used to split up the data. First 
+					arugment of the tuple is the number of records in 
+					DataFrame 1 and the second argument is the number of records 
+					in DataFrame 2 (or 1 in case of deduplication). 
 		:param threshold: Record pairs with a similarity above the threshold are candidate record pairs.
 		:param on: A column name or a list of column names. These columns are used to index on. 
 		:param left_on: A column name or a list of column names of dataframe A. These columns are used to index on. 
 		:param right_on: A column name or a list of column names of dataframe B. These columns are used to index on. 
 
-		:type len_block_a: int
-		:type len_block_b: int
 		:type threshold: float
 		:type on: label
 		:type left_on: label
