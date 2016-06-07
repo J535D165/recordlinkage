@@ -163,7 +163,7 @@ class TestIndexing(unittest.TestCase):
         dfA = datasets.load_censusA()
         dfB = datasets.load_censusB()
 
-        index = recordlinkage.Pairs(dfA, dfB)
+        index = recordlinkage.Pairs(dfA[0:100], dfB[0:100])
         pairs = index.qgram('last_name')
 
         # Check if index is unique
