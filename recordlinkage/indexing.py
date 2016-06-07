@@ -3,7 +3,7 @@ from __future__ import division
 import pandas
 import numpy
 
-from recordlinkage.utils import IndexError
+from recordlinkage.utils import IndexError, merge_dicts
 from recordlinkage.comparing import qgram_similarity
 
 def _randomindex(df_a,df_b, n_pairs):
@@ -52,11 +52,19 @@ def _blockindex(df_a, df_b, on=None, left_on=None, right_on=None):
 
 	return pairs.index
 
-def _sortedneighbourhood(df_a, df_b, column, window=3, sorting_key_values=None, on=[], left_on=[], right_on=[]):
+def _sortedneighbourhood(df_a, df_b, column, window=3, sorting_key_values=None, block_on=[], block_left_on=[], block_right_on=[]):
 
 	# Check if window is an odd number
 	if not bool(window % 2):
 		raise ValueError('The given window length is not an odd integer.')
+
+	block_on = [block_on] if type(block_on) != list else block_on
+	block_left_on = [block_left_on] if type(block_left_on) != list else block_left_on
+	block_right_on = [block_right_on] if type(block_right_on) != list else block_right_on
+
+	block_left_on, block_right_on = [block_on, block_on] if block_on else ([], [])
+	keys_left = [column] + block_left_on
+	keys_right = [column] + block_right_on
 
 	# sorting_key_values is the terminology in Data Matching [Christen, 2012]
 	if sorting_key_values is None:
@@ -68,7 +76,10 @@ def _sortedneighbourhood(df_a, df_b, column, window=3, sorting_key_values=None, 
 	factors = factors[factors.notnull()].values # Remove possible numpy.nan values. They are not replaced in the next step.
 	factors_label = numpy.arange(len(factors))
 
-	sorted_df_A = pandas.DataFrame({column:df_a[column].replace(factors, factors_label), df_a.index.name: df_a.index.values})
+	data_dict_A = {kl:df_a[kl] for kl in keys_left}
+	data_dict_B = {kl:df_b[kl] for kl in keys_right}
+
+	sorted_df_A = pandas.DataFrame(merge_dicts(data_dict_A, {column:df_a[column].replace(factors, factors_label), df_a.index.name: df_a.index.values}))
 	sorted_df_B = pandas.DataFrame({column:df_b[column].replace(factors, factors_label), df_b.index.name: df_b.index.values})
 
 	pairs_concat = None
@@ -78,7 +89,9 @@ def _sortedneighbourhood(df_a, df_b, column, window=3, sorting_key_values=None, 
 
 	for w in range(-_window, _window+1):
 
-		pairs = sorted_df_A.merge(pandas.DataFrame({column:sorted_df_B[column]+w, df_b.index.name: df_b.index.values}), on=column, how='inner').set_index([df_a.index.name, df_b.index.name])
+		df = pandas.DataFrame(merge_dicts(data_dict_B, {column:sorted_df_B[column]+w, df_b.index.name: df_b.index.values}))
+
+		pairs = sorted_df_A.merge(df, left_on=keys_left, right_on=keys_right, how='inner').set_index([df_a.index.name, df_b.index.name])
 
 		# Append pairs to existing ones. PANDAS BUG workaround
 		pairs_concat = pairs.index if pairs_concat is None else pairs.index.append(pairs_concat)
@@ -244,18 +257,18 @@ class Pairs(object):
 
 	def sortedneighbourhood(self, *args, **kwargs):
 		"""
-		sortedneighbourhood(sorting_key, window=3, sorting_key_values=None, on=[], left_on=[], right_on=[])
+		sortedneighbourhood(column, window=3, sorting_key_values=None, block_on=[], block_left_on=[], block_right_on=[])
 
 		Create a Sorted Neighbourhood index. 
 
-		:param sorting_key: Specify the column to make a sorted index. 
+		:param column: Specify the column to make a sorted index. 
 		:param window: The width of the window, default is 3. 
 		:param sorting_key_values: A list of sorting key values (optional).
-		:param on: Additional columns to use standard blocking on. 
-		:param left_on: Additional columns in the left dataframe to use standard blocking on. 
-		:param right_on: Additional columns in the right dataframe to use standard blocking on. 
+		:param block_on: Additional columns to use standard blocking on. 
+		:param block_left_on: Additional columns in the left dataframe to use standard blocking on. 
+		:param block_right_on: Additional columns in the right dataframe to use standard blocking on. 
 
-		:type sorting_key: label 
+		:type column: label 
 		:type window: int
 		:type sorting_key_values: array
 		:type on: label
@@ -396,27 +409,27 @@ class Pairs(object):
 
 	def itersortedneighbourhood(self, *args, **kwargs):
 		"""
-		itersortedneighbourhood(len_block_a=None, len_block_b=None, sorting_key, window=3, sorting_key_values=None, on=[], left_on=[], right_on=[])
+		itersortedneighbourhood(len_block_a=None, len_block_b=None, column, window=3, sorting_key_values=None, block_on=[], block_left_on=[], block_right_on=[])
 
 		Iterative function that returns a records pairs based on a sorted neighbourhood index. The number of iterations can be adjusted to prevent memory problems.  
 
 		:param len_block_a: The length of a block of records in dataframe A. The integer len_block_a should satisfy 0 > len_block_a.
 		:param len_block_b: The length of a block of records in dataframe B. The integer len_block_b should satisfy 0 > len_block_b.
-		:param sorting_key: Specify the column to make a sorted index. 
+		:param column: Specify the column to make a sorted index. 
 		:param window: The width of the window, default is 3. 
 		:param sorting_key_values: A list of sorting key values (optional).
-		:param on: Additional columns to use standard blocking on. 
-		:param left_on: Additional columns in the left dataframe to use standard blocking on. 
-		:param right_on: Additional columns in the right dataframe to use standard blocking on. 
+		:param block_on: Additional columns to use standard blocking on. 
+		:param block_left_on: Additional columns in the left dataframe to use standard blocking on. 
+		:param block_right_on: Additional columns in the right dataframe to use standard blocking on. 
 
 		:type len_block_a: int
 		:type len_block_b: int
-		:type sorting_key: label 
+		:type column: label 
 		:type window: int
 		:type sorting_key_values: array
-		:type on: label
-		:type left_on: label
-		:type right_on: label 
+		:type block_on: label
+		:type block_left_on: label
+		:type block_right_on: label 
 
 		:return: The index of the candidate record pairs
 		:rtype: pandas.MultiIndex
