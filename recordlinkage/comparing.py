@@ -183,12 +183,16 @@ class Compare(object):
 		"""
 		numeric(s1, s2, threshold=None, method='step', missing_value=0, name=None, store=True)
 
-		Compare numeric values. 
+		This method returns the similarity between two numeric values. The
+		following algorithms can be used: 'step', 'linear' or 'squared'. These
+		functions are defined on the interval (-threshold, threshold). In case
+		of agreement, the similarity is 1 and in case of complete disagreement it is
+		0. For linear and squared methods is also partial agreement possible.
 
 		:param s1: Series or DataFrame to compare all fields. 
 		:param s2: Series or DataFrame to compare all fields. 
 		:param threshold: The threshold size. Can be a tuple with two values or a single number. 
-		:param method: The metric used. Options 'step', 'linear' or 'squared'. 
+		:param method: The metric used. Options 'step', 'linear' or 'squared'. Default 'step'.
 		:param missing_value: The value for a comparison with a missing value. Default 0.
 		:param name: The name of the feature and the name of the column.
 		:param store: Store the result in the dataframe.
