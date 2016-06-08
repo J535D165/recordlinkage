@@ -159,9 +159,10 @@ class Pairs(object):
 
 	"""
 
-	def __init__(self, df_a, df_b=None):
+	def __init__(self, df_a, df_b=None, chunks=None):
 
 		self.df_a = df_a
+		self.chunks = chunks
 
 		# Linking two datasets
 		if df_b is not None:
@@ -207,25 +208,12 @@ class Pairs(object):
 		:rtype: pandas.MultiIndex
 		"""	
 
-		# If not deduplication, make pairs of records with one record from the first dataset and one of the second dataset
-		if not self.deduplication:
-
-			pairs = index_func(self.df_a, self.df_b, *args, **kwargs)
-
-		# If deduplication, remove the record pairs that are already included. For example: (a1, a1), (a1, a2), (a2, a1), (a2, a2) results in (a1, a2) or (a2, a1)
-		elif self.deduplication:
-
-			B = pandas.DataFrame(self.df_a, index=pandas.Index(self.df_a.index, name=str(self.df_a.index.name) + '_'))
-
-			pairs = index_func(self.df_a, B, *args, **kwargs)
-
-			# Remove all double pairs!
-			pairs = pairs[pairs.get_level_values(0) < pairs.get_level_values(1)]
-			pairs.names = [self.df_a, self.df_a]
-
-		self.n_pairs = len(pairs)
-
-		return pairs
+		# If there are no chunks, then use the first item of the generator
+		if self.chunks is None or self.chunks == (None,None):
+			return next(self._iterindex(index_func, *args, **kwargs))
+		# Use the chunks
+		else:
+			return self._iterindex(index_func, *args, **kwargs)
 
 	def full(self, *args, **kwargs):
 		""" 
@@ -297,7 +285,6 @@ class Pairs(object):
 		"""		
 		return self.index(_randomindex, *args, **kwargs)
 
-
 	def qgram(self, *args, **kwargs):
 		""" 
 		qgram(on=None, left_on=None, right_on=None, threshold=0.8)
@@ -326,7 +313,7 @@ class Pairs(object):
 
 	# -- Iterative index methods ----------------------------------------------
 
-	def iterindex(self, index_func, chunks=(1000,1000), *args, **kwargs):
+	def _iterindex(self, index_func, *args, **kwargs):
 		"""
 
 		Iterative function that returns records pairs based on a user-defined
@@ -346,141 +333,64 @@ class Pairs(object):
 		:rtype: pandas.MultiIndex
 		"""
 
-		len_block_a, len_block_b = split_or_pass(chunks)
-
-		len_block_a = len_block_a if len_block_a else len(self.df_a) 
-		len_block_b = len_block_b if len_block_b else len(self.df_b) 
-		len_a = len(self.df_a)
-		len_b = len(self.df_b) if not self.deduplication else len(self.df_a)
-
-		blocks = [(a,b, a+len_block_a, b+len_block_b) for a in numpy.arange(0, len_a, len_block_a) for b in numpy.arange(0, len_b, len_block_b)]
+		blocks = self.make_grid()
 
 		# Reset the number of pairs counter
 		self.n_pairs = 0
 
-		for bl in blocks:
+		for bl0, bl1, bl2, bl3 in blocks:
 
-			if self.deduplication: # Deduplication
+			# If not deduplication, make pairs of records with one record from
+			# the first dataset and one of the second dataset
+			if not self.deduplication:
 
-				df_b = pandas.DataFrame(self.df_a, index=pandas.Index(self.df_a.index, name=self.df_a.index.name + '_'))
-				pairs_block_class = Pairs(self.df_a[bl[0]:bl[2]], df_b[bl[1]:bl[3]])
-				pairs_block = pairs_block_class.index(index_func, *args, **kwargs)
-				pairs_block = pairs_block[pairs_block.get_level_values(0) < pairs_block.get_level_values(1)]
-	
-			else:
-				pairs_block_class = Pairs(self.df_a[bl[0]:bl[2]], self.df_b[bl[1]:bl[3]])
-				pairs_block = pairs_block_class.index(index_func, *args, **kwargs)
+				pairs = index_func(
+					self.df_a[bl0:bl2], self.df_b[bl1:bl3], 
+					*args, **kwargs
+					)
 
-			# Count the number of pairs
-			self.n_pairs += len(pairs_block)
-			
-			yield pairs_block
+			# If deduplication, remove the record pairs that are already
+			# included. For example: (a1, a1), (a1, a2), (a2, a1), (a2, a2)
+			# results in (a1, a2) or (a2, a1)
+			elif self.deduplication:
 
-	def iterfull(self, *args, **kwargs):
-		"""
-		iterfull(chunks=(1000,1000))
+				df_b = pandas.DataFrame(
+					self.df_a, 
+					index=pandas.Index(self.df_a.index, name=str(self.df_a.index.name) + '_')
+					)
 
-		Iterative function that returns a part of a full index. 
+				pairs = index_func(
+					self.df_a[bl0:bl2], df_b[bl1:bl3], 
+					*args, **kwargs
+					)
 
-		:param chunks: The number of records used to split up the data. First 
-					arugment of the tuple is the number of records in 
-					DataFrame 1 and the second argument is the number of records 
-					in DataFrame 2 (or 1 in case of deduplication). 
+				# Remove all double pairs!
+				pairs = pairs[pairs.get_level_values(0) < pairs.get_level_values(1)]
+				pairs.names = [self.df_a, self.df_a]
 
-		:type chunks: tuple, int
+			self.n_pairs = len(pairs)
 
-		:return: The index of the candidate record pairs
-		:rtype: pandas.MultiIndex
-		"""
-		return self.iterindex(_fullindex, *args, **kwargs)
-
-	def iterblock(self, *args, **kwargs):
-		"""
-		iterblock(chunks=(1000,1000), on=None, left_on=None, right_on=None)
-
-		Iterative function that returns a part of a blocking index.
-
-		:param chunks: The number of records used to split up the data. First 
-					arugment of the tuple is the number of records in 
-					DataFrame 1 and the second argument is the number of records 
-					in DataFrame 2 (or 1 in case of deduplication). 
-		:param on: A column name or a list of column names. These columns are used to block on. 
-		:param left_on: A column name or a list of column names of dataframe A. These columns are used to block on. 
-		:param right_on: A column name or a list of column names of dataframe B. These columns are used to block on. 
-
-		:type chunks: tuple, int
-		:type on: label
-		:type left_on: label
-		:type right_on: label
-
-		:param columns: A column name or a list of column names. These columns are used to block on. 
-
-		:return: The index of the candidate record pairs
-		:rtype: pandas.MultiIndex
-		"""		
-		return self.iterindex(_blockindex, *args, **kwargs)
-
-	def itersortedneighbourhood(self, *args, **kwargs):
-		"""
-		itersortedneighbourhood(chunks=(1000,1000), column, window=3, sorting_key_values=None, block_on=[], block_left_on=[], block_right_on=[])
-
-		Iterative function that returns a records pairs based on a sorted neighbourhood index. The number of iterations can be adjusted to prevent memory problems.  
-
-		:param chunks: The number of records used to split up the data. First 
-					arugment of the tuple is the number of records in 
-					DataFrame 1 and the second argument is the number of records 
-					in DataFrame 2 (or 1 in case of deduplication). 
-		:param column: Specify the column to make a sorted index. 
-		:param window: The width of the window, default is 3. 
-		:param sorting_key_values: A list of sorting key values (optional).
-		:param block_on: Additional columns to use standard blocking on. 
-		:param block_left_on: Additional columns in the left dataframe to use standard blocking on. 
-		:param block_right_on: Additional columns in the right dataframe to use standard blocking on. 
-
-		:type chunks: tuple, int		
-		:type column: label 
-		:type window: int
-		:type sorting_key_values: array
-		:type block_on: label
-		:type block_left_on: label
-		:type block_right_on: label 
-
-		:return: The index of the candidate record pairs
-		:rtype: pandas.MultiIndex
-		"""
-		column = args[2] # The argument after the two block size values
-
-		# The unique values of both dataframes are passed as an argument. 
-		sorting_key_values = numpy.sort(numpy.unique(numpy.append(self.df_a[column].values, self.df_b[column].values)))
-
-		return self.iterindex(_sortedneighbourhood, *args, sorting_key_values=sorting_key_values, **kwargs)
-
-	def iterqgram(self, *args, **kwargs):
-		""" 
-		iterqgram(chunks=(1000,1000), on=None, left_on=None, right_on=None, threshold=0.8)
-
-		Iterative function that returns Q-gram based index.  
-
-		:param chunks: The number of records used to split up the data. First 
-					arugment of the tuple is the number of records in 
-					DataFrame 1 and the second argument is the number of records 
-					in DataFrame 2 (or 1 in case of deduplication). 
-		:param threshold: Record pairs with a similarity above the threshold are candidate record pairs.
-		:param on: A column name or a list of column names. These columns are used to index on. 
-		:param left_on: A column name or a list of column names of dataframe A. These columns are used to index on. 
-		:param right_on: A column name or a list of column names of dataframe B. These columns are used to index on. 
-
-		:type threshold: float
-		:type on: label
-		:type left_on: label
-		:type right_on: label
-
-		:return: The index of the candidate record pairs
-		:rtype: pandas.MultiIndex
-		"""		
-		return self.index(_qgram, *args, **kwargs)
+			yield pairs
 
 	# -- Tools for indexing ----------------------------------------------
+
+	def make_grid(self):
+
+		# Generate blocks to evaluate
+		len_block_a, len_block_b = split_or_pass(self.chunks)
+
+		# If len_block is None, then use the length of the DataFrame
+		len_block_a = len_block_a if len_block_a else len(self.df_a)
+		len_a = len(self.df_a)
+
+		if not self.deduplication:
+			len_block_b = len_block_b if len_block_b else len(self.df_b)
+			len_b = len(self.df_b)
+		else:
+			len_block_b = len_block_b if len_block_b else len(self.df_a)
+			len_b = len(self.df_a)
+
+		return [(a,b, a+len_block_a, b+len_block_b) for a in numpy.arange(0, len_a, len_block_a) for b in numpy.arange(0, len_b, len_block_b)]
 
 	@property
 	def reduction(self):

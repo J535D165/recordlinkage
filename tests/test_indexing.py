@@ -206,11 +206,15 @@ class TestIndexing(unittest.TestCase):
         dfA = datasets.load_censusA()
         dfB = datasets.load_censusB()
 
+        index_chucks = recordlinkage.Pairs(dfA, dfB, chunks=(100,200))
         index = recordlinkage.Pairs(dfA, dfB)
+
+        # Compute pairs in one iteration
         pairs_single = index.full()
 
+        # Compute pairs in iterations
         n_pairs_iter = 0
-        for pairs in index.iterfull((100,200)):
+        for pairs in index_chucks.full():
 
             print (len(pairs))
             n_pairs_iter +=  len(pairs)
@@ -227,14 +231,20 @@ class TestIndexing(unittest.TestCase):
 
         dfA = datasets.load_censusA()
 
+        index_chucks = recordlinkage.Pairs(dfA, chunks=(100,200))
         index = recordlinkage.Pairs(dfA)
+
+        # Compute pairs in one iteration
         pairs_single = index.full()
 
+        # Compute pairs in iterations
         n_pairs_iter = 0
-        for pairs in index.iterfull((100,200)):
+        for pairs in index_chucks.full():
 
             print (len(pairs))
             n_pairs_iter += len(pairs)
+
+            # print (pairs)
 
             # Check if index is unique
             self.assertTrue(pairs.is_unique)
