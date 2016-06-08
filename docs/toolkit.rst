@@ -2,11 +2,14 @@
 The toolkit
 ***********
 
-This **Record Linkage Toolkit** package is a library to link records in or
-between data sources. The package provides most of the tools needed for
-record linkage. The package contains indexing methods, functions to
-compare records and classifiers. The package is developed for research
-and linking of small or medium sized files.
+Introduction
+============
+
+This **Record Linkage Toolkit** is a library to link records in or between
+data sources. The package provides tools needed for linking records. The
+package contains indexing methods, functions to compare records and
+classifiers. The package is developed for research and linking of small or
+medium sized files.
 
 This project is inspired by the `Freely Extensible Biomedical Record
 Linkage (FEBRL) <https://sourceforge.net/projects/febrl/>`__ project,

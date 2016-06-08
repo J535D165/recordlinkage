@@ -5,13 +5,15 @@ Installation guide
 Installation
 ============
 
-It is not possible to install the package with ``pip`` (coming soon).
-You can download or clone the **recordlinkage** project and install it
-in the normal way
+You can download and install the **recordlinkage** package with pip or conda
+
+Install the package with pip or conda
 
 .. code:: sh
+	pip install recordlinkage
 
-    python setup.py install
+	conda install recordlinkage
+
 
 The license for the Record Linkage Toolkit is GPLv3.
 
