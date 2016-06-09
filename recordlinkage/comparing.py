@@ -367,9 +367,32 @@ def _numeric_sim(s1, s2, threshold=None, method='step', missing_value=0):
 
 	return d
 
-def _geo_sim(lat1, lng1, lat2, lng2, *args, **kwargs):
+def _geo_sim(lat1, lng1, lat2, lng2, threshold=None, method='step', missing_value=0):
 
-	return _numeric_sim((lat1, lng1), (lat2, lng2), *args, method='haversine', **kwargs)
+	a=threshold
+	b=1/threshold
+
+	# numeric step functions
+	if method == 'step':
+		d = (_haversine_distance(lat1, lng1, lat2, lng2) <= 1).astype(int)
+
+	# numeric linear functions
+	elif method == 'linear':
+		'abs(((s2-s1)-a)*b)'
+		d = 1-abs((_haversine_distance(lat1, lng1, lat2, lng2)-a)*b)
+		d[d < 0] = 0
+
+	# numeric squared function
+	elif method == 'squared':
+		d = 1-(_haversine_distance(lat1, lng1, lat2, lng2)-a)**2*b**2
+		d[d < 0] = 0
+
+	else:
+		raise KeyError('The given algorithm is not found.')
+
+	d.fillna(missing_value, inplace=True)
+
+	return d
 
 def _string_sim(s1,s2, method='levenshtein', threshold=None, missing_value=0):
 
