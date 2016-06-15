@@ -33,6 +33,8 @@ make latexpdf
 
 cd ..
 
+# git tag -a v1.4 -m "my version 1.4"
+
 # Make the package installable. 
 python setup.py sdist
 python setup.py build

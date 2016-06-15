@@ -17,7 +17,7 @@ setup(
 
 	# Description
 	description="A record linkage toolkit for linking and deduplication",
-	long_description=read('docs/README.rst'),
+	long_description=read('README.rst'),
 
 	# Documentation
 	url="http://recordlinkage.readthedocs.io/",
