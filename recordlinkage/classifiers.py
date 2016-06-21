@@ -504,6 +504,13 @@ class FellegiSunter(Classifier):
 	# 	except Exception:
 	# 		return False
 
+	@property
+	def p(self):
+		try:
+			return self.algorithm._p
+		except Exception:
+			pass
+
 	# @property
 	# def w(self):
 

@@ -68,3 +68,5 @@ class TestClassify(unittest.TestCase):
         ecm.learn(train_df.round())
         ecm.predict(y.round())
         ecm.prob(y.round())
+
+        self.assertTrue(ecm.p != None)
