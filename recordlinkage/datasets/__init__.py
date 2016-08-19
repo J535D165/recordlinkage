@@ -116,7 +116,7 @@ def load_febrl1():
 
 	The Freely Extensible Biomedical Record Linkage (Febrl) package was distributed
 	with a dataset generator and four datasets generated with the generator.
-	This functions returns the first dataset in a pandas DataFrame.
+	This functions returns the first Febrl dataset as a pandas DataFrame.
 
 		*"This data set contains 1000 records (500 original and 500
 		duplicates, with exactly one duplicate per original record."*
@@ -133,7 +133,7 @@ def load_febrl2():
 
 	The Freely Extensible Biomedical Record Linkage (Febrl) package was distributed
 	with a dataset generator and four datasets generated with the generator.
-	This functions returns the second dataset in a pandas DataFrame.
+	This functions returns the second Febrl dataset as a pandas DataFrame.
 
 		*"This data set contains 5000 records (4000 originals and 1000
 		duplicates), with a maximum of 5 duplicates based on one original
@@ -158,7 +158,7 @@ def load_febrl3():
 
 	The Freely Extensible Biomedical Record Linkage (Febrl) package was distributed
 	with a dataset generator and four datasets generated with the generator.
-	This functions returns the third dataset in a pandas DataFrame.
+	This functions returns the third Febrl dataset as a pandas DataFrame.
 
 		*"This data set contains 5000 records (2000 originals and 3000
 		duplicates), with a maximum of 5 duplicates based on one original
@@ -183,7 +183,7 @@ def load_febrl4():
 
 	The Freely Extensible Biomedical Record Linkage (Febrl) package was distributed
 	with a dataset generator and four datasets generated with the generator.
-	This functions returns the fourth dataset in a pandas DataFrame.
+	This functions returns the fourth Febrl dataset as a pandas DataFrame.
 
 		*"Generated as one data set with 10000 records (5000 originals and
 		5000 duplicates, with one duplicate per original), the originals
