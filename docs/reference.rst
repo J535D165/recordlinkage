@@ -58,4 +58,7 @@ Datasets
 
 This package contains some example datasets that can be used for experiments. For example a dataset of comparison vectors and their labels for a cancer research. It is also possible to generate fake datasets. 
 
-.. autofunction:: recordlinkage.datasets.krebsregister_cmp_data
+.. automodule:: recordlinkage.datasets
+
+
+
