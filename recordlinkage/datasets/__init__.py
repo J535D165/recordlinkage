@@ -3,11 +3,18 @@ import pandas
 import numpy
 
 import os
+import zipfile
+from six import BytesIO
 
 try:
 	from faker import Faker
 except ImportError:
 	print ('Faker is not installed. Therefore, the functionalities of this module are limited.')
+
+try:
+	import requests
+except ImportError:
+	pass
 
 def krebsregister_cmp_data(*args, **kwargs):
 
@@ -53,190 +60,165 @@ def krebsregister_cmp_data(*args, **kwargs):
 
 	"""
 
-	try:
-		from rldatasets import krebsregister_cmp_data
-		return krebsregister_cmp_data(*args, **kwargs)
+	# If the data is not found, download it.
+	for i in range(1,11):
 
-	except ImportError:
-		print("Install recordlinkage-datasets to use this dataset.")
+		filepath = os.path.join(os.path.dirname(__file__), \
+			'krebsregister', 'block_{}.csv'.format(i))
+		
+		if not os.path.exists(filepath):
+			_download_krebsregister()
 
-def load_censusA():
+	if type(block) == list:
 
-	fp = os.path.join(os.path.dirname(__file__), 'data', 'personaldata1000A.csv')
+		data = None
 
-	df = pandas.read_csv(fp, sep=';', index_col='record_id', encoding='utf-8')
-	df.index.name = 'index_A'
-	return df
-
-def load_censusB():
-
-	fp = os.path.join(os.path.dirname(__file__), 'data', 'personaldata1000B.csv')
-
-	df = pandas.read_csv(fp, sep=';', index_col='record_id', encoding='utf-8')
-	df.index.name = 'index_B'
-	return df
-
-MISSING_DICT  = {
-	'first_name': 0.02,
-	'sex': 0.02,
-	'last_name': 0.02,
-	'phone_number': 0.1,
-	'job': 0.15,
-	'email': 0.1,
-	'birthdate': 0.005,
-	'street_address': 0.08,
-	'postcode': 0.08,
-	'city': 0.01
-}
-
-SUBS_DICT  = {
-	'first_name': 0.02,
-	'sex': 0.002,
-	'last_name': 0.02,
-	'phone_number': 0.1,
-	'job': 0.1,
-	'email': 0.08,
-	'birthdate': 0.005,
-	'street_address': 0.05,
-	'postcode': 0.08,
-	'city': 0.01
-}
-
-def addtypos(df):
-
-	return
-
-def addmissingvalues(df, missing_dict=MISSING_DICT):
-
-	fake = Faker()
-
-	for col in list(df):
-
-		if col in missing_dict.keys():
-
-			# Make a random sample of values to replace. 
-			to_replace = numpy.random.choice([True, False], len(df), p=[missing_dict[col], 1-missing_dict[col]])
-			df.loc[to_replace, col] = numpy.nan
-
-	return df
-
-def addsubstitutions(df, subs_dict=SUBS_DICT):
-
-	fake = Faker()
-
-	for col in list(df):
-
-		if col in subs_dict.keys():
-
-			# Make a random sample of values to replace. 
-			to_replace = numpy.random.choice([True, False], len(df), p=[subs_dict[col], 1-subs_dict[col]])
-
-			# Special case when for first name
-			if col == 'first_name':
-
-				if 'sex' == 'M':
-					df.loc[ to_replace, col] = [fake.first_name_male() for _ in range(0,sum(to_replace))]
-				elif 'sex' == 'F':
-					df.loc[ to_replace, col] = [fake.first_name_female() for _ in range(0,sum(to_replace))]
-				else:
-					pass
-			elif col == 'last_name':
-				df.loc[ to_replace, col] = [fake.last_name() for _ in range(0,sum(to_replace))]
-			elif col == 'phone_number':
-				df.loc[ to_replace, col] = [fake.phone_number() for _ in range(0,sum(to_replace))]
-			elif col == 'job':
-				df.loc[ to_replace, col] = [fake.job() for _ in range(0,sum(to_replace))]
-			elif col == 'email':
-				df.loc[ to_replace, col] = [fake.free_email() for _ in range(0,sum(to_replace))]
-			elif col == 'birthdate':
-				df.loc[ to_replace, col] = [fake.date() for _ in range(0,sum(to_replace))]
-			elif col == 'street_address':
-				df.loc[ to_replace, col] = [fake.street_address() for _ in range(0,sum(to_replace))]
-			elif col == 'postcode':
-				df.loc[ to_replace, col] = [fake.postcode() for _ in range(0,sum(to_replace))]
-			elif col == 'city':
-				df.loc[ to_replace, col] = [fake.city() for _ in range(0,sum(to_replace))]
-
-	return df
-
-def fakeperson():
-
-	fake = Faker()
-
-	person = {}
-
-	if numpy.random.random() < 0.5:
-		person['first_name'] = fake.first_name_male()
-		person['sex'] = 'M'
+		for bl in block:
+			data = pandas.concat([data, _krebsregister_block(bl)])
 	else:
-		person['first_name'] = fake.first_name_female()
-		person['sex'] = 'F'
 
-	person['last_name'] = fake.last_name()
-	person['phone_number'] = fake.phone_number()
-	person['job'] = fake.job()
-	person['email'] = fake.free_email()
-	person['birthdate'] = fake.date()
-	person['street_address'] = fake.street_address()
-	person['postcode'] = fake.postcode()
-	person['city'] = fake.city()
+		data = _krebsregister_block(block)
 
-	return person
+	match_index = data.index[data['is_match']]
+	del data['is_match']
 
-def dataset(N, df=None, matches=None):
+	return data, match_index
 
-	if df is None:
+def _download_krebsregister():
 
-		# Create a dataframe with fake personal information
-		df_persons = pandas.DataFrame([fakeperson() for _ in range(0, N)])
+	zip_file_url = "https://archive.ics.uci.edu/ml/machine-learning-databases/00210/donation.zip"
 
-		# Set an entity id for each created record. 
-		df_persons['entity_id'] = numpy.arange(1, N+1).astype(object)
+	try:
+		print("Start downloading the data.")
+		r = requests.get(zip_file_url)
 
-		# Reset the index of the dataframe. Start at 1e6
-		df_persons.set_index(numpy.arange(1e6, 1e6+N).astype(numpy.int64), inplace=True)
-		df_persons.index.name = 'record_id'
+		# unzip the content and put it in the krebsregister folder
+		z = zipfile.ZipFile(io.BytesIO(r.content))
+		z.extractall(os.path.join(os.path.dirname(__file__), 'krebsregister'))
 
-		# Return the dataframe
-		return df_persons
+		print("Data download succesfull.")
 
-	elif df is not None:
+	except Exception, e:
+		print("Issue with downloading the data:", e)
 
-		len_df = N-matches
-		if len_df < 0:
-			raise ValueError("The number of matches is higher than the number of records N.")
+def _krebsregister_block(block):
 
-		# Create a dataframe with fake personal information
-		df_persons = pandas.DataFrame([fakeperson() for _ in range(0, len_df)])
+	fp_i = os.path.join(os.path.dirname(__file__), 'krebsregister', 'block_{}.csv'.format(block))
 
-		# Set an entity id for each created record. 
-		max_entity_id = max(df['entity_id'])
-		df_persons['entity_id'] = numpy.arange(max_entity_id+1, max_entity_id+len_df+ 1).astype(object)
+	data_block = pandas.read_csv(fp_i, index_col=['id_1', 'id_2'], na_values='?')
+	data_block.columns = ['cmp_firstname1', 'cmp_firstname2', 'cmp_lastname1', 'cmp_lastname2', 'cmp_sex', 'cmp_birthday', 'cmp_birthmonth', 'cmp_birthyear', 'cmp_zipcode', 'is_match']
+	data_block.index.names = ['id1', 'id2']
+	return data_block
 
-		# Dataframe
-		df_persons = df.sample(matches).append(pandas.DataFrame([fakeperson() for _ in range(0, len_df)]))
 
-		# Reset the index of the dataframe. Start at 1e6
-		df_persons.set_index(numpy.arange(1e6, 1e6+N).astype(numpy.int64), inplace=True)
-		df_persons.index.name = 'record_id'
+def load_febrl1():
+	"""
 
-		# Add substituations.
-		df_persons = addsubstitutions(df_persons)
+	The Freely Extensible Biomedical Record Linkage (Febrl) package was distributed
+	with a dataset generator and four datasets generated with the generator.
+	This functions returns the first dataset in a pandas DataFrame.
 
-		# Add missing values
-		df_persons = addmissingvalues(df_persons)
+		*"This data set contains 1000 records (500 original and 500
+		duplicates, with exactly one duplicate per original record."*
 
-		# Return the dataframe
-		return df_persons
+	:return: A pandas DataFrame with Febrl dataset1.csv.
+	:rtype: pandas.DataFrame
 
-# censusdataA = dataset(1000)
-# censusdataB = dataset(1000, censusdataA, 800)
-# print censusdataA.head()
-# print censusdataB.head()
-# print censusdataB.dtypes
+	"""
 
-# censusdataA.to_csv('data/personaldata1000A.csv', sep=';')
-# censusdataB.to_csv('data/personaldata1000B.csv', sep=';')
+	return _load_febrl_data('dataset1.csv')
 
+def load_febrl2():
+	"""
+
+	The Freely Extensible Biomedical Record Linkage (Febrl) package was distributed
+	with a dataset generator and four datasets generated with the generator.
+	This functions returns the second dataset in a pandas DataFrame.
+
+		*"This data set contains 5000 records (4000 originals and 1000
+		duplicates), with a maximum of 5 duplicates based on one original
+		record (and a poisson distribution of duplicate records).
+		Distribution of duplicates:
+		19 originals records have 5 duplicate records
+		47 originals records have 4 duplicate records
+		107 originals records have 3 duplicate records
+		141 originals records have 2 duplicate records
+		114 originals records have 1 duplicate record
+		572 originals records have no duplicate record"*
+
+	:return: A pandas DataFrame with Febrl dataset2.csv.
+	:rtype: pandas.DataFrame
+
+	"""
+	
+	return _load_febrl_data('dataset2.csv')
+
+def load_febrl3():
+	"""
+
+	The Freely Extensible Biomedical Record Linkage (Febrl) package was distributed
+	with a dataset generator and four datasets generated with the generator.
+	This functions returns the third dataset in a pandas DataFrame.
+
+		*"This data set contains 5000 records (2000 originals and 3000
+		duplicates), with a maximum of 5 duplicates based on one original
+		record (and a Zipf distribution of duplicate records).
+		Distribution of duplicates:
+		168 originals records have 5 duplicate records
+		161 originals records have 4 duplicate records
+		212 originals records have 3 duplicate records
+		256 originals records have 2 duplicate records
+		368 originals records have 1 duplicate record
+		1835 originals records have no duplicate record"*
+
+	:return: A pandas DataFrame with Febrl dataset3.csv.
+	:rtype: pandas.DataFrame
+
+	"""
+	
+	return _load_febrl_data('dataset3.csv')
+
+def load_febrl4():
+	"""
+
+	The Freely Extensible Biomedical Record Linkage (Febrl) package was distributed
+	with a dataset generator and four datasets generated with the generator.
+	This functions returns the fourth dataset in a pandas DataFrame.
+
+		*"Generated as one data set with 10000 records (5000 originals and
+		5000 duplicates, with one duplicate per original), the originals
+		have been split from the duplicates, into
+
+		dataset4a.csv (containing the 5000 original records)
+		dataset4b.csv (containing the 5000 duplicate records)
+
+		These two data sets can be used for testing linkage procedures."*
+
+	:return: A pandas DataFrame with Febrl dataset4a.csv and a pandas
+				DataFrame with Febrl dataset4b.csv. 
+	rtype: (pandas.DataFrame, pandas.DataFrame)
+
+	"""
+	
+	return _load_febrl_data('dataset4a.csv'), _load_febrl_data('dataset4b.csv')
+
+def _load_febrl_data(filename):
+	# Internal function for loading febrl data
+
+	filepath = os.path.join(os.path.dirname(__file__), 'febrl', filename)
+
+	febrl_data = pandas.read_csv(filepath, 
+		index_col="rec_id", 
+		sep=",", 
+		engine='c', 
+		skipinitialspace=True,
+		dtype={
+			"street_number": object,
+			"date_of_birth": object,
+			"soc_sec_id": object,
+			"postcode": object
+		})
+
+	return febrl_data
 
 
