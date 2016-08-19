@@ -26,6 +26,6 @@ setup(
 	packages=['recordlinkage', 'recordlinkage.datasets', 'recordlinkage.standardise'],
 	include_package_data=True,
 	package_dir={'recordlinkage': 'recordlinkage'},
-	package_data={'recordlinkage': ['datasets/data/*.csv']},
+	package_data={'recordlinkage': ['datasets/*/*.csv']},
 	license='GNU'
 )

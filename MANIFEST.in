@@ -1,4 +1,5 @@
 include versioneer.py
 include recordlinkage/_version.py
 
-recursive-include recordlinkage/datasets/data *
+recursive-include recordlinkage/datasets/febrl *.csv
+recursive-include recordlinkage/datasets/krebsregister *.csv
