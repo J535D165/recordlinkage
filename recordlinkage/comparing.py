@@ -417,10 +417,7 @@ def _string_sim(s1,s2, method='levenshtein', threshold=None, missing_value=0):
 	else:
 		raise ValueError("""Algorithm '{}' not found.""".format(method))
 
-	if threshold is not None:
-		comp = (approx >= threshold).astype(int)
-	else:
-		comp = approx
+	comp = (approx >= threshold).astype(int) if threshold is not None else approx
 
 	# Only for missing values
 	comp[_missing(s1, s2)] = missing_value
