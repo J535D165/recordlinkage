@@ -210,7 +210,11 @@ class Pairs(object):
 
 		# If there are no chunks, then use the first item of the generator
 		if self.chunks is None or self.chunks == (None,None):
-			return next(self._iterindex(index_func, *args, **kwargs))
+
+			d = next(self._iterindex(index_func, *args, **kwargs))
+
+			return d
+
 		# Use the chunks
 		else:
 			return self._iterindex(index_func, *args, **kwargs)
@@ -354,19 +358,17 @@ class Pairs(object):
 			# results in (a1, a2) or (a2, a1)
 			elif self.deduplication:
 
-				df_b = pandas.DataFrame(
-					self.df_a, 
-					index=pandas.Index(self.df_a.index, name=str(self.df_a.index.name) + '_')
-					)
+				df_b = self.df_a[bl1:bl3].copy()
+				df_b.index.name = str(self.df_a.index.name) + '_'
 
 				pairs = index_func(
-					self.df_a[bl0:bl2], df_b[bl1:bl3], 
+					self.df_a[bl0:bl2], df_b, 
 					*args, **kwargs
 					)
 
 				# Remove all double pairs!
 				pairs = pairs[pairs.get_level_values(0) < pairs.get_level_values(1)]
-				pairs.names = [self.df_a, self.df_a]
+				pairs.names = [self.df_a.index.name, self.df_a.index.name]
 
 			self.n_pairs = len(pairs)
 
