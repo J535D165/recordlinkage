@@ -5,7 +5,7 @@ Installation guide
 Installation
 ============
 
-The easy way of installing ``recordlinkage`` is using ``pip``. It is as easy as typing:
+The easiest way of installing ``recordlinkage`` is using ``pip``. It is as easy as typing:
 
 .. code:: sh
 
