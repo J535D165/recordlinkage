@@ -120,16 +120,10 @@ The following packages are recommanded
 -  `jellyfish <https://github.com/jamesturk/jellyfish>`__: Needed for
    approximate string comparison. Version 0.5.0 or higher.
 
-Install the package with pip or conda
+Install the package with pip
 
 .. code:: sh
 
     pip install recordlinkage
-
-or
-
-.. code:: sh
-
-    conda install recordlinkage
 
 The license for this record linkage tool is GPLv3.
