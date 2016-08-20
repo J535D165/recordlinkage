@@ -121,8 +121,8 @@ class TestIndexing(unittest.TestCase):
 
     def test_random_index_linking(self):
 
-        dfA = datasets.load_censusA()
-        dfB = datasets.load_censusB()
+        dfA, dfB = datasets.load_febrl4()
+        dfB.index.name = dfB.index.name + "_"
 
         index = recordlinkage.Pairs(dfA, dfB)
         pairs = index.random(1000)
@@ -135,8 +135,8 @@ class TestIndexing(unittest.TestCase):
 
     def test_full_index_linking(self):
 
-        dfA = datasets.load_censusA()
-        dfB = datasets.load_censusB()
+        dfA, dfB = datasets.load_febrl4()
+        dfB.index.name = dfB.index.name + "_"
 
         index = recordlinkage.Pairs(dfA, dfB)
         pairs = index.full()
@@ -149,33 +149,33 @@ class TestIndexing(unittest.TestCase):
 
     def test_block_index_linking(self):
 
-        dfA = datasets.load_censusA()
-        dfB = datasets.load_censusB()
+        dfA, dfB = datasets.load_febrl4()
+        dfB.index.name = dfB.index.name + "_"
 
         index = recordlinkage.Pairs(dfA, dfB)
-        pairs = index.block('last_name')
+        pairs = index.block('given_name')
 
         # Check if index is unique
         self.assertTrue(pairs.is_unique)
 
     def test_qgram_index_linking(self):
 
-        dfA = datasets.load_censusA()
-        dfB = datasets.load_censusB()
+        dfA, dfB = datasets.load_febrl4()
+        dfB.index.name = dfB.index.name + "_"
 
         index = recordlinkage.Pairs(dfA[0:100], dfB[0:100])
-        pairs = index.qgram('last_name')
+        pairs = index.qgram('given_name')
 
         # Check if index is unique
         self.assertTrue(pairs.is_unique)
 
     def test_sorted_index_linking(self):
 
-        dfA = datasets.load_censusA()
-        dfB = datasets.load_censusB()
+        dfA, dfB = datasets.load_febrl4()
+        dfB.index.name = dfB.index.name + "_"
 
         index = recordlinkage.Pairs(dfA, dfB)
-        pairs = index.sortedneighbourhood('last_name')
+        pairs = index.sortedneighbourhood('given_name')
 
         # Check if index is unique
         self.assertTrue(pairs.is_unique)
@@ -183,12 +183,12 @@ class TestIndexing(unittest.TestCase):
 
     def test_blocking_special_case_of_sorting(self):
 
-        dfA = datasets.load_censusA()
-        dfB = datasets.load_censusB()
+        dfA, dfB = datasets.load_febrl4()
+        dfB.index.name = dfB.index.name + "_"
 
         index = recordlinkage.Pairs(dfA, dfB)
-        bl = index.block('last_name')
-        sn = index.sortedneighbourhood('last_name', window=1)
+        bl = index.block('given_name')
+        sn = index.sortedneighbourhood('given_name', window=1)
 
         print('The number of record pairs found with blocking', len(bl))
         print('The number of record pairs found with sorted neighbourhood indexing', len(sn))
@@ -203,8 +203,8 @@ class TestIndexing(unittest.TestCase):
 
     def test_full_iter_index_linking(self):
 
-        dfA = datasets.load_censusA()
-        dfB = datasets.load_censusB()
+        dfA, dfB = datasets.load_febrl4()
+        dfB.index.name = dfB.index.name + "_"
 
         index_chucks = recordlinkage.Pairs(dfA, dfB, chunks=(100,200))
         index = recordlinkage.Pairs(dfA, dfB)
@@ -229,16 +229,17 @@ class TestIndexing(unittest.TestCase):
 
     def test_full_iter_index_deduplication(self):
 
-        dfA = datasets.load_censusA()
-
-        index_chucks = recordlinkage.Pairs(dfA, chunks=(100,200))
-        index = recordlinkage.Pairs(dfA)
+        dfA = datasets.load_febrl1()
 
         # Compute pairs in one iteration
+        index = recordlinkage.Pairs(dfA)
         pairs_single = index.full()
 
         # Compute pairs in iterations
         n_pairs_iter = 0
+
+        index_chucks = recordlinkage.Pairs(dfA, chunks=100)
+
         for pairs in index_chucks.full():
 
             print (len(pairs))
@@ -256,8 +257,8 @@ class TestIndexing(unittest.TestCase):
 
     def test_reduction_ratio(self):
 
-        dfA = datasets.load_censusA()
-        dfB = datasets.load_censusB()
+        dfA, dfB = datasets.load_febrl4()
+        dfB.index.name = dfB.index.name + "_"
 
         index = recordlinkage.Pairs(dfA, dfB)
         pairs = index.full()
