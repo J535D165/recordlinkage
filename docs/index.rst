@@ -12,10 +12,10 @@ First steps
 	:caption: First steps
 	:hidden:
 
-	toolkit
+	about
 	installation
-	examples/link_two_dataframes.ipynb
-	examples/classifiers.ipynb
+	notebooks/link_two_dataframes.ipynb
+	notebooks/classifiers.ipynb
 
 :doc:`toolkit`
 	All you need to know about the project.
@@ -23,10 +23,10 @@ First steps
 :doc:`installation`
 	Install the `Record Linkage Toolkit` package and optional dependencies.
 
-:doc:`examples/link_two_dataframes`
+:doc:`notebooks/link_two_dataframes`
 	First steps: Link two datasets.
 
-:doc:`examples/classifiers`
+:doc:`notebooks/classifiers`
 	The full API reference of the `Record Linkage Toolkit` package is found here.
 
 Advanced usage
@@ -37,9 +37,22 @@ Advanced usage
 	:maxdepth: 2
 	:hidden:
 
-	examples/advanced_indexing.ipynb
+	notebooks/advanced_indexing.ipynb
 
-:doc:`examples/advanced_indexing`
+:doc:`notebooks/advanced_indexing`
+	Are the built-in indexing algorithms not sufficient? Build your own!
+
+Advanced usage
+==============
+
+.. toctree::
+	:caption: Advanced usage
+	:maxdepth: 2
+	:hidden:
+
+	notebooks/advanced_indexing.ipynb
+
+:doc:`notebooks/advanced_indexing`
 	Are the built-in indexing algorithms not sufficient? Build your own!
 
 

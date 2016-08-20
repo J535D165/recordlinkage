@@ -25,5 +25,4 @@ The following packages are required. You probably have it already ;)
 
 The following packages are not required but recommended for some functionalities:
 
--  `jellyfish <https://github.com/jamesturk/jellyfish>`__: Required for
-	several string comparison functions. Version 0.5.0 or higher.
+-  `jellyfish <https://github.com/jamesturk/jellyfish>`__: Required for several string comparison functions. Version 0.5.0 or higher.
