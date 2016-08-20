@@ -1,3 +1,6 @@
+
+recordlinkage/datasets/krebsregister/*
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

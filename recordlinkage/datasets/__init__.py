@@ -6,17 +6,7 @@ import os
 import zipfile
 from six import BytesIO
 
-try:
-	from faker import Faker
-except ImportError:
-	print ('Faker is not installed. Therefore, the functionalities of this module are limited.')
-
-try:
-	import requests
-except ImportError:
-	pass
-
-def krebsregister_cmp_data(*args, **kwargs):
+def krebsregister_cmp_data(block=1):
 
 	"""
 	krebsregister_cmp_data(block=1)
@@ -64,17 +54,15 @@ def krebsregister_cmp_data(*args, **kwargs):
 	for i in range(1,11):
 
 		filepath = os.path.join(os.path.dirname(__file__), \
-			'krebsregister', 'block_{}.csv'.format(i))
+			'krebsregister', 'block_{}.zip'.format(i))
 		
 		if not os.path.exists(filepath):
 			_download_krebsregister()
+			break
 
 	if type(block) == list:
 
-		data = None
-
-		for bl in block:
-			data = pandas.concat([data, _krebsregister_block(bl)])
+		data = pandas.concat([_krebsregister_block(bl) for bl in block])
 	else:
 
 		data = _krebsregister_block(block)
@@ -86,6 +74,9 @@ def krebsregister_cmp_data(*args, **kwargs):
 
 def _download_krebsregister():
 
+	# Try to import requests
+	import requests
+
 	zip_file_url = "https://archive.ics.uci.edu/ml/machine-learning-databases/00210/donation.zip"
 
 	try:
@@ -93,21 +84,27 @@ def _download_krebsregister():
 		r = requests.get(zip_file_url)
 
 		# unzip the content and put it in the krebsregister folder
-		z = zipfile.ZipFile(io.BytesIO(r.content))
+		z = zipfile.ZipFile(BytesIO(r.content))
 		z.extractall(os.path.join(os.path.dirname(__file__), 'krebsregister'))
 
 		print("Data download succesfull.")
 
-	except Exception, e:
+	except Exception as e:
 		print("Issue with downloading the data:", e)
 
 def _krebsregister_block(block):
 
-	fp_i = os.path.join(os.path.dirname(__file__), 'krebsregister', 'block_{}.csv'.format(block))
+	fp_i = os.path.join(os.path.dirname(__file__), 'krebsregister', 'block_{}.zip'.format(block))
 
-	data_block = pandas.read_csv(fp_i, index_col=['id_1', 'id_2'], na_values='?')
+	data_block = pandas.read_csv(
+		fp_i, 
+		index_col=['id_1', 'id_2'], 
+		na_values='?',
+		compression='zip')
+
 	data_block.columns = ['cmp_firstname1', 'cmp_firstname2', 'cmp_lastname1', 'cmp_lastname2', 'cmp_sex', 'cmp_birthday', 'cmp_birthmonth', 'cmp_birthyear', 'cmp_zipcode', 'is_match']
 	data_block.index.names = ['id1', 'id2']
+
 	return data_block
 
 
