@@ -57,10 +57,10 @@ class and the available comparison/similarity functions.
 
     compare = recordlinkage.Compare(candidate_links, df_a, df_b)
 
-    compare.fuzzy('name', 'name', method='jarowinkler', threshold=0.85)
+    compare.string('name', 'name', method='jarowinkler', threshold=0.85)
     compare.exact('sex', 'gender')
     compare.exact('dob', 'date_of_birth')
-    compare.fuzzy('streetname', 'streetname', method='damerau_levenshtein', threshold=0.7)
+    compare.string('streetname', 'streetname', method='damerau_levenshtein', threshold=0.7)
     compare.exact('place', 'placename')
     compare.exact('haircolor', 'haircolor', missing_value=9)
 
