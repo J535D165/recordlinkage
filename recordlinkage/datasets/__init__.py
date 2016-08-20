@@ -6,10 +6,9 @@ import os
 import zipfile
 from six import BytesIO
 
-def krebsregister_cmp_data(block=1):
+def load_krebsregister(block=1):
 
 	"""
-	krebsregister_cmp_data(block=1)
 
 	This dataset of comparison patterns was obtained in a epidemiological
 	cancer study in Germany. The comparison patterns were created by the
