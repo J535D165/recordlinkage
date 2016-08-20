@@ -66,21 +66,24 @@ def _sortedneighbourhood(df_a, df_b, column, window=3, sorting_key_values=None, 
 	keys_left = [column] + block_left_on
 	keys_right = [column] + block_right_on
 
+	df_a = df_a[df_a[column].notnull()]
+	df_b = df_b[df_b[column].notnull()]
+
 	# sorting_key_values is the terminology in Data Matching [Christen, 2012]
 	if sorting_key_values is None:
-		sorting_key_values = df_a[column].append(df_b[column])
 
-	factors = pandas.Series(pandas.Series(sorting_key_values).unique())
-	factors.sort_values(inplace=True)
+		# Combine the results
+		sorting_key_values = numpy.sort(numpy.unique(
+			numpy.concatenate([df_a[column].values,df_b[column].values])
+			))
 
-	factors = factors[factors.notnull()].values # Remove possible numpy.nan values. They are not replaced in the next step.
-	factors_label = numpy.arange(len(factors))
+	sorting_key_factors = numpy.arange(len(sorting_key_values))
 
 	data_dict_A = {kl:df_a[kl] for kl in keys_left}
 	data_dict_B = {kl:df_b[kl] for kl in keys_right}
 
-	sorted_df_A = pandas.DataFrame(merge_dicts(data_dict_A, {column:df_a[column].replace(factors, factors_label), df_a.index.name: df_a.index.values}))
-	sorted_df_B = pandas.DataFrame({column:df_b[column].replace(factors, factors_label), df_b.index.name: df_b.index.values})
+	sorted_df_A = pandas.DataFrame(merge_dicts(data_dict_A, {column:df_a[column].replace(sorting_key_values, sorting_key_factors), df_a.index.name: df_a.index.values}))
+	sorted_df_B = pandas.DataFrame({column:df_b[column].replace(sorting_key_values, sorting_key_factors), df_b.index.name: df_b.index.values})
 
 	pairs_concat = None
 
@@ -92,8 +95,6 @@ def _sortedneighbourhood(df_a, df_b, column, window=3, sorting_key_values=None, 
 		df = pandas.DataFrame(merge_dicts(data_dict_B, {column:sorted_df_B[column]+w, df_b.index.name: df_b.index.values}))
 
 		pairs = sorted_df_A.merge(df, left_on=keys_left, right_on=keys_right, how='inner').set_index([df_a.index.name, df_b.index.name])
-
-		# Append pairs to existing ones. PANDAS BUG workaround
 		pairs_concat = pairs.index if pairs_concat is None else pairs.index.append(pairs_concat)
 
 	return pairs_concat
@@ -358,11 +359,11 @@ class Pairs(object):
 			# results in (a1, a2) or (a2, a1)
 			elif self.deduplication:
 
-				df_b = self.df_a[bl1:bl3].copy()
+				df_b = self.df_a.copy()
 				df_b.index.name = str(self.df_a.index.name) + '_'
 
 				pairs = index_func(
-					self.df_a[bl0:bl2], df_b, 
+					self.df_a[bl0:bl2], df_b[bl1:bl3], 
 					*args, **kwargs
 					)
 
