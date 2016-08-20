@@ -2,6 +2,16 @@
 Release notes
 *************
 
+Version 0.4
+===========
+
+- Fixes a serious bug with deduplication.
+- Fixes undesired behaviour for sorted neighbourhood indexing with missing values.
+- Add new datasets to the package like Febrl datasets
+- Move Krebsregister dataset to this package. 
+- Improve and add some tests
+- Various documentation updates 
+
 Version 0.3
 ===========
 
