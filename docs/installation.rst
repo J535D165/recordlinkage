@@ -5,17 +5,13 @@ Installation guide
 Installation
 ============
 
-You can download and install the **recordlinkage** package with pip or conda
-
-Install the package with pip or conda
+The easy way of installing ``recordlinkage`` is using ``pip``. It is as easy as typing:
 
 .. code:: sh
+
 	pip install recordlinkage
 
-	conda install recordlinkage
-
-
-The license for the Record Linkage Toolkit is GPLv3.
+The license of this record linkage package is GPLv3.
 
 Dependencies
 ============
@@ -27,7 +23,7 @@ The following packages are required. You probably have it already ;)
 -  `scipy <https://www.scipy.org/>`__
 -  `sklearn <http://scikit-learn.org/>`__
 
-The following packages are recommanded
+The following packages are not required but recommended for some functionalities:
 
--  `jellyfish <https://github.com/jamesturk/jellyfish>`__: Needed for
-   approximate string comparison. Version 0.5.0 or higher.
+-  `jellyfish <https://github.com/jamesturk/jellyfish>`__: Required for
+	several string comparison functions. Version 0.5.0 or higher.
