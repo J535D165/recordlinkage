@@ -31,9 +31,3 @@ The following packages are recommanded
 
 -  `jellyfish <https://github.com/jamesturk/jellyfish>`__: Needed for
    approximate string comparison. Version 0.5.0 or higher.
-
-Record linkage datasets
-=======================
-
-The record linkage toolkit does not contain sample datasets. In the package ``recordlinkage-datasets``, there are some example datasets. Some of the datasets are comparison samples, others are complete datasets. The datasets do not infringe on the privacy. 
-
