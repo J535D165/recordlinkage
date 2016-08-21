@@ -15,6 +15,7 @@ First steps
 	about
 	installation
 	notebooks/link_two_dataframes.ipynb
+	notebooks/data_deduplication.ipynb
 
 :doc:`about`
 	All you need to know about the project.
@@ -24,6 +25,9 @@ First steps
 
 :doc:`notebooks/link_two_dataframes`
 	First steps: Link two datasets.
+
+:doc:`notebooks/data_deduplication`
+	First steps: Finding duplicate records.
 
 Record linkage
 ==============
