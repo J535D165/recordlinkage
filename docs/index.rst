@@ -16,7 +16,7 @@ First steps
 	installation
 	notebooks/link_two_dataframes.ipynb
 
-:doc:`toolkit`
+:doc:`about`
 	All you need to know about the project.
 
 :doc:`installation`
@@ -42,8 +42,8 @@ Record linkage
 :doc:`notebooks/advanced_indexing`
 	Are the built-in indexing algorithms not sufficient? Build your own!
 
-Reference and more
-==================
+Reference
+=========
 
 .. toctree::
 	:maxdepth: 2
