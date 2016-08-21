@@ -208,6 +208,7 @@ def _load_febrl_data(filename):
 		sep=",", 
 		engine='c', 
 		skipinitialspace=True,
+		encoding='utf-8',
 		dtype={
 			"street_number": object,
 			"date_of_birth": object,
