@@ -291,14 +291,6 @@ class Compare(object):
 
 		return self.compare(_geo_sim, (lat1, lng1), (lat2, lng2), *args, **kwargs)
 
-	def batchcompare(self, list_of_comp_funcs):
-		"""
-		This method will be used to speed up the comparison of record pairs in the future.
-
-		"""
-
-		raise NotImplementedError("This method will be used to increase the comparing speed.")
-
 	def _append(self, comp_vect, name=None):
 		"""
 
