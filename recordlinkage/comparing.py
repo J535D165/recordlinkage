@@ -73,7 +73,7 @@ class Compare(object):
 
 	"""
 
-	def __init__(self, pairs, df_a=None, df_b=None):
+	def __init__(self, pairs, df_a=None, df_b=None, batch=False):
 
 		# The dataframes
 		self.df_a = df_a
@@ -82,12 +82,15 @@ class Compare(object):
 		# The candidate record pairs
 		self.pairs = pairs
 
+		self.batch = batch
+		self._batch_functions = []
+
 		# The resulting data
 		self.vectors = pandas.DataFrame(index=pairs)
 
 		# self.ndim = self._compute_dimension(pairs)
 
-	def compare(self, comp_func, data_a, data_b, *args, **kwargs):
+	def compare(self, comp_func, labels_a, labels_b, *args, **kwargs):
 		"""
 
 		Core method to compare records. This method takes a function and data from both records in
@@ -105,14 +108,14 @@ class Compare(object):
 			>>> comp.compare(recordlinkage._compare_exact, 'first_name', 'name')
 
 		:param comp_func: A comparison function. This function can be a built-in function or a user defined comparison function.
-		:param data_a: The labels, Series or DataFrame to compare.
-		:param data_b: The labels, Series or DataFrame to compare.
+		:param labels_a: The labels, Series or DataFrame to compare.
+		:param labels_b: The labels, Series or DataFrame to compare.
 		:param name: The name of the feature and the name of the column.
 		:param store: Store the result in the dataframe.
 
 		:type comp_func: function
-		:type data_a: label, pandas.Series, pandas.DataFrame
-		:type data_b: label, pandas.Series, pandas.DataFrame
+		:type labels_a: label, pandas.Series, pandas.DataFrame
+		:type labels_b: label, pandas.Series, pandas.DataFrame
 		:type name: label
 		:type store: boolean, default True
 
@@ -120,35 +123,101 @@ class Compare(object):
 		:rtype: standardise.DataFrame
 		"""
 
-		args = list(args)
+		if not self.batch:
 
-		name = kwargs.pop('name', None)
-		store = kwargs.pop('store', True)
+			name = kwargs.pop('name', None)
+			store = kwargs.pop('store', True)
 
-		# Sample the data and add it to the arguments.
-		if not isinstance(data_b, (tuple, list)):
-			data_b = [data_b]
+			# Sample the data and add it to the arguments.
+			labels_b = [labels_b] if not isinstance(labels_b, (tuple, list)) else labels_b
+			labels_a = [labels_a] if not isinstance(labels_a, (tuple, list)) else labels_a
 
-		if not isinstance(data_a, (tuple, list)):
-			data_a = [data_a]
+			args = tuple(_resample(_label_or_column(da, self.df_b), self.pairs, 0) for da in reversed(labels_a)) + \
+				tuple(_resample(_label_or_column(db, self.df_a), self.pairs, 1) for db in reversed(labels_b)) + args
 
-		for db in reversed(data_b):
-			args.insert(0, _resample(_label_or_column(db, self.df_b), self.pairs, 1))
+			c = comp_func(*tuple(args), **kwargs)
 
-		for da in reversed(data_a):
-			args.insert(0, _resample(_label_or_column(da, self.df_a), self.pairs, 0))
+			# Store the result
+			if store:
+				# append column
+				name_or_id = name if name else len(self.vectors.columns)
 
-		c = comp_func(*tuple(args), **kwargs)
+				self.vectors[name_or_id] = c
 
-		# If it is a pandas Series, remove the name and replace it. 
-		if isinstance(c, (pandas.DataFrame, pandas.Series)):
-			c.name = name
+			return pandas.Series(c, index=self.pairs, name=name)
 
-		# Store the result the comparison result
-		if store:
-			self._append(c, name=name)
+		else:
 
-		return pandas.Series(c, index=self.pairs, name=name)
+			# Add to batch compare functions
+			self._batch_functions.append((comp_func, labels_a, labels_b, args, kwargs))
+
+	def run(self):
+		"""
+
+		Batch method for comparing records. This method excecutes the methods
+		called before in one time. This method has performance advantages. This
+		function works ONLY when ``batch=True`` is set in the class ``Compare``.
+
+		:Example:
+
+			>>> comp = recordlinkage.Compare(..., batch=True)
+			>>> comp.exact('first_name', 'name')
+			>>> comp.exact('surname', 'surname')
+			>>> comp.exact('date_of_birth', 'dob')
+			>>> comp.run()
+
+		:return: The comparison vectors Compare.vectors
+		:rtype: standardise.DataFrame
+		"""
+
+		if not self._batch_functions:
+			raise Exception("No batch functions found. Check if batch=True in recordlinkage.Compare")
+
+		# Collect the labels
+		labelsA = []
+		labelsB = []
+
+		for comp_func, labels_a, labels_b, args, kwargs in self._batch_functions:
+
+			if isinstance(labels_a, (tuple, list)):
+				labelsA.extend(labels_a)
+			else:
+				labelsA.append(labels_a)
+
+		for comp_func, labels_a, labels_b, args, kwargs in self._batch_functions:
+
+			if isinstance(labels_b, (tuple, list)):
+				labelsB.extend(labels_b)
+			else:
+				labelsB.append(labels_b)
+
+		# Make selections of columns
+		dataA = _resample(self.df_a[labelsA], self.pairs, 1)
+		dataB = _resample(self.df_b[labelsB], self.pairs, 0)
+
+		for comp_func, labels_a, labels_b, args, kwargs in self._batch_functions:
+
+			name = kwargs.pop('name', None)
+			store = kwargs.pop('store', None) # always true, but if passed then ignored
+
+			# Sample the data and add it to the arguments.
+			labels_b = [labels_b] if not isinstance(labels_b, (tuple, list)) else labels_b
+			labels_a = [labels_a] if not isinstance(labels_a, (tuple, list)) else labels_a
+
+			args = tuple(dataA.loc[:,da] for da in reversed(labels_a)) + \
+				tuple(dataB.loc[:,db] for db in reversed(labels_b)) + args
+
+			# Compute the comparison
+			c = comp_func(*tuple(args), **kwargs)
+
+			# append column to Compare.vectors
+			name_or_id = name if name else len(self.vectors.columns)
+			self.vectors[name_or_id] = c
+
+		# Reset the batch functions
+		self._batch_functions = []
+
+		return self.vectors
 
 	def exact(self, s1, s2, *args, **kwargs):
 		"""
@@ -290,18 +359,6 @@ class Compare(object):
 		"""
 
 		return self.compare(_geo_sim, (lat1, lng1), (lat2, lng2), *args, **kwargs)
-
-	def _append(self, comp_vect, name=None):
-		"""
-
-		Add the comparison result to the ``vector`` attribute.
-
-		"""
-
-		if name:
-			self.vectors[name] = comp_vect.values
-		else:
-			self.vectors[len(self.vectors)] = comp_vect
 
 def _missing(*args):
 	""" Internal function to return the index of record pairs with missing values """
