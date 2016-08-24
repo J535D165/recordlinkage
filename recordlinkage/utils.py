@@ -24,8 +24,8 @@ def _label_or_column(label_or_column, dataframe):
 		if isinstance(label_or_column, (pandas.Series, pandas.DataFrame)):
 			return label_or_column
 		else:
-			raise ValueError("The label or column has to be a valid label \
-				or pandas.Series or pandas.DataFrame. ")
+			raise ValueError("The label or column has to be a valid label " + \
+				"or pandas.Series or pandas.DataFrame. ")
 
 def _resample(frame, index, level_i):
 	"""
