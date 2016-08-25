@@ -19,7 +19,8 @@ from recordlinkage.utils import _label_or_column, _resample
 def _check_jellyfish():
 
 	if 'jellyfish' not in sys.modules:
-		raise ImportError("Install the module 'jellyfish' to use the following string metrics: 'jaro', 'jarowinkler', 'levenshtein' and 'damerau_levenshtein'.")
+		raise ImportError("Install the module 'jellyfish' to use the following " + \
+			"string metrics: 'jaro', 'jarowinkler', 'levenshtein' and 'damerau_levenshtein'.")
 
 class Compare(object):
 	""" 
@@ -99,12 +100,10 @@ class Compare(object):
 
 		:Example:
 
-			Consider ``comp`` is a Compare instance. The code
-
+			>>> comp = recordlinkage.Compare(PAIRS, DATAFRAME1, DATAFRAME2)
 			>>> comp.exact('first_name', 'name')
 
-			is the same as
-
+			>>> # same as
 			>>> comp.compare(recordlinkage._compare_exact, 'first_name', 'name')
 
 		:param comp_func: A comparison function. This function can be a built-in function or a user defined comparison function.
@@ -155,23 +154,26 @@ class Compare(object):
 		"""
 
 		Batch method for comparing records. This method excecutes the methods
-		called before in one time. This method has performance advantages. This
-		function works ONLY when ``batch=True`` is set in the class ``Compare``.
+		called before in one time. This method may decrease the computation
+		time. This function works ONLY when ``batch=True`` is set in the class
+		``Compare`` and ``run`` is called in the end.
 
 		:Example:
 
+			# This example is almost 3 times faster than the traditional one.
 			>>> comp = recordlinkage.Compare(..., batch=True)
 			>>> comp.exact('first_name', 'name')
 			>>> comp.exact('surname', 'surname')
 			>>> comp.exact('date_of_birth', 'dob')
 			>>> comp.run()
 
-		:return: The comparison vectors Compare.vectors
+		:return: The comparison vectors (Compare.vectors)
 		:rtype: standardise.DataFrame
 		"""
 
 		if not self._batch_functions:
-			raise Exception("No batch functions found. Check if batch=True in recordlinkage.Compare")
+			raise Exception("No batch functions found. " \
+				"Check if batch=True in recordlinkage.Compare")
 
 		# Collect the labels
 		labelsA = []
@@ -314,7 +316,12 @@ class Compare(object):
 		:return: A Series with similarity values. Values equal or between 0 and 1.
 		:rtype: pandas.Series
 
-		Note: For som of these algorithms is the package 'jellyfish' required. Install it with ``pip install jellyfish``.
+		.. note::
+
+			The 'jarowinkler', 'jaro', 'levenshtein' and 'damerau_levenshtein'
+			algorithms use the package 'jellyfish' for string similarity
+			measures. It can be installed with pip (``pip install
+			jellyfish``).
 
 		"""
 
