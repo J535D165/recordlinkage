@@ -100,11 +100,13 @@ class Compare(object):
 
 		:Example:
 
-			>>> comp = recordlinkage.Compare(PAIRS, DATAFRAME1, DATAFRAME2)
-			>>> comp.exact('first_name', 'name')
+			.. code-block:: python
 
-			>>> # same as
-			>>> comp.compare(recordlinkage._compare_exact, 'first_name', 'name')
+				comp = recordlinkage.Compare(PAIRS, DATAFRAME1, DATAFRAME2)
+				comp.exact('first_name', 'name')
+
+				# same as
+				comp.compare(recordlinkage._compare_exact, 'first_name', 'name')
 
 		:param comp_func: A comparison function. This function can be a built-in function or a user defined comparison function.
 		:param labels_a: The labels, Series or DataFrame to compare.
@@ -160,12 +162,14 @@ class Compare(object):
 
 		:Example:
 
-			# This example is almost 3 times faster than the traditional one.
-			>>> comp = recordlinkage.Compare(..., batch=True)
-			>>> comp.exact('first_name', 'name')
-			>>> comp.exact('surname', 'surname')
-			>>> comp.exact('date_of_birth', 'dob')
-			>>> comp.run()
+			.. code-block:: python
+
+				# This example is almost 3 times faster than the traditional one.
+				>>> comp = recordlinkage.Compare(..., batch=True)
+				>>> comp.exact('first_name', 'name')
+				>>> comp.exact('surname', 'surname')
+				>>> comp.exact('date_of_birth', 'dob')
+				>>> comp.run()
 
 		:return: The comparison vectors (Compare.vectors)
 		:rtype: standardise.DataFrame
