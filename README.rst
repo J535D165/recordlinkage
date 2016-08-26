@@ -127,3 +127,9 @@ Install the package with pip
     pip install recordlinkage
 
 The license for this record linkage tool is GPLv3.
+
+
+Need help?
+----------
+
+Stuck on your record linkage code or problem? Any other questions? Don't hestitate to send me an email (jonathandebruinhome@gmail.com).
