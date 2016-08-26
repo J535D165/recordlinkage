@@ -332,6 +332,11 @@ class Compare(object):
 		return self.compare(_string_sim, s1, s2, *args, **kwargs)
 
 	def fuzzy(self, s1, s2, *args, **kwargs):
+		"""
+		.. deprecated:: 0.3.0
+			Use :func:`~recordlinkage.Compare.string` instead.
+
+		"""
 
 		warnings.warn(
 			"Use the method 'string' instead of 'fuzzy'",
