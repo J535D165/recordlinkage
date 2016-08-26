@@ -252,18 +252,18 @@ class Pairs(object):
 
 	def sortedneighbourhood(self, *args, **kwargs):
 		"""
-		sortedneighbourhood(column, window=3, sorting_key_values=None, block_on=[], block_left_on=[], block_right_on=[])
+		sortedneighbourhood(on, window=3, sorting_key_values=None, block_on=[], block_left_on=[], block_right_on=[])
 
 		Create a Sorted Neighbourhood index. 
 
-		:param column: Specify the column to make a sorted index. 
+		:param on: Specify the on to make a sorted index. 
 		:param window: The width of the window, default is 3. 
 		:param sorting_key_values: A list of sorting key values (optional).
 		:param block_on: Additional columns to use standard blocking on. 
 		:param block_left_on: Additional columns in the left dataframe to use standard blocking on. 
 		:param block_right_on: Additional columns in the right dataframe to use standard blocking on. 
 
-		:type column: label 
+		:type on: label 
 		:type window: int
 		:type sorting_key_values: array
 		:type on: label
@@ -281,8 +281,8 @@ class Pairs(object):
 
 		Make an index of randomly selected record pairs. 
 
-		:param n_pairs: The number of record pairs to return. The integer n_pairs should satisfy 0 < n_pairs <= len(A)*len(B).
-
+		:param n_pairs: The number of record pairs to return. The integer 
+				n_pairs should satisfy 0 < n_pairs <= len(A)*len(B).
 		:type n_pairs: int
 
 		:return: The index of the candidate record pairs
