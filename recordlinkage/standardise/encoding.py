@@ -12,7 +12,7 @@ from .cleaning import *
 
 def phonetic(s, method):
     """
-    phonetic(method, encoding='utf-8')
+    phonetic(method)
 
     Phonetically encode the values in the Series. 
 
