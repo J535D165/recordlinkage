@@ -27,10 +27,11 @@ def clean(s, lower=True, replace_by_none='[^ \-\_A-Za-z0-9]+', replace_by_whites
     :return: A cleaned Series of strings.
     :rtype: pandas.Series
 
-   :Example:
+    :Example:
 
         .. code:: python
 
+            >>> import pandas
             >>> from recordlinkage.standardise import clean
 
             >>> s = pandas.Series(['Mary-ann', 'Bob :)', 'Angel', 'Bob (alias Billy)', None])
@@ -66,8 +67,7 @@ def clean(s, lower=True, replace_by_none='[^ \-\_A-Za-z0-9]+', replace_by_whites
 
 def phonenumbers(s):
     """ 
-
-    Clean string formatted phonenumbers. 
+    Clean phonenumbers by removing all non-numbers (except +). 
 
     :param s: A pandas.Series to clean.
     :type s: pandas.Series
@@ -83,7 +83,7 @@ def phonenumbers(s):
 
 def value_occurence(s):
     """
-    Count the number of times a value occurs. The difference with pandas.value_counts is that this function returns the values for each row. 
+    Count the number of times each value occurs. This function returns the values for each row, in contrast with `pandas.value_counts <http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.value_counts.html>`_. 
 
     :return: A Series with value counts.
     :rtype: pandas.Series

@@ -14,15 +14,19 @@ from .cleaning import *
 
 def phonetic(s, method):
     """
-    phonetic(method)
-
     Phonetically encode the values in the Series. 
 
-    :param method: The algorithm that is used to phonetically encode the values. The possible options are 'soundex' en 'nysiis'.
+    :param method: The algorithm that is used to phonetically encode the values. The possible options are 'soundex' and 'nysiis'.
     :type method: string
 
     :return: A Series with phonetic encoded values.
     :rtype: pandas.Series
+
+    .. note::
+
+        The 'soundex' and 'nysiis' algorithms use the package 'jellyfish'. 
+        It can be installed with pip (``pip install jellyfish``).
+
     """
 
 
