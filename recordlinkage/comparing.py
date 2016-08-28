@@ -1,8 +1,8 @@
 from __future__ import division 
+from __future__ import unicode_literals
 
 import sys
 import warnings
-
 
 import pandas
 import numpy as np
