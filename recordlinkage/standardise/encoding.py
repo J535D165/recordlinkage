@@ -44,7 +44,7 @@ def phonetic(s, method):
 
 def gender(names, years=None, method="ssa", countries=None, labels=("male", "female"), q=0.1):
     """
-    Predict the gender based on the first name. This tool is based on https://github.com/ropensci/gender and uses their data. 
+    Predict the gender based on the first name. This tool is based on https://github.com/ropensci/gender and uses their data. The gender prediction is based `Bayes' theorem <https://en.wikipedia.org/wiki/Bayes%27_theorem>`_. 
 
     :param names: The given names.
     :param years: The birth year of the first names whose gender is to be predicted. 
@@ -56,8 +56,8 @@ def gender(names, years=None, method="ssa", countries=None, labels=("male", "fem
             U.S. Social Security Administration baby name data.
     :param countries: The country. 
     :param labels: The label given for male and female prediction. Default: ("male", "female").
-    :param sex_ratio: The ratio of males to females in the newborn population (`wikipedia 
-            <https://en.wikipedia.org/wiki/Sex_ratio>`_). Default 1.07
+    :param sex_ratio: The ratio of males to females (`sex ratio 
+            <https://en.wikipedia.org/wiki/Sex_ratio>`_) in the newborn population. Default 1.07
     :param q: The maximum error probability for a name. 
 
     :type names: pandas.Series
@@ -81,7 +81,7 @@ def gender(names, years=None, method="ssa", countries=None, labels=("male", "fem
 def gender_ssa(names, years=None, labels=("male", "female"), q=0.49, sex_ratio=1.07):
 
     filepath = os.path.join(os.path.dirname(__file__), 'data', 'ssa_national.zip')
-    fileurl = ""
+    fileurl = "https://github.com/J535D165/recordlinkage/raw/master/recordlinkage/standardise/data/ssa_national.zip"
 
     if os.path.exists(filepath):
         ssa_national = pandas.read_csv(filepath, compression="zip")
