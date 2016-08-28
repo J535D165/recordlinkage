@@ -10,16 +10,13 @@ import itertools
 
 def clean(s, lower=True, replace_by_none='[^ \-\_A-Za-z0-9]+', replace_by_whitespace='[\-\_]', remove_brackets=True):
     """
-    clean(lower=True, replace_by_none='[^ \-\_A-Za-z0-9]+', replace_by_whitespace='[\-\_]', remove_brackets=True)
-    
-    Clean a pandas Series with strings. Remove unwanted tokens and additional
-    whitespace.
+    Clean strings in the Series by removing unwanted tokens, whitespace and brackets.
 
     :param s: A pandas.Series to clean.
-    :param lower: Convert strings in the Series to lowercase. Default: True.
+    :param lower: Convert strings in the Series to lowercase. Default True.
     :param replace_by_none: The matches of this regular expression are replaced by ''.
     :param replace_by_whitespace: The matches of this regular expression are replaced by a whitespace.
-    :param remove_brackets: Remove all content between brackets and the brackets themselves. Default: True.
+    :param remove_brackets: Remove all content between brackets and the brackets themselves. Default True.
 
     :type s: pandas.Series
     :type lower: boolean
