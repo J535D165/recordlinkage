@@ -16,10 +16,10 @@ def clean(s, lower=True, replace_by_none='[^ \-\_A-Za-z0-9]+', replace_by_whites
     whitespace.
 
     :param s: A pandas.Series to clean.
-    :param lower: Convert the strings in lowercase characters.
-    :param replace_by_none: A regular expression that is replaced by ''.
-    :param replace_by_whitespace: A regular expression that is replaced by a whitespace.
-    :param remove_brackets: Remove all content between brackets and the brackets themselves. 
+    :param lower: Convert strings in the Series to lowercase. Default: True.
+    :param replace_by_none: The matches of this regular expression are replaced by ''.
+    :param replace_by_whitespace: The matches of this regular expression are replaced by a whitespace.
+    :param remove_brackets: Remove all content between brackets and the brackets themselves. Default: True.
 
     :type s: pandas.Series
     :type lower: boolean
@@ -30,14 +30,21 @@ def clean(s, lower=True, replace_by_none='[^ \-\_A-Za-z0-9]+', replace_by_whites
     :return: A cleaned Series of strings.
     :rtype: pandas.Series
 
-    For example:
+   :Example:
 
-    >>> s = pandas.Series(['Mary-ann', 'Bob :)', 'Angel', 'Bob (alias Billy)'])
-    >>> print(recordlinkage.clean(s))
-    mary ann
-    bob
-    angel
-    bob
+        .. code:: python
+
+            >>> from recordlinkage.standardise import clean
+
+            >>> s = pandas.Series(['Mary-ann', 'Bob :)', 'Angel', 'Bob (alias Billy)', None])
+            >>> print(clean(s))
+
+            0    mary ann
+            1         bob
+            2       angel
+            3         bob
+            4         NaN
+            dtype: object
 
     """
 
