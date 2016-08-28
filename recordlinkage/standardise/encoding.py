@@ -70,22 +70,20 @@ def gender(names, years=None, method="ssa", countries=None, labels=("male", "fem
 
     :return: The gender predictions for each row.
     :rtype: pandas.Series
+    
+    :Example:
 
-	:Example:
-
-        predict the sex of the records in the first FEBRL dataset: 
+        Predict the sex of the records in the first FEBRL dataset: 
 
         .. code:: python
 
-            from recordlinkage.datasets import load_febrl1
-            from recordlinkage.standardise import gender
+            >>> from recordlinkage.datasets import load_febrl1
+            >>> from recordlinkage.standardise import gender
             
-            data = load_febrl1()
-            data["sex"] = gender(data['given_name'], years=[1990, 2010], method="ssa")
+            >>> data = load_febrl1()
+            >>> data["sex"] = gender(data['given_name'], years=[1990, 2010], method="ssa")
             
-            print (data["sex"].head())
-
-        .. parsed-literal::
+            >>> print (data["sex"].head())
 
             rec_id
             rec-223-org        NaN
