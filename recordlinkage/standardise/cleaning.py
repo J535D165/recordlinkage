@@ -12,37 +12,38 @@ def clean(s, lower=True, replace_by_none='[^ \-\_A-Za-z0-9]+', replace_by_whites
     """
     Clean strings in the Series by removing unwanted tokens, whitespace and brackets.
 
-    :param s: A pandas.Series to clean.
+    :param s: A Series to clean.
     :param lower: Convert strings in the Series to lowercase. Default True.
     :param replace_by_none: The matches of this regular expression are replaced by ''.
     :param replace_by_whitespace: The matches of this regular expression are replaced by a whitespace.
     :param remove_brackets: Remove all content between brackets and the brackets themselves. Default True.
 
     :type s: pandas.Series
-    :type lower: boolean
-    :type replace_by_none: string
-    :type replace_by_whitespace: string
-    :type remove_brackets: boolean
+    :type lower: bool
+    :type replace_by_none: str
+    :type replace_by_whitespace: str
+    :type remove_brackets: bool
 
     :return: A cleaned Series of strings.
     :rtype: pandas.Series
 
-    :Example:
+    Example:
+    
+    .. code:: python
 
-        .. code:: python
+        >>> import pandas
+        >>> from recordlinkage.standardise import clean
 
-            >>> import pandas
-            >>> from recordlinkage.standardise import clean
+        >>> s = pandas.Series(['Mary-ann', 'Bob :)', 'Angel', 'Bob (alias Billy)', None])
+        >>> print(clean(s))
 
-            >>> s = pandas.Series(['Mary-ann', 'Bob :)', 'Angel', 'Bob (alias Billy)', None])
-            >>> print(clean(s))
+        0    mary ann
+        1         bob
+        2       angel
+        3         bob
+        4         NaN
+        dtype: object
 
-            0    mary ann
-            1         bob
-            2       angel
-            3         bob
-            4         NaN
-            dtype: object
 
     """
 
@@ -69,7 +70,7 @@ def phonenumbers(s):
     """ 
     Clean phonenumbers by removing all non-numbers (except +). 
 
-    :param s: A pandas.Series to clean.
+    :param s: A Series to clean.
     :type s: pandas.Series
 
     :return: A Series with cleaned phonenumbers.

@@ -2,12 +2,12 @@
 API Reference
 *************
 
-This page contains the class, method and functions documentation of the ``recordlinkage`` package. 
+This page contains the API reference of the ``recordlinkage`` package. 
 
 Standardising
 =============
 
-Clean and standardise your data before you start linking records. Remove special tokens or phonetically encode names. Install ``jellyfish`` to use phonetic encoding of names. 
+Cleaning and standardising your data may increase your record linkage accuracy. The ``recordlinkage`` package contains several tools for data cleaning and standardising. Some of the tools included are: phonetic encoding algorithms, gender imputation and string cleaning tools. 
 
 .. automodule:: recordlinkage.standardise
 	:members:
@@ -21,7 +21,7 @@ Clean and standardise your data before you start linking records. Remove special
 Indexing
 ========
 
-This class can be used to make pairs of records, also called candidate record pairs. There are several smart indexing functions available. 
+This class ``recordlinkage.Pairs`` can be used to make pairs of records, also called candidate record pairs. There are several indexing algorithms available such as blocking and sorted neighborhood indexing. 
 
 .. automodule:: recordlinkage.indexing
 
@@ -31,7 +31,7 @@ This class can be used to make pairs of records, also called candidate record pa
 Comparing
 =========
 
-The ``Compare`` class and its methods can be used to compare records pairs. Several comparison methods are included such as string similarity measures, numerical measures and distance measures. The string similarity algorithms are available when ``jellyfish`` is installed (pip install jellyfish). 
+The ``recordlinkage.Compare`` class and its methods can be used to compare records pairs. Several comparison methods are included such as string similarity measures, numerical measures and distance measures. 
 
 .. automodule:: recordlinkage.comparing
 

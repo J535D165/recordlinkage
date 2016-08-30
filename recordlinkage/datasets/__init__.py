@@ -176,19 +176,18 @@ def load_febrl3():
 
 def load_febrl4():
 	"""
-
 	The Freely Extensible Biomedical Record Linkage (Febrl) package was distributed
-	with a dataset generator and four datasets generated with the generator.
-	This functions returns the fourth Febrl dataset as a pandas DataFrame.
+	with a dataset generator and four datasets generated with the generator. This 
+	functions returns the fourth Febrl dataset as a pandas DataFrame.
 
-	    *"Generated as one data set with 10000 records (5000 originals and
-		5000 duplicates, with one duplicate per original), the originals have been
+		*"Generated as one data set with 10000 records (5000 originals and 5000 
+		duplicates, with one duplicate per original), the originals have been
 		split from the duplicates, into dataset4a.csv (containing the 5000 original
 		records) and dataset4b.csv (containing the 5000 duplicate records) These two
 		data sets can be used for testing linkage procedures."*
 
-	:return: A pandas DataFrame with Febrl dataset4a.csv and a pandas
-				DataFrame with Febrl dataset4b.csv. 
+	:return: A pandas DataFrame with Febrl dataset4a.csv and a pandas 
+		DataFrame with Febrl dataset4b.csv. 
 	rtype: (pandas.DataFrame, pandas.DataFrame)
 
 	"""

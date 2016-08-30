@@ -50,12 +50,14 @@ class Compare(object):
 	:vartype df_b: pandas.DataFrame
 	:vartype vectors: pandas.DataFrame
 
-	:Example:
+	Example:
 
-		In the following example, the record pairs of two historical datasets with census data are
-		compared. The datasets are named ``census_data_1980`` and ``census_data_1990``. The
-		``candidate_pairs`` are the record pairs to compare. The record pairs are compared on the
-		first name, last name, sex, date of birth, address, place, and income.
+	In the following example, the record pairs of two historical datasets with census data are
+	compared. The datasets are named ``census_data_1980`` and ``census_data_1990``. The
+	``candidate_pairs`` are the record pairs to compare. The record pairs are compared on the
+	first name, last name, sex, date of birth, address, place, and income.
+
+	.. code:: python
 
 		>>> comp = recordlinkage.Compare(
 			candidate_pairs, census_data_1980, census_data_1990
@@ -69,8 +71,8 @@ class Compare(object):
 		>>> comp.numeric('income', 'income')
 		>>> print(comp.vectors.head())
 
-		The attribute ``vectors`` is the DataFrame with the comparison data. It can be called whenever
-		you want.
+	The attribute ``vectors`` is the DataFrame with the comparison data. It can be called whenever
+	you want.
 
 	"""
 
@@ -98,15 +100,15 @@ class Compare(object):
 		the record pair. The data is compared with the compare function. The built-in methods also
 		use this function.
 
-		:Example:
+		Example:
 
-			.. code-block:: python
+		.. code-block:: python
 
-				comp = recordlinkage.Compare(PAIRS, DATAFRAME1, DATAFRAME2)
-				comp.exact('first_name', 'name')
+			>>> comp = recordlinkage.Compare(PAIRS, DATAFRAME1, DATAFRAME2)
+			>>> comp.exact('first_name', 'name')
 
-				# same as
-				comp.compare(recordlinkage._compare_exact, 'first_name', 'name')
+			>>> # same as
+			>>> comp.compare(recordlinkage._compare_exact, 'first_name', 'name')
 
 		:param comp_func: A comparison function. This function can be a built-in function or a user defined comparison function.
 		:param labels_a: The labels, Series or DataFrame to compare.
@@ -118,7 +120,7 @@ class Compare(object):
 		:type labels_a: label, pandas.Series, pandas.DataFrame
 		:type labels_b: label, pandas.Series, pandas.DataFrame
 		:type name: label
-		:type store: boolean, default True
+		:type store: bool, default True
 
 		:return: The DataFrame Compare.vectors
 		:rtype: standardise.DataFrame
@@ -160,16 +162,16 @@ class Compare(object):
 		time. This function works ONLY when ``batch=True`` is set in the class
 		``Compare`` and ``run`` is called in the end.
 
-		:Example:
+		Example:
 
-			.. code-block:: python
+		.. code-block:: python
 
-				# This example is almost 3 times faster than the traditional one.
-				>>> comp = recordlinkage.Compare(..., batch=True)
-				>>> comp.exact('first_name', 'name')
-				>>> comp.exact('surname', 'surname')
-				>>> comp.exact('date_of_birth', 'dob')
-				>>> comp.run()
+			>>> # This example is almost 3 times faster than the traditional one.
+			>>> comp = recordlinkage.Compare(..., batch=True)
+			>>> comp.exact('first_name', 'name')
+			>>> comp.exact('surname', 'surname')
+			>>> comp.exact('date_of_birth', 'dob')
+			>>> comp.run()
 
 		:return: The comparison vectors (Compare.vectors)
 		:rtype: standardise.DataFrame
@@ -237,15 +239,15 @@ class Compare(object):
 		:param disagree_value: The value when two records are not identical.
 		:param missing_value: The value for a comparison with a missing value. Default 0.
 		:param name: The name of the feature and the name of the column.
-		:param store: Store the result in the dataframe.
+		:param store: Store the result in the dataframe. Default True
 
 		:type s1: label, pandas.Series
 		:type s2: label, pandas.Series
-		:type agree_value: numpy.dtype
-		:type disagree_value: numpy.dtype
-		:type missing_value: numpy.dtype
+		:type agree_value: float, str, numpy.dtype
+		:type disagree_value: float, str, numpy.dtype
+		:type missing_value: float, str, numpy.dtype
 		:type name: label
-		:type store: boolean, default True
+		:type store: bool
 
 		:return: A Series with comparison values.
 		:rtype: pandas.Series
@@ -270,7 +272,7 @@ class Compare(object):
 		:param method: The metric used. Options 'step', 'linear' or 'squared'. Default 'step'.
 		:param missing_value: The value for a comparison with a missing value. Default 0.
 		:param name: The name of the feature and the name of the column.
-		:param store: Store the result in the dataframe.
+		:param store: Store the result in the dataframe. Default True
 
 		:type s1: label, pandas.Series
 		:type s2: label, pandas.Series
@@ -278,7 +280,7 @@ class Compare(object):
 		:type method: 'step', 'linear' or 'squared'
 		:type missing_value: numpy.dtype
 		:type name: label
-		:type store: boolean, default True
+		:type store: bool
 
 		:return: A Series with comparison values.
 		:rtype: pandas.Series
@@ -307,15 +309,15 @@ class Compare(object):
 		:param threshold: A threshold value. All approximate string comparisons higher or equal than this threshold are 1. Otherwise 0.  
 		:param missing_value: The value for a comparison with a missing value. Default 0.
 		:param name: The name of the feature and the name of the column.
-		:param store: Store the result in the dataframe.
+		:param store: Store the result in the dataframe. Default True
 
 		:type s1: label, pandas.Series
 		:type s2: label, pandas.Series
-		:type method: string
+		:type method: str
 		:type threshold: float, tuple of floats
 		:type missing_value: numpy.dtype
 		:type name: label
-		:type store: boolean, default True
+		:type store: bool
 		
 		:return: A Series with similarity values. Values equal or between 0 and 1.
 		:rtype: pandas.Series
@@ -334,7 +336,7 @@ class Compare(object):
 	def fuzzy(self, s1, s2, *args, **kwargs):
 		"""
 		.. deprecated:: 0.3.0
-			Use :func:`~recordlinkage.Compare.string` instead.
+			Use :meth:`Compare.string` instead.
 
 		"""
 
@@ -358,17 +360,17 @@ class Compare(object):
 		:param method: The metric used. Options 'step', 'linear' or 'squared'. 
 		:param missing_value: The value for a comparison with a missing value. Default 0.
 		:param name: The name of the feature and the name of the column.
-		:param store: Store the result in the dataframe.
+		:param store: Store the result in the dataframe. Default True.
 
 		:type lat1: pandas.Series, numpy.array, label/string
 		:type lng1: pandas.Series, numpy.array, label/string
 		:type lat2: pandas.Series, numpy.array, label/string
 		:type lng2: pandas.Series, numpy.array, label/string
 		:type threshold: float, tuple of floats
-		:type method: string
+		:type method: str
 		:type missing_value: numpy.dtype
 		:type name: label
-		:type store: boolean, default True
+		:type store: bool
 
 		:return: A Series with comparison values.
 		:rtype: pandas.Series

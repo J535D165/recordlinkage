@@ -144,11 +144,13 @@ class Pairs(object):
 	:vartype n_pairs: int
 	:vartype reduction: float
 
-	:Example:
+	Example:
 
-		In the following example, the record pairs are made for two historical
-		datasets with census data. The datasets are named ``census_data_1980``
-		and ``census_data_1990``. 
+	In the following example, the record pairs are made for two historical
+	datasets with census data. The datasets are named ``census_data_1980``
+	and ``census_data_1990``. 
+
+	.. code:: python
 
 		>>> pcl = recordlinkage.Pairs(census_data_1980, census_data_1990)
 		>>> pcl.block('first_name')
@@ -156,7 +158,7 @@ class Pairs(object):
 	.. seealso::
 
 		.. [christen2012] Christen, 2012. Data Matching Concepts and Techniques for 
-					Record Linkage, Entity Resolution, and Duplicate Detection
+			Record Linkage, Entity Resolution, and Duplicate Detection
 
 	"""
 

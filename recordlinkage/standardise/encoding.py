@@ -17,8 +17,8 @@ def phonetic(s, method):
     """
     Phonetically encode the values in the Series. 
 
-    :param method: The algorithm that is used to phonetically encode the values. The possible options are 'soundex' and 'nysiis'.
-    :type method: string
+    :param method: The algorithm that is used to phonetically encode the values. The possible options are 'soundex' (`wikipedia <https://en.wikipedia.org/wiki/Soundex>`_) and 'nysiis' (`wikipedia <https://en.wikipedia.org/wiki/New_York_State_Identification_and_Intelligence_System>`_). 
+    :type method: str
 
     :return: A Series with phonetic encoded values.
     :rtype: pandas.Series
@@ -49,7 +49,7 @@ def phonetic(s, method):
 
 def gender(names, years=None, method="ssa", countries=None, labels=("male", "female"), q=0.1):
     """
-    Predict the gender based on the first name. This tool is based on https://github.com/ropensci/gender and uses their data. The gender prediction is based `Bayes' theorem <https://en.wikipedia.org/wiki/Bayes%27_theorem>`_. 
+    Predict the gender based on the first name. This tool is based on https://github.com/ropensci/gender and uses their data. The prediction of the sex for each name uses `Bayes' theorem <https://en.wikipedia.org/wiki/Bayes%27_theorem>`_. 
 
     :param names: The given names.
     :param years: The birth year of the first names whose gender is to be predicted. 
@@ -76,27 +76,27 @@ def gender(names, years=None, method="ssa", countries=None, labels=("male", "fem
     :return: The gender predictions for each row.
     :rtype: pandas.Series
     
-    :Example:
+    Example:
 
-        Predict the sex of the records in the first FEBRL dataset: 
+    Predict the sex of the records in the first FEBRL dataset: 
 
-        .. code:: python
+    .. code:: python
 
-            >>> from recordlinkage.datasets import load_febrl1
-            >>> from recordlinkage.standardise import gender
-            
-            >>> data = load_febrl1()
-            >>> data["sex"] = gender(data['given_name'], years=[1990, 2010], method="ssa")
-            
-            >>> print (data["sex"].head())
+        >>> from recordlinkage.datasets import load_febrl1
+        >>> from recordlinkage.standardise import gender
+        
+        >>> data = load_febrl1()
+        >>> data["sex"] = gender(data['given_name'], years=[1990, 2010], method="ssa")
+        
+        >>> print (data["sex"].head())
 
-            rec_id
-            rec-223-org        NaN
-            rec-122-org       male
-            rec-373-org       male
-            rec-10-dup-0    female
-            rec-227-org       male
-            Name: sex, dtype: object
+        rec_id
+        rec-223-org        NaN
+        rec-122-org       male
+        rec-373-org       male
+        rec-10-dup-0    female
+        rec-227-org       male
+        Name: sex, dtype: object
 
     """
 
