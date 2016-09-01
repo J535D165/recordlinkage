@@ -5,27 +5,53 @@ About
 Introduction
 ============
 
-This **Record Linkage Toolkit** is a library to link records in or between
-data sources. The package provides tools needed for linking records. The
-package contains indexing methods, functions to compare records and
-classifiers. The package is developed for research and linking of small or
-medium sized files.
+The **recordlinkage** toolkit is a library to link records in or between data
+sources. The library provides tools needed for record linkage and
+deduplication. The package contains indexing methods, functions to compare
+attributes and classifiers. The package is developed for research and the
+linkage of small or medium sized files.
 
-This project is inspired by the `Freely Extensible Biomedical Record
-Linkage (FEBRL) <https://sourceforge.net/projects/febrl/>`__ project,
-which is a great project. This project has one big difference, it uses
-``pandas`` and ``numpy`` for data handling and computations. The use of
-``pandas``, a flexible and powerful data analysis and manipulation
-library for Python, makes the record linkage process much easier and
-faster. A lot of built-in ``pandas`` methods can be used to integrate
-your record linkage directly into existing data manipulation projects.
+The *recordlinkage* project is inspired by the `Freely Extensible Biomedical
+Record Linkage (FEBRL) <https://sourceforge.net/projects/febrl/>`__ project,
+which is a great project. In contrast with FEBRL, the recordlinkage project makes extensive use of data
+manipulation tools like `pandas <http://pandas.pydata.org/>`__ and `numpy <http://www.numpy.org/>`__. The use of *pandas*, a flexible and powerful data analysis and
+manipulation library for Python, makes the record linkage process much easier
+and faster. The extensive *pandas* library can be used to integrate your
+record linkage directly into existing data manipulation projects.
 
 One of the aims of this project is to make an extensible record linkage
 framework. It is easy to include your own indexing algorithms,
-comparison/similarity measures and classifiers.
+comparison/similarity measures and classifiers. The main features of the ``recordlinkage`` package are:
 
-How to link
-===========
+-  Clean and standardise data with easy to use tools
+-  Make pairs of records with smart indexing methods
+-  Compare records with a large number of comparison and similarity
+   measures
+-  Several classifications algorithms, both supervised and unsupervised
+   algorithms.
+-  Common record linkage evaluation tools
+-  Several built-in datasets. 
+
+
+What is record linkage?
+=======================
+
+The term record linkage is used to indicate the procedure of bringing together information from two or more records that are believed to belong to the same entity. Record linkage is used to link data from multiple data sources or to find duplicates in a single data source. In computer science, record linkage is also known as data matching or deduplication (in case of search duplicate records within a single file). 
+
+In record linkage, the attributes of the entity (stored in a record) are used to link two or more records. Attributes can be unique entity identifiers (SSN, license plate number), but also attributes like (sur)name, date of birth and car model/colour. The record linkage procedure can be represented as a workflow [Christen, 2012]. The steps are: cleaning, indexing, comparing, classifying and evaluation. If needed, the classified record pairs flow back to improve the previous step. The ``recordlinkage`` package follows this workflow. 
+
+.. seealso::
+
+    *Christen, Peter. 2012. Data matching: concepts and techniques for record linkage, entity resolution, and duplicate detection. Springer Science & Business Media.*
+
+    *Fellegi, Ivan P and Alan B Sunter. 1969. “A theory for record linkage.” Journal of the American Statistical Association 64(328):1183–1210.*
+
+    *Dunn, Halbert L. 1946. “Record linkage.” American Journal of Public Health and the Nations Health 36(12):1412–1416.*
+
+    *Herzog, Thomas N, Fritz J Scheuren and William E Winkler. 2007. Data quality and record linkage techniques. Vol. 1 Springer.*
+
+How to link records?
+====================
 
 Import the ``recordlinkage`` module with all important tools for record
 linkage and import the data manipulation framework **pandas**.
@@ -35,7 +61,7 @@ linkage and import the data manipulation framework **pandas**.
     import recordlinkage
     import pandas
 
-For examples, you try to link two datasets with personal information
+Consider that you try to link two datasets with personal information
 like name, sex and date of birth. Load these datasets into a pandas
 ``DataFrame``.
 
@@ -46,7 +72,7 @@ like name, sex and date of birth. Load these datasets into a pandas
 
 Comparing all record can be computationally intensive. Therefore, we
 make smart set of candidate links with one of the built-in indexing
-techniques like **blocking**. Only records pairs that agree on the
+techniques like **blocking**. Only records pairs agreeing on the
 surname are included.
 
 .. code:: python
@@ -54,29 +80,29 @@ surname are included.
     index = recordlinkage.Index(df_a, df_b)
     candidate_links = index.block('surname')
 
-For each candidate link, compare the pair of records with the Compare
-class and the available comparison/similarity functions.
+Each ``candidate_link`` needs to be compared on the comparable attributes.
+This can be done easily with the Compare class and the available comparison
+and similarity measures.
 
 .. code:: python
 
     compare = recordlinkage.Compare(candidate_links, df_a, df_b)
 
-    compare.fuzzy('name', 'name', method='jarowinkler', threshold=0.85)
+    compare.string('name', 'name', method='jarowinkler', threshold=0.85)
     compare.exact('sex', 'gender')
     compare.exact('dob', 'date_of_birth')
-    compare.fuzzy('streetname', 'streetname', method='damerau_levenshtein', threshold=0.7)
+    compare.string('streetname', 'streetname', method='damerau_levenshtein', threshold=0.7)
     compare.exact('place', 'placename')
     compare.exact('haircolor', 'haircolor', missing_value=9)
 
     # The comparison vectors
     compare.vectors
 
-This record linkage package contains several classification alogirthms.
+This record linkage package contains several classification algorithms.
 Plenty of the algorithms need trainings data (supervised learning) while
-others are unsupervised. An example of supervised learning:
+some others are unsupervised. An example of supervised learning:
 
 .. code:: python
-
 
     true_linkage = pandas.Series(YOUR_GOLDEN_DATA, index=pandas.MultiIndex(YOUR_MULTI_INDEX))
 
@@ -89,20 +115,7 @@ and an example of unsupervised learning (the well known ECM-algorithm):
 
 .. code:: python
 
-
     ecm = recordlinkage.BernoulliEMClassifier()
     ecm.learn(compare.vectors)
 
-Main Features
-=============
-
-The main features of the **Record Linkage Toolkit** package are:
-
--  Clean and standardise data
--  Make pairs of records with several indexing methods such as
-   **blocking** and **sorted neighbourhood indexing**
--  Compare records with a large number of comparison and similarity
-   functions (including the jaro-winkler and levenshtein metrics)
--  Several classifications algorithms, both supervised and unsupervised
-   algorithms.
 
