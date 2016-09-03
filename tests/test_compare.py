@@ -171,4 +171,22 @@ class TestCompare(unittest.TestCase):
             # if alg == 'q_gram':
             #     rr
 
+    def test_batch_compare(self):
+
+        comp = recordlinkage.Compare(TEST_INDEX_LINKING, TEST_DATA_1, TEST_DATA_2)
+
+        # Missing values as 0
+        result = comp.exact('name', 'name', missing_value=0, name='y_name')
+
+
+
+        # pdt.assert_series_equal(result, expected)
+
+
+
+
+
+
+
+        
 
