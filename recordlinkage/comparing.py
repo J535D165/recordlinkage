@@ -140,6 +140,13 @@ class Compare(object):
 
 			c = comp_func(*tuple(args), **kwargs)
 
+			# Strange bug in pandas? 
+			try:
+				# down to numpy.array
+				c = c.values
+			except AttributeError:
+				pass
+
 			# Store the result
 			if store:
 				# append column
