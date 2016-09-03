@@ -83,8 +83,8 @@ class TestCompare(unittest.TestCase):
         comp = recordlinkage.Compare(TEST_INDEX_DEDUP, TEST_DATA_1, TEST_DATA_1)
 
         # Missing values
-        result = comp.exact('name', 'name', name='y_name')
-        expected = pd.Series([1,0,1,1,0], index=TEST_INDEX_DEDUP, name='y_name')
+        result = comp.exact('name', 'name')#, name='y_name')
+        expected = pd.Series([1,0,1,1,0], index=TEST_INDEX_DEDUP)#, name='y_name')
 
         pdt.assert_series_equal(result, expected)
 
@@ -94,7 +94,7 @@ class TestCompare(unittest.TestCase):
 
         # Missing values
         result = comp.numeric('age', 'age', 2)
-        expected = pd.Series([1,1,1,0,0], index=TEST_INDEX_LINKING)
+        expected = pd.Series([1,1,1,0,0], index=TEST_INDEX_LINKING)#, name='age')
 
         pdt.assert_series_equal(result, expected)
 
