@@ -41,14 +41,31 @@ def _eye(df_a, df_b):
 
 def _fullindex(df_a, df_b):
 
-	return pandas.MultiIndex.from_product([df_a.index.values, df_b.index.values], names=[df_a.index.name, df_b.index.name])
+	return pandas.MultiIndex.from_product(
+		[df_a.index.values, df_b.index.values], 
+		names=[df_a.index.name, df_b.index.name]
+		)
 
 def _blockindex(df_a, df_b, on=None, left_on=None, right_on=None):
+
+	# Index name conflicts do not occur. They are handled in the core index
+	# method. If there is a name conflict in the core index method, the second
+	# index gets an additional underscore to the name.
+	# 
+	# Rows with missing values on the on attributes are dropped. 
 
 	if on:
 		left_on, right_on = on, on
 
-	pairs = df_a[left_on].reset_index().merge(df_b[right_on].reset_index(), how='inner', left_on=left_on, right_on=right_on).set_index([df_a.index.name, df_b.index.name])
+	data_left = df_a[left_on].dropna(axis=0).reset_index()
+	data_right = df_b[right_on].dropna(axis=0).reset_index()
+
+	pairs = data_left.merge(
+		data_right, 
+		how='inner', 
+		left_on=left_on, 
+		right_on=right_on
+		).set_index([df_a.index.name, df_b.index.name])
 
 	return pairs.index
 
@@ -66,8 +83,8 @@ def _sortedneighbourhood(df_a, df_b, column, window=3, sorting_key_values=None, 
 	keys_left = [column] + block_left_on
 	keys_right = [column] + block_right_on
 
-	df_a = df_a[df_a[column].notnull()]
-	df_b = df_b[df_b[column].notnull()]
+	df_a = df_a[df_a[column].notnull()] # df_a.dropna(inplace=True)
+	df_b = df_b[df_b[column].notnull()] # df_a.dropna(inplace=True)
 
 	# sorting_key_values is the terminology in Data Matching [Christen, 2012]
 	if sorting_key_values is None:
@@ -237,7 +254,8 @@ class Pairs(object):
 		""" 
 		block(on=None, left_on=None, right_on=None)
 
-		Make an index of record pairs agreeing on one or more specified attributes.
+		Return all record pairs that agree on the passed attribute(s). This
+		method is known as *blocking*. 
 
 		:param on: A column name or a list of column names. These columns are used to block on. 
 		:param left_on: A column name or a list of column names of dataframe A. These columns are used to block on. 
