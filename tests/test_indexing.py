@@ -193,14 +193,10 @@ class TestIndexing(unittest.TestCase):
         print('The number of record pairs found with blocking', len(bl))
         print('The number of record pairs found with sorted neighbourhood indexing', len(sn))
 
-        # What is happening with missing values?
-        # self.assertEqual(len(bl), len(sn))
-
-        # union = bl.union(sn)
-        # print('The union of all indices of both methods', len(union))
+        print('The union of all indices of both methods', len(union))
         
-        # # The length of the union should be the same as the length of bl or sn.
-        # self.assertEqual(len(union), len(sn))
+        # The length of the union should be the same as the length of bl or sn.
+        self.assertEqual(len(bl), len(sn))
 
     def test_full_iter_index_linking(self):
 

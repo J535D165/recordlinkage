@@ -351,10 +351,15 @@ class Pairs(object):
 			# the first dataset and one of the second dataset
 			if not self.deduplication:
 
+				if self.df_a.index.name == self.df_b.index.name:
+					self.df_b.index.name = str(self.df_b.index.name) + '_'
+
 				pairs = index_func(
 					self.df_a[bl0:bl2], self.df_b[bl1:bl3], 
 					*args, **kwargs
 					)
+
+				pairs.names = [self.df_a.index.name, self.df_b.index.name]
 
 			# If deduplication, remove the record pairs that are already
 			# included. For example: (a1, a1), (a1, a2), (a2, a1), (a2, a2)
