@@ -191,11 +191,11 @@ class Pairs(object):
 			self.df_b = df_b
 			self.deduplication = False
 
-			if self.df_a.index.name == None or self.df_b.index.name == None:
-				raise IndexError('DataFrame has no index name.')
+			# if self.df_a.index.name == None or self.df_b.index.name == None:
+			# 	raise IndexError('DataFrame has no index name.')
 
-			if self.df_a.index.name == self.df_b.index.name:
-				raise IndexError("Identical index name '{}' for both dataframes.".format(self.df_a.index.name))
+			# if self.df_a.index.name == self.df_b.index.name:
+			# 	raise IndexError("Identical index name '{}' for both dataframes.".format(self.df_a.index.name))
 
 			if not self.df_a.index.is_unique or not self.df_b.index.is_unique:
 				raise IndexError('DataFrame index is not unique.')
@@ -204,8 +204,8 @@ class Pairs(object):
 		else:
 			self.deduplication = True
 
-			if self.df_a.index.name == None:
-				raise IndexError('DataFrame has no index name.')
+			# if self.df_a.index.name == None:
+			# 	raise IndexError('DataFrame has no index name.')
 
 			if not self.df_a.index.is_unique:
 				raise IndexError('DataFrame index is not unique.')

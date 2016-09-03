@@ -25,7 +25,7 @@ TEST_DATA_2 = pd.DataFrame([
     ],
     columns=['name', 'lastname', 'age', 'place'])
 
-TEST_DATA_2.index.name = 'index_df2'
+TEST_DATA_2.index.name = 'index_df1'
 
 TEST_INDEX_DEDUP = pd.MultiIndex.from_arrays(
     [np.arange(len(TEST_DATA_1)), np.arange(len(TEST_DATA_1))], 

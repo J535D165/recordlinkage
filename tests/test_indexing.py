@@ -11,9 +11,9 @@ from recordlinkage import datasets
 
 # Two larger numeric dataframes
 df_large_numeric_1 = pd.DataFrame(np.arange(1000))
-df_large_numeric_1.index.name = 'df_large_numeric_1'
+df_large_numeric_1.index.name = None
 df_large_numeric_2 = pd.DataFrame(np.arange(1000))
-df_large_numeric_2.index.name = 'df_large_numeric_2'
+df_large_numeric_2.index.name = None
 
 class TestIndexing(unittest.TestCase):
 
@@ -122,7 +122,7 @@ class TestIndexing(unittest.TestCase):
     def test_random_index_linking(self):
 
         dfA, dfB = datasets.load_febrl4()
-        dfB.index.name = dfB.index.name + "_"
+        # dfB.index.name = dfB.index.name + "_"
 
         index = recordlinkage.Pairs(dfA, dfB)
         pairs = index.random(1000)
@@ -136,7 +136,7 @@ class TestIndexing(unittest.TestCase):
     def test_full_index_linking(self):
 
         dfA, dfB = datasets.load_febrl4()
-        dfB.index.name = dfB.index.name + "_"
+        # dfB.index.name = dfB.index.name + "_"
 
         index = recordlinkage.Pairs(dfA, dfB)
         pairs = index.full()
@@ -150,7 +150,7 @@ class TestIndexing(unittest.TestCase):
     def test_block_index_linking(self):
 
         dfA, dfB = datasets.load_febrl4()
-        dfB.index.name = dfB.index.name + "_"
+        # dfB.index.name = dfB.index.name + "_"
 
         index = recordlinkage.Pairs(dfA, dfB)
         pairs = index.block('given_name')
@@ -161,7 +161,7 @@ class TestIndexing(unittest.TestCase):
     def test_qgram_index_linking(self):
 
         dfA, dfB = datasets.load_febrl4()
-        dfB.index.name = dfB.index.name + "_"
+        # dfB.index.name = dfB.index.name + "_"
 
         index = recordlinkage.Pairs(dfA[0:100], dfB[0:100])
         pairs = index.qgram('given_name')
@@ -172,7 +172,7 @@ class TestIndexing(unittest.TestCase):
     def test_sorted_index_linking(self):
 
         dfA, dfB = datasets.load_febrl4()
-        dfB.index.name = dfB.index.name + "_"
+        # dfB.index.name = dfB.index.name + "_"
 
         index = recordlinkage.Pairs(dfA, dfB)
         pairs = index.sortedneighbourhood('given_name')
@@ -184,7 +184,7 @@ class TestIndexing(unittest.TestCase):
     def test_blocking_special_case_of_sorting(self):
 
         dfA, dfB = datasets.load_febrl4()
-        dfB.index.name = dfB.index.name + "_"
+        # dfB.index.name = dfB.index.name + "_"
 
         index = recordlinkage.Pairs(dfA, dfB)
         bl = index.block('given_name')
@@ -199,7 +199,7 @@ class TestIndexing(unittest.TestCase):
     def test_full_iter_index_linking(self):
 
         dfA, dfB = datasets.load_febrl4()
-        dfB.index.name = dfB.index.name + "_"
+        # dfB.index.name = dfB.index.name + "_"
 
         index_chucks = recordlinkage.Pairs(dfA, dfB, chunks=(100,200))
         index = recordlinkage.Pairs(dfA, dfB)
@@ -253,7 +253,7 @@ class TestIndexing(unittest.TestCase):
     def test_reduction_ratio(self):
 
         dfA, dfB = datasets.load_febrl4()
-        dfB.index.name = dfB.index.name + "_"
+        # dfB.index.name = dfB.index.name + "_"
 
         index = recordlinkage.Pairs(dfA, dfB)
         pairs = index.full()
