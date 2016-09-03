@@ -130,8 +130,9 @@ def _qgram(df_a, df_b, on=None, left_on=None, right_on=None, threshold=0.8):
 class Pairs(object):
 	""" 
 
-	This class can be used to make record pairs. Multiple indexation methods can be used
-	to make a smart selection of record pairs. Indexation methods included:
+	This class can be used to make record pairs. Multiple indexation methods
+	can be used to make a smart selection of record pairs. Indexation methods
+	included:
 
 	- Full indexing
 	- Blocking
@@ -243,7 +244,10 @@ class Pairs(object):
 		""" 
 		full()
 
-		Make an index with all possible record pairs. In case of linking two dataframes (A and B), the number of pairs is len(A)*len(B). In case of deduplicating a dataframe A, the number of pairs is len(A)*(len(A)-1)/2. 
+		Make an index with all possible record pairs. In case of linking two
+		dataframes (A and B), the number of pairs is len(A)*len(B). In case of
+		deduplicating a dataframe A, the number of pairs is
+		len(A)*(len(A)-1)/2.
 
 		:return: The index of the candidate record pairs
 		:rtype: pandas.MultiIndex
