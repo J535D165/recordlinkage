@@ -61,15 +61,33 @@ def _blockindex(df_a, df_b, on=None, left_on=None, right_on=None):
 	if on:
 		left_on, right_on = on, on
 
-	data_left = df_a[left_on].dropna(axis=0).reset_index()
-	data_right = df_b[right_on].dropna(axis=0).reset_index()
+	# Change labels in case of conflict
+	data_left = df_a[left_on].dropna(axis=0)
+	data_right = df_b[right_on].dropna(axis=0)
 
+	rightname = 'index_y'
+	while rightname in df_b.columns.tolist():
+		rightname = rightname + '_'
+
+	leftname = 'index_x'
+	while leftname in df_a.columns.tolist():
+		leftname = leftname + '_'
+
+	data_left.index.name = leftname
+	data_right.index.name = rightname
+
+	data_left = data_left.reset_index()
+	data_right = data_right.reset_index()
+
+	# Join
 	pairs = data_left.merge(
 		data_right, 
 		how='inner', 
 		left_on=left_on, 
-		right_on=right_on
-		).set_index([df_a.index.name, df_b.index.name])
+		right_on=right_on,
+		).set_index([leftname, rightname])
+
+	pairs.index.names = [df_a.index.name, df_b.index.name]
 
 	return pairs.index
 
@@ -377,15 +395,16 @@ class Pairs(object):
 			# the first dataset and one of the second dataset
 			if not self.deduplication:
 
-				if self.df_a.index.name == self.df_b.index.name:
-					self.df_b.index.name = str(self.df_b.index.name) + '_'
+				# if self.df_a.index.name == self.df_b.index.name:
+				# 	self.df_b.index.name = str(self.df_b.index.name) + '_'
 
 				pairs = index_func(
-					self.df_a[bl0:bl2], self.df_b[bl1:bl3], 
+					self.df_a[bl0:bl2], 
+					self.df_b[bl1:bl3], 
 					*args, **kwargs
 					)
 
-				pairs.names = [self.df_a.index.name, self.df_b.index.name]
+				# pairs.names = [self.df_a.index.name, self.df_b.index.name]
 
 			# If deduplication, remove the record pairs that are already
 			# included. For example: (a1, a1), (a1, a2), (a2, a1), (a2, a2)
