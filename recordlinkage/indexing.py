@@ -46,6 +46,10 @@ def _fullindex(df_a, df_b):
 		names=[df_a.index.name, df_b.index.name]
 		)
 
+def index_name_conflict():
+	# decorator for the stuff below
+	pass
+
 def _blockindex(df_a, df_b, on=None, left_on=None, right_on=None):
 
 	# Index name conflicts do not occur. They are handled in the core index
