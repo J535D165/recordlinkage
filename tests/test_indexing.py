@@ -15,6 +15,189 @@ df_large_numeric_1.index.name = None
 df_large_numeric_2 = pd.DataFrame(np.arange(1000))
 df_large_numeric_2.index.name = None
 
+# nosetests tests/test_indexing.py:TestIndexApi
+class TestIndexApi(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(self):
+
+        self.data_A = {
+            'name':['Bob', 'Anne', 'Micheal'],
+            'age': [40, 45, 69]
+            }
+        self.data_B = {
+            'name':['Bob', 'Anne', 'Micheal'],
+            'age': [40, 45, 68]
+            }
+
+        self.index = ['rec1','rec2','rec3']
+
+    def test_instance(self):
+
+        A = pd.DataFrame(self.data_A)
+        B = pd.DataFrame(self.data_B)
+
+        index_cl = recordlinkage.Pairs(A, B)
+
+        # index full
+        pairs = index_cl.full()
+        self.assertIsInstance(pairs, pd.MultiIndex)
+
+        # index block
+        pairs = index_cl.block('name')
+        self.assertIsInstance(pairs, pd.MultiIndex)
+
+        # index sni
+        pairs = index_cl.sortedneighbourhood('name', 3)
+        self.assertIsInstance(pairs, pd.MultiIndex)
+
+        # index eye
+        pairs = index_cl.eye()
+        self.assertIsInstance(pairs, pd.MultiIndex)
+
+        # index random
+        pairs = index_cl.random(3)
+        self.assertIsInstance(pairs, pd.MultiIndex)
+
+    def test_index_names_different(self):
+
+        index_A = pd.Index(self.index, name='left')
+        index_B = pd.Index(self.index, name='right')
+
+        A = pd.DataFrame(self.data_A, index=index_A)
+        B = pd.DataFrame(self.data_B, index=index_B)
+
+        # index full
+        index_cl = recordlinkage.Pairs(A, B)
+        pairs = index_cl.full()
+        self.assertEqual(pairs.names, ['left', 'right'])
+
+        # index block
+        index_cl = recordlinkage.Pairs(A, B)
+        pairs = index_cl.block('name')
+        self.assertEqual(pairs.names, ['left', 'right'])
+
+        # index sni 
+        index_cl = recordlinkage.Pairs(A, B)
+        pairs = index_cl.sortedneighbourhood('name')
+        self.assertEqual(pairs.names, ['left', 'right'])
+
+        # index eye 
+        index_cl = recordlinkage.Pairs(A, B)
+        pairs = index_cl.eye()
+        self.assertEqual(pairs.names, ['left', 'right'])
+
+        # index random 
+        index_cl = recordlinkage.Pairs(A, B)
+        pairs = index_cl.random(3)
+        self.assertEqual(pairs.names, ['left', 'right'])
+
+    def test_index_names_equal(self):
+
+        index_A = pd.Index(self.index, name='leftright')
+        index_B = pd.Index(self.index, name='leftright')
+
+        A = pd.DataFrame(self.data_A, index=index_A)
+        B = pd.DataFrame(self.data_B, index=index_B)
+
+        # index full
+        index_cl = recordlinkage.Pairs(A, B)
+        pairs = index_cl.full()
+        self.assertEqual(pairs.names, ['leftright', 'leftright'])
+
+        # index block
+        index_cl = recordlinkage.Pairs(A, B)
+        pairs = index_cl.block('name')
+        self.assertEqual(pairs.names, ['leftright', 'leftright'])
+
+        # index sni 
+        index_cl = recordlinkage.Pairs(A, B)
+        pairs = index_cl.sortedneighbourhood('name')
+        self.assertEqual(pairs.names, ['leftright', 'leftright'])
+
+        # index eye 
+        index_cl = recordlinkage.Pairs(A, B)
+        pairs = index_cl.eye()
+        self.assertEqual(pairs.names, ['leftright', 'leftright'])
+
+        # index random 
+        index_cl = recordlinkage.Pairs(A, B)
+        pairs = index_cl.random(3)
+        self.assertEqual(pairs.names, ['leftright', 'leftright'])
+
+    def test_index_names_none(self):
+
+        index_A = pd.Index(self.index)
+        index_B = pd.Index(self.index)
+
+        A = pd.DataFrame(self.data_A, index=index_A)
+        B = pd.DataFrame(self.data_B, index=index_B)
+
+        # index full
+        index_cl = recordlinkage.Pairs(A, B)
+        pairs = index_cl.full()
+        self.assertEqual(pairs.names, [None, None])
+
+        # index block
+        index_cl = recordlinkage.Pairs(A, B)
+        pairs = index_cl.block('name')
+        self.assertEqual(pairs.names, [None, None])
+
+        # index sni 
+        index_cl = recordlinkage.Pairs(A, B)
+        pairs = index_cl.sortedneighbourhood('name')
+        self.assertEqual(pairs.names, [None, None])
+
+        # index eye 
+        index_cl = recordlinkage.Pairs(A, B)
+        pairs = index_cl.eye()
+        self.assertEqual(pairs.names, [None, None])
+
+        # index random 
+        index_cl = recordlinkage.Pairs(A, B)
+        pairs = index_cl.random(3)
+        self.assertEqual(pairs.names, [None, None])
+
+    def test_index_names_one_none(self):
+
+        index_A = pd.Index(self.index)
+        index_B = pd.Index(self.index)
+
+        A = pd.DataFrame(self.data_A, index=index_A)
+        B = pd.DataFrame(self.data_B, index=pd.Index(index_B, name='right'))
+
+        # index full
+        index_cl = recordlinkage.Pairs(A, B)
+        pairs = index_cl.full()
+        self.assertEqual(pairs.names, [None, 'right'])
+
+        # index block
+        index_cl = recordlinkage.Pairs(A, B)
+        pairs = index_cl.block('name')
+        self.assertEqual(pairs.names, [None, 'right'])
+
+        # index sni 
+        index_cl = recordlinkage.Pairs(A, B)
+        pairs = index_cl.sortedneighbourhood('name')
+        self.assertEqual(pairs.names, [None, 'right'])
+
+        # index eye 
+        index_cl = recordlinkage.Pairs(A, B)
+        pairs = index_cl.eye()
+        self.assertEqual(pairs.names, [None, 'right'])
+
+        # index random 
+        index_cl = recordlinkage.Pairs(A, B)
+        pairs = index_cl.random(3)
+        self.assertEqual(pairs.names, [None, 'right'])
+
+
+
+
+
+
+
+# nosetests tests/test_indexing.py:TestIndexing
 class TestIndexing(unittest.TestCase):
 
     def test_full_index_names(self):
