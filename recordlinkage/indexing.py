@@ -418,33 +418,25 @@ class Pairs(object):
 			# the first dataset and one of the second dataset
 			if not self.deduplication:
 
-				# if self.df_a.index.name == self.df_b.index.name:
-				# 	self.df_b.index.name = str(self.df_b.index.name) + '_'
-
 				pairs = index_func(
 					self.df_a[bl0:bl2], 
 					self.df_b[bl1:bl3], 
 					*args, **kwargs
 					)
 
-				# pairs.names = [self.df_a.index.name, self.df_b.index.name]
-
 			# If deduplication, remove the record pairs that are already
 			# included. For example: (a1, a1), (a1, a2), (a2, a1), (a2, a2)
 			# results in (a1, a2) or (a2, a1)
 			elif self.deduplication:
 
-				df_b = self.df_a.copy()
-				df_b.index.name = str(self.df_a.index.name) + '_'
-
 				pairs = index_func(
-					self.df_a[bl0:bl2], df_b[bl1:bl3], 
+					self.df_a[bl0:bl2], 
+					self.df_a[bl1:bl3], 
 					*args, **kwargs
 					)
 
 				# Remove all double pairs!
 				pairs = pairs[pairs.get_level_values(0) < pairs.get_level_values(1)]
-				pairs.names = [self.df_a.index.name, self.df_a.index.name]
 
 			self.n_pairs = len(pairs)
 
