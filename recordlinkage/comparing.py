@@ -135,8 +135,8 @@ class Compare(object):
 			labels_b = [labels_b] if not isinstance(labels_b, (tuple, list)) else labels_b
 			labels_a = [labels_a] if not isinstance(labels_a, (tuple, list)) else labels_a
 
-			args = tuple(_resample(_label_or_column(da, self.df_b), self.pairs, 0) for da in reversed(labels_a)) + \
-				tuple(_resample(_label_or_column(db, self.df_a), self.pairs, 1) for db in reversed(labels_b)) + args
+			args = tuple(_resample(_label_or_column(da, self.df_a), self.pairs, 0) for da in reversed(labels_a)) + \
+				tuple(_resample(_label_or_column(db, self.df_b), self.pairs, 1) for db in reversed(labels_b)) + args
 
 			c = comp_func(*tuple(args), **kwargs)
 
