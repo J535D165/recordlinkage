@@ -22,15 +22,17 @@ class TestIndexApi(unittest.TestCase):
     def setUpClass(self):
 
         self.data_A = {
-            'name':['Bob', 'Anne', 'Micheal'],
-            'age': [40, 45, 69]
+            'name':['Bob', 'Anne', 'Micheal', 'Charly B', 'Ana'],
+            'age': [40, 45, 69, 90, 70],
+            'hometown': ['town 1', 'town 1', 'town 1', 'town 3', 'town 1']
             }
         self.data_B = {
-            'name':['Bob', 'Anne', 'Micheal'],
-            'age': [40, 45, 68]
+            'name':['Bob', 'Anne', 'Micheal', 'Charly', 'Ana'],
+            'age': [40, 45, 68, 89, 70],
+            'hometown': ['town 1', 'town 1', 'town 2', 'town 3', 'town 1']
             }
 
-        self.index = ['rec1','rec2','rec3']
+        self.index = ['rec1','rec2','rec3', 'rec4', 'rec5']
 
     def test_instance(self):
 
@@ -42,22 +44,38 @@ class TestIndexApi(unittest.TestCase):
         # index full
         pairs = index_cl.full()
         self.assertIsInstance(pairs, pd.MultiIndex)
+        self.assertEqual(A.index.name, None) # prevent that the index name is changed
+        self.assertEqual(B.index.name, None)
 
         # index block
         pairs = index_cl.block('name')
         self.assertIsInstance(pairs, pd.MultiIndex)
+        self.assertEqual(A.index.name, None)
+        self.assertEqual(B.index.name, None)
 
         # index sni
         pairs = index_cl.sortedneighbourhood('name', 3)
         self.assertIsInstance(pairs, pd.MultiIndex)
+        self.assertEqual(A.index.name, None)
+        self.assertEqual(B.index.name, None)
 
         # index eye
         pairs = index_cl.eye()
         self.assertIsInstance(pairs, pd.MultiIndex)
+        self.assertEqual(A.index.name, None)
+        self.assertEqual(B.index.name, None)
 
         # index random
         pairs = index_cl.random(3)
         self.assertIsInstance(pairs, pd.MultiIndex)
+        self.assertEqual(A.index.name, None)
+        self.assertEqual(B.index.name, None)
+
+        # index qgram
+        pairs = index_cl.qgram('name')
+        self.assertIsInstance(pairs, pd.MultiIndex)
+        self.assertEqual(A.index.name, None)
+        self.assertEqual(B.index.name, None)
 
     def test_index_names_different(self):
 
@@ -71,26 +89,43 @@ class TestIndexApi(unittest.TestCase):
         index_cl = recordlinkage.Pairs(A, B)
         pairs = index_cl.full()
         self.assertEqual(pairs.names, ['left', 'right'])
+        self.assertEqual(A.index.name, 'left')
+        self.assertEqual(B.index.name, 'right')
 
         # index block
         index_cl = recordlinkage.Pairs(A, B)
         pairs = index_cl.block('name')
         self.assertEqual(pairs.names, ['left', 'right'])
+        self.assertEqual(A.index.name, 'left')
+        self.assertEqual(B.index.name, 'right')
 
         # index sni 
         index_cl = recordlinkage.Pairs(A, B)
         pairs = index_cl.sortedneighbourhood('name')
         self.assertEqual(pairs.names, ['left', 'right'])
+        self.assertEqual(A.index.name, 'left')
+        self.assertEqual(B.index.name, 'right')
 
         # index eye 
         index_cl = recordlinkage.Pairs(A, B)
         pairs = index_cl.eye()
         self.assertEqual(pairs.names, ['left', 'right'])
+        self.assertEqual(A.index.name, 'left')
+        self.assertEqual(B.index.name, 'right')
 
         # index random 
         index_cl = recordlinkage.Pairs(A, B)
         pairs = index_cl.random(3)
         self.assertEqual(pairs.names, ['left', 'right'])
+        self.assertEqual(A.index.name, 'left')
+        self.assertEqual(B.index.name, 'right')
+
+        # index qgram 
+        index_cl = recordlinkage.Pairs(A, B)
+        pairs = index_cl.qgram('name')
+        self.assertEqual(pairs.names, ['left', 'right'])
+        self.assertEqual(A.index.name, 'left')
+        self.assertEqual(B.index.name, 'right')
 
     def test_index_names_equal(self):
 
@@ -104,26 +139,43 @@ class TestIndexApi(unittest.TestCase):
         index_cl = recordlinkage.Pairs(A, B)
         pairs = index_cl.full()
         self.assertEqual(pairs.names, ['leftright', 'leftright'])
+        self.assertEqual(A.index.name, 'leftright')
+        self.assertEqual(B.index.name, 'leftright')
 
         # index block
         index_cl = recordlinkage.Pairs(A, B)
         pairs = index_cl.block('name')
         self.assertEqual(pairs.names, ['leftright', 'leftright'])
+        self.assertEqual(A.index.name, 'leftright')
+        self.assertEqual(B.index.name, 'leftright')
 
         # index sni 
         index_cl = recordlinkage.Pairs(A, B)
         pairs = index_cl.sortedneighbourhood('name')
         self.assertEqual(pairs.names, ['leftright', 'leftright'])
+        self.assertEqual(A.index.name, 'leftright')
+        self.assertEqual(B.index.name, 'leftright')
 
         # index eye 
         index_cl = recordlinkage.Pairs(A, B)
         pairs = index_cl.eye()
         self.assertEqual(pairs.names, ['leftright', 'leftright'])
+        self.assertEqual(A.index.name, 'leftright')
+        self.assertEqual(B.index.name, 'leftright')
 
         # index random 
         index_cl = recordlinkage.Pairs(A, B)
         pairs = index_cl.random(3)
         self.assertEqual(pairs.names, ['leftright', 'leftright'])
+        self.assertEqual(A.index.name, 'leftright')
+        self.assertEqual(B.index.name, 'leftright')
+
+        # index random 
+        index_cl = recordlinkage.Pairs(A, B)
+        pairs = index_cl.qgram('name')
+        self.assertEqual(pairs.names, ['leftright', 'leftright'])
+        self.assertEqual(A.index.name, 'leftright')
+        self.assertEqual(B.index.name, 'leftright')
 
     def test_index_names_none(self):
 
@@ -137,26 +189,43 @@ class TestIndexApi(unittest.TestCase):
         index_cl = recordlinkage.Pairs(A, B)
         pairs = index_cl.full()
         self.assertEqual(pairs.names, [None, None])
+        self.assertEqual(A.index.name, None)
+        self.assertEqual(B.index.name, None)
 
         # index block
         index_cl = recordlinkage.Pairs(A, B)
         pairs = index_cl.block('name')
         self.assertEqual(pairs.names, [None, None])
+        self.assertEqual(A.index.name, None)
+        self.assertEqual(B.index.name, None)
 
         # index sni 
         index_cl = recordlinkage.Pairs(A, B)
         pairs = index_cl.sortedneighbourhood('name')
         self.assertEqual(pairs.names, [None, None])
+        self.assertEqual(A.index.name, None)
+        self.assertEqual(B.index.name, None)
 
         # index eye 
         index_cl = recordlinkage.Pairs(A, B)
         pairs = index_cl.eye()
         self.assertEqual(pairs.names, [None, None])
+        self.assertEqual(A.index.name, None)
+        self.assertEqual(B.index.name, None)
 
         # index random 
         index_cl = recordlinkage.Pairs(A, B)
         pairs = index_cl.random(3)
         self.assertEqual(pairs.names, [None, None])
+        self.assertEqual(A.index.name, None)
+        self.assertEqual(B.index.name, None)
+
+        # index random 
+        index_cl = recordlinkage.Pairs(A, B)
+        pairs = index_cl.qgram('name')
+        self.assertEqual(pairs.names, [None, None])
+        self.assertEqual(A.index.name, None)
+        self.assertEqual(B.index.name, None)
 
     def test_index_names_one_none(self):
 
@@ -170,27 +239,43 @@ class TestIndexApi(unittest.TestCase):
         index_cl = recordlinkage.Pairs(A, B)
         pairs = index_cl.full()
         self.assertEqual(pairs.names, [None, 'right'])
+        self.assertEqual(A.index.name, None)
+        self.assertEqual(B.index.name, 'right')
 
         # index block
         index_cl = recordlinkage.Pairs(A, B)
         pairs = index_cl.block('name')
         self.assertEqual(pairs.names, [None, 'right'])
+        self.assertEqual(A.index.name, None)
+        self.assertEqual(B.index.name, 'right')
 
         # index sni 
         index_cl = recordlinkage.Pairs(A, B)
         pairs = index_cl.sortedneighbourhood('name')
         self.assertEqual(pairs.names, [None, 'right'])
+        self.assertEqual(A.index.name, None)
+        self.assertEqual(B.index.name, 'right')
 
         # index eye 
         index_cl = recordlinkage.Pairs(A, B)
         pairs = index_cl.eye()
         self.assertEqual(pairs.names, [None, 'right'])
+        self.assertEqual(A.index.name, None)
+        self.assertEqual(B.index.name, 'right')
 
         # index random 
         index_cl = recordlinkage.Pairs(A, B)
         pairs = index_cl.random(3)
         self.assertEqual(pairs.names, [None, 'right'])
+        self.assertEqual(A.index.name, None)
+        self.assertEqual(B.index.name, 'right')
 
+        # index random 
+        index_cl = recordlinkage.Pairs(A, B)
+        pairs = index_cl.qgram('name')
+        self.assertEqual(pairs.names, [None, 'right'])
+        self.assertEqual(A.index.name, None)
+        self.assertEqual(B.index.name, 'right')
 
 
 

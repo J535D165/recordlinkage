@@ -1,10 +1,52 @@
 from __future__ import division
 
+from functools import wraps
+
 import pandas
 import numpy
 
 from recordlinkage.utils import IndexError, merge_dicts, split_or_pass
 from recordlinkage.comparing import qgram_similarity
+
+
+def check_index_names(func):
+	# decorator to prevent index name conflicts. Used in functions like
+	# blocking and SNI. Also useful for user defined functions. 
+
+	@wraps(func)
+	def index_name_checker(df_a, df_b, *args, **kwargs):
+
+		if df_a.index.name is None or df_b.index.name is None or (df_a.index.name == df_b.index.name) or (df_a.index.name in df_a.columns.tolist()) or (df_b.index.name in df_b.columns.tolist()):
+
+			df_a_index_name = df_a.index.name
+			df_b_index_name = df_b.index.name
+
+			rightname = 'index_y'
+			while rightname in df_b.columns.tolist():
+				rightname = rightname + '_'
+
+			leftname = 'index_x'
+			while leftname in df_a.columns.tolist():
+				leftname = leftname + '_'
+
+			df_a.index.name = leftname
+			df_b.index.name = rightname
+
+			pairs = func(df_a, df_b, *args, **kwargs)
+
+			pairs.names = [df_a_index_name, df_b_index_name]
+
+			return pairs
+
+		else:
+
+			return func(df_a, df_b, *args, **kwargs)
+
+	return index_name_checker
+
+###########################
+##       Algorithms      ##
+###########################
 
 def _randomindex(df_a,df_b, n_pairs):
 
@@ -46,51 +88,29 @@ def _fullindex(df_a, df_b):
 		names=[df_a.index.name, df_b.index.name]
 		)
 
-def index_name_conflict():
-	# decorator for the stuff below
-	pass
-
+@check_index_names
 def _blockindex(df_a, df_b, on=None, left_on=None, right_on=None):
 
-	# Index name conflicts do not occur. They are handled in the core index
-	# method. If there is a name conflict in the core index method, the second
-	# index gets an additional underscore to the name.
-	# 
-	# Rows with missing values on the on attributes are dropped. 
+	# Index name conflicts do not occur. They are handled in the decorator.
 
 	if on:
 		left_on, right_on = on, on
 
-	# Change labels in case of conflict
+	# Rows with missing values on the on attributes are dropped.
 	data_left = df_a[left_on].dropna(axis=0)
 	data_right = df_b[right_on].dropna(axis=0)
 
-	rightname = 'index_y'
-	while rightname in df_b.columns.tolist():
-		rightname = rightname + '_'
-
-	leftname = 'index_x'
-	while leftname in df_a.columns.tolist():
-		leftname = leftname + '_'
-
-	data_left.index.name = leftname
-	data_right.index.name = rightname
-
-	data_left = data_left.reset_index()
-	data_right = data_right.reset_index()
-
 	# Join
-	pairs = data_left.merge(
-		data_right, 
+	pairs = data_left.reset_index().merge(
+		data_right.reset_index(), 
 		how='inner', 
 		left_on=left_on, 
 		right_on=right_on,
-		).set_index([leftname, rightname])
-
-	pairs.index.names = [df_a.index.name, df_b.index.name]
+		).set_index([df_a.index.name, df_b.index.name])
 
 	return pairs.index
 
+@check_index_names
 def _sortedneighbourhood(df_a, df_b, column, window=3, sorting_key_values=None, block_on=[], block_left_on=[], block_right_on=[]):
 
 	# Check if window is an odd number
@@ -148,6 +168,9 @@ def _qgram(df_a, df_b, on=None, left_on=None, right_on=None, threshold=0.8):
 	bool_index = (qgram_similarity(df_a.loc[fi.get_level_values(0), left_on], df_b.loc[fi.get_level_values(1), right_on]) >= threshold)
 
 	return fi[bool_index]
+
+
+
 
 class Pairs(object):
 	""" 
