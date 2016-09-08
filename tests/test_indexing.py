@@ -2,6 +2,8 @@ from __future__ import print_function
 
 import unittest
 
+from itertools import combinations_with_replacement, combinations, product
+
 import pandas.util.testing as pdt
 import recordlinkage
 import numpy as np
@@ -277,197 +279,106 @@ class TestIndexApi(unittest.TestCase):
         self.assertEqual(A.index.name, None)
         self.assertEqual(B.index.name, 'right')
 
+    def test_dedupe_index_name_none(self):
 
+        index_A = pd.Index(self.index)
+        A = pd.DataFrame(self.data_A, index=index_A)
 
+        # index full
+        index_cl = recordlinkage.Pairs(A)
+        pairs = index_cl.full()
+        self.assertEqual(pairs.names, [None, None])
+        self.assertEqual(A.index.name, None)
 
+        # index block
+        index_cl = recordlinkage.Pairs(A)
+        pairs = index_cl.block('name')
+        self.assertEqual(pairs.names, [None, None])
+        self.assertEqual(A.index.name, None)
 
+        # index sni 
+        index_cl = recordlinkage.Pairs(A)
+        pairs = index_cl.sortedneighbourhood('name')
+        self.assertEqual(pairs.names, [None, None])
+        self.assertEqual(A.index.name, None)
 
-# nosetests tests/test_indexing.py:TestIndexing
-class TestIndexing(unittest.TestCase):
+        # index eye 
+        index_cl = recordlinkage.Pairs(A)
+        pairs = index_cl.eye()
+        self.assertEqual(pairs.names, [None, None])
+        self.assertEqual(A.index.name, None)
 
-    def test_full_index_names(self):
+        # index random 
+        index_cl = recordlinkage.Pairs(A)
+        pairs = index_cl.random(3)
+        self.assertEqual(pairs.names, [None, None])
+        self.assertEqual(A.index.name, None)
 
-        df1 = pd.DataFrame({'name':['Bob', 'Anne', 'Micheal']}, index=pd.Index(['001', '002', '003'], name='index_A'))
-        df2 = pd.DataFrame({'name':['Bob', 'Anne', 'Micheal']}, index=pd.Index(['001', '002', '003'], name='index_B'))
+        # index random 
+        index_cl = recordlinkage.Pairs(A)
+        pairs = index_cl.qgram('name')
+        self.assertEqual(pairs.names, [None, None])
+        self.assertEqual(A.index.name, None)
 
-        index = recordlinkage.Pairs(df1, df2)
+    def test_dedupe_index_name_not_none(self):
+
+        index_A = pd.Index(self.index, name='dedup')
+        A = pd.DataFrame(self.data_A, index=index_A)
+
+        # index full
+        index_cl = recordlinkage.Pairs(A)
+        pairs = index_cl.full()
+        self.assertEqual(pairs.names, ['dedup', 'dedup'])
+        self.assertEqual(A.index.name, 'dedup')
+
+        # index block
+        index_cl = recordlinkage.Pairs(A)
+        pairs = index_cl.block('name')
+        self.assertEqual(pairs.names, ['dedup', 'dedup'])
+        self.assertEqual(A.index.name, 'dedup')
+
+        # index sni 
+        index_cl = recordlinkage.Pairs(A)
+        pairs = index_cl.sortedneighbourhood('name')
+        self.assertEqual(pairs.names, ['dedup', 'dedup'])
+        self.assertEqual(A.index.name, 'dedup')
+
+        # index eye 
+        index_cl = recordlinkage.Pairs(A)
+        pairs = index_cl.eye()
+        self.assertEqual(pairs.names, ['dedup', 'dedup'])
+        self.assertEqual(A.index.name, 'dedup')
+
+        # index random 
+        index_cl = recordlinkage.Pairs(A)
+        pairs = index_cl.random(3)
+        self.assertEqual(pairs.names, ['dedup', 'dedup'])
+        self.assertEqual(A.index.name, 'dedup')
+
+        # index random 
+        index_cl = recordlinkage.Pairs(A)
+        pairs = index_cl.qgram('name')
+        self.assertEqual(pairs.names, ['dedup', 'dedup'])
+        self.assertEqual(A.index.name, 'dedup')
+
+    def test_reduction_ratio(self):
+
+        index_A = pd.Index(self.index)
+        index_B = pd.Index(self.index)
+
+        A = pd.DataFrame(self.data_A, index=index_A)
+        B = pd.DataFrame(self.data_B, index=index_B)
+
+        index = recordlinkage.Pairs(A, B)
         pairs = index.full()
 
-        index_exp = [('001', '001'), ('001', '002'), ('001', '003'), ('002', '001'), ('002', '002'), ('002', '003'), ('003', '001'), ('003', '002'), ('003', '003')]
+        rr = index.reduction
 
-        # Check if index is unique
-        self.assertTrue(pairs.is_unique)
-
-        # Check is number of pairs is correct
-        self.assertEqual(len(pairs), len(df1)*len(df2))
-
-    def test_full_index(self):
-
-        index = recordlinkage.Pairs(df_large_numeric_1, df_large_numeric_2)
-        pairs = index.full()
-
-        # Check if index is unique
-        self.assertTrue(pairs.is_unique)
-
-        # Check is number of pairs is correct
-        self.assertEqual(1000000, len(df_large_numeric_1)*len(df_large_numeric_2))
-
-    def test_block_index_unique(self):
-
-        df1 = pd.DataFrame({'name':['Bob', 'Anne', 'Micheal']}, index=pd.Index(['001', '002', '003'], name='index_A'))
-        df2 = pd.DataFrame({'name':['Bob', 'Anne', 'Micheal']}, index=pd.Index(['001', '002', '003'], name='index_B'))
-
-        index = recordlinkage.Pairs(df1, df2)
-        pairs = index.block('name')
-
-        index_exp = [('001', '001'), ('002', '002'),('003', '003')]
-
-        # Check if index is unique
-        self.assertTrue(pairs.is_unique)
-
-        # Check is number of pairs is correct
-        self.assertEqual(len(pairs), 3)
-
-    def test_sortedneighbourhood_index_unique(self):
-
-        df1 = pd.DataFrame({'name':['Bob', 'Anne', 'Micheal']}, index=pd.Index(['001', '002', '003'], name='index_A'))
-        df2 = pd.DataFrame({'name':['Bob', 'Anne', 'Micheal']}, index=pd.Index(['001', '002', '003'], name='index_B'))
-
-        index = recordlinkage.Pairs(df1, df2)
-        pairs = index.sortedneighbourhood('name')
-
-        index_exp = [('001', '001'), ('002', '002'),('003', '003')]
-
-        # Check if index is unique
-        self.assertTrue(pairs.is_unique)
-
-    #####################################
-    ##          RANDOM INDEXING        ##
-    #####################################
-
-    def test_random_index_unique(self):
-
-        n_pairs = 5
-
-        df1 = pd.DataFrame({'name':['Bob', 'Anne', 'Micheal']}, index=pd.Index(['001', '002', '003'], name='index_A'))
-        df2 = pd.DataFrame({'name':['Bob', 'Anne', 'Micheal']}, index=pd.Index(['001', '002', '003'], name='index_B'))
-
-        index = recordlinkage.Pairs(df1, df2)
-        pairs = index.random(n_pairs)
-
-        # Check if index is unique
-        self.assertTrue(pairs.is_unique)
-
-        # Check is number of pairs is correct
-        self.assertEqual(len(pairs), n_pairs)
-
-    def test_random_index_less_than_25(self):
-
-        n_pairs = 10000
-
-        index = recordlinkage.Pairs(df_large_numeric_1, df_large_numeric_2)
-        pairs = index.random(n_pairs)
-
-        # Check if index is unique
-        self.assertTrue(pairs.is_unique)
-
-        # Check is number of pairs is correct
-        self.assertEqual(len(pairs), n_pairs)
-
-    def test_random_index_more_than_25(self):
-
-        n_pairs = 300000
-
-        index = recordlinkage.Pairs(df_large_numeric_1, df_large_numeric_2)
-        pairs = index.random(n_pairs)
-
-        # Check if index is unique
-        self.assertTrue(pairs.is_unique)
-
-        # Check is number of pairs is correct
-        self.assertEqual(len(pairs), n_pairs)
-
-    def test_random_index_linking(self):
-
-        dfA, dfB = datasets.load_febrl4()
-        # dfB.index.name = dfB.index.name + "_"
-
-        index = recordlinkage.Pairs(dfA, dfB)
-        pairs = index.random(1000)
-
-        # Check if index is unique
-        self.assertTrue(pairs.is_unique)
-
-        # Check is number of pairs is correct
-        self.assertTrue(len(pairs) <= 1000)
-
-    def test_full_index_linking(self):
-
-        dfA, dfB = datasets.load_febrl4()
-        # dfB.index.name = dfB.index.name + "_"
-
-        index = recordlinkage.Pairs(dfA, dfB)
-        pairs = index.full()
-
-        # Check if index is unique
-        self.assertTrue(pairs.is_unique)
-
-        # Check is number of pairs is correct
-        self.assertEqual(len(pairs), len(dfA)*len(dfB))
-
-    def test_block_index_linking(self):
-
-        dfA, dfB = datasets.load_febrl4()
-        # dfB.index.name = dfB.index.name + "_"
-
-        index = recordlinkage.Pairs(dfA, dfB)
-        pairs = index.block('given_name')
-
-        # Check if index is unique
-        self.assertTrue(pairs.is_unique)
-
-    def test_qgram_index_linking(self):
-
-        dfA, dfB = datasets.load_febrl4()
-        # dfB.index.name = dfB.index.name + "_"
-
-        index = recordlinkage.Pairs(dfA[0:100], dfB[0:100])
-        pairs = index.qgram('given_name')
-
-        # Check if index is unique
-        self.assertTrue(pairs.is_unique)
-
-    def test_sorted_index_linking(self):
-
-        dfA, dfB = datasets.load_febrl4()
-        # dfB.index.name = dfB.index.name + "_"
-
-        index = recordlinkage.Pairs(dfA, dfB)
-        pairs = index.sortedneighbourhood('given_name')
-
-        # Check if index is unique
-        self.assertTrue(pairs.is_unique)
-
-
-    def test_blocking_special_case_of_sorting(self):
-
-        dfA, dfB = datasets.load_febrl4()
-        # dfB.index.name = dfB.index.name + "_"
-
-        index = recordlinkage.Pairs(dfA, dfB)
-        bl = index.block('given_name')
-        sn = index.sortedneighbourhood('given_name', window=1)
-
-        print('The number of record pairs found with blocking', len(bl))
-        print('The number of record pairs found with sorted neighbourhood indexing', len(sn))
-        
-        # The length of the union should be the same as the length of bl or sn.
-        self.assertEqual(len(bl), len(sn))
+        self.assertEqual(rr, 0)
 
     def test_full_iter_index_linking(self):
 
         dfA, dfB = datasets.load_febrl4()
-        # dfB.index.name = dfB.index.name + "_"
 
         index_chucks = recordlinkage.Pairs(dfA, dfB, chunks=(100,200))
         index = recordlinkage.Pairs(dfA, dfB)
@@ -508,8 +419,6 @@ class TestIndexing(unittest.TestCase):
             print (len(pairs))
             n_pairs_iter += len(pairs)
 
-            # print (pairs)
-
             # Check if index is unique
             self.assertTrue(pairs.is_unique)
 
@@ -518,19 +427,232 @@ class TestIndexing(unittest.TestCase):
         # Check is number of pairs is correct
         self.assertEqual(n_pairs_iter, (len(dfA)-1)*len(dfA)/2)
 
+
+
+
+
+
+# nosetests tests/test_indexing.py:TestIndexAlgorithms
+class TestIndexAlgorithms(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(self):
+
+        self.data_A = {
+            'name':['Bob', 'Anne', 'Micheal', 'Charly B', 'Ana'],
+            'age': [40, 45, 69, 90, 70],
+            'hometown': ['town 1', 'town 1', 'town 1', 'town 3', 'town 1']
+            }
+        self.data_B = {
+            'name':['Bob', 'Anne', 'Micheal', 'Charly', 'Ana'],
+            'age': [40, 45, 68, 89, 70],
+            'hometown': ['town 1', 'town 1', 'town 2', 'town 3', 'town 1']
+            }
+
+        self.index = ['rec1','rec2','rec3', 'rec4', 'rec5']
+
+        self.fullindex_dedup = list(combinations_with_replacement(self.index, 2))
+        self.fullindex = list(product(self.index, self.index))
+
+    def test_full_index(self):
+
+        A = pd.DataFrame(self.data_A, index=pd.Index(self.index, name='index_a'))
+        B = pd.DataFrame(self.data_B, index=pd.Index(self.index, name='index_b'))
+
+        # index full
+        index_cl = recordlinkage.Pairs(A, B)
+        pairs = index_cl.full()
+
+        # Check if index is unique
+        self.assertTrue(pairs.is_unique)
+
+        # Check is number of pairs is correct
+        self.assertEqual(len(pairs), len(self.fullindex))
+
+    def test_block_index(self):
+
+        A = pd.DataFrame(self.data_A, index=pd.Index(self.index, name='index_a'))
+        B = pd.DataFrame(self.data_B, index=pd.Index(self.index, name='index_b'))
+
+        # index block
+        index_cl = recordlinkage.Pairs(A, B)
+        pairs = index_cl.block('name')
+
+        # Check if index is unique
+        self.assertTrue(pairs.is_unique)
+
+        # Check is number of pairs is correct
+        self.assertEqual(len(pairs), 4)
+
+    def test_sni_index(self):
+
+        A = pd.DataFrame(self.data_A, index=pd.Index(self.index, name='index_a'))
+        B = pd.DataFrame(self.data_B, index=pd.Index(self.index, name='index_b'))
+
+        # index full
+        index_cl = recordlinkage.Pairs(A, B)
+        pairs = index_cl.sortedneighbourhood('name')
+
+        # Check if index is unique
+        self.assertTrue(pairs.is_unique)
+
+        # Check is number of pairs is correct
+        self.assertTrue(len(pairs) <= len(A)*len(B))
+
+    def test_random_index(self):
+
+        A = pd.DataFrame(self.data_A, index=pd.Index(self.index, name='index_a'))
+        B = pd.DataFrame(self.data_B, index=pd.Index(self.index, name='index_b'))
+
+        # index block
+        index_cl = recordlinkage.Pairs(A, B)
+        pairs = index_cl.random(5)
+
+        # Check if index is unique
+        self.assertTrue(pairs.is_unique)
+
+        # Check is number of pairs is correct
+        self.assertEqual(len(pairs), 5)
+
+        # index block
+        index_cl = recordlinkage.Pairs(A, B)
+        pairs = index_cl.random(2)
+
+        # Check if index is unique
+        self.assertTrue(pairs.is_unique)
+
+        # Check is number of pairs is correct
+        self.assertEqual(len(pairs), 2)
+
+    def test_qgram_index(self):
+
+        A = pd.DataFrame(self.data_A, index=pd.Index(self.index, name='index_a'))
+        B = pd.DataFrame(self.data_B, index=pd.Index(self.index, name='index_b'))
+
+        # index block
+        index_cl = recordlinkage.Pairs(A, B)
+        pairs = index_cl.qgram('name')
+
+        # Check if index is unique
+        self.assertTrue(pairs.is_unique)
+
+        # Check is number of pairs is correct
+        self.assertTrue(len(pairs) <= len(A)*len(B))
+
+    def test_blocking_special_case_of_sorting(self):
+
+        A = pd.DataFrame(self.data_A, index=pd.Index(self.index, name='index_a'))
+        B = pd.DataFrame(self.data_B, index=pd.Index(self.index, name='index_b'))
+
+        # index block
+        index_cl = recordlinkage.Pairs(A, B)
+
+        bl = index_cl.block('name')
+        sn = index_cl.sortedneighbourhood('name', window=1)
+
+        print('The number of record pairs found with blocking', len(bl))
+        print('The number of record pairs found with sorted neighbourhood indexing', len(sn))
+        
+        # The length of the union should be the same as the length of bl or sn.
+        self.assertEqual(len(bl), len(sn))
+
+
+
+
+
+
+
+
+
+
+
+# nosetests tests/test_indexing.py:TestIndexAlgorithms
+class TestIndexOnDatasets(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(self):
+
+        self.A, self.B = datasets.load_febrl4()
+
     def test_reduction_ratio(self):
 
-        dfA, dfB = datasets.load_febrl4()
-        # dfB.index.name = dfB.index.name + "_"
-
-        index = recordlinkage.Pairs(dfA, dfB)
+        index = recordlinkage.Pairs(self.A, self.B)
         pairs = index.full()
 
         rr = index.reduction
 
         self.assertEqual(rr, 0)
 
+    def test_random_index_linking(self):
 
+        index = recordlinkage.Pairs(self.A, self.B)
+        pairs = index.random(1000)
 
+        # Check if index is unique
+        self.assertTrue(pairs.is_unique)
 
+        # Check is number of pairs is correct
+        self.assertTrue(len(pairs) <= 1000)
 
+    def test_full_index_linking(self):
+
+        index = recordlinkage.Pairs(self.A, self.B)
+        pairs = index.full()
+
+        # Check if index is unique
+        self.assertTrue(pairs.is_unique)
+
+        # Check is number of pairs is correct
+        self.assertEqual(len(pairs), len(self.A)*len(self.B))
+
+    def test_block_index_linking(self):
+
+        index = recordlinkage.Pairs(self.A, self.B)
+        pairs = index.block('given_name')
+
+        # Check if index is unique
+        self.assertTrue(pairs.is_unique)
+
+    def test_qgram_index_linking(self):
+
+        index = recordlinkage.Pairs(self.A, self.B)
+
+        index = recordlinkage.Pairs(self.A[0:100], self.B[0:100])
+        pairs = index.qgram('given_name')
+
+        # Check if index is unique
+        self.assertTrue(pairs.is_unique)
+
+    def test_sorted_index_linking(self):
+
+        index = recordlinkage.Pairs(self.A, self.B)
+        pairs = index.sortedneighbourhood('given_name')
+
+        # Check if index is unique
+        self.assertTrue(pairs.is_unique)
+
+    def test_small_random_index(self):
+
+        n_pairs = 10000
+
+        index = recordlinkage.Pairs(self.A, self.B)
+        pairs = index.random(n_pairs)
+
+        # Check if index is unique
+        self.assertTrue(pairs.is_unique)
+
+        # Check is number of pairs is correct
+        self.assertEqual(len(pairs), n_pairs)
+
+    def test_large_random_index(self):
+
+        n_pairs = 300000
+
+        index = recordlinkage.Pairs(self.A, self.B)
+        pairs = index.random(n_pairs)
+
+        # Check if index is unique
+        self.assertTrue(pairs.is_unique)
+
+        # Check is number of pairs is correct
+        self.assertEqual(len(pairs), n_pairs)
