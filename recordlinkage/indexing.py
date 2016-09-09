@@ -1,10 +1,52 @@
 from __future__ import division
 
+from functools import wraps
+
 import pandas
 import numpy
 
 from recordlinkage.utils import IndexError, merge_dicts, split_or_pass
 from recordlinkage.comparing import qgram_similarity
+
+
+def check_index_names(func):
+	# decorator to prevent index name conflicts. Used in functions like
+	# blocking and SNI. Also useful for user defined functions. 
+
+	@wraps(func)
+	def index_name_checker(df_a, df_b, *args, **kwargs):
+
+		if df_a.index.name is None or df_b.index.name is None or (df_a.index.name == df_b.index.name) or (df_a.index.name in df_a.columns.tolist()) or (df_b.index.name in df_b.columns.tolist()):
+
+			df_a_index_name = df_a.index.name
+			df_b_index_name = df_b.index.name
+
+			rightname = 'index_y'
+			while rightname in df_b.columns.tolist():
+				rightname = rightname + '_'
+
+			leftname = 'index_x'
+			while leftname in df_a.columns.tolist():
+				leftname = leftname + '_'
+
+			df_a.index.name = leftname
+			df_b.index.name = rightname
+
+			pairs = func(df_a, df_b, *args, **kwargs)
+
+			pairs.names = [df_a_index_name, df_b_index_name]
+
+			return pairs
+
+		else:
+
+			return func(df_a, df_b, *args, **kwargs)
+
+	return index_name_checker
+
+###########################
+##       Algorithms      ##
+###########################
 
 def _randomindex(df_a,df_b, n_pairs):
 
@@ -46,29 +88,29 @@ def _fullindex(df_a, df_b):
 		names=[df_a.index.name, df_b.index.name]
 		)
 
+@check_index_names
 def _blockindex(df_a, df_b, on=None, left_on=None, right_on=None):
 
-	# Index name conflicts do not occur. They are handled in the core index
-	# method. If there is a name conflict in the core index method, the second
-	# index gets an additional underscore to the name.
-	# 
-	# Rows with missing values on the on attributes are dropped. 
+	# Index name conflicts do not occur. They are handled in the decorator.
 
 	if on:
 		left_on, right_on = on, on
 
-	data_left = df_a[left_on].dropna(axis=0).reset_index()
-	data_right = df_b[right_on].dropna(axis=0).reset_index()
+	# Rows with missing values on the on attributes are dropped.
+	data_left = df_a[left_on].dropna(axis=0)
+	data_right = df_b[right_on].dropna(axis=0)
 
-	pairs = data_left.merge(
-		data_right, 
+	# Join
+	pairs = data_left.reset_index().merge(
+		data_right.reset_index(), 
 		how='inner', 
 		left_on=left_on, 
-		right_on=right_on
+		right_on=right_on,
 		).set_index([df_a.index.name, df_b.index.name])
 
 	return pairs.index
 
+@check_index_names
 def _sortedneighbourhood(df_a, df_b, column, window=3, sorting_key_values=None, block_on=[], block_left_on=[], block_right_on=[]):
 
 	# Check if window is an odd number
@@ -126,6 +168,9 @@ def _qgram(df_a, df_b, on=None, left_on=None, right_on=None, threshold=0.8):
 	bool_index = (qgram_similarity(df_a.loc[fi.get_level_values(0), left_on], df_b.loc[fi.get_level_values(1), right_on]) >= threshold)
 
 	return fi[bool_index]
+
+
+
 
 class Pairs(object):
 	""" 
@@ -191,11 +236,11 @@ class Pairs(object):
 			self.df_b = df_b
 			self.deduplication = False
 
-			if self.df_a.index.name == None or self.df_b.index.name == None:
-				raise IndexError('DataFrame has no index name.')
+			# if self.df_a.index.name == None or self.df_b.index.name == None:
+			# 	raise IndexError('DataFrame has no index name.')
 
-			if self.df_a.index.name == self.df_b.index.name:
-				raise IndexError("Identical index name '{}' for both dataframes.".format(self.df_a.index.name))
+			# if self.df_a.index.name == self.df_b.index.name:
+			# 	raise IndexError("Identical index name '{}' for both dataframes.".format(self.df_a.index.name))
 
 			if not self.df_a.index.is_unique or not self.df_b.index.is_unique:
 				raise IndexError('DataFrame index is not unique.')
@@ -204,8 +249,8 @@ class Pairs(object):
 		else:
 			self.deduplication = True
 
-			if self.df_a.index.name == None:
-				raise IndexError('DataFrame has no index name.')
+			# if self.df_a.index.name == None:
+			# 	raise IndexError('DataFrame has no index name.')
 
 			if not self.df_a.index.is_unique:
 				raise IndexError('DataFrame index is not unique.')
@@ -373,32 +418,25 @@ class Pairs(object):
 			# the first dataset and one of the second dataset
 			if not self.deduplication:
 
-				if self.df_a.index.name == self.df_b.index.name:
-					self.df_b.index.name = str(self.df_b.index.name) + '_'
-
 				pairs = index_func(
-					self.df_a[bl0:bl2], self.df_b[bl1:bl3], 
+					self.df_a[bl0:bl2], 
+					self.df_b[bl1:bl3], 
 					*args, **kwargs
 					)
-
-				pairs.names = [self.df_a.index.name, self.df_b.index.name]
 
 			# If deduplication, remove the record pairs that are already
 			# included. For example: (a1, a1), (a1, a2), (a2, a1), (a2, a2)
 			# results in (a1, a2) or (a2, a1)
 			elif self.deduplication:
 
-				df_b = self.df_a.copy()
-				df_b.index.name = str(self.df_a.index.name) + '_'
-
 				pairs = index_func(
-					self.df_a[bl0:bl2], df_b[bl1:bl3], 
+					self.df_a[bl0:bl2], 
+					self.df_a[bl1:bl3], 
 					*args, **kwargs
 					)
 
 				# Remove all double pairs!
 				pairs = pairs[pairs.get_level_values(0) < pairs.get_level_values(1)]
-				pairs.names = [self.df_a.index.name, self.df_a.index.name]
 
 			self.n_pairs = len(pairs)
 
