@@ -2,6 +2,18 @@
 Release notes
 *************
 
+Version 0.5
+===========
+
+- Batch comparing added. Signifant speed improvement.
+- rldatasets are now included in the package itself.
+- Added an experimental gender imputation tool. 
+- Blocking and SNI skip missing values
+- No longer need for different index names
+- FEBRL datasets included
+- Unit tests for indexing and comparing improved
+- Documentation updated
+
 Version 0.4
 ===========
 
