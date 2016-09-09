@@ -566,7 +566,7 @@ class TestIndexAlgorithms(unittest.TestCase):
 
 
 
-# nosetests tests/test_indexing.py:TestIndexAlgorithms
+# nosetests tests/test_indexing.py:TestIndexOnDatasets
 class TestIndexOnDatasets(unittest.TestCase):
 
     @classmethod
