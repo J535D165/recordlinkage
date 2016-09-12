@@ -47,7 +47,7 @@ surname are included.
 
 .. code:: python
 
-    index = recordlinkage.Index(df_a, df_b)
+    index = recordlinkage.Pairs(df_a, df_b)
     candidate_links = index.block('surname')
 
 For each candidate link, compare the pair of records with the Compare
