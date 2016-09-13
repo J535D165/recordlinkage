@@ -2,13 +2,14 @@ from __future__ import division
 from __future__ import absolute_import
 
 import logging
+import unicodedata
+import itertools
 
 import numpy as np
 import pandas as pd
 
-import itertools
 
-def clean(s, lower=True, replace_by_none='[^ \-\_A-Za-z0-9]+', replace_by_whitespace='[\-\_]', remove_brackets=True):
+def clean(s, lower=True, replace_by_none='[^ \-\_A-Za-z0-9]+', replace_by_whitespace='[\-\_]', remove_accents=True, remove_brackets=True):
     """
     Clean strings in the Series by removing unwanted tokens, whitespace and brackets.
 
@@ -47,16 +48,24 @@ def clean(s, lower=True, replace_by_none='[^ \-\_A-Za-z0-9]+', replace_by_whites
 
     """
 
+    # # Remove accents etc
+    # if remove_accents:
+    #     s = s.map(lambda x: ''.join(c for c in unicodedata.normalize('NFD', x) if unicodedata.category(c) != 'Mn'))
+
     # Lower s if lower is True
-    s = s.str.lower() if lower else s 
+    if lower:
+        s = s.str.lower()
 
     # Remove all content between brackets
     if remove_brackets:
         s = s.str.replace(r'(\[.*?\]|\(.*?\)|\{.*?\})', '')
 
     # Remove the special characters
-    s = s.str.replace(replace_by_none, '')
-    s = s.str.replace(replace_by_whitespace, ' ')
+    if replace_by_none:
+        s = s.str.replace(replace_by_none, '')
+
+    if replace_by_whitespace:
+        s = s.str.replace(replace_by_whitespace, ' ')
 
     # Remove multiple whitespaces
     s = s.str.replace(r'\s\s+', ' ')
@@ -90,6 +99,7 @@ def value_occurence(s):
     :rtype: pandas.Series
     """
 
+    # https://github.com/pydata/pandas/issues/3729
     value_count = s.fillna('NAN')
 
     return value_count.groupby(by=value_count).transform('count')
