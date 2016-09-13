@@ -41,10 +41,10 @@ def true_negatives(true_match_index, matches_index, n_pairs):
 	:rtype: int
 	"""	
 
-	if type(n_pairs) != int:
+	if not isinstance(n_pairs, (int, float)):
 		n_pairs = len(n_pairs)
 
-	return n_pairs - len(true_match_index | matches_index)
+	return int(n_pairs) - len(true_match_index | matches_index)
 
 def false_positives(true_match_index, matches_index):
 	""" 
