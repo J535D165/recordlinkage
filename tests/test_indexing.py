@@ -372,7 +372,7 @@ class TestIndexApi(unittest.TestCase):
         B = pd.DataFrame(self.data_B, index=index_B)
 
         index = recordlinkage.Pairs(A, B)
-        # pairs = index.full()
+        index.full()
 
         rr = index.reduction
 
