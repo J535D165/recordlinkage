@@ -73,18 +73,14 @@ others are unsupervised. An example of supervised learning:
 
 .. code:: python
 
-
-    true_linkage = pandas.Series(YOUR_GOLDEN_DATA, index=pandas.MultiIndex(YOUR_MULTI_INDEX))
-
     logrg = recordlinkage.LogisticRegressionClassifier()
-    logrg.learn(compare.vectors[true_linkage.index], true_linkage)
+    logrg.learn(TRAINING_COMPARISON_VECTORS, TRAINING_CLASSES)
 
     logrg.predict(compare.vectors)
 
 and an example of unsupervised learning (the well known ECM-algorithm):
 
 .. code:: python
-
 
     ecm = recordlinkage.BernoulliEMClassifier()
     ecm.learn(compare.vectors)
