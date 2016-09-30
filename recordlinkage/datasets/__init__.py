@@ -1,6 +1,5 @@
 
 import pandas
-import numpy
 
 import os
 import zipfile
@@ -16,35 +15,38 @@ def load_krebsregister(block=1):
     and the University Medical Center of Johannes Gutenberg University
     (Mainz, Germany). The dataset is available for research online.
 
-            *"The records represent individual data including first and  family
-            name, sex, date of birth and postal code, which were collected through
-            iterative insertions in the course of several years. The comparison
-            patterns in this data set are based on a sample of 100.000 records
-            dating from 2005 to 2008. Data pairs were classified as "match" or
-            "non-match" during  an extensive manual review where several
-            documentarists were involved.  The resulting classification formed the
-            basis for assessing the quality of the registry's own record linkage
-            procedure.*
+            *"The records represent individual data including first and family
+            name, sex, date of birth and postal code, which were collected
+            through iterative insertions in the course of several years. The
+            comparison patterns in this data set are based on a sample of
+            100.000 records dating from 2005 to 2008. Data pairs were
+            classified as "match" or "non-match" during  an extensive manual
+            review where several documentarists were involved.  The resulting
+            classification formed the basis for assessing the quality of the
+            registry's own record linkage procedure.*
 
             *In order to limit the amount of patterns a blocking procedure was
-            applied, which selects only record pairs that meet specific agreement
-            conditions. The results of the following six blocking iterations were
-            merged together:* 
+            applied, which selects only record pairs that meet specific
+            agreement conditions. The results of the following six blocking
+            iterations were merged together:*
 
-            1. *Phonetic equality of first name and family name, equality of date of birth.*
+            1. *Phonetic equality of first name and family name, equality of
+                    date of birth.*
             2. *Phonetic equality of first name, equality of day of birth.*
             3. *Phonetic equality of first name, equality of month of birth.*
             4. *Phonetic equality of first name, equality of year of birth.*
             5. *Equality of complete date of birth.*
             6. *Phonetic equality of family name, equality of sex.*
 
-            *This procedure resulted in 5.749.132 record pairs, of which 20.931 are
-            matches. The data set is split into 10 blocks of (approximately) equal
-            size and ratio of matches to non-matches."*
+            *This procedure resulted in 5.749.132 record pairs, of which
+            20.931 are matches. The data set is split into 10 blocks of
+            (approximately) equal size and ratio of matches to non-matches."*
 
-    :param block: An integer or a list with integers between 1 and 10. The blocks are the blocks explained in the description.
+    :param block: An integer or a list with integers between 1 and 10. The
+            blocks are the blocks explained in the description.
 
-    :return: A data frame with comparison vectors and a multi index with the indices of the matches.  
+    :return: A data frame with comparison vectors and a multi index with the
+            indices of the matches.  
     :rtype: (pandas.DataFrame, pandas.MultiIndex)
 
     """
@@ -194,11 +196,12 @@ def load_febrl4():
     generator. This  functions returns the fourth Febrl dataset as a pandas
     DataFrame.
 
-            *"Generated as one data set with 10000 records (5000 originals and 5000 
-            duplicates, with one duplicate per original), the originals have been
-            split from the duplicates, into dataset4a.csv (containing the 5000 original
-            records) and dataset4b.csv (containing the 5000 duplicate records) These two
-            data sets can be used for testing linkage procedures."*
+            *"Generated as one data set with 10000 records (5000 originals and
+            5000  duplicates, with one duplicate per original), the originals
+            have been split from the duplicates, into dataset4a.csv
+            (containing the 5000 original records) and dataset4b.csv
+            (containing the 5000 duplicate records) These two data sets can be
+            used for testing linkage procedures."*
 
     :return: A pandas DataFrame with Febrl dataset4a.csv and a pandas
             DataFrame with Febrl dataset4b.csv.
