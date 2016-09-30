@@ -200,8 +200,8 @@ def load_febrl4():
             records) and dataset4b.csv (containing the 5000 duplicate records) These two
             data sets can be used for testing linkage procedures."*
 
-    :return: A pandas DataFrame with Febrl dataset4a.csv and a pandas 
-            DataFrame with Febrl dataset4b.csv. 
+    :return: A pandas DataFrame with Febrl dataset4a.csv and a pandas
+            DataFrame with Febrl dataset4b.csv.
     rtype: (pandas.DataFrame, pandas.DataFrame)
 
     """

@@ -17,7 +17,10 @@ def phonetic(s, method):
     """
     Phonetically encode the values in the Series.
 
-    :param method: The algorithm that is used to phonetically encode the values. The possible options are 'soundex' (`wikipedia <https://en.wikipedia.org/wiki/Soundex>`_) and 'nysiis' (`wikipedia <https://en.wikipedia.org/wiki/New_York_State_Identification_and_Intelligence_System>`_).
+    :param method: The algorithm that is used to phonetically encode the
+            values. The possible options are 'soundex'
+            (`wikipedia <https://en.wikipedia.org/wiki/Soundex>`_) and
+            'nysiis' (`wikipedia <https://en.wikipedia.org/wiki/New_York_State_Identification_and_Intelligence_System>`_).
     :type method: str
 
     :return: A Series with phonetic encoded values.
@@ -53,7 +56,10 @@ def phonetic(s, method):
         raise Exception("Phonetic encoding method not found")
 
 
-def gender(names, years=None, method="ssa", countries=None, labels=("male", "female"), q=0.1):
+def gender(
+    names, years=None, method="ssa", countries=None,
+    labels=("male", "female"), q=0.1
+):
     """
 
     Predict the gender based on the first name. This tool is based on
@@ -62,17 +68,19 @@ def gender(names, years=None, method="ssa", countries=None, labels=("male", "fem
     <https://en.wikipedia.org/wiki/Bayes%27_theorem>`_.
 
     :param names: The given names.
-    :param years: The birth year of the first names whose gender is to be predicted.
-            This argument can be either a single year, a range of years in the form
-            [1880, 1900]. If no value is specified, then for the ``ssa``
-            method it will use the period 1932 to 2012.
-    :param method: This value determines the data set that is used to predict the
-            gender of the name. The ``ssa`` method looks up names based from the
-            U.S. Social Security Administration baby name data.
+    :param years: The birth year of the first names whose gender is to be
+            predicted. This argument can be either a single year, a range of
+            years in the form [1880, 1900]. If no value is specified, then for
+            the ``ssa`` method it will use the period 1932 to 2012.
+    :param method: This value determines the data set that is used to predict
+            the gender of the name. The ``ssa`` method looks up names based
+            from the U.S. Social Security Administration baby name data.
     :param countries: The country.
-    :param labels: The label given for male and female prediction. Default: ("male", "female").
+    :param labels: The label given for male and female prediction. Default:
+            ("male", "female").
     :param sex_ratio: The ratio of males to females (`sex ratio
-            <https://en.wikipedia.org/wiki/Sex_ratio>`_) in the newborn population. Default 1.07
+            <https://en.wikipedia.org/wiki/Sex_ratio>`_) in the newborn
+            population. Default 1.07
     :param q: The maximum error probability for a name.
 
     :type names: pandas.Series
@@ -117,7 +125,9 @@ def gender(names, years=None, method="ssa", countries=None, labels=("male", "fem
             "This chosen method {} is not known.".format(method))
 
 
-def gender_ssa(names, years=None, labels=("male", "female"), q=0.49, sex_ratio=1.07):
+def gender_ssa(
+    names, years=None, labels=("male", "female"), q=0.49, sex_ratio=1.07
+):
 
     filepath = os.path.join(os.path.dirname(__file__),
                             'data', 'ssa_national.zip')
@@ -142,8 +152,10 @@ def gender_ssa(names, years=None, labels=("male", "female"), q=0.49, sex_ratio=1
         years = [int(years.min()), int(years.max())]
 
         if (years[1] > ssa_max_year) or (years[0] < ssa_min_year):
-            warnings.warn("years outside the range {} - {}. Using truncated average.".format(
-                ssa_min_year, ssa_max_year))
+            warnings.warn(
+                "years outside the range {} - {}. " +
+                "Using truncated average.".format(
+                    ssa_min_year, ssa_max_year))
         else:
             s_years = pandas.Series(years)
 
@@ -161,7 +173,8 @@ def gender_ssa(names, years=None, labels=("male", "female"), q=0.49, sex_ratio=1
 
     if (years[1] > ssa_max_year) or (years[0] < ssa_min_year):
         raise ValueError(
-            "Use years in the range {} - {}".format(ssa_min_year, ssa_max_year))
+            "Use years in the range {} - {}".format(ssa_min_year, ssa_max_year)
+        )
 
     # Make subset of relevant years
     ssa_national_subset = ssa_national[
@@ -179,10 +192,10 @@ def gender_ssa(names, years=None, labels=("male", "female"), q=0.49, sex_ratio=1
 
     # compute sex ratio https://en.wikipedia.org/wiki/Sex_ratio with
     if not sex_ratio:
-        P_male = ssa_national_grouped[
-            'male'] / (ssa_national_grouped['male'] + ssa_national_grouped['female'])
-        P_female = ssa_national_grouped[
-            'female'] / (ssa_national_grouped['male'] + ssa_national_grouped['female'])
+        P_male = ssa_national_grouped['male'] \
+            / (ssa_national_grouped['male'] + ssa_national_grouped['female'])
+        P_female = ssa_national_grouped['female'] \
+            / (ssa_national_grouped['male'] + ssa_national_grouped['female'])
         sex_ratio = P_male / P_female
 
     P_name_given_male = ssa_national_grouped[
@@ -222,8 +235,11 @@ def similar_values(s, threshold=0.8):
 
     Group strings with high similarities.
 
-    :param threshold: Two strings with similarity above this threshold are considered to be the same string. The threshold is a value equal or between 0 and 1. Default 0.8.
-    :param inplace: If True, replace the current strings by their cleaned variant. Default: True.
+    :param threshold: Two strings with similarity above this threshold are
+            considered to be the same string. The threshold is a value equal
+            or between 0 and 1. Default 0.8.
+    :param inplace: If True, replace the current strings by their cleaned
+            variant. Default: True.
 
     :return: A Series of strings.
     :rtype: pandas.Series
@@ -236,7 +252,10 @@ def similar_values(s, threshold=0.8):
 
     replace_tuples = []
 
-    for pair in itertools.combinations(self[self.notnull()].astype(unicode).unique(), 2):
+    for pair in itertools.combinations(
+        self[self.notnull()].astype(unicode).unique(),
+        2
+    ):
 
         sim = 1 - \
             jellyfish.levenshtein_distance(

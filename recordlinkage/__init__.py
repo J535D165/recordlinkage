@@ -12,6 +12,3 @@ from .indexing import *
 from .comparing import *
 from .classifiers import *
 from .measures import *
-
-
-

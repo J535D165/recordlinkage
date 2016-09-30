@@ -8,20 +8,24 @@ import pandas
 import numpy as np
 
 from sklearn.feature_extraction.text import CountVectorizer
+from recordlinkage.utils import _label_or_column, _resample
 
 try:
     import jellyfish
 except ImportError:
+    # Jellyfish is not installed, raise error when calling jellyfish dependent
+    # function.
     pass
-
-from recordlinkage.utils import _label_or_column, _resample
 
 
 def _check_jellyfish():
 
     if 'jellyfish' not in sys.modules:
-        raise ImportError("Install the module 'jellyfish' to use the following " +
-                          "string metrics: 'jaro', 'jarowinkler', 'levenshtein' and 'damerau_levenshtein'.")
+        raise ImportError(
+            "Install the module 'jellyfish' to use the following " +
+            "string metrics: 'jaro', 'jarowinkler', 'levenshtein'" +
+            " and 'damerau_levenshtein'."
+        )
 
 
 class Compare(object):
@@ -205,38 +209,38 @@ class Compare(object):
         labelsA = []
         labelsB = []
 
-        for comp_func, labels_a, labels_b, args, kwargs in self._batch_functions:
+        for comp_func, lbls_a, lbls_b, args, kwargs in self._batch_functions:
 
-            if isinstance(labels_a, (tuple, list)):
-                labelsA.extend(labels_a)
+            if isinstance(lbls_a, (tuple, list)):
+                labelsA.extend(lbls_a)
             else:
-                labelsA.append(labels_a)
+                labelsA.append(lbls_a)
 
-        for comp_func, labels_a, labels_b, args, kwargs in self._batch_functions:
+        for comp_func, lbls_a, lbls_b, args, kwargs in self._batch_functions:
 
-            if isinstance(labels_b, (tuple, list)):
-                labelsB.extend(labels_b)
+            if isinstance(lbls_b, (tuple, list)):
+                labelsB.extend(lbls_b)
             else:
-                labelsB.append(labels_b)
+                labelsB.append(lbls_b)
 
         # Make selections of columns
         dataA = _resample(self.df_a[labelsA], self.pairs, 1)
         dataB = _resample(self.df_b[labelsB], self.pairs, 0)
 
-        for comp_func, labels_a, labels_b, args, kwargs in self._batch_functions:
+        for comp_func, lbls_a, lbls_b, args, kwargs in self._batch_functions:
 
             name = kwargs.pop('name', None)
             # always true, but if passed then ignored
             store = kwargs.pop('store', None)
 
             # Sample the data and add it to the arguments.
-            labels_b = [labels_b] if not isinstance(
-                labels_b, (tuple, list)) else labels_b
-            labels_a = [labels_a] if not isinstance(
-                labels_a, (tuple, list)) else labels_a
+            lbls_b = [lbls_b] if not isinstance(
+                lbls_b, (tuple, list)) else lbls_b
+            lbls_a = [lbls_a] if not isinstance(
+                lbls_a, (tuple, list)) else lbls_a
 
-            args = tuple(dataA.loc[:, da] for da in reversed(labels_a)) + \
-                tuple(dataB.loc[:, db] for db in reversed(labels_b)) + args
+            args = tuple(dataA.loc[:, da] for da in reversed(lbls_a)) + \
+                tuple(dataB.loc[:, db] for db in reversed(lbls_b)) + args
 
             # Compute the comparison
             c = comp_func(*tuple(args), **kwargs)
@@ -258,9 +262,12 @@ class Compare(object):
 
         :param s1: Series or DataFrame to compare all fields.
         :param s2: Series or DataFrame to compare all fields.
-        :param agree_value: The value when two records are identical. Default 1. If 'values' is passed, then the value of the record pair is passed.   
+        :param agree_value: The value when two records are identical.
+                Default 1. If 'values' is passed, then the value of the record
+                pair is passed.
         :param disagree_value: The value when two records are not identical.
-        :param missing_value: The value for a comparison with a missing value. Default 0.
+        :param missing_value: The value for a comparison with a missing value.
+                Default 0.
         :param name: The name of the feature and the name of the column.
         :param store: Store the result in the dataframe. Default True
 
@@ -286,14 +293,18 @@ class Compare(object):
         This method returns the similarity between two numeric values. The
         following algorithms can be used: 'step', 'linear' or 'squared'. These
         functions are defined on the interval (-threshold, threshold). In case
-        of agreement, the similarity is 1 and in case of complete disagreement it is
-        0. For linear and squared methods is also partial agreement possible.
+        of agreement, the similarity is 1 and in case of complete disagreement
+        it is 0. For linear and squared methods is also partial agreement
+        possible.
 
         :param s1: Series or DataFrame to compare all fields.
         :param s2: Series or DataFrame to compare all fields.
-        :param threshold: The threshold size. Can be a tuple with two values or a single number.
-        :param method: The metric used. Options 'step', 'linear' or 'squared'. Default 'step'.
-        :param missing_value: The value for a comparison with a missing value. Default 0.
+        :param threshold: The threshold size. Can be a tuple with two values
+                or a single number.
+        :param method: The metric used. Options 'step', 'linear' or 'squared'.
+                Default 'step'.
+        :param missing_value: The value for a comparison with a missing value.
+                Default 0.
         :param name: The name of the feature and the name of the column.
         :param store: Store the result in the dataframe. Default True
 
@@ -328,9 +339,14 @@ class Compare(object):
 
         :param s1: Series or DataFrame to compare all fields.
         :param s2: Series or DataFrame to compare all fields.
-        :param method: A approximate string comparison method. Options are ['jaro', 'jarowinkler', 'levenshtein', 'damerau_levenshtein', 'qgram', 'cosine']. Default: 'levenshtein'
-        :param threshold: A threshold value. All approximate string comparisons higher or equal than this threshold are 1. Otherwise 0. 
-        :param missing_value: The value for a comparison with a missing value. Default 0.
+        :param method: A approximate string comparison method. Options are
+                ['jaro', 'jarowinkler', 'levenshtein', 'damerau_levenshtein',
+                'qgram', 'cosine']. Default: 'levenshtein'
+        :param threshold: A threshold value. All approximate string
+                comparisons higher or equal than this threshold are 1.
+                Otherwise 0.
+        :param missing_value: The value for a comparison with a missing value.
+                Default 0.
         :param name: The name of the feature and the name of the column.
         :param store: Store the result in the dataframe. Default True
 
@@ -342,7 +358,8 @@ class Compare(object):
         :type name: label
         :type store: bool
 
-        :return: A Series with similarity values. Values equal or between 0 and 1.
+        :return: A Series with similarity values. Values equal or between 0
+                and 1.
         :rtype: pandas.Series
 
         .. note::
@@ -373,15 +390,18 @@ class Compare(object):
         """
         geo(lat1, lng1, lat2, lng2, threshold=None, method='step', missing_value=0, name=None, store=True)
 
-        [Experimental] Compare geometric WGS-coordinates with a tolerance window.
+        [Experimental] Compare geometric WGS-coordinates with a tolerance
+        [window.
 
         :param lat1: Series with Lat-coordinates
         :param lng1: Series with Lng-coordinates
         :param lat2: Series with Lat-coordinates
         :param lng2: Series with Lng-coordinates
-        :param threshold: The threshold size. Can be a tuple with two values or a single number.
+        :param threshold: The threshold size. Can be a tuple with two values
+                or a single number.
         :param method: The metric used. Options 'step', 'linear' or 'squared'.
-        :param missing_value: The value for a comparison with a missing value. Default 0.
+        :param missing_value: The value for a comparison with a missing value.
+                Default 0.
         :param name: The name of the feature and the name of the column.
         :param store: Store the result in the dataframe. Default True.
 
@@ -399,11 +419,18 @@ class Compare(object):
         :rtype: pandas.Series
         """
 
-        return self.compare(_geo_sim, (lat1, lng1), (lat2, lng2), *args, **kwargs)
+        return self.compare(
+            _geo_sim,
+            (lat1, lng1),
+            (lat2, lng2),
+            *args, **kwargs
+        )
 
 
 def _missing(*args):
-    """ Internal function to return the index of record pairs with missing values """
+    """
+    Internal function to return the index of record pairs with missing values
+    """
 
     return np.any(
         np.concatenate(
@@ -466,7 +493,9 @@ def _numeric_sim(s1, s2, threshold=None, method='step', missing_value=0):
     return d
 
 
-def _geo_sim(lat1, lng1, lat2, lng2, threshold=None, method='step', missing_value=0):
+def _geo_sim(
+        lat1, lng1, lat2, lng2,
+        threshold=None, method='step', missing_value=0):
 
     a = threshold
     b = 1 / threshold
@@ -526,10 +555,6 @@ def _string_sim(s1, s2, method='levenshtein', threshold=None, missing_value=0):
     return comp
 
 
-############ FUNCTIONS ##############
-
-############# DISTANCE ##############
-
 def _linear_distance(s1, s2, a=0, b=1):
 
     expr = 'abs(((s2-s1)-a)*b)'
@@ -570,7 +595,9 @@ def _haversine_distance(lat1, lng1, lat2, lng2):
     except ImportError:
         return pandas.eval(expr, engine='python')
 
-######### STRING SIMILARITY #########
+################################
+#      STRING SIMILARITY       #
+################################
 
 
 def jaro_similarity(s1, s2):
@@ -617,7 +644,8 @@ def levenshtein_similarity(s1, s2):
     def levenshtein_apply(x):
 
         try:
-            return 1 - jellyfish.levenshtein_distance(x[0], x[1]) / np.max([len(x[0]), len(x[1])])
+            return 1 - jellyfish.levenshtein_distance(x[0], x[1]) \
+                / np.max([len(x[0]), len(x[1])])
         except Exception:
             return np.nan
 
@@ -634,7 +662,8 @@ def damerau_levenshtein_similarity(s1, s2):
     def damerau_levenshtein_apply(x):
 
         try:
-            return 1 - jellyfish.damerau_levenshtein_distance(x[0], x[1]) / np.max([len(x[0]), len(x[1])])
+            return 1 - jellyfish.damerau_levenshtein_distance(x[0], x[1]) \
+                / np.max([len(x[0]), len(x[1])])
         except Exception:
             return np.nan
 
@@ -647,7 +676,7 @@ def qgram_similarity(s1, s2, include_wb=True, ngram=(2, 2)):
         raise ValueError('Arrays or Series have to be same length.')
 
     # include word boundaries or not
-    analyzer = 'char_wb' if include_wb == True else 'char'
+    analyzer = 'char_wb' if include_wb is True else 'char'
 
     # The vectorizer
     vectorizer = CountVectorizer(

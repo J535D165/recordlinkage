@@ -145,7 +145,10 @@ def precision(confusion_matrix):
     :rtype: float
     """
 
-    return float(confusion_matrix[0, 0] / (confusion_matrix[0, 0] + confusion_matrix[1, 0]))
+    v = confusion_matrix[0, 0] \
+        / (confusion_matrix[0, 0] + confusion_matrix[1, 0])
+
+    return float(v)
 
 
 def recall(confusion_matrix):
@@ -159,7 +162,10 @@ def recall(confusion_matrix):
     :rtype: float
     """
 
-    return float(confusion_matrix[0, 0] / (confusion_matrix[0, 0] + confusion_matrix[0, 1]))
+    v = confusion_matrix[0, 0] \
+        / (confusion_matrix[0, 0] + confusion_matrix[0, 1])
+
+    return float(v)
 
 
 def accuracy(confusion_matrix):
@@ -173,7 +179,10 @@ def accuracy(confusion_matrix):
     :rtype: float
     """
 
-    return float((confusion_matrix[0, 0] + confusion_matrix[1, 1]) / numpy.sum(confusion_matrix))
+    v = (confusion_matrix[0, 0] + confusion_matrix[1, 1]) \
+        / numpy.sum(confusion_matrix)
+
+    return float(v)
 
 
 def specificity(confusion_matrix):
@@ -187,7 +196,10 @@ def specificity(confusion_matrix):
     :rtype: float
     """
 
-    return float(confusion_matrix[1, 1] / (confusion_matrix[1, 1] + confusion_matrix[1, 0]))
+    v = confusion_matrix[1, 1] \
+        / (confusion_matrix[1, 1] + confusion_matrix[1, 0])
+
+    return float(v)
 
 
 def fscore(confusion_matrix):

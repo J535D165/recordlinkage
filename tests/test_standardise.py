@@ -2,7 +2,8 @@ import unittest
 
 import pandas.util.testing as pdt
 
-from recordlinkage.standardise import clean, phonenumbers, value_occurence, phonetic
+from recordlinkage.standardise import clean, phonenumbers, \
+    value_occurence, phonetic
 
 import numpy as np
 import pandas as pd
@@ -88,7 +89,8 @@ class TestEncodingStandardise(unittest.TestCase):
         values = pd.Series([np.nan, u'John', u'Mary Ann', u'billy',
                             u'Jonathan', u'Gretha', u'Micheal', u'Sjors'])
         expected = pd.Series(
-            [np.nan, u'J500', u'M650', u'B400', u'J535', u'G630', u'M240', u'S620'])
+            [np.nan, u'J500', u'M650', u'B400', u'J535',
+             u'G630', u'M240', u'S620'])
 
         phon = phonetic(values, 'soundex')
 
@@ -99,7 +101,8 @@ class TestEncodingStandardise(unittest.TestCase):
         values = pd.Series([np.nan, u'John', u'Mary Ann', u'billy',
                             u'Jonathan', u'Gretha', u'Micheal', u'Sjors'])
         expected = pd.Series(
-            [np.nan, u'JAN', u'MARYAN', u'BALY', u'JANATAN', u'GRAT', u'MACAL', u'SJAR'])
+            [np.nan, u'JAN', u'MARYAN', u'BALY', u'JANATAN',
+             u'GRAT', u'MACAL', u'SJAR'])
 
         phon = phonetic(values, 'nysiis')
 

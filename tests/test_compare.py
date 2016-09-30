@@ -196,8 +196,9 @@ class TestCompareAlgorithms(TestCompare):
 
         comp = recordlinkage.Compare(self.index_AB, self.A, self.A)
 
-        self.assertRaises(ValueError, comp.fuzzy, 'given_name',
-                          'given_name', name='y_name', method='unknown_algorithm')
+        self.assertRaises(
+            ValueError, comp.fuzzy, 'given_name',
+            'given_name', name='y_name', method='unknown_algorithm')
 
     def test_fuzzy_same_labels(self):
 
@@ -242,12 +243,12 @@ class TestCompareAlgorithms(TestCompare):
             # if alg == 'q_gram':
             #     rr
 
-    def test_batch_compare(self):
+    # def test_batch_compare(self):
 
-        comp = recordlinkage.Compare(self.index_AB, self.A, self.B)
+    #     comp = recordlinkage.Compare(self.index_AB, self.A, self.B)
 
-        # Missing values as 0
-        result = comp.exact('given_name', 'given_name',
-                            missing_value=0, name='y_name')
+    #     # Missing values as 0
+    #     result = comp.exact('given_name', 'given_name',
+    #                         missing_value=0, name='y_name')
 
         # pdt.assert_series_equal(result, expected)

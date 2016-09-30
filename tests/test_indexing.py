@@ -46,7 +46,9 @@ class TestIndexApi(unittest.TestCase):
         # index full
         pairs = index_cl.full()
         self.assertIsInstance(pairs, pd.MultiIndex)
-        self.assertEqual(A.index.name, None) # prevent that the index name is changed
+
+        # prevent that the index name is changed
+        self.assertEqual(A.index.name, None)
         self.assertEqual(B.index.name, None)
 
         # index block
@@ -425,11 +427,7 @@ class TestIndexApi(unittest.TestCase):
         self.assertEqual(len(pairs_single), n_pairs_iter)
 
         # Check is number of pairs is correct
-        self.assertEqual(n_pairs_iter, (len(dfA)-1)*len(dfA)/2)
-
-
-
-
+        self.assertEqual(n_pairs_iter, (len(dfA) - 1) * len(dfA) / 2)
 
 
 # nosetests tests/test_indexing.py:TestIndexAlgorithms
@@ -451,13 +449,18 @@ class TestIndexAlgorithms(unittest.TestCase):
 
         self.index = ['rec1', 'rec2', 'rec3', 'rec4', 'rec5']
 
-        self.fullindex_dedup = list(combinations_with_replacement(self.index, 2))
+        self.fullindex_dedup = list(
+            combinations_with_replacement(self.index, 2))
         self.fullindex = list(product(self.index, self.index))
 
     def test_full_index(self):
 
-        A = pd.DataFrame(self.data_A, index=pd.Index(self.index, name='index_a'))
-        B = pd.DataFrame(self.data_B, index=pd.Index(self.index, name='index_b'))
+        A = pd.DataFrame(
+            self.data_A,
+            index=pd.Index(self.index, name='index_a'))
+        B = pd.DataFrame(
+            self.data_B,
+            index=pd.Index(self.index, name='index_b'))
 
         # index full
         index_cl = recordlinkage.Pairs(A, B)
@@ -471,8 +474,10 @@ class TestIndexAlgorithms(unittest.TestCase):
 
     def test_block_index(self):
 
-        A = pd.DataFrame(self.data_A, index=pd.Index(self.index, name='index_a'))
-        B = pd.DataFrame(self.data_B, index=pd.Index(self.index, name='index_b'))
+        A = pd.DataFrame(self.data_A, index=pd.Index(
+            self.index, name='index_a'))
+        B = pd.DataFrame(self.data_B, index=pd.Index(
+            self.index, name='index_b'))
 
         # index block
         index_cl = recordlinkage.Pairs(A, B)
@@ -486,8 +491,10 @@ class TestIndexAlgorithms(unittest.TestCase):
 
     def test_sni_index(self):
 
-        A = pd.DataFrame(self.data_A, index=pd.Index(self.index, name='index_a'))
-        B = pd.DataFrame(self.data_B, index=pd.Index(self.index, name='index_b'))
+        A = pd.DataFrame(self.data_A, index=pd.Index(
+            self.index, name='index_a'))
+        B = pd.DataFrame(self.data_B, index=pd.Index(
+            self.index, name='index_b'))
 
         # index full
         index_cl = recordlinkage.Pairs(A, B)
@@ -497,12 +504,14 @@ class TestIndexAlgorithms(unittest.TestCase):
         self.assertTrue(pairs.is_unique)
 
         # Check is number of pairs is correct
-        self.assertTrue(len(pairs) <= len(A)*len(B))
+        self.assertTrue(len(pairs) <= len(A) * len(B))
 
     def test_random_index(self):
 
-        A = pd.DataFrame(self.data_A, index=pd.Index(self.index, name='index_a'))
-        B = pd.DataFrame(self.data_B, index=pd.Index(self.index, name='index_b'))
+        A = pd.DataFrame(self.data_A, index=pd.Index(
+            self.index, name='index_a'))
+        B = pd.DataFrame(self.data_B, index=pd.Index(
+            self.index, name='index_b'))
 
         # index block
         index_cl = recordlinkage.Pairs(A, B)
@@ -526,8 +535,10 @@ class TestIndexAlgorithms(unittest.TestCase):
 
     def test_qgram_index(self):
 
-        A = pd.DataFrame(self.data_A, index=pd.Index(self.index, name='index_a'))
-        B = pd.DataFrame(self.data_B, index=pd.Index(self.index, name='index_b'))
+        A = pd.DataFrame(self.data_A, index=pd.Index(
+            self.index, name='index_a'))
+        B = pd.DataFrame(self.data_B, index=pd.Index(
+            self.index, name='index_b'))
 
         # index block
         index_cl = recordlinkage.Pairs(A, B)
@@ -537,12 +548,14 @@ class TestIndexAlgorithms(unittest.TestCase):
         self.assertTrue(pairs.is_unique)
 
         # Check is number of pairs is correct
-        self.assertTrue(len(pairs) <= len(A)*len(B))
+        self.assertTrue(len(pairs) <= len(A) * len(B))
 
     def test_blocking_special_case_of_sorting(self):
 
-        A = pd.DataFrame(self.data_A, index=pd.Index(self.index, name='index_a'))
-        B = pd.DataFrame(self.data_B, index=pd.Index(self.index, name='index_b'))
+        A = pd.DataFrame(self.data_A, index=pd.Index(
+            self.index, name='index_a'))
+        B = pd.DataFrame(self.data_B, index=pd.Index(
+            self.index, name='index_b'))
 
         # index block
         index_cl = recordlinkage.Pairs(A, B)
@@ -551,8 +564,9 @@ class TestIndexAlgorithms(unittest.TestCase):
         sn = index_cl.sortedneighbourhood('name', window=1)
 
         print('The number of record pairs found with blocking', len(bl))
-        print('The number of record pairs found with sorted neighbourhood indexing', len(sn))
-       
+        print("The number of record pairs found with sorted " +
+              "neighbourhood indexing", len(sn))
+
         # The length of the union should be the same as the length of bl or sn.
         self.assertEqual(len(bl), len(sn))
 
@@ -568,7 +582,7 @@ class TestIndexOnDatasets(unittest.TestCase):
     def test_reduction_ratio(self):
 
         index = recordlinkage.Pairs(self.A, self.B)
-        pairs = index.full()
+        index.full()
 
         rr = index.reduction
 

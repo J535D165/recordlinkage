@@ -35,15 +35,18 @@ class Classifier(object):
         argument can be used to label the matches (1) and non-matches (0).
 
         :param comparison_vectors: The dataframe with comparison vectors.
-        :param return_type: The format to return the classification result. The argument value
-                'index' will return the pandas.MultiIndex of the matches. The argument value 'series'
-                will return a pandas.Series with zeros (distinct) and ones (matches). The argument
-                value 'array' will return a numpy.ndarray with zeros and ones.
+        :param return_type: The format to return the classification result.
+                The argument value 'index' will return the pandas.MultiIndex
+                of the matches. The argument value 'series' will return a
+                pandas.Series with zeros (distinct) and ones (matches). The
+                argument value 'array' will return a numpy.ndarray with zeros
+                and ones.
 
         :type comparison_vectors: pandas.DataFrame
         :type return_type: 'index' (default), 'series', 'array'
 
-        :return: A pandas Series with the labels 1 (for the matches) and 0 (for the non-matches).
+        :return: A pandas Series with the labels 1 (for the matches) and 0
+                        (for the non-matches).
         :rtype: pandas.Series
 
         """
@@ -59,15 +62,18 @@ class Classifier(object):
         trained to call this method.
 
         :param comparison_vectors: The dataframe with comparison vectors.
-        :param return_type: The format to return the classification result. The argument value
-                'index' will return the pandas.MultiIndex of the matches. The argument value 'series'
-                will return a pandas.Series with zeros (distinct) and ones (matches). The argument
-                value 'array' will return a numpy.ndarray with zeros and ones.
+        :param return_type: The format to return the classification result.
+                The argument value 'index' will return the pandas.MultiIndex
+                of the matches. The argument value 'series' will return a
+                pandas.Series with zeros (distinct) and ones (matches). The
+                argument value 'array' will return a numpy.ndarray with zeros
+                and ones.
 
         :type comparison_vectors: pandas.DataFrame
         :type return_type: 'index' (default), 'series', 'array'
 
-        :return: A pandas Series with the labels 1 (for the matches) and 0 (for the non-matches).
+        :return: A pandas Series with the labels 1 (for the matches) and 0
+                        (for the non-matches).
         :rtype: pandas.Series
 
         """
@@ -88,14 +94,17 @@ class Classifier(object):
         :param comparison_vectors: The dataframe with comparison vectors.
         :type comparison_vectors: pandas.DataFrame
 
-        :return: A pandas Series with pandas.MultiIndex with the probability of being a match.
+        :return: A pandas Series with pandas.MultiIndex with the probability
+                of being a match.
         :rtype: pandas.Series
         """
 
         raise NotImplementedError(
             "Class {} has no method 'prob()' ".format(self.__name__))
 
-    def _return_result(self, result, return_type='index', comparison_vectors=None):
+    def _return_result(
+        self, result, return_type='index', comparison_vectors=None
+    ):
         """
 
         Internal function to return different formatted classification
@@ -112,7 +121,10 @@ class Classifier(object):
 
         # return a pandas.Series
         elif return_type == 'series':
-            return pandas.Series(result, index=comparison_vectors.index, name='classification')
+            return pandas.Series(
+                result,
+                index=comparison_vectors.index,
+                name='classification')
 
         # return a numpy.ndarray
         elif return_type == 'array':
@@ -121,7 +133,8 @@ class Classifier(object):
         # return_type not known
         else:
             raise ValueError(
-                "return_type {} unknown. Choose 'index', 'series' or 'array'".format(return_type))
+                "return_type {} unknown. Choose 'index', 'series' or" +
+                " 'array'".format(return_type))
 
 
 class KMeansClassifier(Classifier):
@@ -133,8 +146,9 @@ class KMeansClassifier(Classifier):
 
     .. note::
 
-            There are way better methods for linking records than the k-means clustering algorithm.
-            However, this algorithm does not need trainings data and is useful to do an initial guess.
+            There are way better methods for linking records than the k-means
+            clustering algorithm. However, this algorithm does not need
+            trainings data and is useful to do an initial guess.
 
     """
 
@@ -153,10 +167,12 @@ class KMeansClassifier(Classifier):
         matches.
 
         :param comparison_vectors: The dataframe with comparison vectors.
-        :param return_type: The format to return the classification result. The argument value
-                'index' will return the pandas.MultiIndex of the matches. The argument value 'series'
-                will return a pandas.Series with zeros (distinct) and ones (matches). The argument
-                value 'array' will return a numpy.ndarray with zeros and ones.
+        :param return_type: The format to return the classification result.
+                The argument value 'index' will return the pandas.MultiIndex
+                of the matches. The argument value 'series' will return a
+                pandas.Series with zeros (distinct) and ones (matches). The
+                argument value 'array' will return a numpy.ndarray with zeros
+                and ones.
 
         :type comparison_vectors: pandas.DataFrame
         :type return_type: 'index' (default), 'series', 'array'
@@ -167,8 +183,10 @@ class KMeansClassifier(Classifier):
         """
 
         # Set the start point of the classifier.
-        self.classifier.init = numpy.array(
-            [[0.05] * len(list(comparison_vectors)), [0.95] * len(list(comparison_vectors))])
+        self.classifier.init = numpy.array([
+            [0.05] * len(list(comparison_vectors)),
+            [0.95] * len(list(comparison_vectors))
+        ])
 
         # Fit and predict
         prediction = self.classifier.fit_predict(
@@ -183,10 +201,12 @@ class KMeansClassifier(Classifier):
         comparison vectors for which the class is unknown.
 
         :param comparison_vectors: The dataframe with comparison vectors.
-        :param return_type: The format to return the classification result. The argument value
-                'index' will return the pandas.MultiIndex of the matches. The argument value 'series'
-                will return a pandas.Series with zeros (distinct) and ones (matches). The argument
-                value 'array' will return a numpy.ndarray with zeros and ones.
+        :param return_type: The format to return the classification result.
+                The argument value 'index' will return the pandas.MultiIndex
+                of the matches. The argument value 'series' will return a
+                pandas.Series with zeros (distinct) and ones (matches). The
+                argument value 'array' will return a numpy.ndarray with zeros
+                and ones.
 
         :type comparison_vectors: pandas.DataFrame
         :type return_type: 'index' (default), 'series', 'array'
@@ -235,7 +255,8 @@ class LogisticRegressionClassifier(Classifier):
 
     @property
     def coefficients(self):
-        return self.classifier_.coef_ if hasattr(logreg.classifier_, 'coef_') else None
+        return self.classifier_.coef_ if hasattr(logreg.classifier_, 'coef_') \
+            else None
 
     @property
     def intercept(self):
@@ -269,15 +290,17 @@ class LogisticRegressionClassifier(Classifier):
         Train the Logistic Regression classifier.
 
         :param comparison_vectors: The dataframe with comparison vectors.
-        :param return_type: The format to return the classification result. The argument value
-                'index' will return the pandas.MultiIndex of the matches. The argument value 'series'
-                will return a pandas.Series with zeros (distinct) and ones (matches). The argument
-                value 'array' will return a numpy.ndarray with zeros and ones.
-
+        :param return_type: The format to return the classification result.
+                The argument value 'index' will return the pandas.MultiIndex
+                of the matches. The argument value 'series' will return a
+                pandas.Series with zeros (distinct) and ones (matches). The
+                argument value 'array' will return a numpy.ndarray with zeros
+                and ones.
         :type comparison_vectors: pandas.DataFrame
         :type return_type: 'index' (default), 'series', 'array'
 
-        :return: A pandas Series with the labels 1 (for the matches) and 0 (for the non-matches).
+        :return: A pandas Series with the labels 1 (for the matches) and 0
+                (for the non-matches).
         :rtype: pandas.Series
 
         """
@@ -297,15 +320,17 @@ class LogisticRegressionClassifier(Classifier):
         trained to call this method.
 
         :param comparison_vectors: The dataframe with comparison vectors.
-        :param return_type: The format to return the classification result. The argument value
-                'index' will return the pandas.MultiIndex of the matches. The argument value 'series'
-                will return a pandas.Series with zeros (distinct) and ones (matches). The argument
-                value 'array' will return a numpy.ndarray with zeros and ones.
-
+        :param return_type: The format to return the classification result.
+                The argument value 'index' will return the pandas.MultiIndex
+                of the matches. The argument value 'series' will return a
+                pandas.Series with zeros (distinct) and ones (matches). The
+                argument value 'array' will return a numpy.ndarray with zeros
+                and ones.
         :type comparison_vectors: pandas.DataFrame
         :type return_type: 'index' (default), 'series', 'array'
 
-        :return: A pandas Series with the labels 1 (for the matches) and 0 (for the non-matches).
+        :return: A pandas Series with the labels 1 (for the matches) and 0
+                (for the non-matches).
         :rtype: pandas.Series
 
         """
@@ -326,7 +351,8 @@ class LogisticRegressionClassifier(Classifier):
         :param comparison_vectors: The dataframe with comparison vectors.
         :type comparison_vectors: pandas.DataFrame
 
-        :return: A pandas Series with pandas.MultiIndex with the probability of being a match.
+        :return: A pandas Series with pandas.MultiIndex with the probability
+                of being a match.
         :rtype: pandas.Series
         """
         probs = self.classifier_.predict_proba(comparison_vectors.as_matrix())
@@ -341,7 +367,8 @@ class LogisticRegressionClassifier(Classifier):
         record pairs.
 
         :param coefficients: The coefficients of logistic regression
-        :param intercept: The interception value (matches are positive and non-matches negative)
+        :param intercept: The interception value (matches are positive and
+                non-matches negative)
 
         :type coefficients: numpy.array, list
         :type coefficients:
@@ -356,15 +383,17 @@ class LogisticRegressionClassifier(Classifier):
 def BernoulliNBClassifier(*args, **kwargs):
 
     raise DeprecationWarning(
-        "This class is renamed. Use NaiveBayesClassifier instead of BernoulliNBClassifier.")
+        "This class is renamed. Use NaiveBayesClassifier instead of" +
+        " BernoulliNBClassifier."
+    )
 
 
 class NaiveBayesClassifier(Classifier):
     """
     NaiveBayesClassifier()
 
-    Bernoulli Naive Bayes classifier to classify the given record pairs into matches and non-
-    matches.
+    Bernoulli Naive Bayes classifier to classify the given record pairs into
+    matches and non- matches.
 
     """
 
@@ -379,15 +408,17 @@ class NaiveBayesClassifier(Classifier):
         Train the Bernoulli Naive Bayes classifier.
 
         :param comparison_vectors: The dataframe with comparison vectors.
-        :param return_type: The format to return the classification result. The argument value
-                'index' will return the pandas.MultiIndex of the matches. The argument value 'series'
-                will return a pandas.Series with zeros (distinct) and ones (matches). The argument
-                value 'array' will return a numpy.ndarray with zeros and ones.
-
+        :param return_type: The format to return the classification result.
+                The argument value 'index' will return the pandas.MultiIndex
+                of the matches. The argument value 'series' will return a
+                pandas.Series with zeros (distinct) and ones (matches). The
+                argument value 'array' will return a numpy.ndarray with zeros
+                and ones.
         :type comparison_vectors: pandas.DataFrame
         :type return_type: 'index' (default), 'series', 'array'
 
-        :return: A pandas Series with the labels 1 (for the matches) and 0 (for the non-matches).
+        :return: A pandas Series with the labels 1 (for the matches) and 0
+                (for the non-matches).
         :rtype: pandas.Series
 
         """
@@ -402,19 +433,22 @@ class NaiveBayesClassifier(Classifier):
     def predict(self, comparison_vectors, return_type='index'):
         """
 
-        Classify a set of record pairs based on their comparison vectors into matches, non-matches
-        and possible matches. The classifier has to be trained to call this method.
+        Classify a set of record pairs based on their comparison vectors into
+        matches, non-matches and possible matches. The classifier has to be
+        trained to call this method.
 
         :param comparison_vectors: The dataframe with comparison vectors.
-        :param return_type: The format to return the classification result. The argument value
-                'index' will return the pandas.MultiIndex of the matches. The argument value 'series'
-                will return a pandas.Series with zeros (distinct) and ones (matches). The argument
-                value 'array' will return a numpy.ndarray with zeros and ones.
-
+        :param return_type: The format to return the classification result.
+                The argument value 'index' will return the pandas.MultiIndex
+                of the matches. The argument value 'series' will return a
+                pandas.Series with zeros (distinct) and ones (matches). The
+                argument value 'array' will return a numpy.ndarray with zeros
+                and ones.
         :type comparison_vectors: pandas.DataFrame
         :type return_type: 'index' (default), 'series', 'array'
 
-        :return: A pandas Series with the labels 1 (for the matches) and 0 (for the non-matches).
+        :return: A pandas Series with the labels 1 (for the matches) and 0
+                (for the non-matches).
         :rtype: pandas.Series
 
         """
@@ -435,7 +469,8 @@ class NaiveBayesClassifier(Classifier):
         :param comparison_vectors: The dataframe with comparison vectors.
         :type comparison_vectors: pandas.DataFrame
 
-        :return: A pandas Series with pandas.MultiIndex with the probability of being a match.
+        :return: A pandas Series with pandas.MultiIndex with the probability
+                of being a match.
         :rtype: pandas.Series
         """
 
@@ -464,15 +499,17 @@ class SVMClassifier(Classifier):
         Train the SVM classifier.
 
         :param comparison_vectors: The dataframe with comparison vectors.
-        :param return_type: The format to return the classification result. The argument value
-                'index' will return the pandas.MultiIndex of the matches. The argument value 'series'
-                will return a pandas.Series with zeros (distinct) and ones (matches). The argument
-                value 'array' will return a numpy.ndarray with zeros and ones.
-
+        :param return_type: The format to return the classification result.
+                The argument value 'index' will return the pandas.MultiIndex
+                of the matches. The argument value 'series' will return a
+                pandas.Series with zeros (distinct) and ones (matches). The
+                argument value 'array' will return a numpy.ndarray with zeros
+                and ones.
         :type comparison_vectors: pandas.DataFrame
         :type return_type: 'index' (default), 'series', 'array'
 
-        :return: A pandas Series with the labels 1 (for the matches) and 0 (for the non-matches).
+        :return: A pandas Series with the labels 1 (for the matches) and 0
+                (for the non-matches).
         :rtype: pandas.Series
 
         """
@@ -492,15 +529,17 @@ class SVMClassifier(Classifier):
         trained to call this method.
 
         :param comparison_vectors: The dataframe with comparison vectors.
-        :param return_type: The format to return the classification result. The argument value
-                'index' will return the pandas.MultiIndex of the matches. The argument value 'series'
-                will return a pandas.Series with zeros (distinct) and ones (matches). The argument
-                value 'array' will return a numpy.ndarray with zeros and ones.
-
+        :param return_type: The format to return the classification result.
+                The argument value 'index' will return the pandas.MultiIndex
+                of the matches. The argument value 'series' will return a
+                pandas.Series with zeros (distinct) and ones (matches). The
+                argument value 'array' will return a numpy.ndarray with zeros
+                and ones.
         :type comparison_vectors: pandas.DataFrame
         :type return_type: 'index' (default), 'series', 'array'
 
-        :return: A pandas Series with the labels 1 (for the matches) and 0 (for the non-matches).
+        :return: A pandas Series with the labels 1 (for the matches) and 0
+                (for the non-matches).
         :rtype: pandas.Series
 
         """
@@ -579,17 +618,20 @@ class ECMClassifier(FellegiSunter):
         linkage.
 
         :param comparison_vectors: The dataframe with comparison vectors.
-        :param params_init: A dictionary with initial parameters of the ECM algorithm (optional).
-        :param return_type: The format to return the classification result. The argument value
-                'index' will return the pandas.MultiIndex of the matches. The argument value 'series'
-                will return a pandas.Series with zeros (distinct) and ones (matches). The argument
-                value 'array' will return a numpy.ndarray with zeros and ones.
-
+        :param params_init: A dictionary with initial parameters of the ECM
+                algorithm (optional).
+        :param return_type: The format to return the classification result.
+                The argument value 'index' will return the pandas.MultiIndex
+                of the matches. The argument value 'series' will return a
+                pandas.Series with zeros (distinct) and ones (matches). The
+                argument value 'array' will return a numpy.ndarray with zeros
+                and ones.
         :type comparison_vectors: pandas.DataFrame
         :type params_init: dict
         :type return_type: 'index' (default), 'series', 'array'
 
-        :return: A pandas Series with the labels 1 (for the matches) and 0 (for the non-matches).
+        :return: A pandas Series with the labels 1 (for the matches) and 0
+                (for the non-matches).
         :rtype: pandas.Series
 
         """
@@ -611,15 +653,17 @@ class ECMClassifier(FellegiSunter):
         trained to call this method.
 
         :param comparison_vectors: The dataframe with comparison vectors.
-        :param return_type: The format to return the classification result. The argument value
-                'index' will return the pandas.MultiIndex of the matches. The argument value 'series'
-                will return a pandas.Series with zeros (distinct) and ones (matches). The argument
-                value 'array' will return a numpy.ndarray with zeros and ones.
-
+        :param return_type: The format to return the classification result.
+                The argument value 'index' will return the pandas.MultiIndex
+                of the matches. The argument value 'series' will return a
+                pandas.Series with zeros (distinct) and ones (matches). The
+                argument value 'array' will return a numpy.ndarray with zeros
+                and ones.
         :type comparison_vectors: pandas.DataFrame
         :type return_type: 'index' (default), 'series', 'array'
 
-        :return: A pandas Series with the labels 1 (for the matches) and 0 (for the non-matches).
+        :return: A pandas Series with the labels 1 (for the matches) and 0
+                (for the non-matches).
         :rtype: pandas.Series
 
         .. note::
@@ -652,7 +696,8 @@ class ECMClassifier(FellegiSunter):
         :param comparison_vectors: The dataframe with comparison vectors.
         :type comparison_vectors: pandas.DataFrame
 
-        :return: A pandas Series with pandas.MultiIndex with the probability of being a match.
+        :return: A pandas Series with pandas.MultiIndex with the probability
+                of being a match.
         :rtype: pandas.Series
         """
 

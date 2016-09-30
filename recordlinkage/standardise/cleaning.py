@@ -1,11 +1,14 @@
 from __future__ import division
 from __future__ import absolute_import
 
-import unicodedata
-import itertools
+# import unicodedata
+# import itertools
 
 
-def clean(s, lower=True, replace_by_none='[^ \-\_A-Za-z0-9]+', replace_by_whitespace='[\-\_]', remove_accents=True, remove_brackets=True):
+def clean(
+    s, lower=True, replace_by_none='[^ \-\_A-Za-z0-9]+',
+    replace_by_whitespace='[\-\_]', remove_accents=True, remove_brackets=True
+):
     """
 
     Clean strings in the Series by removing unwanted tokens, whitespace and
@@ -13,9 +16,12 @@ def clean(s, lower=True, replace_by_none='[^ \-\_A-Za-z0-9]+', replace_by_whites
 
     :param s: A Series to clean.
     :param lower: Convert strings in the Series to lowercase. Default True.
-    :param replace_by_none: The matches of this regular expression are replaced by ''.
-    :param replace_by_whitespace: The matches of this regular expression are replaced by a whitespace.
-    :param remove_brackets: Remove all content between brackets and the brackets themselves. Default True.
+    :param replace_by_none: The matches of this regular expression are
+            replaced by ''.
+    :param replace_by_whitespace: The matches of this regular expression are
+            replaced by a whitespace.
+    :param remove_brackets: Remove all content between brackets and the
+            brackets themselves. Default True.
 
     :type s: pandas.Series
     :type lower: bool
@@ -33,7 +39,9 @@ def clean(s, lower=True, replace_by_none='[^ \-\_A-Za-z0-9]+', replace_by_whites
         >>> import pandas
         >>> from recordlinkage.standardise import clean
 
-        >>> s = pandas.Series(['Mary-ann', 'Bob :)', 'Angel', 'Bob (alias Billy)', None])
+        >>> name = ['Mary-ann', 'Bob :)', 'Angel', 'Bob (alias Billy)', None]
+        >>> s = pandas.Series(names)
+
         >>> print(clean(s))
 
         0    mary ann
@@ -48,7 +56,9 @@ def clean(s, lower=True, replace_by_none='[^ \-\_A-Za-z0-9]+', replace_by_whites
 
     # # Remove accents etc
     # if remove_accents:
-    #     s = s.map(lambda x: ''.join(c for c in unicodedata.normalize('NFD', x) if unicodedata.category(c) != 'Mn'))
+    #     s = s.map(lambda x: \
+    #     ''.join(c for c in unicodedata.normalize('NFD', x)
+    #     if unicodedata.category(c) != 'Mn'))
 
     # Lower s if lower is True
     if lower:

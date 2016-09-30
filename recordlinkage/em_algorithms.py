@@ -2,17 +2,12 @@
 # futures
 from __future__ import division
 
-# defaults
-import time
-import copy
-
 from itertools import groupby
 
 # external
-import pandas as pd
 import numpy
 
-from scipy.sparse import hstack, vstack
+from scipy.sparse import hstack
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 
 
@@ -65,9 +60,11 @@ class ECMEstimate(EMEstimate):
         if isinstance(self.init, (list, numpy.ndarray)):
             try:
                 self._m = numpy.array(
-                    [self.m[cl][f] for cl, f in zip(self._classes, self._features)])
+                    [self.m[cl][f]
+                     for cl, f in zip(self._classes, self._features)])
                 self._u = numpy.array(
-                    [self.u[cl][f] for cl, f in zip(self._classes, self._features)])
+                    [self.u[cl][f]
+                     for cl, f in zip(self._classes, self._features)])
                 self._p = self.p
             except Exception:
                 raise ValueError("The parameters m and/or u are not correct. ")
@@ -77,7 +74,8 @@ class ECMEstimate(EMEstimate):
 
             if numpy.all(numpy.in1d(self._features, [0, 1])):
                 raise ValueError(
-                    "To use 'jaro' for start point estimation, the feature values must be valued 1 or 0. ")
+                    "To use 'jaro' for start point estimation, " +
+                    "the feature values must be valued 1 or 0. ")
 
             self._m = 0.1 + 0.8 * self._classes
             self._u = 0.9 - 0.8 * self._classes

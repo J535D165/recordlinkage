@@ -16,7 +16,11 @@ def check_index_names(func):
     @wraps(func)
     def index_name_checker(df_a, df_b, *args, **kwargs):
 
-        if df_a.index.name is None or df_b.index.name is None or (df_a.index.name == df_b.index.name) or (df_a.index.name in df_a.columns.tolist()) or (df_b.index.name in df_b.columns.tolist()):
+        if (df_a.index.name is None or
+                df_b.index.name is None or
+                df_a.index.name is df_b.index.name or
+                df_a.index.name in df_a.columns.tolist() or
+                df_b.index.name in df_b.columns.tolist()):
 
             df_a_index_name = df_a.index.name
             df_b_index_name = df_b.index.name
@@ -127,7 +131,9 @@ def _blockindex(df_a, df_b, on=None, left_on=None, right_on=None):
 
 
 @check_index_names
-def _sortedneighbourhood(df_a, df_b, column, window=3, sorting_key_values=None, block_on=[], block_left_on=[], block_right_on=[]):
+def _sortedneighbourhood(
+        df_a, df_b, column, window=3, sorting_key_values=None,
+        block_on=[], block_left_on=[], block_right_on=[]):
 
     # Check if window is an odd number
     if not bool(window % 2):
@@ -161,10 +167,15 @@ def _sortedneighbourhood(df_a, df_b, column, window=3, sorting_key_values=None, 
     data_dict_B = {kl: df_b[kl] for kl in keys_right}
 
     sorted_df_A = pandas.DataFrame(
-        merge_dicts(data_dict_A, {column: df_a[column].replace(
-        sorting_key_values, sorting_key_factors), df_a.index.name: df_a.index.values}))
-    sorted_df_B = pandas.DataFrame({column: df_b[column].replace(
-        sorting_key_values, sorting_key_factors), df_b.index.name: df_b.index.values})
+        merge_dicts(
+            data_dict_A,
+            {column: df_a[column].replace(
+                sorting_key_values, sorting_key_factors),
+             df_a.index.name: df_a.index.values}))
+    sorted_df_B = pandas.DataFrame(
+        {column: df_b[column].replace(
+            sorting_key_values, sorting_key_factors),
+            df_b.index.name: df_b.index.values})
 
     pairs_concat = None
 
@@ -275,12 +286,6 @@ class Pairs(object):
             self.df_b = df_b
             self.deduplication = False
 
-            # if self.df_a.index.name == None or self.df_b.index.name == None:
-            # 	raise IndexError('DataFrame has no index name.')
-
-            # if self.df_a.index.name == self.df_b.index.name:
-            # 	raise IndexError("Identical index name '{}' for both dataframes.".format(self.df_a.index.name))
-
             if not self.df_a.index.is_unique or not self.df_b.index.is_unique:
                 raise IndexError('DataFrame index is not unique.')
 
@@ -289,7 +294,7 @@ class Pairs(object):
             self.deduplication = True
 
             # if self.df_a.index.name == None:
-            # 	raise IndexError('DataFrame has no index name.')
+            #   raise IndexError('DataFrame has no index name.')
 
             if not self.df_a.index.is_unique:
                 raise IndexError('DataFrame index is not unique.')
@@ -345,9 +350,12 @@ class Pairs(object):
         Return all record pairs that agree on the passed attribute(s). This
         method is known as *blocking*
 
-        :param on: A column name or a list of column names. These columns are used to block on
-        :param left_on: A column name or a list of column names of dataframe A. These columns are used to block on
-        :param right_on: A column name or a list of column names of dataframe B. These columns are used to block on
+        :param on: A column name or a list of column names. These columns are
+                used to block on.
+        :param left_on: A column name or a list of column names of dataframe
+                A. These columns are used to block on.
+        :param right_on: A column name or a list of column names of dataframe
+                B. These columns are used to block on.
 
         :type on: label
         :type left_on: label
@@ -368,8 +376,10 @@ class Pairs(object):
         :param window: The width of the window, default is 3
         :param sorting_key_values: A list of sorting key values (optional).
         :param block_on: Additional columns to use standard blocking on
-        :param block_left_on: Additional columns in the left dataframe to use standard blocking on
-        :param block_right_on: Additional columns in the right dataframe to use standard blocking on
+        :param block_left_on: Additional columns in the left dataframe to use
+                standard blocking on
+        :param block_right_on: Additional columns in the right dataframe to
+                use standard blocking on
 
         :type on: label
         :type window: int
@@ -404,10 +414,14 @@ class Pairs(object):
 
         Use Q-gram string comparing metric to make an index.
 
-        :param on: A column name or a list of column names. These columns are used to index on
-        :param left_on: A column name or a list of column names of dataframe A. These columns are used to index on
-        :param right_on: A column name or a list of column names of dataframe B. These columns are used to index on
-        :param threshold: Record pairs with a similarity above the threshold are candidate record pairs. [Default 0.8]
+        :param on: A column name or a list of column names. These columns are
+                used to index on
+        :param left_on: A column name or a list of column names of dataframe
+                A. These columns are used to index on
+        :param right_on: A column name or a list of column names of dataframe
+                B. These columns are used to index on
+        :param threshold: Record pairs with a similarity above the threshold
+                are candidate record pairs. [Default 0.8]
 
         :type on: label
         :type left_on: label
@@ -435,9 +449,9 @@ class Pairs(object):
 
         :param index_func: A user defined indexing function.
         :param chunks: The number of records used to split up the data. First
-                                arugment of the tuple is the number of records in
-                                DataFrame 1 and the second argument is the number of records
-                                in DataFrame 2 (or 1 in case of deduplication)
+            arugment of the tuple is the number of records in DataFrame 1 and
+            the second argument is the number of records in DataFrame 2 (or 1
+            in case of deduplication)
 
         :type index_func: function
         :type chunks: tuple, int
@@ -500,7 +514,9 @@ class Pairs(object):
             len_block_b = len_block_b if len_block_b else len(self.df_a)
             len_b = len(self.df_a)
 
-        return [(a, b, a + len_block_a, b + len_block_b) for a in numpy.arange(0, len_a, len_block_a) for b in numpy.arange(0, len_b, len_block_b)]
+        return [(a, b, a + len_block_a, b + len_block_b)
+                for a in numpy.arange(0, len_a, len_block_a)
+                for b in numpy.arange(0, len_b, len_block_b)]
 
     @property
     def reduction(self):
