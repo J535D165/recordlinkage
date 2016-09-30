@@ -1,17 +1,15 @@
 from __future__ import division
 from __future__ import absolute_import
 
-import logging
 import unicodedata
 import itertools
-
-import numpy as np
-import pandas as pd
 
 
 def clean(s, lower=True, replace_by_none='[^ \-\_A-Za-z0-9]+', replace_by_whitespace='[\-\_]', remove_accents=True, remove_brackets=True):
     """
-    Clean strings in the Series by removing unwanted tokens, whitespace and brackets.
+
+    Clean strings in the Series by removing unwanted tokens, whitespace and
+    brackets.
 
     :param s: A Series to clean.
     :param lower: Convert strings in the Series to lowercase. Default True.
@@ -29,7 +27,7 @@ def clean(s, lower=True, replace_by_none='[^ \-\_A-Za-z0-9]+', replace_by_whites
     :rtype: pandas.Series
 
     Example:
-    
+
     .. code:: python
 
         >>> import pandas
@@ -75,9 +73,11 @@ def clean(s, lower=True, replace_by_none='[^ \-\_A-Za-z0-9]+', replace_by_whites
 
     return s
 
+
 def phonenumbers(s):
-    """ 
-    Clean phonenumbers by removing all non-numbers (except +). 
+    """
+
+    Clean phonenumbers by removing all non-numbers (except +).
 
     :param s: A Series to clean.
     :type s: pandas.Series
@@ -91,9 +91,14 @@ def phonenumbers(s):
 
     return s
 
+
 def value_occurence(s):
     """
-    Count the number of times each value occurs. This function returns the values for each row, in contrast with `pandas.value_counts <http://pandas.pydata.org/pandas-docs/stable/generated/pandas.Series.value_counts.html>`_. 
+
+    Count the number of times each value occurs. This function returns the
+    values for each row, in contrast with `pandas.value_counts
+    <http://pandas.pydata.org/pandas-
+    docs/stable/generated/pandas.Series.value_counts.html>`_.
 
     :return: A Series with value counts.
     :rtype: pandas.Series

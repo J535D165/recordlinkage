@@ -1,12 +1,9 @@
 import unittest
 
-import pandas.util.testing as pdt
 
 import recordlinkage
 from recordlinkage.datasets import generate
 
-import numpy as np
-import pandas as pd
 
 class TestClassify(unittest.TestCase):
 
@@ -69,4 +66,4 @@ class TestClassify(unittest.TestCase):
         ecm.predict(y.round())
         ecm.prob(y.round())
 
-        self.assertTrue(ecm.p != None)
+        self.assertTrue(ecm.p is not None)

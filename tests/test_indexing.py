@@ -2,9 +2,8 @@ from __future__ import print_function
 
 import unittest
 
-from itertools import combinations_with_replacement, combinations, product
+from itertools import combinations_with_replacement, product
 
-import pandas.util.testing as pdt
 import recordlinkage
 import numpy as np
 import pandas as pd
@@ -17,6 +16,7 @@ df_large_numeric_1.index.name = None
 df_large_numeric_2 = pd.DataFrame(np.arange(1000))
 df_large_numeric_2.index.name = None
 
+
 # nosetests tests/test_indexing.py:TestIndexApi
 class TestIndexApi(unittest.TestCase):
 
@@ -24,17 +24,17 @@ class TestIndexApi(unittest.TestCase):
     def setUpClass(self):
 
         self.data_A = {
-            'name':['Bob', 'Anne', 'Micheal', 'Charly B', 'Ana'],
+            'name': ['Bob', 'Anne', 'Micheal', 'Charly B', 'Ana'],
             'age': [40, 45, 69, 90, 70],
             'hometown': ['town 1', 'town 1', 'town 1', 'town 3', 'town 1']
-            }
+        }
         self.data_B = {
-            'name':['Bob', 'Anne', 'Micheal', 'Charly', 'Ana'],
+            'name': ['Bob', 'Anne', 'Micheal', 'Charly', 'Ana'],
             'age': [40, 45, 68, 89, 70],
             'hometown': ['town 1', 'town 1', 'town 2', 'town 3', 'town 1']
-            }
+        }
 
-        self.index = ['rec1','rec2','rec3', 'rec4', 'rec5']
+        self.index = ['rec1', 'rec2', 'rec3', 'rec4', 'rec5']
 
     def test_instance(self):
 
@@ -101,28 +101,28 @@ class TestIndexApi(unittest.TestCase):
         self.assertEqual(A.index.name, 'left')
         self.assertEqual(B.index.name, 'right')
 
-        # index sni 
+        # index sni
         index_cl = recordlinkage.Pairs(A, B)
         pairs = index_cl.sortedneighbourhood('name')
         self.assertEqual(pairs.names, ['left', 'right'])
         self.assertEqual(A.index.name, 'left')
         self.assertEqual(B.index.name, 'right')
 
-        # index eye 
+        # index eye
         index_cl = recordlinkage.Pairs(A, B)
         pairs = index_cl.eye()
         self.assertEqual(pairs.names, ['left', 'right'])
         self.assertEqual(A.index.name, 'left')
         self.assertEqual(B.index.name, 'right')
 
-        # index random 
+        # index random
         index_cl = recordlinkage.Pairs(A, B)
         pairs = index_cl.random(3)
         self.assertEqual(pairs.names, ['left', 'right'])
         self.assertEqual(A.index.name, 'left')
         self.assertEqual(B.index.name, 'right')
 
-        # index qgram 
+        # index qgram
         index_cl = recordlinkage.Pairs(A, B)
         pairs = index_cl.qgram('name')
         self.assertEqual(pairs.names, ['left', 'right'])
@@ -151,28 +151,28 @@ class TestIndexApi(unittest.TestCase):
         self.assertEqual(A.index.name, 'leftright')
         self.assertEqual(B.index.name, 'leftright')
 
-        # index sni 
+        # index sni
         index_cl = recordlinkage.Pairs(A, B)
         pairs = index_cl.sortedneighbourhood('name')
         self.assertEqual(pairs.names, ['leftright', 'leftright'])
         self.assertEqual(A.index.name, 'leftright')
         self.assertEqual(B.index.name, 'leftright')
 
-        # index eye 
+        # index eye
         index_cl = recordlinkage.Pairs(A, B)
         pairs = index_cl.eye()
         self.assertEqual(pairs.names, ['leftright', 'leftright'])
         self.assertEqual(A.index.name, 'leftright')
         self.assertEqual(B.index.name, 'leftright')
 
-        # index random 
+        # index random
         index_cl = recordlinkage.Pairs(A, B)
         pairs = index_cl.random(3)
         self.assertEqual(pairs.names, ['leftright', 'leftright'])
         self.assertEqual(A.index.name, 'leftright')
         self.assertEqual(B.index.name, 'leftright')
 
-        # index random 
+        # index random
         index_cl = recordlinkage.Pairs(A, B)
         pairs = index_cl.qgram('name')
         self.assertEqual(pairs.names, ['leftright', 'leftright'])
@@ -201,28 +201,28 @@ class TestIndexApi(unittest.TestCase):
         self.assertEqual(A.index.name, None)
         self.assertEqual(B.index.name, None)
 
-        # index sni 
+        # index sni
         index_cl = recordlinkage.Pairs(A, B)
         pairs = index_cl.sortedneighbourhood('name')
         self.assertEqual(pairs.names, [None, None])
         self.assertEqual(A.index.name, None)
         self.assertEqual(B.index.name, None)
 
-        # index eye 
+        # index eye
         index_cl = recordlinkage.Pairs(A, B)
         pairs = index_cl.eye()
         self.assertEqual(pairs.names, [None, None])
         self.assertEqual(A.index.name, None)
         self.assertEqual(B.index.name, None)
 
-        # index random 
+        # index random
         index_cl = recordlinkage.Pairs(A, B)
         pairs = index_cl.random(3)
         self.assertEqual(pairs.names, [None, None])
         self.assertEqual(A.index.name, None)
         self.assertEqual(B.index.name, None)
 
-        # index random 
+        # index random
         index_cl = recordlinkage.Pairs(A, B)
         pairs = index_cl.qgram('name')
         self.assertEqual(pairs.names, [None, None])
@@ -251,28 +251,28 @@ class TestIndexApi(unittest.TestCase):
         self.assertEqual(A.index.name, None)
         self.assertEqual(B.index.name, 'right')
 
-        # index sni 
+        # index sni
         index_cl = recordlinkage.Pairs(A, B)
         pairs = index_cl.sortedneighbourhood('name')
         self.assertEqual(pairs.names, [None, 'right'])
         self.assertEqual(A.index.name, None)
         self.assertEqual(B.index.name, 'right')
 
-        # index eye 
+        # index eye
         index_cl = recordlinkage.Pairs(A, B)
         pairs = index_cl.eye()
         self.assertEqual(pairs.names, [None, 'right'])
         self.assertEqual(A.index.name, None)
         self.assertEqual(B.index.name, 'right')
 
-        # index random 
+        # index random
         index_cl = recordlinkage.Pairs(A, B)
         pairs = index_cl.random(3)
         self.assertEqual(pairs.names, [None, 'right'])
         self.assertEqual(A.index.name, None)
         self.assertEqual(B.index.name, 'right')
 
-        # index random 
+        # index random
         index_cl = recordlinkage.Pairs(A, B)
         pairs = index_cl.qgram('name')
         self.assertEqual(pairs.names, [None, 'right'])
@@ -296,25 +296,25 @@ class TestIndexApi(unittest.TestCase):
         self.assertEqual(pairs.names, [None, None])
         self.assertEqual(A.index.name, None)
 
-        # index sni 
+        # index sni
         index_cl = recordlinkage.Pairs(A)
         pairs = index_cl.sortedneighbourhood('name')
         self.assertEqual(pairs.names, [None, None])
         self.assertEqual(A.index.name, None)
 
-        # index eye 
+        # index eye
         index_cl = recordlinkage.Pairs(A)
         pairs = index_cl.eye()
         self.assertEqual(pairs.names, [None, None])
         self.assertEqual(A.index.name, None)
 
-        # index random 
+        # index random
         index_cl = recordlinkage.Pairs(A)
         pairs = index_cl.random(3)
         self.assertEqual(pairs.names, [None, None])
         self.assertEqual(A.index.name, None)
 
-        # index random 
+        # index random
         index_cl = recordlinkage.Pairs(A)
         pairs = index_cl.qgram('name')
         self.assertEqual(pairs.names, [None, None])
@@ -337,25 +337,25 @@ class TestIndexApi(unittest.TestCase):
         self.assertEqual(pairs.names, ['dedup', 'dedup'])
         self.assertEqual(A.index.name, 'dedup')
 
-        # index sni 
+        # index sni
         index_cl = recordlinkage.Pairs(A)
         pairs = index_cl.sortedneighbourhood('name')
         self.assertEqual(pairs.names, ['dedup', 'dedup'])
         self.assertEqual(A.index.name, 'dedup')
 
-        # index eye 
+        # index eye
         index_cl = recordlinkage.Pairs(A)
         pairs = index_cl.eye()
         self.assertEqual(pairs.names, ['dedup', 'dedup'])
         self.assertEqual(A.index.name, 'dedup')
 
-        # index random 
+        # index random
         index_cl = recordlinkage.Pairs(A)
         pairs = index_cl.random(3)
         self.assertEqual(pairs.names, ['dedup', 'dedup'])
         self.assertEqual(A.index.name, 'dedup')
 
-        # index random 
+        # index random
         index_cl = recordlinkage.Pairs(A)
         pairs = index_cl.qgram('name')
         self.assertEqual(pairs.names, ['dedup', 'dedup'])
@@ -370,7 +370,7 @@ class TestIndexApi(unittest.TestCase):
         B = pd.DataFrame(self.data_B, index=index_B)
 
         index = recordlinkage.Pairs(A, B)
-        pairs = index.full()
+        # pairs = index.full()
 
         rr = index.reduction
 
@@ -380,7 +380,7 @@ class TestIndexApi(unittest.TestCase):
 
         dfA, dfB = datasets.load_febrl4()
 
-        index_chucks = recordlinkage.Pairs(dfA, dfB, chunks=(100,200))
+        index_chucks = recordlinkage.Pairs(dfA, dfB, chunks=(100, 200))
         index = recordlinkage.Pairs(dfA, dfB)
 
         # Compute pairs in one iteration
@@ -391,7 +391,7 @@ class TestIndexApi(unittest.TestCase):
         for pairs in index_chucks.full():
 
             print (len(pairs))
-            n_pairs_iter +=  len(pairs)
+            n_pairs_iter += len(pairs)
 
             # Check if index is unique
             self.assertTrue(pairs.is_unique)
@@ -399,7 +399,7 @@ class TestIndexApi(unittest.TestCase):
         self.assertEqual(len(pairs_single), n_pairs_iter)
 
         # Check is number of pairs is correct
-        self.assertEqual(n_pairs_iter, len(dfA)*len(dfB))
+        self.assertEqual(n_pairs_iter, len(dfA) * len(dfB))
 
     def test_full_iter_index_deduplication(self):
 
@@ -439,17 +439,17 @@ class TestIndexAlgorithms(unittest.TestCase):
     def setUpClass(self):
 
         self.data_A = {
-            'name':['Bob', 'Anne', 'Micheal', 'Charly B', 'Ana'],
+            'name': ['Bob', 'Anne', 'Micheal', 'Charly B', 'Ana'],
             'age': [40, 45, 69, 90, 70],
             'hometown': ['town 1', 'town 1', 'town 1', 'town 3', 'town 1']
-            }
+        }
         self.data_B = {
-            'name':['Bob', 'Anne', 'Micheal', 'Charly', 'Ana'],
+            'name': ['Bob', 'Anne', 'Micheal', 'Charly', 'Ana'],
             'age': [40, 45, 68, 89, 70],
             'hometown': ['town 1', 'town 1', 'town 2', 'town 3', 'town 1']
-            }
+        }
 
-        self.index = ['rec1','rec2','rec3', 'rec4', 'rec5']
+        self.index = ['rec1', 'rec2', 'rec3', 'rec4', 'rec5']
 
         self.fullindex_dedup = list(combinations_with_replacement(self.index, 2))
         self.fullindex = list(product(self.index, self.index))
@@ -552,18 +552,9 @@ class TestIndexAlgorithms(unittest.TestCase):
 
         print('The number of record pairs found with blocking', len(bl))
         print('The number of record pairs found with sorted neighbourhood indexing', len(sn))
-        
+       
         # The length of the union should be the same as the length of bl or sn.
         self.assertEqual(len(bl), len(sn))
-
-
-
-
-
-
-
-
-
 
 
 # nosetests tests/test_indexing.py:TestIndexOnDatasets
@@ -603,7 +594,7 @@ class TestIndexOnDatasets(unittest.TestCase):
         self.assertTrue(pairs.is_unique)
 
         # Check is number of pairs is correct
-        self.assertEqual(len(pairs), len(self.A)*len(self.B))
+        self.assertEqual(len(pairs), len(self.A) * len(self.B))
 
     def test_block_index_linking(self):
 
