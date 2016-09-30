@@ -255,12 +255,13 @@ class LogisticRegressionClassifier(Classifier):
 
     @property
     def coefficients(self):
-        return self.classifier_.coef_ if hasattr(logreg.classifier_, 'coef_') \
-            else None
+        return self.classifier_.coef_ \
+            if hasattr(self.classifier_, 'coef_') else None
 
     @property
     def intercept(self):
-        return self.classifier_.intercept_[0] if hasattr(logreg.classifier_, 'intercept_') else None
+        return self.classifier_.intercept_[0] \
+            if hasattr(self.classifier_, 'intercept_') else None
 
     @coefficients.setter
     def coefficients(self, value):
@@ -562,15 +563,15 @@ class FellegiSunter(Classifier):
 
     # def _params_valid(self):
 
-    # 	try:
-    # 		# Check labels
-    # 		{self.u[col][label] for label in label_dict.iteritems() for col, label_dict in self.m.iteritems()}
-    # 		{self.m[col][label] for label in label_dict.iteritems() for col, label_dict in self.u.iteritems()}
+    #   try:
+    #       # Check labels
+    #       {self.u[col][label] for label in label_dict.iteritems() for col, label_dict in self.m.iteritems()}
+    #       {self.m[col][label] for label in label_dict.iteritems() for col, label_dict in self.u.iteritems()}
 
-    # 		return True
+    #       return True
 
-    # 	except Exception:
-    # 		return False
+    #   except Exception:
+    #       return False
 
     @property
     def p(self):
@@ -582,10 +583,10 @@ class FellegiSunter(Classifier):
     # @property
     # def w(self):
 
-    # 	if _params_valid:
-    # 		return {col:{label:numpy.log(self.m[col][label]/self.u[col][label]) for label in label_dict.iteritems()} for col, label_dict in self.m.iteritems()}
-    # 	else:
-    # 		raise ValueError
+    #   if _params_valid:
+    #       return {col:{label:numpy.log(self.m[col][label]/self.u[col][label]) for label in label_dict.iteritems()} for col, label_dict in self.m.iteritems()}
+    #   else:
+    #       raise ValueError
 
     def _decision_rule(self, probabilities, threshold, random_decision_rule=False):
 
