@@ -1,13 +1,13 @@
 from __future__ import division
 from __future__ import absolute_import
-from __future__ import unicode_literals
+# from __future__ import unicode_literals
 
 from sklearn.feature_extraction.text import strip_accents_ascii, \
     strip_accents_unicode
 
 
-def clean(s, lowercase=True, replace_by_none='[^ \-\_A-Za-z0-9]+',
-          replace_by_whitespace='[\-\_]', strip_accents=None,
+def clean(s, lowercase=True, replace_by_none=r'[^ \-\_A-Za-z0-9]+',
+          replace_by_whitespace=r'[\-\_]', strip_accents=None,
           remove_brackets=True, encoding='utf-8', decode_error='strict'):
     """
 
@@ -94,9 +94,8 @@ def clean(s, lowercase=True, replace_by_none='[^ \-\_A-Za-z0-9]+',
     if strip_accents:
 
         # encoding
-        if isinstance(s[0], bytes):
-            s = s.str.decode(encoding, decode_error)
-
+        s = s.apply(
+            lambda x: x.decode(encoding, decode_error) if type(x) == bytes else x)
         s = s.map(lambda x: strip_accents_fn(x))
 
     # Remove all content between brackets

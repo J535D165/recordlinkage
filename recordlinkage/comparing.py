@@ -1,7 +1,6 @@
 from __future__ import division
 from __future__ import unicode_literals
 
-import sys
 import warnings
 
 import pandas
@@ -10,17 +9,14 @@ import numpy as np
 from sklearn.feature_extraction.text import CountVectorizer
 from recordlinkage.utils import _label_or_column, _resample
 
-try:
-    import jellyfish
-except ImportError:
-    # Jellyfish is not installed, raise error when calling jellyfish dependent
-    # function.
-    pass
 
+def _import_jellyfish():
 
-def _check_jellyfish():
+    try:
+        import jellyfish
+        return jellyfish
 
-    if 'jellyfish' not in sys.modules:
+    except ImportError:
         raise ImportError(
             "Install the module 'jellyfish' to use the following " +
             "string metrics: 'jaro', 'jarowinkler', 'levenshtein'" +
@@ -603,7 +599,7 @@ def _haversine_distance(lat1, lng1, lat2, lng2):
 def jaro_similarity(s1, s2):
 
     # Check jellyfish
-    _check_jellyfish()
+    jellyfish = _import_jellyfish()
 
     conc = pandas.concat([s1, s2], axis=1, ignore_index=True)
 
@@ -620,7 +616,7 @@ def jaro_similarity(s1, s2):
 def jarowinkler_similarity(s1, s2):
 
     # Check jellyfish
-    _check_jellyfish()
+    jellyfish = _import_jellyfish()
 
     conc = pandas.concat([s1, s2], axis=1, ignore_index=True)
 
@@ -637,7 +633,7 @@ def jarowinkler_similarity(s1, s2):
 def levenshtein_similarity(s1, s2):
 
     # Check jellyfish
-    _check_jellyfish()
+    jellyfish = _import_jellyfish()
 
     conc = pandas.concat([s1, s2], axis=1, ignore_index=True)
 
@@ -655,7 +651,7 @@ def levenshtein_similarity(s1, s2):
 def damerau_levenshtein_similarity(s1, s2):
 
     # Check jellyfish
-    _check_jellyfish()
+    jellyfish = _import_jellyfish()
 
     conc = pandas.concat([s1, s2], axis=1, ignore_index=True)
 
