@@ -98,11 +98,15 @@ The main features of the **recordlinkage** package are:
 -  Several classifications algorithms, both supervised and unsupervised
    algorithms.
 
-Documentation, dependencies, installation and license
------------------------------------------------------
+Documentation 
+-------------
 
-The most recent documentation can be found at
-`recordlinkage.readthedocs.org <http://recordlinkage.readthedocs.org/en/latest/>`__.
+The most recent documentation and API reference can be found at
+`recordlinkage.readthedocs.org <http://recordlinkage.readthedocs.org/en/latest/>`__. The documentation provides some basic usage examples like `deduplication <http://recordlinkage.readthedocs.io/en/latest/notebooks/data_deduplication.html>`__ and `linking <http://recordlinkage.readthedocs.io/en/latest/notebooks/link_two_dataframes.html>`__ census data. More examples are coming soon. If you do have interesting examples to share, let us know.
+
+
+Dependencies, installation and license
+--------------------------------------
 
 The following packages are required. You probably have it already ;)
 
