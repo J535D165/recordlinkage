@@ -1,14 +1,14 @@
 from __future__ import division
 from __future__ import absolute_import
+from __future__ import unicode_literals
 
-# import unicodedata
-# import itertools
+from sklearn.feature_extraction.text import strip_accents_ascii, \
+    strip_accents_unicode
 
 
-def clean(
-    s, lower=True, replace_by_none='[^ \-\_A-Za-z0-9]+',
-    replace_by_whitespace='[\-\_]', remove_accents=True, remove_brackets=True
-):
+def clean(s, lowercase=True, replace_by_none='[^ \-\_A-Za-z0-9]+',
+          replace_by_whitespace='[\-\_]', strip_accents=None,
+          remove_brackets=True, encoding='utf-8', decode_error='strict'):
     """
 
     Clean strings in the Series by removing unwanted tokens, whitespace and
@@ -22,12 +22,26 @@ def clean(
             replaced by a whitespace.
     :param remove_brackets: Remove all content between brackets and the
             brackets themselves. Default True.
+    :param strip_accents: Remove accents during the preprocessing step.
+            'ascii' is a fast method that only works on characters that have
+            an direct ASCII mapping.
+            'unicode' is a slightly slower method that works on any characters.
+            None (default) does nothing.
+    :param encoding: If bytes are given, this encoding is used to
+            decode.
+    :param decode_error: Instruction on what to do if a byte Series is given
+            that contains characters not of the given `encoding`. By default,
+            it is 'strict', meaning that a UnicodeDecodeError will be raised.
+            Other values are 'ignore' and 'replace'.
 
     :type s: pandas.Series
     :type lower: bool
     :type replace_by_none: str
     :type replace_by_whitespace: str
     :type remove_brackets: bool
+    :type strip_accents: {'ascii', 'unicode', None}
+    :type encoding: string, default='utf-8'
+    :type decode_error: {'strict', 'ignore', 'replace'}
 
     :return: A cleaned Series of strings.
     :rtype: pandas.Series
@@ -54,18 +68,39 @@ def clean(
 
     """
 
-    # # Remove accents etc
-    # if remove_accents:
-    #     s = s.map(lambda x: \
-    #     ''.join(c for c in unicodedata.normalize('NFD', x)
-    #     if unicodedata.category(c) != 'Mn'))
+    if s.shape[0] == 0:
+        return s
 
     # Lower s if lower is True
-    if lower:
+    if lowercase is True:
         s = s.str.lower()
 
+    # Accent stripping based on https://github.com/scikit-learn/
+    # scikit-learn/blob/412996f/sklearn/feature_extraction/text.py
+    # BSD license
+    if not strip_accents:
+        pass
+    elif callable(strip_accents):
+        strip_accents_fn = strip_accents
+    elif strip_accents == 'ascii':
+        strip_accents_fn = strip_accents_ascii
+    elif strip_accents == 'unicode':
+        strip_accents_fn = strip_accents_unicode
+    else:
+        raise ValueError('Invalid value for "strip_accents": %s' %
+                         strip_accents)
+
+    # Remove accents etc
+    if strip_accents:
+
+        # encoding
+        if isinstance(s[0], bytes):
+            s = s.str.decode(encoding, decode_error)
+
+        s = s.map(lambda x: strip_accents_fn(x))
+
     # Remove all content between brackets
-    if remove_brackets:
+    if remove_brackets is True:
         s = s.str.replace(r'(\[.*?\]|\(.*?\)|\{.*?\})', '')
 
     # Remove the special characters

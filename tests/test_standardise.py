@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 import unittest
 
 import pandas.util.testing as pdt
@@ -13,10 +16,50 @@ class TestCleaningStandardise(unittest.TestCase):
 
     def test_clean(self):
 
-        values = pd.Series(['Mary-ann', 'Bob :)', 'Angel',
-                            'Bob (alias Billy)', 'Mary  ann', 'John', np.nan])
+        values = pd.Series(
+            ['Mary-ann',
+             'Bob :)',
+             'Angel',
+             'Bob (alias Billy)',
+             'Mary  ann',
+             'John',
+             np.nan
+             ])
+
         expected = pd.Series(
-            ['mary ann', 'bob', 'angel', 'bob', 'mary ann', 'john', np.nan])
+            ['mary ann',
+             'bob',
+             'angel',
+             'bob',
+             'mary ann',
+             'john',
+             np.nan])
+
+        clean_series = clean(values)
+
+        # Check if series are identical.
+        pdt.assert_series_equal(clean_series, expected)
+
+    def test_clean_unicode(self):
+
+        values = pd.Series(
+            [u'Mary-ann',
+             u'Bob :)',
+             u'Angel',
+             u'Bob (alias Billy)',
+             u'Mary  ann',
+             u'John',
+             np.nan
+             ])
+
+        expected = pd.Series(
+            [u'mary ann',
+             u'bob',
+             u'angel',
+             u'bob',
+             u'mary ann',
+             u'john',
+             np.nan])
 
         clean_series = clean(values)
 
@@ -25,14 +68,28 @@ class TestCleaningStandardise(unittest.TestCase):
 
     def test_clean_parameters(self):
 
-        values = pd.Series(['Mary-ann', 'Bob :)', 'Angel',
-                            'Bob (alias Billy)', 'Mary  ann', 'John', np.nan])
+        values = pd.Series(
+            [u'Mary-ann',
+             u'Bob :)',
+             u'Angel',
+             u'Bob (alias Billy)',
+             u'Mary  ann',
+             u'John',
+             np.nan
+             ])
+
         expected = pd.Series(
-            ['mary ann', 'bob', 'angel', 'bob', 'mary ann', 'john', np.nan])
+            [u'mary ann',
+             u'bob',
+             u'angel',
+             u'bob',
+             u'mary ann',
+             u'john',
+             np.nan])
 
         clean_series = clean(
             values,
-            lower=True,
+            lowercase=True,
             replace_by_none='[^ \-\_A-Za-z0-9]+',
             replace_by_whitespace='[\-\_]',
             remove_brackets=True
@@ -46,7 +103,7 @@ class TestCleaningStandardise(unittest.TestCase):
         values = pd.Series([np.nan, 'LowerHigher', 'HIGHERLOWER'])
         expected = pd.Series([np.nan, 'lowerhigher', 'higherlower'])
 
-        clean_series = clean(values, lower=True)
+        clean_series = clean(values, lowercase=True)
 
         # Check if series are identical.
         pdt.assert_series_equal(clean_series, expected)
@@ -60,6 +117,34 @@ class TestCleaningStandardise(unittest.TestCase):
 
         # Check if series are identical.
         pdt.assert_series_equal(clean_series, expected)
+
+    def test_clean_accent_stripping(self):
+
+        values = pd.Series(['ősdfésdfë', 'without'])
+        expected = pd.Series(['osdfesdfe', 'without'])
+
+        values_unicode = pd.Series([u'ősdfésdfë', u'without'])
+        expected_unicode = pd.Series([u'osdfesdfe', u'without'])
+
+        # Check if series are identical.
+        pdt.assert_series_equal(
+            clean(values, strip_accents='unicode'),
+            expected)
+
+        # Check if series are identical.
+        pdt.assert_series_equal(
+            clean(values, strip_accents='ascii'),
+            expected)
+
+        # Check if series are identical.
+        pdt.assert_series_equal(
+            clean(values_unicode, strip_accents='unicode'),
+            expected_unicode)
+
+        # Check if series are identical.
+        pdt.assert_series_equal(
+            clean(values_unicode, strip_accents='ascii'),
+            expected_unicode)
 
     def test_clean_phonenumbers(self):
 
