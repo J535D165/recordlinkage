@@ -6,7 +6,7 @@ import zipfile
 from six import BytesIO
 
 
-def load_krebsregister(block=1):
+def load_krebsregister(block=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]):
     """
 
     This dataset of comparison patterns was obtained in a epidemiological
@@ -46,7 +46,7 @@ def load_krebsregister(block=1):
             blocks are the blocks explained in the description.
 
     :return: A data frame with comparison vectors and a multi index with the
-            indices of the matches.  
+            indices of the matches.
     :rtype: (pandas.DataFrame, pandas.MultiIndex)
 
     """
@@ -61,7 +61,7 @@ def load_krebsregister(block=1):
             _download_krebsregister()
             break
 
-    if type(block) == list:
+    if isinstance(block, (list, tuple)):
 
         data = pandas.concat([_krebsregister_block(bl) for bl in block])
     else:
@@ -96,6 +96,10 @@ def _download_krebsregister():
 
 
 def _krebsregister_block(block):
+
+    if block not in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]:
+        raise ValueError(
+            "Argument 'block' has to be integer in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] or list of integers.")
 
     fp_i = os.path.join(os.path.dirname(__file__),
                         'krebsregister', 'block_{}.zip'.format(block))
