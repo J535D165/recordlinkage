@@ -210,10 +210,16 @@ def _sortedneighbourhood(
 
 def _qgram(df_a, df_b, on=None, left_on=None, right_on=None, threshold=0.8):
 
-    fi = _fullindex(df_a, df_b)
-
     if on:
         left_on, right_on = on, on
+
+        # Rows with missing values on the on attributes are dropped.
+
+    fi = pandas.MultiIndex.from_product(
+        [df_a[left_on].dropna(axis=0).index.values,
+         df_b[right_on].dropna(axis=0).index.values],
+        names=[df_a.index.name, df_b.index.name]
+    )
 
     bool_index = (qgram_similarity(df_a.loc[fi.get_level_values(
         0), left_on], df_b.loc[fi.get_level_values(1), right_on]) >= threshold)
