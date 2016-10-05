@@ -88,7 +88,7 @@ def false_negatives(true_match_index, matches_index):
     :rtype: int
 
     """
-    return len(true_match_index - matches_index)
+    return len(true_match_index.difference(matches_index))
 
 
 def confusion_matrix(true_match_index, matches_index, n_pairs):
