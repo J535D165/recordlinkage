@@ -68,7 +68,7 @@ def false_positives(true_match_index, matches_index):
     """
 
     # The classified matches without the true matches.
-    return len(matches_index - true_match_index)
+    return len(matches_index.difference(true_match_index))
 
 
 def false_negatives(true_match_index, matches_index):
