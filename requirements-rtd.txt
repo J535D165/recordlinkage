@@ -1,9 +1,0 @@
-jellyfish>=0.5.4
-numpy>=1.9.0
-pandas>=0.16.0
-python-dateutil>=2.5.3
-pytz>=2016.4
-scikit-learn>=0.17.1
-scipy>=0.17.1
-six>=1.10.0
-recordlinkage-data
