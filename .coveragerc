@@ -11,6 +11,6 @@ exclude_lines =
 ignore_errors = False
 
 omit =
-    /tests/*
-    /docs/*
-    */_version.py
+    tests/*
+    docs/*
+    recordlinkage/_version.py
