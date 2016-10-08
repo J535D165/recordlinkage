@@ -108,6 +108,10 @@ The most recent documentation and API reference can be found at
 Dependencies, installation and license
 --------------------------------------
 
+.. image:: https://travis-ci.org/J535D165/recordlinkage.svg?branch=master
+    :target: https://travis-ci.org/J535D165/recordlinkage
+
+
 The following packages are required. You probably have it already ;)
 
 -  `numpy <http://www.numpy.org>`__: 1.7.0 or higher
@@ -127,7 +131,6 @@ Install the package with pip
     pip install recordlinkage
 
 The license for this record linkage tool is GPLv3.
-
 
 Need help?
 ----------
