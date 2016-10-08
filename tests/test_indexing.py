@@ -530,6 +530,16 @@ class TestIndexAlgorithms(unittest.TestCase):
 
         # index block
         index_cl = recordlinkage.Pairs(A, B)
+        pairs = index_cl.random(20)
+
+        # Check if index is unique
+        self.assertTrue(pairs.is_unique)
+
+        # Check is number of pairs is correct
+        self.assertEqual(len(pairs), 20)
+
+        # index block
+        index_cl = recordlinkage.Pairs(A, B)
         pairs = index_cl.random(5)
 
         # Check if index is unique
@@ -537,16 +547,6 @@ class TestIndexAlgorithms(unittest.TestCase):
 
         # Check is number of pairs is correct
         self.assertEqual(len(pairs), 5)
-
-        # index block
-        index_cl = recordlinkage.Pairs(A, B)
-        pairs = index_cl.random(2)
-
-        # Check if index is unique
-        self.assertTrue(pairs.is_unique)
-
-        # Check is number of pairs is correct
-        self.assertEqual(len(pairs), 2)
 
     def test_random_index_errors(self):
 
