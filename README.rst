@@ -108,9 +108,13 @@ The most recent documentation and API reference can be found at
 Dependencies, installation and license
 --------------------------------------
 
-.. image:: https://travis-ci.org/J535D165/recordlinkage.svg?branch=master
+|pypi| |travis|
+
+.. |travis| image:: https://travis-ci.org/J535D165/recordlinkage.svg?branch=master
     :target: https://travis-ci.org/J535D165/recordlinkage
 
+.. |pypi| image:: https://badge.fury.io/py/recordlinkage.svg
+    :target: https://pypi.python.org/pypi/recordlinkage/
 
 The following packages are required. You probably have it already ;)
 
