@@ -55,7 +55,7 @@ def check_index_names(func):
 
 def _randomindex(df_a, df_b, n_pairs):
 
-    if n_pairs <= 0 and type(n_pairs) is not int:
+    if type(n_pairs) is not int or n_pairs <= 0:
         raise ValueError("n_pairs must be an positive integer")
 
     if n_pairs < 0.25 * len(df_a) * len(df_b):

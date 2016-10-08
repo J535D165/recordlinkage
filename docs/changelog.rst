@@ -2,6 +2,11 @@
 Release notes
 *************
 
+Version 0.6 Coming soon
+=======================
+
+- Bug for random indexing with incorrect arguments fixed and tests added.
+
 Version 0.5
 ===========
 

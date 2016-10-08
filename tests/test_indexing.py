@@ -533,6 +533,36 @@ class TestIndexAlgorithms(unittest.TestCase):
         # Check is number of pairs is correct
         self.assertEqual(len(pairs), 2)
 
+    def test_random_index_errors(self):
+
+        A = pd.DataFrame(self.data_A, index=pd.Index(
+            self.index, name='index_a'))
+        B = pd.DataFrame(self.data_B, index=pd.Index(
+            self.index, name='index_b'))
+
+        # index block
+        index_cl = recordlinkage.Pairs(A, B)
+
+        # Check if index is unique
+        with self.assertRaises(ValueError):
+            index_cl.random(-10)
+
+        # Check if index is unique
+        with self.assertRaises(ValueError):
+            index_cl.random(0)
+
+        # Check if index is unique
+        with self.assertRaises(ValueError):
+            index_cl.random(5.5)
+
+        # Check if index is unique
+        with self.assertRaises(ValueError):
+            index_cl.random(5.0)
+
+        # Check if index is unique
+        with self.assertRaises(ValueError):
+            index_cl.random('str')
+
     def test_qgram_index(self):
 
         A = pd.DataFrame(self.data_A, index=pd.Index(
