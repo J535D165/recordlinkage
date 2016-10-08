@@ -1,6 +1,5 @@
 [run]
 branch = True
-source = recordlinkage
 
 [report]
 exclude_lines =
@@ -14,4 +13,4 @@ ignore_errors = False
 omit =
     /tests/*
     /docs/*
-    recordlinkage/_version.py
+    */_version.py
