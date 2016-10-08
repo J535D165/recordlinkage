@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 
 from recordlinkage import datasets
+from recordlinkage.utils import IndexError
 
 # Two larger numeric dataframes
 df_large_numeric_1 = pd.DataFrame(np.arange(1000))
@@ -35,6 +36,7 @@ class TestIndexApi(unittest.TestCase):
         }
 
         self.index = ['rec1', 'rec2', 'rec3', 'rec4', 'rec5']
+        self.bad_index = ['rec1', 'rec1', 'rec3', 'rec4', 'rec5']
 
     def test_instance(self):
 
@@ -429,6 +431,19 @@ class TestIndexApi(unittest.TestCase):
         # Check is number of pairs is correct
         self.assertEqual(n_pairs_iter, (len(dfA) - 1) * len(dfA) / 2)
 
+    def test_index_unique(self):
+
+        index_A = pd.Index(self.bad_index, name='left')
+        index_B = pd.Index(self.index, name='right')
+
+        A = pd.DataFrame(self.data_A, index=index_A)
+        B = pd.DataFrame(self.data_B, index=index_B)
+
+        with self.assertRaises(IndexError):
+            recordlinkage.Pairs(A, B)
+
+        with self.assertRaises(IndexError):
+            recordlinkage.Pairs(A)
 
 # nosetests tests/test_indexing.py:TestIndexAlgorithms
 class TestIndexAlgorithms(unittest.TestCase):
