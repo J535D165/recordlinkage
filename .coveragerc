@@ -13,3 +13,4 @@ ignore_errors = False
 omit =
     tests/*
     docs/*
+    _version.py
