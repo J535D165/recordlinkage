@@ -21,7 +21,7 @@ class TestCleaningStandardise(unittest.TestCase):
              'Bob :)',
              'Angel',
              'Bob (alias Billy)',
-             'Mary  ann',
+             'Mary ann',
              'John',
              np.nan
              ])
@@ -39,6 +39,17 @@ class TestCleaningStandardise(unittest.TestCase):
 
         # Check if series are identical.
         pdt.assert_series_equal(clean_series, expected)
+
+        clean_series_nothing = clean(
+            values, lowercase=False, replace_by_none=False,
+            replace_by_whitespace=False, strip_accents=False,
+            remove_brackets=False)
+
+        # Check if ntohing happend.
+        pdt.assert_series_equal(clean_series_nothing, values)
+
+        # Check empty series
+        pdt.assert_series_equal(pd.Series(), pd.Series())
 
     def test_clean_unicode(self):
 
