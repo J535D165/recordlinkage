@@ -319,14 +319,6 @@ class Compare(object):
 
         return self.compare(_numeric_sim, s1, s2, *args, **kwargs)
 
-    def numerical(self, s1, s2, *args, **kwargs):
-
-        warnings.warn(
-            "Use the method 'numeric' instead of 'numerical'",
-            PendingDeprecationWarning
-        )
-        return self.compare(_numeric_sim, s1, s2, *args, **kwargs)
-
     def string(self, s1, s2, *args, **kwargs):
         """
         string(s1, s2, method='levenshtein', threshold=None, missing_value=0, name=None, store=True)
@@ -367,19 +359,6 @@ class Compare(object):
 
         """
 
-        return self.compare(_string_sim, s1, s2, *args, **kwargs)
-
-    def fuzzy(self, s1, s2, *args, **kwargs):
-        """
-        .. deprecated:: 0.3.0
-            Use :meth:`Compare.string` instead.
-
-        """
-
-        warnings.warn(
-            "Use the method 'string' instead of 'fuzzy'",
-            PendingDeprecationWarning
-        )
         return self.compare(_string_sim, s1, s2, *args, **kwargs)
 
     def geo(self, lat1, lng1, lat2, lng2, *args, **kwargs):
@@ -683,9 +662,12 @@ def qgram_similarity(s1, s2, include_wb=True, ngram=(2, 2)):
     vec_fit = vectorizer.fit_transform(data)
 
     def _metric_sparse_euclidean(u, v):
+
         match_ngrams = u.minimum(v).sum(axis=1)
         total_ngrams = np.maximum(u.sum(axis=1), v.sum(axis=1))
 
+        # division by zero is not possible in our case, but 0/0 is possible.
+        # Numpy raises a warning in that case.
         return np.true_divide(match_ngrams, total_ngrams).A1
 
     return _metric_sparse_euclidean(vec_fit[:len(s1)], vec_fit[len(s1):])
