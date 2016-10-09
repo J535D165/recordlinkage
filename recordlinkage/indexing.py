@@ -136,8 +136,8 @@ def _sortedneighbourhood(
         block_on=[], block_left_on=[], block_right_on=[]):
 
     # Check if window is an odd number
-    if not bool(window % 2):
-        raise ValueError('The given window length is not an odd integer.')
+    if not isinstance(window, int) or (window < 0) or not bool(window % 2):
+        raise ValueError('The given window length is not a positive and odd integer.')
 
     block_on = [block_on] if type(block_on) != list else block_on
     block_left_on = [block_left_on] if type(

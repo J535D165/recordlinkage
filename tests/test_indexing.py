@@ -521,6 +521,28 @@ class TestIndexAlgorithms(unittest.TestCase):
         # Check is number of pairs is correct
         self.assertTrue(len(pairs) <= len(A) * len(B))
 
+    def test_sni_index_errors(self):
+
+        A = pd.DataFrame(self.data_A, index=pd.Index(
+            self.index, name='index_a'))
+        B = pd.DataFrame(self.data_B, index=pd.Index(
+            self.index, name='index_b'))
+
+        # index full
+        index_cl = recordlinkage.Pairs(A, B)
+
+        with self.assertRaises(ValueError):
+            index_cl.sortedneighbourhood('name', -3)
+
+        with self.assertRaises(ValueError):
+            index_cl.sortedneighbourhood('name', 2)
+
+        with self.assertRaises(ValueError):
+            index_cl.sortedneighbourhood('name', 'str')
+
+        with self.assertRaises(ValueError):
+            index_cl.sortedneighbourhood('name', 2.5)
+
     def test_random_index(self):
 
         A = pd.DataFrame(self.data_A, index=pd.Index(
