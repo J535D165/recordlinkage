@@ -46,8 +46,6 @@ class TestCompare(unittest.TestCase):
             names=[self.A.index.name, self.B.index.name])
 
 # nosetests tests/test_compare.py:TestCompareAPI
-
-
 class TestCompareAPI(TestCompare):
 
     def test_instance_linking(self):
@@ -91,9 +89,25 @@ class TestCompareAPI(TestCompare):
             self.assertIsInstance(result, pandas.Series)
             self.assertEqual(result.name, "given_name_comp")
 
+    def test_batch_compare(self):
+
+        comp = recordlinkage.Compare(self.index_AB, self.A, self.B, batch=True)
+
+        comp.exact('given_name', 'given_name', name="given_name_comp")
+        comp.exact('lastname', 'lastname', name="lastname_comp")
+        comp.numeric('age', 'age', 2, name="age_comp")
+        comp.run()
+
+        self.assertIsInstance(comp.vectors, pandas.DataFrame)
+        self.assertEqual(
+            comp.vectors.columns.tolist(),
+            ["given_name_comp", "lastname_comp", "age_comp"])
+
+        for v in comp.vectors.columns:
+            self.assertTrue(comp.vectors[v].notnull().any())
+
+
 # nosetests tests/test_compare.py:TestCompareAlgorithms
-
-
 class TestCompareAlgorithms(TestCompare):
 
     def test_exact(self):
