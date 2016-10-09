@@ -65,7 +65,7 @@ class TestCompareAPI(TestCompare):
         for alg in STRING_SIM_ALGORITHMS:
 
             # Missing values
-            result = comp.fuzzy('given_name', 'given_name', method=alg)
+            result = comp.string('given_name', 'given_name', method=alg)
 
             self.assertIsInstance(result, pandas.Series)
             self.assertEqual(result.name, None)
@@ -85,8 +85,8 @@ class TestCompareAPI(TestCompare):
         for alg in STRING_SIM_ALGORITHMS:
 
             # Missing values
-            result = comp.fuzzy('given_name', 'given_name',
-                                method=alg, name="given_name_comp")
+            result = comp.string('given_name', 'given_name',
+                                 method=alg, name="given_name_comp")
 
             self.assertIsInstance(result, pandas.Series)
             self.assertEqual(result.name, "given_name_comp")
@@ -197,7 +197,7 @@ class TestCompareAlgorithms(TestCompare):
         comp = recordlinkage.Compare(self.index_AB, self.A, self.A)
 
         self.assertRaises(
-            ValueError, comp.fuzzy, 'given_name',
+            ValueError, comp.string, 'given_name',
             'given_name', name='y_name', method='unknown_algorithm')
 
     def test_fuzzy_same_labels(self):
@@ -209,9 +209,9 @@ class TestCompareAlgorithms(TestCompare):
             print (alg)
 
             # Missing values
-            result = comp.fuzzy('given_name', 'given_name',
+            result = comp.string('given_name', 'given_name',
                                 method=alg, missing_value=0)
-            result = comp.fuzzy('given_name', 'given_name',
+            result = comp.string('given_name', 'given_name',
                                 alg, missing_value=0)
 
             print (result)
@@ -230,7 +230,7 @@ class TestCompareAlgorithms(TestCompare):
 
             # Missing values
             # Change in future (should work without method)
-            result = comp.fuzzy('given_name', 'given_name',
+            result = comp.string('given_name', 'given_name',
                                 method=alg, missing_value=0)
 
             print (result)
