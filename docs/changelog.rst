@@ -5,6 +5,16 @@ Release notes
 Version 0.6 Coming soon
 =======================
 
+- Reformatting the code such that it follows PEP8.
+- Add Travis-CI and codecov support.
+- Switch to distributing wheels.
+- Fix bugs with depreciated pandas functions. ``__sub__`` is no longer used for computing the difference of Index objects. It is now replaced by ``INDEX.difference(OTHER_INDEX).
+- Exclude pairs with NaN's on the index-key in Q-gram indexing.
+- Add tests for krebsregister dataset.
+- Fix Python3 bug on krebsregister dataset.
+- Improve unicode handling in phonetic encoding functions.
+- Strip accents with the ``clean`` function.
+- Add documentation
 - Bug for random indexing with incorrect arguments fixed and tests added.
 
 Version 0.5
