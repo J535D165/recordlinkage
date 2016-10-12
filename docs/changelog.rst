@@ -2,8 +2,8 @@
 Release notes
 *************
 
-Version 0.6 Coming soon
-=======================
+Version 0.6
+===========
 
 - Reformatting the code such that it follows PEP8.
 - Add Travis-CI and codecov support.
@@ -16,6 +16,8 @@ Version 0.6 Coming soon
 - Strip accents with the ``clean`` function.
 - Add documentation
 - Bug for random indexing with incorrect arguments fixed and tests added.
+- Improved deployment workflow
+- And much more
 
 Version 0.5
 ===========
