@@ -498,16 +498,6 @@ def _missing(*args):
             axis=1),
         axis=1)
 
-
-def _fill_missing(fn, missing_value, *args, **kwargs):
-
-    return fn(*args, **kwargs).fillna(missing_value)
-
-def _threshold(threshold=None):
-
-    return 
-
-
 def _compare_exact(s1, s2, agree_value=1, disagree_value=0, missing_value=0):
 
     if agree_value == 'value':

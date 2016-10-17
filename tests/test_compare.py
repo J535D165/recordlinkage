@@ -112,6 +112,11 @@ class TestCompareAPI(TestCompare):
         for v in comp.vectors.columns:
             self.assertTrue(comp.vectors[v].notnull().any())
 
+    def test_batch_compare_error(self):
+
+        comp = recordlinkage.Compare(self.index_AB, self.A, self.B, batch=True)
+        
+        self.assertRaises(Exception, comp.run)
 
 # nosetests tests/test_compare.py:TestCompareAlgorithms
 class TestCompareAlgorithms(TestCompare):
@@ -198,6 +203,26 @@ class TestCompareAlgorithms(TestCompare):
         # self.assertTrue((result[result.notnull()] >= 0).all())
         # self.assertTrue((result[result.notnull()] <= 1).all())
 
+    def test_geo_batch(self):
+
+        comp = recordlinkage.Compare(self.index_AB, self.A, self.B)
+
+        for alg in NUMERIC_SIM_ALGORITHMS:
+
+            print (alg)
+
+            if alg is not 'step':
+                # Missing values
+                result = comp.geo('age', 'age', 'age', 'age', method=alg, offset=2, scale=2)
+            else:
+                result = comp.geo('age', 'age', 'age', 'age', method=alg, offset=2)
+
+            print (result)
+
+            self.assertFalse(result.isnull().all())
+            self.assertTrue((result[result.notnull()] >= 0).all())
+            self.assertTrue((result[result.notnull()] <= 1).all())
+
     def test_numeric_batch(self):
 
         comp = recordlinkage.Compare(self.index_AB, self.A, self.B)
@@ -247,6 +272,22 @@ class TestCompareAlgorithms(TestCompare):
                                   offset=offset, scale=scale, origin=origin, name='test')
             
             npt.assert_almost_equal(result.values, expected, decimal=4)
+
+    def test_numeric_does_not_exist(self):
+
+        comp = recordlinkage.Compare(self.index_AB, self.A, self.A)
+
+        self.assertRaises(
+            ValueError, comp.numeric, 'age',
+            'age', name='y_age', method='unknown_algorithm')
+
+    def test_geo_does_not_exist(self):
+
+        comp = recordlinkage.Compare(self.index_AB, self.A, self.A)
+
+        self.assertRaises(
+            ValueError, comp.geo, 'age',
+            'age', 'age', 'age', name='y_age', method='unknown_algorithm')
 
     def test_fuzzy_does_not_exist(self):
 
@@ -298,6 +339,19 @@ class TestCompareAlgorithms(TestCompare):
             # Debug trick
             # if alg == 'q_gram':
             #     rr
+
+    def test_fuzzy_errors(self):
+
+        comp = recordlinkage.Compare(self.index_AB, self.A, self.B)
+
+        for alg in STRING_SIM_ALGORITHMS:
+
+            print (alg)
+
+            with self.assertRaises(Exception):
+                # Missing values
+                result = comp.string('age', 'age', method=alg, missing_value=0)
+
 
     # def test_batch_compare(self):
 
