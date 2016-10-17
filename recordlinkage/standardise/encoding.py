@@ -9,8 +9,6 @@ import sys
 import numpy as np
 import pandas
 
-import itertools
-
 from .cleaning import *
 from recordlinkage.comparing import _import_jellyfish
 
@@ -236,49 +234,3 @@ def gender_ssa(
             index=names.index
         )
 
-
-def similar_values(s, threshold=0.8):
-    """
-    similar_values(threshold=0.8)
-
-    Group strings with high similarities.
-
-    :param threshold: Two strings with similarity above this threshold are
-            considered to be the same string. The threshold is a value equal
-            or between 0 and 1. Default 0.8.
-    :param inplace: If True, replace the current strings by their cleaned
-            variant. Default: True.
-
-    :return: A Series of strings.
-    :rtype: pandas.Series
-
-    """
-    try:
-        import jellyfish
-    except ImportError:
-        print ("Install jellyfish to use string encoding.")
-
-    replace_tuples = []
-
-    for pair in itertools.combinations(
-        self[self.notnull()].astype(unicode).unique(),
-        2
-    ):
-
-        sim = 1 - \
-            jellyfish.levenshtein_distance(
-                pair[0], pair[1]) / np.max([len(pair[0]), len(pair[1])])
-
-        if (sim >= threshold):
-            replace_tuples.append(pair)
-
-    # This is not a very clever solution I think. Don't known how to solve it
-    # atm: connected_components?
-    for pair in replace_tuples:
-
-        if (sum(self == pair[0]) > sum(self == pair[1])):
-            self = pandas.Series(self.str.replace(pair[1], pair[0]))
-        else:
-            self = pandas.Series(self.str.replace(pair[0], pair[1]))
-
-    return pandas.Series(string)
