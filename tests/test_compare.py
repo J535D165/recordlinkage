@@ -243,6 +243,22 @@ class TestCompareAlgorithms(TestCompare):
             self.assertTrue((result[result.notnull()] >= 0).all())
             self.assertTrue((result[result.notnull()] <= 1).all())
 
+    def test_numeric_alg_errors(self):
+
+        comp = recordlinkage.Compare(self.index_AB, self.A, self.B)
+
+        for alg in [n for n in NUMERIC_SIM_ALGORITHMS if n is not 'step']:
+
+            print (alg)
+
+            with self.assertRaises(ValueError):
+                comp.numeric('age', 'age', method=alg, 
+                             offset=-2, scale=2)
+
+            with self.assertRaises(ValueError):
+                comp.numeric('age', 'age', method=alg, 
+                             offset=2, scale=-2)
+
     def test_numeric_y05(self):
         """
 
@@ -273,13 +289,13 @@ class TestCompareAlgorithms(TestCompare):
             
             npt.assert_almost_equal(result.values, expected, decimal=4)
 
+
     def test_numeric_does_not_exist(self):
 
         comp = recordlinkage.Compare(self.index_AB, self.A, self.A)
 
-        self.assertRaises(
-            ValueError, comp.numeric, 'age',
-            'age', name='y_age', method='unknown_algorithm')
+        with self.assertRaises(ValueError):
+            comp.numeric('age', 'age', name='y_age', method='unknown_algorithm')
 
     def test_geo_does_not_exist(self):
 
