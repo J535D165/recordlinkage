@@ -1,19 +1,25 @@
 import unittest
 
 import pandas.util.testing as pdt
+import numpy.testing as npt
 import recordlinkage
 
+import numpy as np
 from numpy import nan, arange
 import pandas
 
 STRING_SIM_ALGORITHMS = [
-    'jaro', 'jaro_winkler', 'dameraulevenshtein',
-    'levenshtein', 'q_gram', 'cosine'
+    'jaro', 'q_gram', 'cosine', 'jaro_winkler', 'dameraulevenshtein', 'levenshtein'
 ]
 
+NUMERIC_SIM_ALGORITHMS = [
+    'step', 'linear', 'squared', 'exp', 'gauss'
+]
+
+# Run all tests in this file with:
+# nosetests tests/test_compare.py
+
 # nosetests tests/test_compare.py:TestCompare
-
-
 class TestCompare(unittest.TestCase):
 
     @classmethod
@@ -56,7 +62,7 @@ class TestCompareAPI(TestCompare):
         self.assertIsInstance(result, pandas.Series)
         self.assertEqual(result.name, None)
 
-        result = comp.numeric('age', 'age', 2)
+        result = comp.numeric('age', 'age', offset=2, scale=2)
         self.assertIsInstance(result, pandas.Series)
         self.assertEqual(result.name, None)
 
@@ -76,7 +82,7 @@ class TestCompareAPI(TestCompare):
         self.assertIsInstance(result, pandas.Series)
         self.assertEqual(result.name, "given_name_comp")
 
-        result = comp.numeric('age', 'age', 2, name="given_name_comp")
+        result = comp.numeric('age', 'age', offset=2, scale=2, name="given_name_comp")
         self.assertIsInstance(result, pandas.Series)
         self.assertEqual(result.name, "given_name_comp")
 
@@ -95,7 +101,7 @@ class TestCompareAPI(TestCompare):
 
         comp.exact('given_name', 'given_name', name="given_name_comp")
         comp.exact('lastname', 'lastname', name="lastname_comp")
-        comp.numeric('age', 'age', 2, name="age_comp")
+        comp.numeric('age', 'age', offset=2, scale=2, name="age_comp")
         comp.run()
 
         self.assertIsInstance(comp.vectors, pandas.DataFrame)
@@ -136,6 +142,9 @@ class TestCompareAlgorithms(TestCompare):
         result = comp.exact('given_name', 'given_name', missing_value=nan)
         expected = pandas.Series([0, nan, 0, 1, nan], index=self.index_AB)
 
+        print(result)
+        print(expected)
+
         pdt.assert_series_equal(result, expected)
 
         # Missing values as nan
@@ -171,8 +180,8 @@ class TestCompareAlgorithms(TestCompare):
 
         comp = recordlinkage.Compare(self.index_AB, self.A, self.B)
 
-        # Missing values
-        result = comp.numeric('age', 'age', 2)
+        # Missing values 
+        result = comp.numeric('age', 'age', 'step', offset=2)
         expected = pandas.Series(
             [1, 1, 1, 0, 0], index=self.index_AB)  # , name='age')
 
@@ -183,28 +192,61 @@ class TestCompareAlgorithms(TestCompare):
         comp = recordlinkage.Compare(self.index_AB, self.A, self.B)
 
         # Missing values
-        result = comp.geo('age', 'age', 'age', 'age', 2)
+        result = comp.geo('age', 'age', 'age', 'age', method='linear', offset=2, scale=2)
 
-        self.assertTrue(result.notnull().any())
-        self.assertTrue((result[result.notnull()] >= 0).all())
-        self.assertTrue((result[result.notnull()] <= 1).all())
+        self.assertFalse(result.isnull().all())
+        # self.assertTrue((result[result.notnull()] >= 0).all())
+        # self.assertTrue((result[result.notnull()] <= 1).all())
 
     def test_numeric_batch(self):
 
         comp = recordlinkage.Compare(self.index_AB, self.A, self.B)
 
-        for alg in ['step', 'linear', 'squared']:
+        for alg in NUMERIC_SIM_ALGORITHMS:
 
             print (alg)
 
-            # Missing values
-            result = comp.numeric('age', 'age', 2, method=alg)
+            if alg is not 'step':
+                # Missing values
+                result = comp.numeric('age', 'age', method=alg, offset=2, scale=2)
+            else:
+                result = comp.numeric('age', 'age', method=alg, offset=2)
 
             print (result)
 
-            self.assertTrue(result.notnull().any())
+            self.assertFalse(result.isnull().all())
             self.assertTrue((result[result.notnull()] >= 0).all())
             self.assertTrue((result[result.notnull()] <= 1).all())
+
+    def test_numeric_y05(self):
+        """
+
+        Test to check if d=origin+offset+scale results in a similarity of 0.5.
+        This test is excecuted for all numeric methods, except 'step'.
+
+        """
+
+        origin = 20
+        offset = 20
+        scale = 20
+
+        series_A = pandas.DataFrame({'age':np.arange(0,100)})
+        series_B = pandas.DataFrame(series_A+origin+offset+scale)
+
+        expected = np.array([0.5]*100)
+
+        cand_pairs = pandas.MultiIndex.from_arrays([np.arange(0,100), np.arange(0,100)])
+
+        comp = recordlinkage.Compare(cand_pairs, series_A, series_B)
+
+        for alg in [alg for alg in NUMERIC_SIM_ALGORITHMS if alg is not 'step']:
+
+            print (alg)
+
+            result = comp.numeric('age', 'age', method=alg, 
+                                  offset=offset, scale=scale, origin=origin, name='test')
+            
+            npt.assert_almost_equal(result.values, expected, decimal=4)
 
     def test_fuzzy_does_not_exist(self):
 
@@ -230,7 +272,7 @@ class TestCompareAlgorithms(TestCompare):
 
             print (result)
 
-            self.assertTrue(result.notnull().any())
+            self.assertFalse(result.isnull().all())
             self.assertTrue((result[result.notnull()] >= 0).all())
             self.assertTrue((result[result.notnull()] <= 1).all())
 
@@ -249,7 +291,7 @@ class TestCompareAlgorithms(TestCompare):
 
             print (result)
 
-            self.assertTrue(result.notnull().any())
+            self.assertFalse(result.isnull().all())
             self.assertTrue((result[result.notnull()] >= 0).all())
             self.assertTrue((result[result.notnull()] <= 1).all())
 
