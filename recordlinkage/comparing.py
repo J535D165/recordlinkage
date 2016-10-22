@@ -61,7 +61,7 @@ def fillna_decorator(missing_value=np.nan):
     return real_decorator
 
 
-class Compare(object):
+class CompareCore(object):
     """
 
     Class to compare the attributes of candidate record pairs. The ``Compare``
@@ -227,7 +227,9 @@ class Compare(object):
 
         for comp_func, lbls_a, lbls_b, args, kwargs in self._batch_functions:
 
+            # The name of the comparison
             name = kwargs.pop('name', None)
+
             # always true, but if passed then ignored
             store = kwargs.pop('store', None)
 
@@ -254,6 +256,79 @@ class Compare(object):
             return self.vectors[name_or_id].rename(name)
         else:
             return self.vectors
+
+
+class Compare(CompareCore):
+    """
+
+    Class to compare the attributes of candidate record pairs. The ``Compare``
+    class has several methods to compare data such as string similarity
+    measures, numeric metrics and exact comparison methods.
+
+    :param pairs: A MultiIndex of candidate record pairs.
+    :param df_a: The first dataframe.
+    :param df_b: The second dataframe.
+
+    :type pairs: pandas.MultiIndex
+    :type df_a: pandas.DataFrame
+    :type df_b: pandas.DataFrame
+
+    :returns: A compare class
+    :rtype: recordlinkage.Compare
+
+    :var pairs: The candidate record pairs.
+    :var df_a: The first DataFrame.
+    :var df_b: The second DataFrame.
+    :var vectors: The DataFrame with comparison data.
+
+    :vartype pairs: pandas.MultiIndex
+    :vartype df_a: pandas.DataFrame
+    :vartype df_b: pandas.DataFrame
+    :vartype vectors: pandas.DataFrame
+
+    Example:
+
+    In the following example, the record pairs of two historical datasets with
+    census data are compared. The datasets are named ``census_data_1980`` and
+    ``census_data_1990``. The ``candidate_pairs`` are the record pairs to
+    compare. The record pairs are compared on the first name, last name, sex,
+    date of birth, address, place, and income.
+
+    .. code:: python
+
+        >>> comp = recordlinkage.Compare(
+            candidate_pairs, census_data_1980, census_data_1990
+            )
+        >>> comp.string('first_name', 'name', method='jarowinkler')
+        >>> comp.string('lastname', 'lastname', method='jarowinkler')
+        >>> comp.exact('dateofbirth', 'dob')
+        >>> comp.exact('sex', 'sex')
+        >>> comp.string('address', 'address', method='levenshtein')
+        >>> comp.exact('place', 'place')
+        >>> comp.numeric('income', 'income')
+        >>> print(comp.vectors.head())
+
+    The attribute ``vectors`` is the DataFrame with the comparison data. It
+    can be called whenever you want.
+
+    """
+
+    # def __init__(self, pairs, df_a=None, df_b=None, batch=False):
+
+    #     # The dataframes
+    #     self.df_a = df_a
+    #     self.df_b = df_b
+
+    #     # The candidate record pairs
+    #     self.pairs = pairs
+
+    #     self.batch = batch
+    #     self._batch_functions = []
+
+    #     # The resulting data
+    #     self.vectors = pandas.DataFrame(index=pairs)
+
+    #     # self.ndim = self._compute_dimension(pairs)
 
     def exact(self, s1, s2, *args, **kwargs):
         """
@@ -337,13 +412,13 @@ class Compare(object):
             if method == 'jaro':
                 str_sim_alg = jaro_similarity
 
-            elif method == 'jarowinkler' or method == 'jaro_winkler':
+            elif method in ['jarowinkler', 'jaro_winkler']:
                 str_sim_alg = jarowinkler_similarity
 
             elif method == 'levenshtein':
                 str_sim_alg = levenshtein_similarity
 
-            elif method == 'dameraulevenshtein' or method == 'dameraulevenshtein':
+            elif method in ['dameraulevenshtein', 'dameraulevenshtein']:
                 str_sim_alg = damerau_levenshtein_similarity
 
             elif method == 'q_gram' or method == 'qgram':
@@ -402,7 +477,7 @@ class Compare(object):
         def _num_internal(s1, s2, method, *args, **kwargs):
             """
 
-            Internal function to compute the numeric similarity algorithms. 
+            Internal function to compute the numeric similarity algorithms.
 
             """
 
