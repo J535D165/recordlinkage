@@ -491,16 +491,22 @@ class Compare(object):
             method=method, *args, **kwargs
         )
 
-    def date(self, s1, s2, swap_month_day=0.5, swap_months=0.5, *args, **kwargs):
+    def date(self, s1, s2, swap_month_day=0.5, swap_months='default', *args, **kwargs):
         """
-        date(self, s1, s2, swap_month_day=0.5, swap_months=0.5, missing_value=0, name=None, store=True)
+        date(self, s1, s2, swap_month_day=0.5, swap_months='default', missing_value=0, name=None, store=True)
 
         Compare two dates.
 
-        :param s1: Series with dates
-        :param s2: Series with dates
+        :param s1: Dates. This can be a Series, DatetimeIndex or DataFrame
+                (with columns 'year', 'month' and 'day').
+        :param s2: This can be a Series, DatetimeIndex or DataFrame
+                (with columns 'year', 'month' and 'day').
         :param swap_month_day: The value if the month and day are swapped.
-        :param swap_months: The value if the month and day differ with 1 month.
+        :param swap_months: A list of tuples with common errors caused by the
+                translating of months into numbers, i.e. October is month 10.
+                The format of the tuples is (month_good, month_bad, value).
+                Default: swap_months = [(6, 7, 0.5), (7, 6, 0.5), (9, 10, 0.5),
+                (10, 9, 0.5)]
         :param missing_value: The value for a comparison with a missing value.
                 Default 0.
         :param name: The name of the feature and the name of the column.
@@ -509,12 +515,12 @@ class Compare(object):
         :type s1: pandas.Series, numpy.array, label/string
         :type s2: pandas.Series, numpy.array, label/string
         :type swap_month_day: float
-        :type swap_months: float
+        :type swap_months: list of tuples
         :type missing_value: numpy.dtype
         :type name: label
         :type store: bool
 
-        :return: A Series with comparison values.
+        :return: A Series with date comparison values.
         :rtype: pandas.Series
         """
 
@@ -557,37 +563,50 @@ def _compare_exact(s1, s2, agree_value=1, disagree_value=0, missing_value=0):
 
 
 @fillna_decorator(0)
-def _compare_dates(s1, s2, swap_month_day=0.5, swap_months=0.5):
+def _compare_dates(s1, s2, swap_month_day=0.5, swap_months='default', errors='coerce', *args, **kwargs):
 
-    d1 = pandas.DataFrame({
-        'year': s1.DataTimeIndex.year,
-        'month': s1.DataTimeIndex.month,
-        'day': s1.DataTimeIndex.day,
-    })
+    if isinstance(s1, (pandas.Series)):
+        s1 = s1.values
 
-    d2 = pandas.DataFrame({
-        'year': s2.DataTimeIndex.year,
-        'month': s2.DataTimeIndex.month,
-        'day': s2.DataTimeIndex.day,
-    })
+    if isinstance(s2, (pandas.Series)):
+        s2 = s2.values
+
+    s1_dti = pandas.to_datetime(s1, errors=errors, *args, **kwargs)
+    s2_dti = pandas.to_datetime(s2, errors=errors, *args, **kwargs)
 
     c = (s1 == s2).astype(np.float64)
 
     # The case is which there is a swap_month_day value given.
     if (swap_month_day and swap_month_day != 0):
 
-        c_swap = (d1[['year', 'month', 'day']] == d2[['year', 'day', 'month']]).any(axis=1)
-
-        c[(c_swap == True) & (c != 1)] = swap_month_day
+        c[(s1_dti.year == s2_dti.year) &
+          (s1_dti.month == s2_dti.day) &
+          (s1_dti.day == s2_dti.month) &
+          (c != 1)] = swap_month_day
 
     if (swap_months and swap_months != 0):
 
-        swap_months = [(6,7), (7,6), (9,10), (10,9)]
+        if swap_months == 'default':
+            swap_months = [(6, 7, 0.5),
+                           (7, 6, 0.5),
+                           (9, 10, 0.5),
+                           (10, 9, 0.5)]
+        else:
+            try:
+                if not all([len(x) == 3 for x in swap_months]):
+                    raise Exception
+            except Exception:
+                print swap_months
+                raise ValueError('swap_months must be a list of (first month, second month, value) tuples or lists. ')
 
-        for swap in swap_months:
+        print swap_months
 
-            c_swap_month = (d1['year'] == d2['year']) & (d1['day'] == d2['day']) & (d1['month'] == swap[0]) & (d2['month'] == swap[1])
-            c[(c_swap_month == True) & (c != 1)] = swap_month_day
+        for month1, month2, value in swap_months:
+
+            c[(s1_dti.year == s2_dti.year) &
+              (s1_dti.month == month1) & (s2_dti.month == month2) &
+              (s1_dti.day == s2_dti.day) &
+              (c != 1)] = value
 
     return c
 

@@ -181,6 +181,22 @@ class TestCompareAlgorithms(TestCompare):
 
         pdt.assert_series_equal(result, expected)
 
+    def test_dates(self):
+
+        self.A['test_dates'] = pandas.to_datetime(
+            ['2005/11/23', np.nan, '2004/11/23', '2010/01/10', '2010/10/30']
+        )
+        self.B['test_dates'] = pandas.to_datetime(
+            ['2005/11/23', '2010/12/31', '2005/11/23', '2010/10/01', '2010/9/30']
+        )
+
+        comp = recordlinkage.Compare(self.index_AB, self.A, self.B)
+
+        result = comp.date('test_dates', 'test_dates')
+        expected = pandas.Series([1, 0, 0, 0.5, 0.5], index=self.index_AB)
+
+        pdt.assert_series_equal(result, expected)
+
     def test_numeric(self):
 
         comp = recordlinkage.Compare(self.index_AB, self.A, self.B)
