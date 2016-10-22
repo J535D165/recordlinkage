@@ -1,7 +1,6 @@
 from __future__ import division
 from __future__ import unicode_literals
 
-import warnings
 import sys
 
 import pandas
@@ -15,13 +14,14 @@ try:
 except ImportError:
     pass
 
+
 def _check_jellyfish(raise_error=True):
     """
 
     Check if the jellyfish is imported. If it is imported, return True. If not
     succesfully imported, raise if raise_error == True and return false if
     not.
-    
+
     """
     if 'jellyfish' in sys.modules.keys():
         return True
@@ -35,6 +35,7 @@ def _check_jellyfish(raise_error=True):
         else:
             return False
 
+
 def fillna_decorator(missing_value=np.nan):
 
     def real_decorator(func):
@@ -42,7 +43,7 @@ def fillna_decorator(missing_value=np.nan):
         def func_wrapper(*args, **kwargs):
 
             mv = kwargs.pop('missing_value', missing_value)
-            
+
             result = func(*args, **kwargs)
 
             # fill missing values (Default argument)
@@ -58,6 +59,7 @@ def fillna_decorator(missing_value=np.nan):
         return func_wrapper
 
     return real_decorator
+
 
 class Compare(object):
     """
@@ -460,7 +462,7 @@ class Compare(object):
         def _num_internal(lat1, lng1, lat2, lng2, method, *args, **kwargs):
             """
 
-            Internal function to compute the numeric similarity algorithms. 
+            Internal function to compute the numeric similarity algorithms.
 
             """
 
@@ -478,12 +480,48 @@ class Compare(object):
             elif method == 'gauss':
                 num_sim_alg = _gauss_sim
             else:
-                raise ValueError("The algorithm '{}' is not known.".format(method))
+                raise ValueError(
+                    "The algorithm '{}' is not known.".format(method)
+                )
 
             return num_sim_alg(d, *args, **kwargs)
 
         return self.compare(
-            _num_internal, (lat1, lng1), (lat2, lng2), method=method, *args, **kwargs
+            _num_internal, (lat1, lng1), (lat2, lng2),
+            method=method, *args, **kwargs
+        )
+
+    def date(self, s1, s2, swap_month_day=0.5, swap_months=0.5, *args, **kwargs):
+        """
+        date(self, s1, s2, swap_month_day=0.5, swap_months=0.5, missing_value=0, name=None, store=True)
+
+        Compare two dates.
+
+        :param s1: Series with dates
+        :param s2: Series with dates
+        :param swap_month_day: The value if the month and day are swapped.
+        :param swap_months: The value if the month and day differ with 1 month.
+        :param missing_value: The value for a comparison with a missing value.
+                Default 0.
+        :param name: The name of the feature and the name of the column.
+        :param store: Store the result in the dataframe. Default True.
+
+        :type s1: pandas.Series, numpy.array, label/string
+        :type s2: pandas.Series, numpy.array, label/string
+        :type swap_month_day: float
+        :type swap_months: float
+        :type missing_value: numpy.dtype
+        :type name: label
+        :type store: bool
+
+        :return: A Series with comparison values.
+        :rtype: pandas.Series
+        """
+
+        return self.compare(
+            _compare_dates, s1, s2,
+            swap_month_day=swap_month_day, swap_months=swap_months,
+            *args, **kwargs
         )
 
 
@@ -498,6 +536,7 @@ def _missing(*args):
             axis=1),
         axis=1)
 
+
 def _compare_exact(s1, s2, agree_value=1, disagree_value=0, missing_value=0):
 
     if agree_value == 'value':
@@ -511,9 +550,46 @@ def _compare_exact(s1, s2, agree_value=1, disagree_value=0, missing_value=0):
 
     # Only when disagree value is not identical with the missing value
     if disagree_value != missing_value:
-        compare[_missing(s1, s2)] = missing_value
+
+        compare[(s1.isnull() | s2.isnull())] = missing_value
 
     return compare
+
+
+@fillna_decorator(0)
+def _compare_dates(s1, s2, swap_month_day=0.5, swap_months=0.5):
+
+    d1 = pandas.DataFrame({
+        'year': s1.DataTimeIndex.year,
+        'month': s1.DataTimeIndex.month,
+        'day': s1.DataTimeIndex.day,
+    })
+
+    d2 = pandas.DataFrame({
+        'year': s2.DataTimeIndex.year,
+        'month': s2.DataTimeIndex.month,
+        'day': s2.DataTimeIndex.day,
+    })
+
+    c = (s1 == s2).astype(np.float64)
+
+    # The case is which there is a swap_month_day value given.
+    if (swap_month_day and swap_month_day != 0):
+
+        c_swap = (d1[['year', 'month', 'day']] == d2[['year', 'day', 'month']]).any(axis=1)
+
+        c[(c_swap == True) & (c != 1)] = swap_month_day
+
+    if (swap_months and swap_months != 0):
+
+        swap_months = [(6,7), (7,6), (9,10), (10,9)]
+
+        for swap in swap_months:
+
+            c_swap_month = (d1['year'] == d2['year']) & (d1['day'] == d2['day']) & (d1['month'] == swap[0]) & (d2['month'] == swap[1])
+            c[(c_swap_month == True) & (c != 1)] = swap_month_day
+
+    return c
 
 # Numerical comparison algorithms
 
@@ -527,6 +603,7 @@ def _step_sim(d, offset=0, origin=0):
 
     return pandas.eval(expr).astype(np.int64)
 
+
 def _linear_sim(d, scale, offset=0, origin=0):
 
     if offset < 0:
@@ -535,11 +612,12 @@ def _linear_sim(d, scale, offset=0, origin=0):
     if scale <= 0:
         raise ValueError("The scale must be larger than 0. ")
 
-    d = (abs(d-origin)).clip(offset, offset+2*scale)
+    d = (abs(d - origin)).clip(offset, offset + 2 * scale)
 
     expr = '1 - (d-offset)/(2*scale)'
 
     return pandas.eval(expr)
+
 
 def _squared_sim(d, scale, offset=0, origin=0):
 
@@ -549,12 +627,12 @@ def _squared_sim(d, scale, offset=0, origin=0):
     if scale <= 0:
         raise ValueError("The scale must be larger than 0. ")
 
-    d = (abs(d-origin)).clip(offset, offset+np.sqrt(2)*scale)
+    d = (abs(d - origin)).clip(offset, offset + np.sqrt(2) * scale)
 
     # solve y=1-ad^2 given y(d=scale)=0.5
     # 1-y = ad^2
     # a = (1-y)/d^2
-    # 
+
     # fill y=0.5 and d = scale
     # a = (1-0.5)/scale^2
     # a = 1/(2*scale^2)
@@ -568,6 +646,7 @@ def _squared_sim(d, scale, offset=0, origin=0):
 
     return pandas.eval(expr)
 
+
 def _exp_sim(d, scale, offset=0, origin=0):
 
     if offset < 0:
@@ -576,12 +655,13 @@ def _exp_sim(d, scale, offset=0, origin=0):
     if scale <= 0:
         raise ValueError("The scale must be larger than 0. ")
 
-    d = (abs(d-origin)).clip(offset, None)
+    d = (abs(d - origin)).clip(offset, None)
 
     # solve y=exp(-x*a) if 1/2 = exp(-x/scale)
     expr = '2**(-(d-offset)/scale)'
 
     return pandas.eval(expr)
+
 
 def _gauss_sim(d, scale, offset=0, origin=0):
 
@@ -591,7 +671,7 @@ def _gauss_sim(d, scale, offset=0, origin=0):
     if scale <= 0:
         raise ValueError("The scale must be larger than 0. ")
 
-    d = (abs(d-origin)).clip(offset, None)
+    d = (abs(d - origin)).clip(offset, None)
 
     # solve y=exp(-x^2*a) if 1/2 = exp(-x^2/scale^2)
     expr = '2**(-((d-offset)/scale)**2)'
@@ -600,9 +680,11 @@ def _gauss_sim(d, scale, offset=0, origin=0):
 
 # Numerical distance algorithms
 
+
 def _1d_distance(s1, s2):
 
     return pandas.eval("s2-s1")
+
 
 def _haversine_distance(lat1, lng1, lat2, lng2):
 
@@ -623,7 +705,7 @@ def jaro_similarity(s1, s2):
 
     # Check jellyfish 
     _check_jellyfish(raise_error=True)
-    
+
     conc = pandas.concat([s1, s2], axis=1, ignore_index=True)
 
     def jaro_apply(x):
@@ -727,6 +809,7 @@ def qgram_similarity(s1, s2, include_wb=True, ngram=(2, 2)):
         return np.true_divide(match_ngrams, total_ngrams).A1
 
     return _metric_sparse_euclidean(vec_fit[:len(s1)], vec_fit[len(s1):])
+
 
 def cosine_similarity(s1, s2, include_wb=True, ngram=(2, 2)):
 
