@@ -39,12 +39,16 @@ Record linkage
 
 	notebooks/classifiers.ipynb
 	notebooks/advanced_indexing.ipynb
+	performance
 
 :doc:`notebooks/classifiers`
 	The full API reference of the `Record Linkage Toolkit` package is found here.
 
 :doc:`notebooks/advanced_indexing`
 	Are the built-in indexing algorithms not sufficient? Build your own!
+
+:doc:`performance`
+	Improve the performance of your record linkage.
 
 Reference
 =========
