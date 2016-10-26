@@ -64,55 +64,7 @@ def fillna_decorator(missing_value=np.nan):
 class CompareCore(object):
     """
 
-    Class to compare the attributes of candidate record pairs. The ``Compare``
-    class has several methods to compare data such as string similarity
-    measures, numeric metrics and exact comparison methods.
-
-    :param pairs: A MultiIndex of candidate record pairs.
-    :param df_a: The first dataframe.
-    :param df_b: The second dataframe.
-
-    :type pairs: pandas.MultiIndex
-    :type df_a: pandas.DataFrame
-    :type df_b: pandas.DataFrame
-
-    :returns: A compare class
-    :rtype: recordlinkage.Compare
-
-    :var pairs: The candidate record pairs.
-    :var df_a: The first DataFrame.
-    :var df_b: The second DataFrame.
-    :var vectors: The DataFrame with comparison data.
-
-    :vartype pairs: pandas.MultiIndex
-    :vartype df_a: pandas.DataFrame
-    :vartype df_b: pandas.DataFrame
-    :vartype vectors: pandas.DataFrame
-
-    Example:
-
-    In the following example, the record pairs of two historical datasets with
-    census data are compared. The datasets are named ``census_data_1980`` and
-    ``census_data_1990``. The ``candidate_pairs`` are the record pairs to
-    compare. The record pairs are compared on the first name, last name, sex,
-    date of birth, address, place, and income.
-
-    .. code:: python
-
-        >>> comp = recordlinkage.Compare(
-            candidate_pairs, census_data_1980, census_data_1990
-            )
-        >>> comp.string('first_name', 'name', method='jarowinkler')
-        >>> comp.string('lastname', 'lastname', method='jarowinkler')
-        >>> comp.exact('dateofbirth', 'dob')
-        >>> comp.exact('sex', 'sex')
-        >>> comp.string('address', 'address', method='levenshtein')
-        >>> comp.exact('place', 'place')
-        >>> comp.numeric('income', 'income')
-        >>> print(comp.vectors.head())
-
-    The attribute ``vectors`` is the DataFrame with the comparison data. It
-    can be called whenever you want.
+    Core class for comparing records.
 
     """
 
@@ -362,11 +314,11 @@ class Compare(CompareCore):
 
         return self.compare(_compare_exact, s1, s2, *args, **kwargs)
 
-    def string(self, s1, s2, method='levenshtein', *args, **kwargs):
+    def string(self, s1, s2, method='levenshtein', threshold=None, *args, **kwargs):
         """
         string(s1, s2, method='levenshtein', threshold=None, missing_value=0, name=None, store=True)
 
-        Compare string values with a similarity approximation.
+        Compare strings.
 
         :param s1: Series or DataFrame to compare all fields.
         :param s2: Series or DataFrame to compare all fields.
@@ -403,7 +355,7 @@ class Compare(CompareCore):
         """
 
         @fillna_decorator(0)
-        def _string_internal(s1, s2, method, *args, **kwargs):
+        def _string_internal(s1, s2, method, threshold=None, *args, **kwargs):
             """
 
             Internal function to compute the numeric similarity algorithms. 
@@ -430,31 +382,46 @@ class Compare(CompareCore):
             else:
                 raise ValueError("The algorithm '{}' is not known.".format(method))
 
-            return str_sim_alg(s1, s2, *args, **kwargs)
+            c = str_sim_alg(s1, s2, *args, **kwargs)
 
+            if threshold:
+                return (c >= threshold).astype(np.float64)
+            else:
+                return c
 
-        return self.compare(_string_internal, s1, s2, method=method, *args, **kwargs)
+        return self.compare(
+            _string_internal, s1, s2, method=method,
+            threshold=threshold, *args, **kwargs)
 
     def numeric(self, s1, s2, method='linear', *args, **kwargs):
         """
         numeric(s1, s2, method='linear', offset, scale, origin=0, missing_value=0, name=None, store=True)
 
         This method returns the similarity between two numeric values. The
-        following algorithms can be used: 'step', 'linear' or 'squared'. These
-        functions are defined on the interval (-threshold, threshold). In case
-        of agreement, the similarity is 1 and in case of complete disagreement
-        it is 0. For linear and squared methods is also partial agreement
-        possible.
+        implemented algorithms are: 'step', 'linear', 'exp', 'gauss' or
+        'squared'. In case of agreement, the similarity is 1 and in case of
+        complete disagreement it is 0. The implementation is similar with
+        numeric comparing in ElasticSearch, a full-text search tool. The
+        parameters are explained in the image below (source ElasticSearch, The
+        Definitive Guide)
+
+        .. image:: /images/elas_1705.png
+            :width: 100%
+            :target: https://www.elastic.co/guide/en/elasticsearch/guide/current/decay-functions.html
+            :alt: Decay functions, like in ElasticSearch
 
         :param s1: Series or DataFrame to compare all fields.
         :param s2: Series or DataFrame to compare all fields.
-        :param method: The metric used. Options 'step', 'linear', 'exp', 
+        :param method: The metric used. Options 'step', 'linear', 'exp',
                 'gauss' or 'squared'. Default 'linear'.
-        :param offset: 
-        :param scale: 
-        :param origin: 
-        :param missing_value: The value for a comparison with a missing value.
-                Default 0.
+        :param offset: The offset. See image above.
+        :param scale: The scale of the numeric comparison method. See the
+                image above. This argument is not available for the 'step'
+                algorithm.
+        :param origin: The shift of bias between the values. See image
+                above.
+        :param missing_value: The value if one or both records have a
+                missing value on the compared field. Default 0.
         :param name: The name of the feature and the name of the column.
         :param store: Store the result in the dataframe. Default True
 
@@ -463,13 +430,18 @@ class Compare(CompareCore):
         :type offset: float
         :type scale: float
         :type origin: float
-        :type method: 'step', 'linear' or 'squared'
+        :type method: str
         :type missing_value: numpy.dtype
         :type name: label
         :type store: bool
 
         :return: A Series with comparison values.
         :rtype: pandas.Series
+
+        .. note::
+
+            Numeric comparing can be an efficient way to compare date/time
+            variables. This can be done by comparing the timestamps.
 
         """
 
@@ -503,17 +475,25 @@ class Compare(CompareCore):
 
     def geo(self, lat1, lng1, lat2, lng2, method='linear', *args, **kwargs):
         """
-        geo(lat1, lng1, lat2, lng2, threshold=None, method='step', missing_value=0, name=None, store=True)
+        geo(lat1, lng1, lat2, lng2, method='linear', offset, scale, origin=0, missing_value=0, name=None, store=True)
 
-        Compare geometric WGS-coordinates with a tolerance window.
+        Compare the geometric (haversine) distance between two WGS-
+        coordinates. The similarity algorithms are 'step', 'linear', 'exp',
+        'gauss' or 'squared'. The similarity functions are the same as in
+        :meth:`recordlinkage.comparing.Compare.numeric`
 
         :param lat1: Series with Lat-coordinates
         :param lng1: Series with Lng-coordinates
         :param lat2: Series with Lat-coordinates
         :param lng2: Series with Lng-coordinates
-        :param threshold: The threshold size. Can be a tuple with two values
-                or a single number.
-        :param method: The metric used. Options 'step', 'linear' or 'squared'.
+        :param method: The metric used. Options 'step', 'linear', 'exp',
+                'gauss' or 'squared'. Default 'linear'.
+        :param offset: The offset. See Compare.numeric.
+        :param scale: The scale of the numeric comparison method. See
+                Compare.numeric. This argument is not available for the
+                'step' algorithm.
+        :param origin: The shift of bias between the values. See
+                Compare.numeric.
         :param missing_value: The value for a comparison with a missing value.
                 Default 0.
         :param name: The name of the feature and the name of the column.
@@ -523,8 +503,10 @@ class Compare(CompareCore):
         :type lng1: pandas.Series, numpy.array, label/string
         :type lat2: pandas.Series, numpy.array, label/string
         :type lng2: pandas.Series, numpy.array, label/string
-        :type threshold: float, tuple of floats
         :type method: str
+        :type offset: float
+        :type scale: float
+        :type origin: float
         :type missing_value: numpy.dtype
         :type name: label
         :type store: bool
@@ -570,7 +552,7 @@ class Compare(CompareCore):
         """
         date(self, s1, s2, swap_month_day=0.5, swap_months='default', missing_value=0, name=None, store=True)
 
-        Compare two dates.
+        Compare dates.
 
         :param s1: Dates. This can be a Series, DatetimeIndex or DataFrame
                 (with columns 'year', 'month' and 'day').
