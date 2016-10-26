@@ -12,12 +12,27 @@ Some of the options:
 Blocking on multiple columns
 ----------------------------
 
-Blocking is an effective way to increase performance. If the performance of your implementation is poor, increase the speed by blocking on multiple blocking keys. Use ``index.block(['col1', 'col2'], ['col1', 'col2'])``. Oke, you might incorrectly exclude links. But you can repeat the process with a different combination of blocking keys. For example, ``index.block(['col1', 'col3'], ['col1', 'col3'])``. Merge in the end the links. 
+Blocking is an effective way to increase performance. If the performance of your implementation is poor, increase the speed by blocking on multiple blocking keys. Use ``index.block(['col1', 'col2'], ['col1', 'col2'])``. Oke, you might exclude more links accidently. But you can repeat the process with a different combination of blocking keys. For example, ``index.block(['col1', 'col3'], ['col1', 'col3'])``. Merge in the end the links of the two passes. 
+
+``` python
+>>> pcl = recordlinkage.Pairs(dfA, dfB)
+>>> candidate_pairs = pcl.block(left_on=['first_name', 'surname'], right_on=['name', 'surname'])
+```
 
 Compare in a batch
 ------------------
 
-The structure of the ``recordlinkage`` package has a drawback. The indexation step and comparing step are separated from each other. This is not good for the performance, but uses less memory and is better understandable. If you make a lot of comparisons, the performance can be bad. In this case use ``Compare(..., batch=True)``. See http://recordlinkage.readthedocs.io/en/latest/reference.html#recordlinkage.comparing.Compare.run.
+The structure of the ``recordlinkage`` package has a drawback. The indexation step and comparing step are separated from each other. This is not good for the performance, but uses less memory and is better understandable. If you make a lot of comparisons, the performance can be bad. In this case use ``Compare(..., batch=True)``. 
+
+``` python 
+>>> # This example is almost 3 times faster than the traditional one.
+>>> comp = recordlinkage.Compare(..., batch=True)
+>>> comp.exact('first_name', 'name')
+>>> comp.exact('surname', 'surname')
+>>> comp.exact('date_of_birth', 'dob')
+>>> comp.run()
+```
+See http://recordlinkage.readthedocs.io/en/latest/reference.html#recordlinkage.comparing.Compare.run.
 
 Split the indexation step
 -------------------------
