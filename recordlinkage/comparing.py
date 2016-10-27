@@ -35,7 +35,6 @@ def _check_jellyfish(raise_error=True):
         else:
             return False
 
-
 def fillna_decorator(missing_value=np.nan):
 
     def real_decorator(func):
@@ -46,9 +45,8 @@ def fillna_decorator(missing_value=np.nan):
 
             result = func(*args, **kwargs)
 
-            # fill missing values (Default argument)
-            if not np.isnan(mv):
-
+            # fill missing values if missing_value is not a missing value like NaN or None.
+            if pandas.notnull(mv):
                 if isinstance(result, (np.ndarray)):
                     result[np.isnan(result)] = mv
                 else:
@@ -196,6 +194,11 @@ class CompareCore(object):
 
             # Compute the comparison
             c = comp_func(*tuple(args), **kwargs)
+
+            # if a pandas series is returned, overwrite the index. The index
+            # can be different than the index passed to the compare function.
+            if isinstance(c, pandas.Series):
+                c.index = self.vectors.index
 
             # append column to Compare.vectors
             name_or_id = name if name else len(self.vectors.columns)
@@ -602,6 +605,8 @@ def _missing(*args):
 
 def _compare_exact(s1, s2, agree_value=1, disagree_value=0, missing_value=0):
 
+    print (type(agree_value))
+
     if agree_value == 'value':
         compare = s1.copy()
         compare[s1 != s2] = disagree_value
@@ -611,16 +616,25 @@ def _compare_exact(s1, s2, agree_value=1, disagree_value=0, missing_value=0):
 
     compare = pandas.Series(compare, index=s1.index)
 
+    if type(agree_value) != type(disagree_value):
+        compare = compare.astype(object)
+
+    print ([type(e) for e in compare])
+
     # Only when disagree value is not identical with the missing value
     if disagree_value != missing_value:
 
         compare[(s1.isnull() | s2.isnull())] = missing_value
 
+    print ([type(e) for e in compare])
+
     return compare
 
-
 @fillna_decorator(0)
-def _compare_dates(s1, s2, swap_month_day=0.5, swap_months='default', errors='coerce', *args, **kwargs):
+def _compare_dates(s1, s2, swap_month_day=0.5, swap_months='default',
+                   errors='coerce', *args, **kwargs):
+
+    missing_pairs = (s1.isnull() | s2.isnull()).values
 
     if isinstance(s1, (pandas.Series)):
         s1 = s1.values
@@ -653,7 +667,9 @@ def _compare_dates(s1, s2, swap_month_day=0.5, swap_months='default', errors='co
                 if not all([len(x) == 3 for x in swap_months]):
                     raise Exception
             except Exception:
-                raise ValueError('swap_months must be a list of (first month, second month, value) tuples or lists. ')
+                raise ValueError(
+                    'swap_months must be a list of (first month, \
+                    second month, value) tuples or lists. ')
 
         for month1, month2, value in swap_months:
 
@@ -661,6 +677,12 @@ def _compare_dates(s1, s2, swap_month_day=0.5, swap_months='default', errors='co
               (s1_dti.month == month1) & (s2_dti.month == month2) &
               (s1_dti.day == s2_dti.day) &
               (c != 1)] = value
+
+    c = pandas.Series(c)
+    c[missing_pairs] = np.nan
+
+    print c.dtype
+    print [type(x) for x in c]
 
     return c
 
