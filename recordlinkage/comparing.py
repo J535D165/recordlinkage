@@ -604,29 +604,30 @@ def _missing(*args):
 
 
 def _compare_exact(s1, s2, agree_value=1, disagree_value=0, missing_value=0):
+    # dtypes can be hard if the passed parameters (agreement, disagreement,
+    # missing_value) are of different types.
+    # http://chris.friedline.net/2015-12-15-rutgers/lessons/python2/03-data-types-and-format.html
 
-    print (type(agree_value))
+    # Convert to pandas.Series if (numpy) arrays are passed.
+    if not isinstance(s1, pandas.Series):
+        s1 = pandas.Series(s1, index=s1.index)
 
+    if not isinstance(s2, pandas.Series):
+        s2 = pandas.Series(s2, index=s2.index)
+
+    # Values or agree/disagree
     if agree_value == 'value':
         compare = s1.copy()
         compare[s1 != s2] = disagree_value
 
     else:
-        compare = np.where(s1 == s2, agree_value, disagree_value)
-
-    compare = pandas.Series(compare, index=s1.index)
-
-    if type(agree_value) != type(disagree_value):
-        compare = compare.astype(object)
-
-    print ([type(e) for e in compare])
+        compare = pandas.Series(disagree_value, index=s1.index)
+        compare[s1 == s2] = agree_value
 
     # Only when disagree value is not identical with the missing value
     if disagree_value != missing_value:
 
         compare[(s1.isnull() | s2.isnull())] = missing_value
-
-    print ([type(e) for e in compare])
 
     return compare
 
@@ -680,9 +681,6 @@ def _compare_dates(s1, s2, swap_month_day=0.5, swap_months='default',
 
     c = pandas.Series(c)
     c[missing_pairs] = np.nan
-
-    print c.dtype
-    print [type(x) for x in c]
 
     return c
 
