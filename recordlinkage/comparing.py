@@ -393,8 +393,8 @@ class Compare(CompareCore):
                 return c
 
         return self.compare(
-            _string_internal, s1, s2, method=method,
-            threshold=threshold, *args, **kwargs)
+            _string_internal, s1, s2, method, threshold, *args, **kwargs
+        )
 
     def numeric(self, s1, s2, method='linear', *args, **kwargs):
         """
@@ -474,7 +474,7 @@ class Compare(CompareCore):
 
             return num_sim_alg(d, *args, **kwargs)
 
-        return self.compare(_num_internal, s1, s2, method=method, *args, **kwargs)
+        return self.compare(_num_internal, s1, s2, method, *args, **kwargs)
 
     def geo(self, lat1, lng1, lat2, lng2, method='linear', *args, **kwargs):
         """
@@ -548,7 +548,7 @@ class Compare(CompareCore):
 
         return self.compare(
             _num_internal, (lat1, lng1), (lat2, lng2),
-            method=method, *args, **kwargs
+            method, *args, **kwargs
         )
 
     def date(self, s1, s2, swap_month_day=0.5, swap_months='default', *args, **kwargs):
