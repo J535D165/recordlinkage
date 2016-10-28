@@ -631,25 +631,33 @@ def _compare_exact(s1, s2, agree_value=1, disagree_value=0, missing_value=0):
 
     return compare
 
+
 @fillna_decorator(0)
 def _compare_dates(s1, s2, swap_month_day=0.5, swap_months='default',
                    errors='coerce', *args, **kwargs):
 
     missing_pairs = (s1.isnull() | s2.isnull()).values
 
-    if isinstance(s1, (pandas.Series)):
-        s1 = s1.values
+    # if isinstance(s1, (pandas.Series)):
+    #     s1 = s1.values
 
-    if isinstance(s2, (pandas.Series)):
-        s2 = s2.values
+    # if isinstance(s2, (pandas.Series)):
+    #     s2 = s2.values
 
-    s1_dti = pandas.to_datetime(s1, errors=errors, *args, **kwargs)
-    s2_dti = pandas.to_datetime(s2, errors=errors, *args, **kwargs)
+    s1_dti = pandas.to_datetime(s1.values, errors=errors, *args, **kwargs)
+    s2_dti = pandas.to_datetime(s2.values, errors=errors, *args, **kwargs)
 
-    c = (s1 == s2).astype(np.float64)
+    c = (s1 == s2).astype(np.int64)
 
     # The case is which there is a swap_month_day value given.
     if (swap_month_day and swap_month_day != 0):
+
+        # if isinstance(swap_month_day, float):
+        #     c = c.astype(np.float64)
+        # elif isinstance(swap_month_day, int):
+        #     c = c.astype(np.int64)
+        # else:
+        #     c = c.astype(object)
 
         c[(s1_dti.year == s2_dti.year) &
           (s1_dti.month == s2_dti.day) &
@@ -673,6 +681,15 @@ def _compare_dates(s1, s2, swap_month_day=0.5, swap_months='default',
                     second month, value) tuples or lists. ')
 
         for month1, month2, value in swap_months:
+
+            # print (type(value))
+
+            # if isinstance(value, float):
+            #     c = c.astype(np.float64)
+            # elif isinstance(value, int):
+            #     c = c.astype(np.int64)
+            # else:
+            #     c = c.astype(object)
 
             c[(s1_dti.year == s2_dti.year) &
               (s1_dti.month == month1) & (s2_dti.month == month2) &
