@@ -743,13 +743,10 @@ def _squared_sim(d, scale, offset=0, origin=0):
     # fill y=0.5 and d = scale
     # a = (1-0.5)/scale^2
     # a = 1/(2*scale^2)
-    # 
-    # d = sqrt(2)*scale is the point where similarity is zero. 
+    # y = 1 - 1/2*(d/scale)^2
+    # d = sqrt(2)*scale is the point where similarity is zero.
 
-    # 27 vs 20
-
-    a = '1/(2*scale**2)'
-    expr = '1 - {}*(d-offset)**2'.format(a)
+    expr = '1 - 1/2*exp(2*log((d-offset)/scale))'
 
     return pandas.eval(expr)
 
