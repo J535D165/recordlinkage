@@ -58,67 +58,100 @@ class TestCompareAlgorithms(TestCompare):
 
         self.A['test'] = ['Bob', 'Myrthe', 'Ally', 'John', 'Rose']
         self.B['test'] = ['Bob', 'Myrte', 'Ally', 'John', 'Roze']
+        expected = pandas.Series([1, 0, 1, 1, 0], index=self.index_AB)
 
         comp = recordlinkage.Compare(self.index_AB, self.A, self.B)
-
         result = comp.exact('test', 'test')
-        expected = pandas.Series([1, 0, 1, 1, 0], index=self.index_AB)
 
         pdt.assert_series_equal(result, expected)
 
     def test_link_exact_missing(self):
+        """
+        Test:
+            - Default value
+            - numeric value
+            - numpy.nan
+            - string value
+        """
 
         comp = recordlinkage.Compare(self.index_AB, self.A, self.B)
+
+        # Missing values as default
+        result = comp.exact('given_name', 'given_name')
+        expected = pandas.Series([0, 0, 0, 1, 0], index=self.index_AB)
+        pdt.assert_series_equal(result, expected)
 
         # Missing values as 0
         result = comp.exact('given_name', 'given_name', missing_value=0)
         expected = pandas.Series([0, 0, 0, 1, 0], index=self.index_AB)
+        pdt.assert_series_equal(result, expected)
 
+        # Missing values as 9
+        result = comp.exact('given_name', 'given_name', missing_value=9)
+        expected = pandas.Series([0, 9, 0, 1, 9], index=self.index_AB)
         pdt.assert_series_equal(result, expected)
 
         # Missing values as nan
         result = comp.exact('given_name', 'given_name', missing_value=nan)
         expected = pandas.Series([0, nan, 0, 1, nan], index=self.index_AB)
-
-        print(result)
-        print(expected)
-
         pdt.assert_series_equal(result, expected)
 
-        # Missing values as nan
-        result = comp.exact('given_name', 'given_name', missing_value=9)
-        expected = pandas.Series([0, 9, 0, 1, 9], index=self.index_AB)
-
+        # Missing values as string
+        result = comp.exact('given_name', 'given_name', missing_value='str')
+        expected = pandas.Series([0, 'str', 0, 1, 'str'], index=self.index_AB)
         pdt.assert_series_equal(result, expected)
+
 
     def test_link_exact_disagree(self):
+        """
+        Test:
+            - Default value
+            - numeric value
+            - numpy.nan
+            - string value
+        """
 
         comp = recordlinkage.Compare(self.index_AB, self.A, self.B)
 
-        # Missing values 0 and disagreement as 2
-        result = comp.exact('given_name', 'given_name',
-                            disagree_value=2, missing_value=0, name='y_name')
-        expected = pandas.Series(
-            [2, 0, 2, 1, 0], index=self.index_AB, name='y_name')
+        # disagree values as default
+        result = comp.exact('given_name', 'given_name')
+        expected = pandas.Series([0, 0, 0, 1, 0], index=self.index_AB)
+        pdt.assert_series_equal(result, expected)
+
+        # disagree values as 0
+        result = comp.exact('given_name', 'given_name', disagree_value=0)
+        expected = pandas.Series([0, 0, 0, 1, 0], index=self.index_AB)
+        pdt.assert_series_equal(result, expected)
+
+        # disagree values as 9
+        result = comp.exact('given_name', 'given_name', disagree_value=9)
+        expected = pandas.Series([9, 0, 9, 1, 0], index=self.index_AB)
+        pdt.assert_series_equal(result, expected)
+
+        # disagree values as nan
+        result = comp.exact('given_name', 'given_name', disagree_value=nan)
+        expected = pandas.Series([nan, 0, nan, 1, 0], index=self.index_AB)
+        pdt.assert_series_equal(result, expected)
+
+        # disagree values as string
+        result = comp.exact('given_name', 'given_name', disagree_value='str')
+        expected = pandas.Series(['str', 0, 'str', 1, 0], index=self.index_AB)
 
         pdt.assert_series_equal(result, expected)
 
-    def test_dedup_exact_basic(self):
-
-        comp = recordlinkage.Compare(self.index_AB, self.A, self.A)
-
-        # Missing values
-        result = comp.exact('given_name', 'given_name')  # , name='y_name')
-        # , name='y_name')
-        expected = pandas.Series([1, 0, 1, 1, 0], index=self.index_AB)
-
-        pdt.assert_series_equal(result, expected)
 
 ##########################################################
 #                     DATE ALGORITHM                     #
 ##########################################################
 
     def test_dates(self):
+        """
+        Test:
+            - Default value
+            - numeric value
+            - numpy.nan
+            - string value
+        """
 
         self.A['test_dates'] = pandas.to_datetime(
             ['2005/11/23', np.nan, '2004/11/23', '2010/01/10', '2010/10/30']
@@ -129,10 +162,121 @@ class TestCompareAlgorithms(TestCompare):
 
         comp = recordlinkage.Compare(self.index_AB, self.A, self.B)
 
+        # Missing values as default
         result = comp.date('test_dates', 'test_dates')
         expected = pandas.Series([1, 0, 0, 0.5, 0.5], index=self.index_AB)
 
+
+    def test_dates_with_missings(self):
+        """
+        Test:
+            - Default value
+            - numeric value
+            - numpy.nan
+            - string value
+        """
+
+        self.A['test_dates'] = pandas.to_datetime(
+            ['2005/11/23', np.nan, '2004/11/23', '2010/01/10', '2010/10/30']
+        )
+        self.B['test_dates'] = pandas.to_datetime(
+            ['2005/11/23', '2010/12/31', '2005/11/23', '2010/10/01', '2010/9/30']
+        )
+
+        comp = recordlinkage.Compare(self.index_AB, self.A, self.B)
+
+        # Missing values as default
+        print ("Missing values as default")
+        result = comp.date('test_dates', 'test_dates')
+        expected = pandas.Series([1, 0, 0, 0.5, 0.5], index=self.index_AB)
         pdt.assert_series_equal(result, expected)
+
+        # Missing values as 0
+        print ("Missing values as 0")
+        result = comp.date('test_dates', 'test_dates', missing_value=0)
+        expected = pandas.Series([1, 0, 0, 0.5, 0.5], index=self.index_AB)
+        pdt.assert_series_equal(result, expected)
+
+        # Missing values as 123.45
+        print ("Missing values as 123.45 (float)")
+        result = comp.date('test_dates', 'test_dates', missing_value=123.45)
+        expected = pandas.Series([1, 123.45, 0, 0.5, 0.5], index=self.index_AB)
+        pdt.assert_series_equal(result, expected)
+
+        # Missing values as nan
+        print ("Missing values as numpy.nan")
+        result = comp.date('test_dates', 'test_dates', missing_value=nan)
+        expected = pandas.Series([1, nan, 0, 0.5, 0.5], index=self.index_AB)
+        pdt.assert_series_equal(result, expected)
+
+        # Missing values as string
+        print ("Missing values as string")
+        result = comp.date('test_dates', 'test_dates', missing_value='str')
+        expected = pandas.Series([1, 'str', 0, 0.5, 0.5], index=self.index_AB, dtype=object)
+        pdt.assert_series_equal(result, expected)
+
+
+    def test_dates_with_swap(self):
+        """
+        Test:
+            - Default value
+            - numeric value
+            - numpy.nan
+            - string value
+        """
+
+        months_to_swap = [
+            (9, 10, 123.45),
+            (10, 9, 123.45),
+            (1, 2, 123.45),
+            (2, 1, 123.45)
+        ]
+
+        self.A['test_dates'] = pandas.to_datetime(
+            ['2005/11/23', np.nan, '2004/11/23', '2010/01/10', '2010/10/30']
+        )
+        self.B['test_dates'] = pandas.to_datetime(
+            ['2005/11/23', '2010/12/31', '2005/11/23', '2010/10/01', '2010/9/30']
+        )
+
+        comp = recordlinkage.Compare(self.index_AB, self.A, self.B)
+
+        # swap_month_day as default
+        print ("swap_month_day and swap_months default")
+        result = comp.date('test_dates', 'test_dates')
+        expected = pandas.Series([1, 0, 0, 0.5, 0.5], index=self.index_AB)
+        pdt.assert_series_equal(result, expected)
+
+        # swap_month_day and swap_months as 0
+        print ("swap_month_day and swap_months as 0")
+        result = comp.date('test_dates', 'test_dates', swap_month_day=0, swap_months='default')
+        expected = pandas.Series([1, 0, 0, 0, 0.5], index=self.index_AB)
+        pdt.assert_series_equal(result, expected)
+
+        # swap_month_day 123.45 (float)
+        print ("swap_month_day and swap_months as 123.45 (float)")
+        result = comp.date('test_dates', 'test_dates', swap_month_day=123.45, swap_months='default')
+        expected = pandas.Series([1, 0, 0, 123.45, 0.5], index=self.index_AB)
+        pdt.assert_series_equal(result, expected)
+
+        # swap_month_day and swap_months 123.45 (float)
+        print ("swap_month_day and swap_months as 123.45 (float)")
+        result = comp.date('test_dates', 'test_dates', swap_month_day=123.45, swap_months=months_to_swap)
+        expected = pandas.Series([1, 0, 0, 123.45, 123.45], index=self.index_AB)
+        pdt.assert_series_equal(result, expected)
+
+        # swap_month_day and swap_months as nan
+        print ("swap_month_day and swap_months as numpy.nan")
+        result = comp.date('test_dates', 'test_dates', swap_month_day=nan, swap_months='default', missing_value=nan)
+        expected = pandas.Series([1, nan, 0, nan, 0.5], index=self.index_AB)
+        pdt.assert_series_equal(result, expected)
+
+        # swap_month_day as string
+        print ("swap_month_day as string")
+        result = comp.date('test_dates', 'test_dates', swap_month_day='str')
+        expected = pandas.Series([1, 0, 0, 'str', 0.5], index=self.index_AB, dtype=object)
+        pdt.assert_series_equal(result, expected)
+
 
 ##########################################################
 #                   NUMERIC ALGORITHM                    #
@@ -140,34 +284,122 @@ class TestCompareAlgorithms(TestCompare):
 
     def test_numeric(self):
 
+        self.A['test_numeric'] = [1, 1, 1, nan, 0]
+        self.B['test_numeric'] = [1, 2, 3, nan, nan]
+
         comp = recordlinkage.Compare(self.index_AB, self.A, self.B)
 
-        # Missing values 
+        # Basics
         result = comp.numeric('age', 'age', 'step', offset=2)
-        expected = pandas.Series(
-            [1, 1, 1, 0, 0], index=self.index_AB)  # , name='age')
+        expected = pandas.Series([1, 1, 1, 0, 0], index=self.index_AB)
+        pdt.assert_series_equal(result, expected)
 
+        # Basics
+        result = comp.numeric('age', 'age', method='step', offset=2)
+        expected = pandas.Series([1, 1, 1, 0, 0], index=self.index_AB)
+        pdt.assert_series_equal(result, expected)
+
+        # Basics
+        result = comp.numeric('age', 'age', 'step', 2)
+        expected = pandas.Series([1, 1, 1, 0, 0], index=self.index_AB)
+        pdt.assert_series_equal(result, expected)
+
+    def test_numeric_with_missings(self):
+        """
+        Test:
+            - Default value
+            - numeric value
+            - numpy.nan
+            - string value
+        """
+
+        self.A['test_numeric'] = [1, 1, 1, nan, 1]
+        self.B['test_numeric'] = [1, 1, 1, nan, nan]
+
+        comp = recordlinkage.Compare(self.index_AB, self.A, self.B)
+
+        # Missing values as default
+        print ("Missing values as default")
+        result = comp.numeric('test_numeric', 'test_numeric', scale=2)
+        expected = pandas.Series([1, 1, 1, 0, 0], index=self.index_AB, dtype=np.float64)
+        pdt.assert_series_equal(result, expected)
+
+        # Missing values as 0
+        print ("Missing values as 0")
+        result = comp.numeric('test_numeric', 'test_numeric', scale=2, missing_value=0)
+        expected = pandas.Series([1, 1, 1, 0, 0], index=self.index_AB, dtype=np.float64)
+        pdt.assert_series_equal(result, expected)
+
+        # Missing values as 123.45
+        print ("Missing values as 123.45 (float)")
+        result = comp.numeric(
+            'test_numeric', 'test_numeric', scale=2, missing_value=123.45)
+        expected = pandas.Series([1, 1, 1, 123.45, 123.45], index=self.index_AB)
+        pdt.assert_series_equal(result, expected)
+
+        # Missing values as nan
+        print ("Missing values as numpy.nan")
+        result = comp.numeric(
+            'test_numeric', 'test_numeric', scale=2, missing_value=nan)
+        expected = pandas.Series([1, 1, 1, nan, nan], index=self.index_AB)
+        pdt.assert_series_equal(result, expected)
+
+        # Missing values as string
+        print ("Missing values as string")
+        result = comp.numeric(
+            'test_numeric', 'test_numeric', scale=2, missing_value='str')
+        expected = pandas.Series([1, 1, 1, 'str', 'str'], index=self.index_AB, dtype=object)
         pdt.assert_series_equal(result, expected)
 
     def test_numeric_batch(self):
+
+        tolerance = 0.00000001
+
+        self.A['numeric_val'] = [1, 1, 1, 1, 1]
+        self.B['numeric_val'] = [1, 2, 3, 4, 5]
 
         comp = recordlinkage.Compare(self.index_AB, self.A, self.B)
 
         for alg in NUMERIC_SIM_ALGORITHMS:
 
-            print (alg)
+            print ('The {} algorithm'.format(alg))
 
+            # Exclude step algorithm
             if alg is not 'step':
-                # Missing values
-                result = comp.numeric('age', 'age', method=alg, offset=2, scale=2)
+                result = comp.numeric('numeric_val', 'numeric_val', method=alg, offset=1, scale=2)
             else:
-                result = comp.numeric('age', 'age', method=alg, offset=2)
+                result = comp.numeric('numeric_val', 'numeric_val', method=alg, offset=1)
 
             print (result)
 
-            self.assertFalse(result.isnull().all())
+
+            # All values between 0 and 1.
             self.assertTrue((result[result.notnull()] >= 0).all())
             self.assertTrue((result[result.notnull()] <= 1).all())
+
+            if alg is not 'step':
+
+                # sim(scale) = 0.5
+                expected_bool = pandas.Series(
+                    [False, False, False, True, False], index=self.index_AB)
+                pdt.assert_series_equal(result == 0.5, expected_bool)
+
+                # sim(offset) = 1
+                expected_bool = pandas.Series(
+                    [True, True, False, False, False], index=self.index_AB)
+                pdt.assert_series_equal(result == 1, expected_bool)
+
+                # sim(scale) larger than 0.5
+                expected_bool = pandas.Series(
+                    [False, False, True, False, False], index=self.index_AB)
+                pdt.assert_series_equal(
+                    (result > 0.5) & (result < 1), expected_bool)
+
+                # sim(scale) smaller than 0.5
+                expected_bool = pandas.Series(
+                    [False, False, False, False, True], index=self.index_AB)
+                pdt.assert_series_equal(
+                    (result < 0.5) & (result >= 0), expected_bool)
 
     def test_numeric_alg_errors(self):
 
@@ -175,7 +407,7 @@ class TestCompareAlgorithms(TestCompare):
 
         for alg in [n for n in NUMERIC_SIM_ALGORITHMS if n is not 'step']:
 
-            print (alg)
+            print ('The {} algorithm'.format(alg))
 
             with self.assertRaises(ValueError):
                 comp.numeric('age', 'age', method=alg, 
@@ -185,43 +417,15 @@ class TestCompareAlgorithms(TestCompare):
                 comp.numeric('age', 'age', method=alg, 
                              offset=2, scale=-2)
 
-    def test_numeric_y05(self):
-        """
-
-        Test to check if d=origin+offset+scale results in a similarity of 0.5.
-        This test is excecuted for all numeric methods, except 'step'.
-
-        """
-
-        origin = 20
-        offset = 20
-        scale = 20
-
-        series_A = pandas.DataFrame({'age':np.arange(0,100)})
-        series_B = pandas.DataFrame(series_A+origin+offset+scale)
-
-        expected = np.array([0.5]*100)
-
-        cand_pairs = pandas.MultiIndex.from_arrays([np.arange(0,100), np.arange(0,100)])
-
-        comp = recordlinkage.Compare(cand_pairs, series_A, series_B)
-
-        for alg in [alg for alg in NUMERIC_SIM_ALGORITHMS if alg is not 'step']:
-
-            print (alg)
-
-            result = comp.numeric('age', 'age', method=alg, 
-                                  offset=offset, scale=scale, origin=origin, name='test')
-            
-            npt.assert_almost_equal(result.values, expected, decimal=4)
-
-
     def test_numeric_does_not_exist(self):
+        """
+        Raise error is the algorithm doesn't exist.
+        """
 
         comp = recordlinkage.Compare(self.index_AB, self.A, self.A)
 
         with self.assertRaises(ValueError):
-            comp.numeric('age', 'age', name='y_age', method='unknown_algorithm')
+            comp.numeric('age', 'age', method='unknown_algorithm')
 
 ##########################################################
 #                     GEO ALGORITHM                      #
@@ -244,7 +448,7 @@ class TestCompareAlgorithms(TestCompare):
 
         for alg in NUMERIC_SIM_ALGORITHMS:
 
-            print (alg)
+            print ('The {} algorithm'.format(alg))
 
             if alg is not 'step':
                 # Missing values
@@ -258,26 +462,19 @@ class TestCompareAlgorithms(TestCompare):
             self.assertTrue((result[result.notnull()] >= 0).all())
             self.assertTrue((result[result.notnull()] <= 1).all())
 
-
     def test_geo_does_not_exist(self):
+        """
+        Raise error is the algorithm doesn't exist.
+        """
 
         comp = recordlinkage.Compare(self.index_AB, self.A, self.A)
 
-        self.assertRaises(
-            ValueError, comp.geo, 'age',
-            'age', 'age', 'age', name='y_age', method='unknown_algorithm')
+        with self.assertRaises(ValueError):
+            comp.geo('age', 'age', 'age', 'age', method='unknown_algorithm')
 
 ##########################################################
 #                    STRING ALGORITHMS                   #
 ##########################################################
-
-    def test_fuzzy_does_not_exist(self):
-
-        comp = recordlinkage.Compare(self.index_AB, self.A, self.A)
-
-        self.assertRaises(
-            ValueError, comp.string, 'given_name',
-            'given_name', name='y_name', method='unknown_algorithm')
 
     def test_fuzzy_same_labels(self):
 
@@ -285,13 +482,13 @@ class TestCompareAlgorithms(TestCompare):
 
         for alg in STRING_SIM_ALGORITHMS:
 
-            print (alg)
+            print ('The {} algorithm'.format(alg))
 
             # Missing values
-            result = comp.string('given_name', 'given_name',
-                                method=alg, missing_value=0)
-            result = comp.string('given_name', 'given_name',
-                                alg, missing_value=0)
+            result = comp.string(
+                'given_name', 'given_name', method=alg, missing_value=0)
+            result = comp.string(
+                'given_name', 'given_name', alg, missing_value=0)
 
             print (result)
 
@@ -305,12 +502,12 @@ class TestCompareAlgorithms(TestCompare):
 
         for alg in STRING_SIM_ALGORITHMS:
 
-            print (alg)
+            print ('The {} algorithm'.format(alg))
 
             # Missing values
             # Change in future (should work without method)
-            result = comp.string('given_name', 'given_name',
-                                method=alg, missing_value=0)
+            result = comp.string(
+                'given_name', 'given_name', method=alg, missing_value=0)
 
             print (result)
 
@@ -318,19 +515,25 @@ class TestCompareAlgorithms(TestCompare):
             self.assertTrue((result[result.notnull()] >= 0).all())
             self.assertTrue((result[result.notnull()] <= 1).all())
 
-            # Debug trick
-            # if alg == 'q_gram':
-            #     rr
-
     def test_fuzzy_errors(self):
+
+        self.A['numeric_value'] = [1, 2, 3, 4, 5]
+        self.B['numeric_value'] = [1, 2, 3, 4, 5]
 
         comp = recordlinkage.Compare(self.index_AB, self.A, self.B)
 
         for alg in STRING_SIM_ALGORITHMS:
 
-            print (alg)
+            print ('The {} algorithm'.format(alg))
 
             with self.assertRaises(Exception):
                 # Missing values
-                result = comp.string('age', 'age', method=alg, missing_value=0)
+                comp.string('numeric_value', 'numeric_value', method=alg, missing_value=0)
 
+    def test_fuzzy_does_not_exist(self):
+
+        comp = recordlinkage.Compare(self.index_AB, self.A, self.A)
+
+        self.assertRaises(
+            ValueError, comp.string, 'given_name',
+            'given_name', name='y_name', method='unknown_algorithm')
