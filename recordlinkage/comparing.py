@@ -461,13 +461,13 @@ class Compare(CompareCore):
 
             if method == 'step':
                 num_sim_alg = _step_sim
-            elif method == 'linear':
+            elif method in ['linear', 'lin']:
                 num_sim_alg = _linear_sim
             elif method == 'squared':
                 num_sim_alg = _squared_sim
-            elif method == 'exp':
+            elif method in ['exp', 'exponential']:
                 num_sim_alg = _exp_sim
-            elif method == 'gauss':
+            elif method in ['gauss', 'gaussian']:
                 num_sim_alg = _gauss_sim
             else:
                 raise ValueError("The algorithm '{}' is not known.".format(method))
@@ -531,13 +531,13 @@ class Compare(CompareCore):
 
             if method == 'step':
                 num_sim_alg = _step_sim
-            elif method == 'linear':
+            elif method in ['linear', 'lin']:
                 num_sim_alg = _linear_sim
             elif method == 'squared':
                 num_sim_alg = _squared_sim
-            elif method == 'exp':
+            elif method in ['exp', 'exponential']:
                 num_sim_alg = _exp_sim
-            elif method == 'gauss':
+            elif method in ['gauss', 'gaussian']:
                 num_sim_alg = _gauss_sim
             else:
                 raise ValueError(
@@ -682,8 +682,6 @@ def _compare_dates(s1, s2, swap_month_day=0.5, swap_months='default',
 
         for month1, month2, value in swap_months:
 
-            # print (type(value))
-
             # if isinstance(value, float):
             #     c = c.astype(np.float64)
             # elif isinstance(value, int):
@@ -738,7 +736,6 @@ def _squared_sim(d, scale, offset=0, origin=0):
         raise ValueError("The scale must be larger than 0. ")
 
     d = (abs(d - origin)).clip(offset, offset + np.sqrt(2) * scale)
-
     # solve y=1-ad^2 given y(d=scale)=0.5
     # 1-y = ad^2
     # a = (1-y)/d^2
