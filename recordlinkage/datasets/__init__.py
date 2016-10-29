@@ -1,9 +1,11 @@
 
-import pandas
-
 import os
 import zipfile
-from six import BytesIO
+
+import pandas
+
+from ..compat.six import BytesIO
+from ..compat.six.moves.urllib.request import urlopen
 
 
 def load_krebsregister(block=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]):
@@ -76,17 +78,14 @@ def load_krebsregister(block=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]):
 
 def _download_krebsregister():
 
-    # Try to import requests
-    import requests
-
     zip_file_url = "https://archive.ics.uci.edu/ml/machine-learning-databases/00210/donation.zip"
 
     try:
         print("Start downloading the data.")
-        r = requests.get(zip_file_url)
+        r = urlopen(zip_file_url).read()
 
         # unzip the content and put it in the krebsregister folder
-        z = zipfile.ZipFile(BytesIO(r.content))
+        z = zipfile.ZipFile(BytesIO(r))
         z.extractall(os.path.join(os.path.dirname(__file__), 'krebsregister'))
 
         print("Data download succesfull.")
