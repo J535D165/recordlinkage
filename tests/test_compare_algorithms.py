@@ -406,16 +406,33 @@ class TestCompareAlgorithms(TestCompare):
 
         comp = recordlinkage.Compare(self.index_AB, self.A, self.B)
 
-        for alg in NUMERIC_SIM_ALGORITHMS:
+        with self.assertRaises(ValueError):
+            comp.numeric('age', 'age', method='linear', offset=2, scale=-2)
 
-            print ('The {} algorithm'.format(alg))
+        with self.assertRaises(ValueError):
+            comp.numeric('age', 'age', method='exp', offset=2, scale=-2)
 
-            if alg is not 'step':
-                with self.assertRaises(ValueError):
-                    yield comp.numeric('age', 'age', method=alg, offset=-2, scale=2)
+        with self.assertRaises(ValueError):
+            comp.numeric('age', 'age', method='gauss', offset=2, scale=-2)
 
-                with self.assertRaises(ValueError):
-                    yield comp.numeric('age', 'age', method=alg, offset=2, scale=-2)
+        with self.assertRaises(ValueError):
+            comp.numeric('age', 'age', method='squared', offset=2, scale=-2)
+
+        # offset negative
+        with self.assertRaises(ValueError):
+            comp.numeric('age', 'age', method='step', offset=-2)
+
+        with self.assertRaises(ValueError):
+            comp.numeric('age', 'age', method='linear', offset=-2, scale=2)
+
+        with self.assertRaises(ValueError):
+            comp.numeric('age', 'age', method='exp', offset=-2, scale=2)
+
+        with self.assertRaises(ValueError):
+            comp.numeric('age', 'age', method='gauss', offset=-2, scale=2)
+
+        with self.assertRaises(ValueError):
+            comp.numeric('age', 'age', method='squared', offset=-2, scale=2)
 
     def test_numeric_does_not_exist(self):
         """
@@ -517,18 +534,54 @@ class TestCompareAlgorithms(TestCompare):
 
     def test_fuzzy_errors(self):
 
-        self.A['numeric_value'] = [1, 2, 3, 4, 5]
-        self.B['numeric_value'] = [1, 2, 3, 4, 5]
+        self.A['numeric_value'] = [nan, 2, 3, 4, nan]
+        self.B['numeric_value'] = [nan, 2, 3, nan, 5]
 
         comp = recordlinkage.Compare(self.index_AB, self.A, self.B)
 
-        for alg in STRING_SIM_ALGORITHMS:
+        with self.assertRaises(Exception):
+            comp.string('numeric_value', 'numeric_value', method='jaro')
 
-            print ('The {} algorithm'.format(alg))
+        with self.assertRaises(Exception):
+            comp.string('numeric_value', 'numeric_value', method='q_gram')
 
-            with self.assertRaises(Exception):
-                # Missing values
-                comp.string('numeric_value', 'numeric_value', method=alg, missing_value=0)
+        with self.assertRaises(Exception):
+            comp.string('numeric_value', 'numeric_value', method='cosine')
+
+        with self.assertRaises(Exception):
+            comp.string('numeric_value', 'numeric_value', method='jaro_winkler')
+
+        with self.assertRaises(Exception):
+            comp.string('numeric_value', 'numeric_value', method='dameraulevenshtein')
+
+        with self.assertRaises(Exception):
+            comp.string('numeric_value', 'numeric_value', method='levenshtein')
+
+    def test_fuzzy_nan(self):
+
+        self.A['numeric_value'] = [nan, nan, nan, nan, nan]
+        self.B['numeric_value'] = [nan, nan, nan, nan, nan]
+
+        expected = pandas.Series([nan, nan, nan, nan, nan], index=self.index_AB)
+
+        comp = recordlinkage.Compare(self.index_AB, self.A, self.B)
+
+        result = comp.string('numeric_value', 'numeric_value', method='jaro', missing_value=nan)
+        pdt.assert_series_equal(result, expected)
+
+        # result = comp.string('numeric_value', 'numeric_value', method='q_gram', missing_value=nan)
+        # pdt.assert_series_equal(result, expected)
+
+        # result = comp.string('numeric_value', 'numeric_value', method='cosine', missing_value=nan)
+        # pdt.assert_series_equal(result, expected)
+
+        result = comp.string('numeric_value', 'numeric_value', method='jaro_winkler', missing_value=nan)
+        pdt.assert_series_equal(result, expected)
+
+        result = comp.string('numeric_value', 'numeric_value', method='dameraulevenshtein', missing_value=nan)
+        pdt.assert_series_equal(result, expected)
+
+        result = comp.string('numeric_value', 'numeric_value', method='levenshtein', missing_value=nan)
 
     def test_fuzzy_does_not_exist(self):
 
