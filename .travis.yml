@@ -14,7 +14,7 @@ install:
   - pip install -r requirements.txt
   
 # command to run tests
-script: nosetests --with-coverage
+script: nosetests --with-coverage --cover-package=recordlinkage
 
 # Codecov
 after_success:
