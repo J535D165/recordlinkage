@@ -412,10 +412,10 @@ class TestCompareAlgorithms(TestCompare):
 
             if alg is not 'step':
                 with self.assertRaises(ValueError):
-                    comp.numeric('age', 'age', method=alg, offset=-2, scale=2)
+                    yield comp.numeric('age', 'age', method=alg, offset=-2, scale=2)
 
                 with self.assertRaises(ValueError):
-                    comp.numeric('age', 'age', method=alg, offset=2, scale=-2)
+                    yield comp.numeric('age', 'age', method=alg, offset=2, scale=-2)
 
     def test_numeric_does_not_exist(self):
         """
