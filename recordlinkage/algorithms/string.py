@@ -27,7 +27,7 @@ def jaro_similarity(s1, s2):
         try:
             return jellyfish.jaro_distance(x[0], x[1])
         except Exception as err:
-            if np.isnan(x[0]) or np.isnan(x[1]):
+            if pandas.isnull(x[0]) or pandas.isnull(x[1]):
                 return np.nan
             else:
                 raise err
@@ -47,7 +47,7 @@ def jarowinkler_similarity(s1, s2):
         try:
             return jellyfish.jaro_winkler(x[0], x[1])
         except Exception as err:
-            if np.isnan(x[0]) or np.isnan(x[1]):
+            if pandas.isnull(x[0]) or pandas.isnull(x[1]):
                 return np.nan
             else:
                 raise err
@@ -68,7 +68,7 @@ def levenshtein_similarity(s1, s2):
             return 1 - jellyfish.levenshtein_distance(x[0], x[1]) \
                 / np.max([len(x[0]), len(x[1])])
         except Exception as err:
-            if np.isnan(x[0]) or np.isnan(x[1]):
+            if pandas.isnull(x[0]) or pandas.isnull(x[1]):
                 return np.nan
             else:
                 raise err
@@ -89,7 +89,7 @@ def damerau_levenshtein_similarity(s1, s2):
             return 1 - jellyfish.damerau_levenshtein_distance(x[0], x[1]) \
                 / np.max([len(x[0]), len(x[1])])
         except Exception as err:
-            if np.isnan(x[0]) or np.isnan(x[1]):
+            if pandas.isnull(x[0]) or pandas.isnull(x[1]):
                 return np.nan
             else:
                 raise err
