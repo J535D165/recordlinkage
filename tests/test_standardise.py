@@ -203,3 +203,12 @@ class TestEncodingStandardise(unittest.TestCase):
         phon = phonetic(values, 'nysiis')
 
         pdt.assert_series_equal(phon, expected)
+
+
+    def test_phonetic_does_not_exist(self):
+
+        values = pd.Series([np.nan, u'John', u'Mary Ann', u'billy',
+                            u'Jonathan', u'Gretha', u'Micheal', u'Sjors'])
+
+        with self.assertRaises(ValueError):
+            phonetic(values, 'unknown_algorithm')

@@ -53,7 +53,7 @@ def phonetic(s, method, encoding='utf-8', decode_error='strict'):
     elif method == 'nysiis':
         phonetic_callback = jellyfish.nysiis
     else:
-        raise Exception("Phonetic encoding method not found")
+        raise ValueError("The algorithm '{}' is not known.".format(method))
 
     return s.str.upper().apply(
         lambda x: phonetic_callback(x) if pandas.notnull(x) else np.nan
