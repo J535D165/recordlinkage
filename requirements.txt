@@ -5,4 +5,3 @@ python-dateutil>=2.5.3
 pytz>=2016.4
 scipy>=0.17.1
 scikit-learn>=0.17.1
-six>=1.10.0
