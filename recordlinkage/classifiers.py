@@ -1,6 +1,6 @@
 # classifier.py
 
-from recordlinkage.em_algorithms import ECMEstimate
+from recordlinkage.algorithms.em import ECMEstimate
 
 import pandas
 import numpy

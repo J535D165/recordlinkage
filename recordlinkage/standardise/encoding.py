@@ -1,16 +1,9 @@
-from __future__ import division
-# from __future__ import absolute_import
-# from __future__ import unicode_literals
-
-import warnings
-import os
 import sys
 
 import numpy as np
 import pandas
 
-from .cleaning import *
-from recordlinkage.comparing import _check_jellyfish
+from recordlinkage.utils import _check_jellyfish
 
 try:
     import jellyfish
