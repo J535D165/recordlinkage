@@ -351,9 +351,7 @@ class TestCompareAlgorithms(TestCompare):
         expected = pandas.Series([1, 1, 1, 'str', 'str'], index=self.index_AB, dtype=object)
         pdt.assert_series_equal(result, expected)
 
-    def test_numeric_batch(self):
-
-        tolerance = 0.00000001
+    def test_numeric_algorithms(self):
 
         self.A['numeric_val'] = [1, 1, 1, 1, 1]
         self.B['numeric_val'] = [1, 2, 3, 4, 5]
@@ -366,9 +364,12 @@ class TestCompareAlgorithms(TestCompare):
 
             # Exclude step algorithm
             if alg is not 'step':
-                result = comp.numeric('numeric_val', 'numeric_val', method=alg, offset=1, scale=2)
+                result = comp.numeric(
+                    'numeric_val', 'numeric_val',
+                    method=alg, offset=1, scale=2)
             else:
-                result = comp.numeric('numeric_val', 'numeric_val', method=alg, offset=1)
+                result = comp.numeric(
+                    'numeric_val', 'numeric_val', method=alg, offset=1)
 
             print (result)
 
@@ -405,17 +406,16 @@ class TestCompareAlgorithms(TestCompare):
 
         comp = recordlinkage.Compare(self.index_AB, self.A, self.B)
 
-        for alg in [n for n in NUMERIC_SIM_ALGORITHMS if n is not 'step']:
+        for alg in NUMERIC_SIM_ALGORITHMS:
 
             print ('The {} algorithm'.format(alg))
 
-            with self.assertRaises(ValueError):
-                comp.numeric('age', 'age', method=alg, 
-                             offset=-2, scale=2)
+            if alg is not 'step':
+                with self.assertRaises(ValueError):
+                    comp.numeric('age', 'age', method=alg, offset=-2, scale=2)
 
-            with self.assertRaises(ValueError):
-                comp.numeric('age', 'age', method=alg, 
-                             offset=2, scale=-2)
+                with self.assertRaises(ValueError):
+                    comp.numeric('age', 'age', method=alg, offset=2, scale=-2)
 
     def test_numeric_does_not_exist(self):
         """
