@@ -9,8 +9,6 @@ import sys
 import numpy as np
 import pandas
 
-import itertools
-
 from .cleaning import *
 from recordlinkage.comparing import _check_jellyfish
 
@@ -69,6 +67,7 @@ def phonetic(s, method, encoding='utf-8', decode_error='strict'):
     )
 
 
+<<<<<<< HEAD
 def gender(
     names, years=None, method="ssa", countries=None,
     labels=("male", "female"), q=0.1
@@ -285,3 +284,5 @@ def similar_values(s, threshold=0.8):
             self = pandas.Series(self.str.replace(pair[0], pair[1]))
 
     return pandas.Series(string)
+=======
+>>>>>>> develop
