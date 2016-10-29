@@ -12,7 +12,12 @@ import pandas
 import itertools
 
 from .cleaning import *
-from recordlinkage.comparing import _import_jellyfish
+from recordlinkage.comparing import _check_jellyfish
+
+try:
+    import jellyfish
+except ImportError:
+    pass
 
 
 def phonetic(s, method, encoding='utf-8', decode_error='strict'):
@@ -43,7 +48,7 @@ def phonetic(s, method, encoding='utf-8', decode_error='strict'):
     """
 
     # import jellyfish if present
-    jellyfish = _import_jellyfish()
+    _check_jellyfish()
 
     # encoding
     if sys.version_info[0] == 2:
@@ -253,10 +258,8 @@ def similar_values(s, threshold=0.8):
     :rtype: pandas.Series
 
     """
-    try:
-        import jellyfish
-    except ImportError:
-        print ("Install jellyfish to use string encoding.")
+
+    _check_jellyfish()
 
     replace_tuples = []
 

@@ -1,7 +1,7 @@
 from __future__ import division
 from __future__ import unicode_literals
 
-import warnings
+import sys
 
 import pandas
 import numpy as np
@@ -9,73 +9,60 @@ import numpy as np
 from sklearn.feature_extraction.text import CountVectorizer
 from recordlinkage.utils import _label_or_column, _resample
 
-
-def _import_jellyfish():
-
-    try:
-        import jellyfish
-        return jellyfish
-
-    except ImportError:
-        raise ImportError(
-            "Install the module 'jellyfish' to use the following " +
-            "string metrics: 'jaro', 'jarowinkler', 'levenshtein'" +
-            " and 'damerau_levenshtein'."
-        )
+try:
+    import jellyfish
+except ImportError:
+    pass
 
 
-class Compare(object):
+def _check_jellyfish(raise_error=True):
     """
 
-    Class to compare the attributes of candidate record pairs. The ``Compare``
-    class has several methods to compare data such as string similarity
-    measures, numeric metrics and exact comparison methods.
+    Check if the jellyfish is imported. If it is imported, return True. If not
+    succesfully imported, raise if raise_error == True and return false if
+    not.
 
-    :param pairs: A MultiIndex of candidate record pairs.
-    :param df_a: The first dataframe.
-    :param df_b: The second dataframe.
-
-    :type pairs: pandas.MultiIndex
-    :type df_a: pandas.DataFrame
-    :type df_b: pandas.DataFrame
-
-    :returns: A compare class
-    :rtype: recordlinkage.Compare
-
-    :var pairs: The candidate record pairs.
-    :var df_a: The first DataFrame.
-    :var df_b: The second DataFrame.
-    :var vectors: The DataFrame with comparison data.
-
-    :vartype pairs: pandas.MultiIndex
-    :vartype df_a: pandas.DataFrame
-    :vartype df_b: pandas.DataFrame
-    :vartype vectors: pandas.DataFrame
-
-    Example:
-
-    In the following example, the record pairs of two historical datasets with
-    census data are compared. The datasets are named ``census_data_1980`` and
-    ``census_data_1990``. The ``candidate_pairs`` are the record pairs to
-    compare. The record pairs are compared on the first name, last name, sex,
-    date of birth, address, place, and income.
-
-    .. code:: python
-
-        >>> comp = recordlinkage.Compare(
-            candidate_pairs, census_data_1980, census_data_1990
+    """
+    if 'jellyfish' in sys.modules.keys():
+        return True
+    else:
+        if raise_error:
+            raise ImportError(
+                "Install the module 'jellyfish' to use the following " +
+                "string metrics: 'jaro', 'jarowinkler', 'levenshtein'" +
+                " and 'damerau_levenshtein'."
             )
-        >>> comp.string('first_name', 'name', method='jarowinkler')
-        >>> comp.string('lastname', 'lastname', method='jarowinkler')
-        >>> comp.exact('dateofbirth', 'dob')
-        >>> comp.exact('sex', 'sex')
-        >>> comp.string('address', 'address', method='levenshtein')
-        >>> comp.exact('place', 'place')
-        >>> comp.numeric('income', 'income')
-        >>> print(comp.vectors.head())
+        else:
+            return False
 
-    The attribute ``vectors`` is the DataFrame with the comparison data. It
-    can be called whenever you want.
+def fillna_decorator(missing_value=np.nan):
+
+    def real_decorator(func):
+
+        def func_wrapper(*args, **kwargs):
+
+            mv = kwargs.pop('missing_value', missing_value)
+
+            result = func(*args, **kwargs)
+
+            # fill missing values if missing_value is not a missing value like NaN or None.
+            if pandas.notnull(mv):
+                if isinstance(result, (np.ndarray)):
+                    result[np.isnan(result)] = mv
+                else:
+                    result.fillna(mv, inplace=True)
+
+            return result
+
+        return func_wrapper
+
+    return real_decorator
+
+
+class CompareCore(object):
+    """
+
+    Core class for comparing records.
 
     """
 
@@ -130,49 +117,14 @@ class Compare(object):
         :rtype: standardise.DataFrame
         """
 
+        # Add to batch compare functions
+        self._batch_functions.append(
+            (comp_func, labels_a, labels_b, args, kwargs)
+        )
+
+        # Run directly if not batch
         if not self.batch:
-
-            name = kwargs.pop('name', None)
-            store = kwargs.pop('store', True)
-
-            # Sample the data and add it to the arguments.
-            labels_b = [labels_b] if not isinstance(
-                labels_b, (tuple, list)) else labels_b
-            labels_a = [labels_a] if not isinstance(
-                labels_a, (tuple, list)) else labels_a
-
-            args = tuple(_resample(
-                _label_or_column(da, self.df_a),
-                self.pairs,
-                0) for da in reversed(labels_a)) + \
-                tuple(_resample(
-                    _label_or_column(db, self.df_b),
-                    self.pairs,
-                    1) for db in reversed(labels_b)) + args
-
-            c = comp_func(*tuple(args), **kwargs)
-
-            # Strange bug in pandas?
-            try:
-                # down to numpy.array
-                c = c.values
-            except AttributeError:
-                pass
-
-            # Store the result
-            if store:
-                # append column
-                name_or_id = name if name else len(self.vectors.columns)
-
-                self.vectors[name_or_id] = c
-
-            return pandas.Series(c, index=self.pairs, name=name)
-
-        else:
-
-            # Add to batch compare functions
-            self._batch_functions.append(
-                (comp_func, labels_a, labels_b, args, kwargs))
+            return self.run()
 
     def run(self):
         """
@@ -220,12 +172,14 @@ class Compare(object):
                 labelsB.append(lbls_b)
 
         # Make selections of columns
-        dataA = _resample(self.df_a[labelsA], self.pairs, 1)
-        dataB = _resample(self.df_b[labelsB], self.pairs, 0)
+        dataA = _resample(self.df_a[list(set(labelsA))], self.pairs, 1)
+        dataB = _resample(self.df_b[list(set(labelsB))], self.pairs, 0)
 
         for comp_func, lbls_a, lbls_b, args, kwargs in self._batch_functions:
 
+            # The name of the comparison
             name = kwargs.pop('name', None)
+
             # always true, but if passed then ignored
             store = kwargs.pop('store', None)
 
@@ -241,6 +195,11 @@ class Compare(object):
             # Compute the comparison
             c = comp_func(*tuple(args), **kwargs)
 
+            # if a pandas series is returned, overwrite the index. The index
+            # can be different than the index passed to the compare function.
+            if isinstance(c, pandas.Series):
+                c.index = self.vectors.index
+
             # append column to Compare.vectors
             name_or_id = name if name else len(self.vectors.columns)
             self.vectors[name_or_id] = c
@@ -248,7 +207,83 @@ class Compare(object):
         # Reset the batch functions
         self._batch_functions = []
 
-        return self.vectors
+        if not self.batch:
+            return self.vectors[name_or_id].rename(name)
+        else:
+            return self.vectors
+
+
+class Compare(CompareCore):
+    """
+
+    Class to compare the attributes of candidate record pairs. The ``Compare``
+    class has several methods to compare data such as string similarity
+    measures, numeric metrics and exact comparison methods.
+
+    :param pairs: A MultiIndex of candidate record pairs.
+    :param df_a: The first dataframe.
+    :param df_b: The second dataframe.
+
+    :type pairs: pandas.MultiIndex
+    :type df_a: pandas.DataFrame
+    :type df_b: pandas.DataFrame
+
+    :returns: A compare class
+    :rtype: recordlinkage.Compare
+
+    :var pairs: The candidate record pairs.
+    :var df_a: The first DataFrame.
+    :var df_b: The second DataFrame.
+    :var vectors: The DataFrame with comparison data.
+
+    :vartype pairs: pandas.MultiIndex
+    :vartype df_a: pandas.DataFrame
+    :vartype df_b: pandas.DataFrame
+    :vartype vectors: pandas.DataFrame
+
+    Example:
+
+    In the following example, the record pairs of two historical datasets with
+    census data are compared. The datasets are named ``census_data_1980`` and
+    ``census_data_1990``. The ``candidate_pairs`` are the record pairs to
+    compare. The record pairs are compared on the first name, last name, sex,
+    date of birth, address, place, and income.
+
+    .. code:: python
+
+        >>> comp = recordlinkage.Compare(
+            candidate_pairs, census_data_1980, census_data_1990
+            )
+        >>> comp.string('first_name', 'name', method='jarowinkler')
+        >>> comp.string('lastname', 'lastname', method='jarowinkler')
+        >>> comp.exact('dateofbirth', 'dob')
+        >>> comp.exact('sex', 'sex')
+        >>> comp.string('address', 'address', method='levenshtein')
+        >>> comp.exact('place', 'place')
+        >>> comp.numeric('income', 'income')
+        >>> print(comp.vectors.head())
+
+    The attribute ``vectors`` is the DataFrame with the comparison data. It
+    can be called whenever you want.
+
+    """
+
+    # def __init__(self, pairs, df_a=None, df_b=None, batch=False):
+
+    #     # The dataframes
+    #     self.df_a = df_a
+    #     self.df_b = df_b
+
+    #     # The candidate record pairs
+    #     self.pairs = pairs
+
+    #     self.batch = batch
+    #     self._batch_functions = []
+
+    #     # The resulting data
+    #     self.vectors = pandas.DataFrame(index=pairs)
+
+    #     # self.ndim = self._compute_dimension(pairs)
 
     def exact(self, s1, s2, *args, **kwargs):
         """
@@ -282,48 +317,11 @@ class Compare(object):
 
         return self.compare(_compare_exact, s1, s2, *args, **kwargs)
 
-    def numeric(self, s1, s2, *args, **kwargs):
-        """
-        numeric(s1, s2, threshold=None, method='step', missing_value=0, name=None, store=True)
-
-        This method returns the similarity between two numeric values. The
-        following algorithms can be used: 'step', 'linear' or 'squared'. These
-        functions are defined on the interval (-threshold, threshold). In case
-        of agreement, the similarity is 1 and in case of complete disagreement
-        it is 0. For linear and squared methods is also partial agreement
-        possible.
-
-        :param s1: Series or DataFrame to compare all fields.
-        :param s2: Series or DataFrame to compare all fields.
-        :param threshold: The threshold size. Can be a tuple with two values
-                or a single number.
-        :param method: The metric used. Options 'step', 'linear' or 'squared'.
-                Default 'step'.
-        :param missing_value: The value for a comparison with a missing value.
-                Default 0.
-        :param name: The name of the feature and the name of the column.
-        :param store: Store the result in the dataframe. Default True
-
-        :type s1: label, pandas.Series
-        :type s2: label, pandas.Series
-        :type threshold: float, tuple of floats
-        :type method: 'step', 'linear' or 'squared'
-        :type missing_value: numpy.dtype
-        :type name: label
-        :type store: bool
-
-        :return: A Series with comparison values.
-        :rtype: pandas.Series
-
-        """
-
-        return self.compare(_numeric_sim, s1, s2, *args, **kwargs)
-
-    def string(self, s1, s2, *args, **kwargs):
+    def string(self, s1, s2, method='levenshtein', threshold=None, *args, **kwargs):
         """
         string(s1, s2, method='levenshtein', threshold=None, missing_value=0, name=None, store=True)
 
-        Compare string values with a similarity approximation.
+        Compare strings.
 
         :param s1: Series or DataFrame to compare all fields.
         :param s2: Series or DataFrame to compare all fields.
@@ -359,22 +357,146 @@ class Compare(object):
 
         """
 
-        return self.compare(_string_sim, s1, s2, *args, **kwargs)
+        @fillna_decorator(0)
+        def _string_internal(s1, s2, method, threshold=None, *args, **kwargs):
+            """
 
-    def geo(self, lat1, lng1, lat2, lng2, *args, **kwargs):
+            Internal function to compute the numeric similarity algorithms. 
+
+            """
+            if method == 'jaro':
+                str_sim_alg = jaro_similarity
+
+            elif method in ['jarowinkler', 'jaro_winkler']:
+                str_sim_alg = jarowinkler_similarity
+
+            elif method == 'levenshtein':
+                str_sim_alg = levenshtein_similarity
+
+            elif method in ['dameraulevenshtein', 'dameraulevenshtein']:
+                str_sim_alg = damerau_levenshtein_similarity
+
+            elif method == 'q_gram' or method == 'qgram':
+                str_sim_alg = qgram_similarity
+
+            elif method == 'cosine':
+                str_sim_alg = cosine_similarity
+
+            else:
+                raise ValueError("The algorithm '{}' is not known.".format(method))
+
+            c = str_sim_alg(s1, s2, *args, **kwargs)
+
+            if threshold:
+                return (c >= threshold).astype(np.float64)
+            else:
+                return c
+
+        return self.compare(
+            _string_internal, s1, s2, method, threshold, *args, **kwargs
+        )
+
+    def numeric(self, s1, s2, method='linear', *args, **kwargs):
         """
-        geo(lat1, lng1, lat2, lng2, threshold=None, method='step', missing_value=0, name=None, store=True)
+        numeric(s1, s2, method='linear', offset, scale, origin=0, missing_value=0, name=None, store=True)
 
-        [Experimental] Compare geometric WGS-coordinates with a tolerance
-        [window.
+        This method returns the similarity between two numeric values. The
+        implemented algorithms are: 'step', 'linear', 'exp', 'gauss' or
+        'squared'. In case of agreement, the similarity is 1 and in case of
+        complete disagreement it is 0. The implementation is similar with
+        numeric comparing in ElasticSearch, a full-text search tool. The
+        parameters are explained in the image below (source ElasticSearch, The
+        Definitive Guide)
+
+        .. image:: /images/elas_1705.png
+            :width: 100%
+            :target: https://www.elastic.co/guide/en/elasticsearch/guide/current/decay-functions.html
+            :alt: Decay functions, like in ElasticSearch
+
+        :param s1: Series or DataFrame to compare all fields.
+        :param s2: Series or DataFrame to compare all fields.
+        :param method: The metric used. Options 'step', 'linear', 'exp',
+                'gauss' or 'squared'. Default 'linear'.
+        :param offset: The offset. See image above.
+        :param scale: The scale of the numeric comparison method. See the
+                image above. This argument is not available for the 'step'
+                algorithm.
+        :param origin: The shift of bias between the values. See image
+                above.
+        :param missing_value: The value if one or both records have a
+                missing value on the compared field. Default 0.
+        :param name: The name of the feature and the name of the column.
+        :param store: Store the result in the dataframe. Default True
+
+        :type s1: label, pandas.Series
+        :type s2: label, pandas.Series
+        :type offset: float
+        :type scale: float
+        :type origin: float
+        :type method: str
+        :type missing_value: numpy.dtype
+        :type name: label
+        :type store: bool
+
+        :return: A Series with comparison values.
+        :rtype: pandas.Series
+
+        .. note::
+
+            Numeric comparing can be an efficient way to compare date/time
+            variables. This can be done by comparing the timestamps.
+
+        """
+
+        @fillna_decorator(0)
+        def _num_internal(s1, s2, method, *args, **kwargs):
+            """
+
+            Internal function to compute the numeric similarity algorithms.
+
+            """
+
+            # compute the 1D distance between the values
+            d = _1d_distance(s1, s2)
+
+            if method == 'step':
+                num_sim_alg = _step_sim
+            elif method in ['linear', 'lin']:
+                num_sim_alg = _linear_sim
+            elif method == 'squared':
+                num_sim_alg = _squared_sim
+            elif method in ['exp', 'exponential']:
+                num_sim_alg = _exp_sim
+            elif method in ['gauss', 'gaussian']:
+                num_sim_alg = _gauss_sim
+            else:
+                raise ValueError("The algorithm '{}' is not known.".format(method))
+
+            return num_sim_alg(d, *args, **kwargs)
+
+        return self.compare(_num_internal, s1, s2, method, *args, **kwargs)
+
+    def geo(self, lat1, lng1, lat2, lng2, method='linear', *args, **kwargs):
+        """
+        geo(lat1, lng1, lat2, lng2, method='linear', offset, scale, origin=0, missing_value=0, name=None, store=True)
+
+        Compare the geometric (haversine) distance between two WGS-
+        coordinates. The similarity algorithms are 'step', 'linear', 'exp',
+        'gauss' or 'squared'. The similarity functions are the same as in
+        :meth:`recordlinkage.comparing.Compare.numeric`
 
         :param lat1: Series with Lat-coordinates
         :param lng1: Series with Lng-coordinates
         :param lat2: Series with Lat-coordinates
         :param lng2: Series with Lng-coordinates
-        :param threshold: The threshold size. Can be a tuple with two values
-                or a single number.
-        :param method: The metric used. Options 'step', 'linear' or 'squared'.
+        :param method: The metric used. Options 'step', 'linear', 'exp',
+                'gauss' or 'squared'. Default 'linear'.
+        :param offset: The offset. See Compare.numeric.
+        :param scale: The scale of the numeric comparison method. See
+                Compare.numeric. This argument is not available for the
+                'step' algorithm.
+        :param origin: The shift of bias between the values. See
+                Compare.numeric.
         :param missing_value: The value for a comparison with a missing value.
                 Default 0.
         :param name: The name of the feature and the name of the column.
@@ -384,8 +506,10 @@ class Compare(object):
         :type lng1: pandas.Series, numpy.array, label/string
         :type lat2: pandas.Series, numpy.array, label/string
         :type lng2: pandas.Series, numpy.array, label/string
-        :type threshold: float, tuple of floats
         :type method: str
+        :type offset: float
+        :type scale: float
+        :type origin: float
         :type missing_value: numpy.dtype
         :type name: label
         :type store: bool
@@ -394,10 +518,75 @@ class Compare(object):
         :rtype: pandas.Series
         """
 
+        @fillna_decorator(0)
+        def _num_internal(lat1, lng1, lat2, lng2, method, *args, **kwargs):
+            """
+
+            Internal function to compute the numeric similarity algorithms.
+
+            """
+
+            # compute the 1D distance between the values
+            d = _haversine_distance(lat1, lng1, lat2, lng2)
+
+            if method == 'step':
+                num_sim_alg = _step_sim
+            elif method in ['linear', 'lin']:
+                num_sim_alg = _linear_sim
+            elif method == 'squared':
+                num_sim_alg = _squared_sim
+            elif method in ['exp', 'exponential']:
+                num_sim_alg = _exp_sim
+            elif method in ['gauss', 'gaussian']:
+                num_sim_alg = _gauss_sim
+            else:
+                raise ValueError(
+                    "The algorithm '{}' is not known.".format(method)
+                )
+
+            return num_sim_alg(d, *args, **kwargs)
+
         return self.compare(
-            _geo_sim,
-            (lat1, lng1),
-            (lat2, lng2),
+            _num_internal, (lat1, lng1), (lat2, lng2),
+            method, *args, **kwargs
+        )
+
+    def date(self, s1, s2, swap_month_day=0.5, swap_months='default', *args, **kwargs):
+        """
+        date(self, s1, s2, swap_month_day=0.5, swap_months='default', missing_value=0, name=None, store=True)
+
+        Compare dates.
+
+        :param s1: Dates. This can be a Series, DatetimeIndex or DataFrame
+                (with columns 'year', 'month' and 'day').
+        :param s2: This can be a Series, DatetimeIndex or DataFrame
+                (with columns 'year', 'month' and 'day').
+        :param swap_month_day: The value if the month and day are swapped.
+        :param swap_months: A list of tuples with common errors caused by the
+                translating of months into numbers, i.e. October is month 10.
+                The format of the tuples is (month_good, month_bad, value).
+                Default: swap_months = [(6, 7, 0.5), (7, 6, 0.5), (9, 10, 0.5),
+                (10, 9, 0.5)]
+        :param missing_value: The value for a comparison with a missing value.
+                Default 0.
+        :param name: The name of the feature and the name of the column.
+        :param store: Store the result in the dataframe. Default True.
+
+        :type s1: pandas.Series, numpy.array, label/string
+        :type s2: pandas.Series, numpy.array, label/string
+        :type swap_month_day: float
+        :type swap_months: list of tuples
+        :type missing_value: numpy.dtype
+        :type name: label
+        :type store: bool
+
+        :return: A Series with date comparison values.
+        :rtype: pandas.Series
+        """
+
+        return self.compare(
+            _compare_dates, s1, s2,
+            swap_month_day=swap_month_day, swap_months=swap_months,
             *args, **kwargs
         )
 
@@ -415,160 +604,201 @@ def _missing(*args):
 
 
 def _compare_exact(s1, s2, agree_value=1, disagree_value=0, missing_value=0):
+    # dtypes can be hard if the passed parameters (agreement, disagreement,
+    # missing_value) are of different types.
+    # http://chris.friedline.net/2015-12-15-rutgers/lessons/python2/03-data-types-and-format.html
 
+    # Convert to pandas.Series if (numpy) arrays are passed.
+    if not isinstance(s1, pandas.Series):
+        s1 = pandas.Series(s1, index=s1.index)
+
+    if not isinstance(s2, pandas.Series):
+        s2 = pandas.Series(s2, index=s2.index)
+
+    # Values or agree/disagree
     if agree_value == 'value':
         compare = s1.copy()
         compare[s1 != s2] = disagree_value
 
     else:
-        compare = np.where(s1 == s2, agree_value, disagree_value)
-
-    compare = pandas.Series(compare, index=s1.index)
+        compare = pandas.Series(disagree_value, index=s1.index)
+        compare[s1 == s2] = agree_value
 
     # Only when disagree value is not identical with the missing value
     if disagree_value != missing_value:
-        compare[_missing(s1, s2)] = missing_value
+
+        compare[(s1.isnull() | s2.isnull())] = missing_value
 
     return compare
 
 
-def _numeric_sim(s1, s2, threshold=None, method='step', missing_value=0):
+@fillna_decorator(0)
+def _compare_dates(s1, s2, swap_month_day=0.5, swap_months='default',
+                   errors='coerce', *args, **kwargs):
 
-    threshold_left, threshold_right = threshold if isinstance(
-        threshold, (list, tuple)) else (-threshold, threshold)
+    missing_pairs = (s1.isnull() | s2.isnull()).values
 
-    a = threshold_right + threshold_left
-    b = 2 / (threshold_right - threshold_left)
+    # if isinstance(s1, (pandas.Series)):
+    #     s1 = s1.values
 
-    # numeric step functions
-    if method == 'step':
-        d = (_linear_distance(s1, s2, a=a, b=b) <= 1).astype(int)
+    # if isinstance(s2, (pandas.Series)):
+    #     s2 = s2.values
 
-    # numeric linear functions
-    elif method == 'linear':
-        d = 1 - _linear_distance(s1, s2, a=a, b=b)
-        d[d < 0] = 0
+    s1_dti = pandas.to_datetime(s1.values, errors=errors, *args, **kwargs)
+    s2_dti = pandas.to_datetime(s2.values, errors=errors, *args, **kwargs)
 
-    # numeric squared function
-    elif method == 'squared':
-        d = 1 - _squared_distance(s1, s2, a=a, b=b)
-        d[d < 0] = 0
+    c = (s1 == s2).astype(np.int64)
 
-    # numeric haversine (for coordinates)
-    elif method == 'haversine':
-        lat1, lng1 = s1
-        lat2, lng2 = s2
-        d = 1 - _haversine_distance(lat1, lng1, lat2, lng2) / threshold
-        d[d < 0] = 0
-    else:
-        raise KeyError('The given algorithm is not found.')
+    # The case is which there is a swap_month_day value given.
+    if (swap_month_day and swap_month_day != 0):
 
-    d.fillna(missing_value, inplace=True)
+        # if isinstance(swap_month_day, float):
+        #     c = c.astype(np.float64)
+        # elif isinstance(swap_month_day, int):
+        #     c = c.astype(np.int64)
+        # else:
+        #     c = c.astype(object)
 
-    return d
+        c[(s1_dti.year == s2_dti.year) &
+          (s1_dti.month == s2_dti.day) &
+          (s1_dti.day == s2_dti.month) &
+          (c != 1)] = swap_month_day
 
+    if (swap_months and swap_months != 0):
 
-def _geo_sim(
-        lat1, lng1, lat2, lng2,
-        threshold=None, method='step', missing_value=0):
+        if swap_months == 'default':
+            swap_months = [(6, 7, 0.5),
+                           (7, 6, 0.5),
+                           (9, 10, 0.5),
+                           (10, 9, 0.5)]
+        else:
+            try:
+                if not all([len(x) == 3 for x in swap_months]):
+                    raise Exception
+            except Exception:
+                raise ValueError(
+                    'swap_months must be a list of (first month, \
+                    second month, value) tuples or lists. ')
 
-    a = threshold
-    b = 1 / threshold
+        for month1, month2, value in swap_months:
 
-    # numeric step functions
-    if method == 'step':
-        d = (_haversine_distance(lat1, lng1, lat2, lng2) <= 1).astype(int)
+            # if isinstance(value, float):
+            #     c = c.astype(np.float64)
+            # elif isinstance(value, int):
+            #     c = c.astype(np.int64)
+            # else:
+            #     c = c.astype(object)
 
-    # numeric linear functions
-    elif method == 'linear':
-        'abs(((s2-s1)-a)*b)'
-        d = 1 - abs((_haversine_distance(lat1, lng1, lat2, lng2) - a) * b)
-        d[d < 0] = 0
+            c[(s1_dti.year == s2_dti.year) &
+              (s1_dti.month == month1) & (s2_dti.month == month2) &
+              (s1_dti.day == s2_dti.day) &
+              (c != 1)] = value
 
-    # numeric squared function
-    elif method == 'squared':
-        d = 1 - (_haversine_distance(lat1, lng1, lat2, lng2) - a)**2 * b**2
-        d[d < 0] = 0
+    c = pandas.Series(c)
+    c[missing_pairs] = np.nan
 
-    else:
-        raise KeyError('The given algorithm is not found.')
+    return c
 
-    d.fillna(missing_value, inplace=True)
+# Numerical comparison algorithms
 
-    return d
+def _step_sim(d, offset=0, origin=0):
+    # scale is not an argument
 
+    if offset < 0:
+        raise ValueError("The offset must be positive.")
 
-def _string_sim(s1, s2, method='levenshtein', threshold=None, missing_value=0):
+    expr = 'abs(d - origin) <= offset'
 
-    if method == 'jaro':
-        approx = jaro_similarity(s1, s2)
-
-    elif method in ['jarowinkler', 'jaro_winkler']:
-        approx = jarowinkler_similarity(s1, s2)
-
-    elif method == 'levenshtein':
-        approx = levenshtein_similarity(s1, s2)
-
-    elif method in ['dameraulevenshtein', 'damerau_levenshtein']:
-        approx = damerau_levenshtein_similarity(s1, s2)
-
-    elif method in ['qgram', 'q_gram']:
-        approx = qgram_similarity(s1, s2)
-
-    elif method == 'cosine':
-        approx = cosine_similarity(s1, s2)
-
-    else:
-        raise ValueError("""Algorithm '{}' not found.""".format(method))
-
-    comp = (approx >= threshold).astype(
-        int) if threshold is not None else approx
-
-    # Only for missing values
-    comp[_missing(s1, s2)] = missing_value
-
-    return comp
+    return pandas.eval(expr).astype(np.int64)
 
 
-def _linear_distance(s1, s2, a=0, b=1):
+def _linear_sim(d, scale, offset=0, origin=0):
 
-    expr = 'abs(((s2-s1)-a)*b)'
+    if offset < 0:
+        raise ValueError("The offset must be positive.")
 
-    # PANDAS BUG?
-    # return pandas.eval(expr, engine=None)
+    if scale <= 0:
+        raise ValueError("The scale must be larger than 0. ")
 
-    try:
-        return pandas.eval(expr, engine='numexpr')
-    except ImportError:
-        return pandas.eval(expr, engine='python')
+    d = (abs(d - origin)).clip(offset, offset + 2 * scale)
+
+    expr = '1 - (d-offset)/(2*scale)'
+
+    return pandas.eval(expr)
 
 
-def _squared_distance(s1, s2, a=0, b=1):
+def _squared_sim(d, scale, offset=0, origin=0):
 
-    expr = '((s2-s1)-a)**2*b**2'
+    if offset < 0:
+        raise ValueError("The offset must be positive.")
 
-    # PANDAS BUG?
-    # return pandas.eval(expr, engine=None)
-    try:
-        return pandas.eval(expr, engine='numexpr')
-    except ImportError:
-        return pandas.eval(expr, engine='python')
+    if scale <= 0:
+        raise ValueError("The scale must be larger than 0. ")
+
+    d = (abs(d - origin)).clip(offset, offset + np.sqrt(2) * scale)
+    # solve y=1-ad^2 given y(d=scale)=0.5
+    # 1-y = ad^2
+    # a = (1-y)/d^2
+
+    # fill y=0.5 and d = scale
+    # a = (1-0.5)/scale^2
+    # a = 1/(2*scale^2)
+    # y = 1 - 1/2*(d/scale)^2
+    # d = sqrt(2)*scale is the point where similarity is zero.
+
+    expr = '1 - 1/2*exp(2*log((d-offset)/scale))'
+
+    return pandas.eval(expr)
+
+
+def _exp_sim(d, scale, offset=0, origin=0):
+
+    if offset < 0:
+        raise ValueError("The offset must be positive.")
+
+    if scale <= 0:
+        raise ValueError("The scale must be larger than 0. ")
+
+    d = (abs(d - origin)).clip(offset, None)
+
+    # solve y=exp(-x*a) if 1/2 = exp(-x/scale)
+    expr = '2**(-(d-offset)/scale)'
+
+    return pandas.eval(expr)
+
+
+def _gauss_sim(d, scale, offset=0, origin=0):
+
+    if offset < 0:
+        raise ValueError("The offset must be positive.")
+
+    if scale <= 0:
+        raise ValueError("The scale must be larger than 0. ")
+
+    d = (abs(d - origin)).clip(offset, None)
+
+    # solve y=exp(-x^2*a) if 1/2 = exp(-x^2/scale^2)
+    expr = '2**(-((d-offset)/scale)**2)'
+
+    return pandas.eval(expr)
+
+# Numerical distance algorithms
+
+
+def _1d_distance(s1, s2):
+
+    return pandas.eval("s2-s1")
 
 
 def _haversine_distance(lat1, lng1, lat2, lng2):
 
     # degrees to radians conversion
-    to_rad = 1 / 360 * np.pi * 2
+    to_rad = np.deg2rad(1)
 
     # numeric expression to use with numexpr package
     expr = '2*6371*arcsin(sqrt((sin((lat2*to_rad-lat1*to_rad)/2))**2+cos(lat1*to_rad)*cos(lat2*to_rad)*(sin((lng2*to_rad-lng1*to_rad)/2))**2))'
 
-    # PANDAS BUG?
-    # return pandas.eval(expr, engine=None)
-    try:
-        return pandas.eval(expr, engine='numexpr')
-    except ImportError:
-        return pandas.eval(expr, engine='python')
+    return pandas.eval(expr)
 
 ################################
 #      STRING SIMILARITY       #
@@ -577,8 +807,8 @@ def _haversine_distance(lat1, lng1, lat2, lng2):
 
 def jaro_similarity(s1, s2):
 
-    # Check jellyfish
-    jellyfish = _import_jellyfish()
+    # Check jellyfish 
+    _check_jellyfish(raise_error=True)
 
     conc = pandas.concat([s1, s2], axis=1, ignore_index=True)
 
@@ -586,8 +816,11 @@ def jaro_similarity(s1, s2):
 
         try:
             return jellyfish.jaro_distance(x[0], x[1])
-        except Exception:
-            return np.nan
+        except Exception as err:
+            if np.isnan(x[0]) or np.isnan(x[1]):
+                return np.nan
+            else:
+                raise err
 
     return conc.apply(jaro_apply, axis=1)
 
@@ -595,7 +828,7 @@ def jaro_similarity(s1, s2):
 def jarowinkler_similarity(s1, s2):
 
     # Check jellyfish
-    jellyfish = _import_jellyfish()
+    _check_jellyfish(raise_error=True)
 
     conc = pandas.concat([s1, s2], axis=1, ignore_index=True)
 
@@ -603,8 +836,11 @@ def jarowinkler_similarity(s1, s2):
 
         try:
             return jellyfish.jaro_winkler(x[0], x[1])
-        except Exception:
-            return np.nan
+        except Exception as err:
+            if np.isnan(x[0]) or np.isnan(x[1]):
+                return np.nan
+            else:
+                raise err
 
     return conc.apply(jaro_winkler_apply, axis=1)
 
@@ -612,7 +848,7 @@ def jarowinkler_similarity(s1, s2):
 def levenshtein_similarity(s1, s2):
 
     # Check jellyfish
-    jellyfish = _import_jellyfish()
+    _check_jellyfish(raise_error=True)
 
     conc = pandas.concat([s1, s2], axis=1, ignore_index=True)
 
@@ -621,8 +857,11 @@ def levenshtein_similarity(s1, s2):
         try:
             return 1 - jellyfish.levenshtein_distance(x[0], x[1]) \
                 / np.max([len(x[0]), len(x[1])])
-        except Exception:
-            return np.nan
+        except Exception as err:
+            if np.isnan(x[0]) or np.isnan(x[1]):
+                return np.nan
+            else:
+                raise err
 
     return conc.apply(levenshtein_apply, axis=1)
 
@@ -630,7 +869,7 @@ def levenshtein_similarity(s1, s2):
 def damerau_levenshtein_similarity(s1, s2):
 
     # Check jellyfish
-    jellyfish = _import_jellyfish()
+    _check_jellyfish(raise_error=True)
 
     conc = pandas.concat([s1, s2], axis=1, ignore_index=True)
 
@@ -639,8 +878,11 @@ def damerau_levenshtein_similarity(s1, s2):
         try:
             return 1 - jellyfish.damerau_levenshtein_distance(x[0], x[1]) \
                 / np.max([len(x[0]), len(x[1])])
-        except Exception:
-            return np.nan
+        except Exception as err:
+            if np.isnan(x[0]) or np.isnan(x[1]):
+                return np.nan
+            else:
+                raise err
 
     return conc.apply(damerau_levenshtein_apply, axis=1)
 
