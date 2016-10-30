@@ -1,15 +1,19 @@
 from __future__ import division
 from __future__ import unicode_literals
 
-import sys
+import warnings
 
 import pandas
+from pandas.types.inference import is_list_like
 import numpy as np
 
 from recordlinkage.utils import _resample
 from recordlinkage.algorithms.distance import _1d_distance, _haversine_distance
-from recordlinkage.algorithms.numeric import _step_sim, _linear_sim, _squared_sim, _exp_sim, _gauss_sim
-from recordlinkage.algorithms.string import jaro_similarity, jarowinkler_similarity, levenshtein_similarity, damerau_levenshtein_similarity, qgram_similarity, cosine_similarity
+from recordlinkage.algorithms.numeric import _step_sim, \
+    _linear_sim, _squared_sim, _exp_sim, _gauss_sim
+from recordlinkage.algorithms.string import jaro_similarity, \
+    jarowinkler_similarity, levenshtein_similarity, \
+    damerau_levenshtein_similarity, qgram_similarity, cosine_similarity
 
 
 def fillna_decorator(missing_value=np.nan):
@@ -127,8 +131,8 @@ class CompareCore(object):
         """
 
         if not self._batch_functions:
-            raise Exception("No batch functions found. "
-                            "Check if batch=True in recordlinkage.Compare")
+            raise Exception("No batch functions found. \
+                Check if batch=True in recordlinkage.Compare")
 
         # Collect the labels
         labelsA = []
@@ -148,23 +152,27 @@ class CompareCore(object):
             else:
                 labelsB.append(lbls_b)
 
+        labelsA = list(set(labelsA))
+        labelsB = list(set(labelsB))
+
         # Make selections of columns
-        dataA = _resample(self.df_a[list(set(labelsA))], self.pairs, 1)
-        dataB = _resample(self.df_b[list(set(labelsB))], self.pairs, 0)
+        dataA = _resample(self.df_a[labelsA], self.pairs, 1)
+        dataB = _resample(self.df_b[labelsB], self.pairs, 0)
 
         for comp_func, lbls_a, lbls_b, args, kwargs in self._batch_functions:
 
             # The name of the comparison
             name = kwargs.pop('name', None)
 
-            # always true, but if passed then ignored
-            store = kwargs.pop('store', None)
+            # # always true, but if passed then ignored
+            # store = kwargs.pop('store', True)
+            if 'store' in kwargs.keys():
+                warnings.warn("The argument store might be removed \
+                    in the next version.", DeprecationWarning)
 
             # Sample the data and add it to the arguments.
-            lbls_b = [lbls_b] if not isinstance(
-                lbls_b, (tuple, list)) else lbls_b
-            lbls_a = [lbls_a] if not isinstance(
-                lbls_a, (tuple, list)) else lbls_a
+            lbls_b = [lbls_b] if not is_list_like(lbls_b) else lbls_b
+            lbls_a = [lbls_a] if not is_list_like(lbls_a) else lbls_a
 
             args = tuple(dataA.loc[:, da] for da in reversed(lbls_a)) + \
                 tuple(dataB.loc[:, db] for db in reversed(lbls_b)) + args
@@ -172,8 +180,9 @@ class CompareCore(object):
             # Compute the comparison
             c = comp_func(*tuple(args), **kwargs)
 
-            # if a pandas series is returned, overwrite the index. The index
-            # can be different than the index passed to the compare function.
+            # if a pandas series is returned, overwrite the index. The
+            # returned index can be different than the MultiIndex passed to
+            # the compare function.
             if isinstance(c, pandas.Series):
                 c.index = self.vectors.index
 
@@ -184,8 +193,10 @@ class CompareCore(object):
         # Reset the batch functions
         self._batch_functions = []
 
+        # Return the Series
         if not self.batch:
             return self.vectors[name_or_id].rename(name)
+        # Return the DataFrame
         else:
             return self.vectors
 
