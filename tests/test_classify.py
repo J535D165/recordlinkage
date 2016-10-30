@@ -30,11 +30,10 @@ class TestClassifyData(unittest.TestCase):
         )
 
         self.matches_array = numpy.random.random_integers(0, 1, N)
-        self.matches_series = pandas.Series(self.matches_array)
+        self.matches_series = pandas.Series(self.matches_array, index=self.y.index)
         self.matches_index = self.matches_series[self.matches_series == 1].index
 
-        self.y_train = self.y.sample(1000, replace=False, random_state=seed_gold)
-        self.y_train_index = self.y_train.index
+        self.y_train = self.y.iloc[0:1000]
 
 
 # nosetests tests/test_classify.py:TestClassifyAPI --with-coverage --cover-package=recordlinkage
@@ -73,50 +72,58 @@ class TestClassifyAlgorithms(TestClassifyData):
 
     def test_kmeans(self):
 
-        train_df = self.y.ix[self.match_index].sample(500)
-        train_df = train_df.append(self.y.ix[self.y.index.difference(self.match_index)].sample(1500))
+        kmeans = recordlinkage.KMeansClassifier()
+        kmeans.learn(self.y_train)
+        kmeans.predict(self.y)
+
+    def test_kmeans_no_training_data(self):
 
         kmeans = recordlinkage.KMeansClassifier()
-        kmeans.learn(train_df)
-        kmeans.predict(self.y)
+
+        with self.assertRaises(ValueError):
+            kmeans.learn(pandas.DataFrame(columns=self.y_train.columns))
+
+    def test_kmeans_not_trained(self):
+        """
+        Raise an error if the classifier is not trained, but a prediction is
+        asked.
+        """
+
+        kmeans = recordlinkage.KMeansClassifier()
+
+        with self.assertRaises(Exception):
+            kmeans.predict(self.y)
 
     def test_logistic(self):
 
-        train_df = self.y.ix[self.match_index].sample(500)
-        train_df = train_df.append(self.y.ix[self.y.index.difference(self.match_index)].sample(1500))
+        logis = recordlinkage.LogisticRegressionClassifier()
+        logis.learn(self.y_train, self.matches_index)
+        logis.predict(self.y)
+        # logis.prob(self.y)
+
+    def test_logistic_advanced(self):
 
         logis = recordlinkage.LogisticRegressionClassifier()
-        logis.learn(train_df, self.match_index)
+        logis.learn(self.y_train, self.matches_index)
         logis.predict(self.y)
+        # logis.prob(self.y)
 
     def test_bernoulli_naive_bayes(self):
 
-        train_df_matches = self.y.ix[self.match_index].sample(500)
-        train_df_nonmatches = self.y.ix[self.y.index.difference(self.match_index)].sample(1500)
-        train_df = train_df_matches.append(train_df_nonmatches)
-
         bernb = recordlinkage.NaiveBayesClassifier()
-        bernb.learn(train_df.round(), train_df_matches.index)
+        bernb.learn(self.y_train.round(), self.matches_index)
         bernb.predict(self.y.round())
 
     def test_svm(self):
 
-        train_df_matches = self.y.ix[self.match_index].sample(500)
-        train_df_nonmatches = self.y.ix[self.y.index.difference(self.match_index)].sample(1500)
-        train_df = train_df_matches.append(train_df_nonmatches)
-
         svm = recordlinkage.SVMClassifier()
-        svm.learn(train_df.round(), train_df_matches.index)
+        svm.learn(self.y_train, self.matches_index)
         svm.predict(self.y.round())
 
     def test_em(self):
 
-        train_df_matches = self.y.ix[self.match_index].sample(500)
-        train_df_nonmatches = self.y.ix[self.y.index.difference(self.match_index)].sample(1500)
-        train_df = train_df_matches.append(train_df_nonmatches)
-
         ecm = recordlinkage.ECMClassifier()
-        ecm.learn(train_df.round())
+        ecm.learn(self.y_train.round())
         ecm.predict(self.y.round())
         ecm.prob(self.y.round())
 
