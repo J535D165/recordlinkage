@@ -6,6 +6,7 @@ import pandas
 import numpy
 
 from sklearn import cluster, linear_model, naive_bayes, svm
+from sklearn.utils.validation import NotFittedError
 
 import warnings
 warnings.simplefilter(action="ignore", category=FutureWarning)
@@ -215,8 +216,12 @@ class KMeansClassifier(Classifier):
         :rtype: pandas.MultiIndex, pandas.Series or numpy.ndarray
 
         """
-
-        prediction = self.classifier.predict(comparison_vectors.as_matrix())
+        try:
+            prediction = self.classifier.predict(comparison_vectors.as_matrix())
+        except NotFittedError:
+            raise NotFittedError(
+                "This KMeansClassifier instance is not fitted yet. " + \
+                "Call 'learn' with appropriate arguments before using this method.")
 
         return self._return_result(prediction, return_type, comparison_vectors)
 
@@ -335,7 +340,12 @@ class LogisticRegressionClassifier(Classifier):
         :rtype: pandas.Series
 
         """
-        prediction = self.classifier_.predict(comparison_vectors.as_matrix())
+        try:
+            prediction = self.classifier_.predict(comparison_vectors.as_matrix())
+        except NotFittedError:
+            raise NotFittedError(
+                "This LogisticRegressionClassifier instance is not fitted yet. " + \
+                "Call 'learn' with appropriate arguments before using this method.")
 
         return self._return_result(prediction, return_type, comparison_vectors)
 
@@ -453,7 +463,12 @@ class NaiveBayesClassifier(Classifier):
         :rtype: pandas.Series
 
         """
-        prediction = self.classifier.predict(comparison_vectors.as_matrix())
+        try:
+            prediction = self.classifier.predict(comparison_vectors.as_matrix())
+        except NotFittedError:
+            raise NotFittedError(
+                "This NaiveBayesClassifier instance is not fitted yet. " + \
+                "Call 'learn' with appropriate arguments before using this method.")
 
         return self._return_result(prediction, return_type, comparison_vectors)
 
@@ -544,7 +559,12 @@ class SVMClassifier(Classifier):
         :rtype: pandas.Series
 
         """
-        prediction = self.classifier.predict(comparison_vectors.as_matrix())
+        try:
+            prediction = self.classifier.predict(comparison_vectors.as_matrix())
+        except NotFittedError:
+            raise NotFittedError(
+                "This SVMClassifier instance is not fitted yet. " + \
+                "Call 'learn' with appropriate arguments before using this method.")
 
         return self._return_result(prediction, return_type, comparison_vectors)
 
