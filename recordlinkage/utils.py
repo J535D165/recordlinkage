@@ -35,7 +35,7 @@ def _resample(frame, index, level_i):
     MultiIndex.
     """
 
-    data = frame.ix[index.get_level_values(level_i)]
+    data = frame.loc[index.get_level_values(level_i)]
     data.index = index
 
     return data
