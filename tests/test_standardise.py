@@ -177,7 +177,7 @@ class TestCleaningStandardise(unittest.TestCase):
 
         pdt.assert_series_equal(value_occurence(values), expected)
 
-
+# nosetests tests/test_standardise.py:TestEncodingStandardise
 class TestEncodingStandardise(unittest.TestCase):
 
     def test_encode_soundex(self):
@@ -204,6 +204,29 @@ class TestEncodingStandardise(unittest.TestCase):
 
         pdt.assert_series_equal(phon, expected)
 
+    def test_encode_metaphone(self):
+
+        values = pd.Series([np.nan, u'John', u'Mary Ann', u'billy',
+                            u'Jonathan', u'Gretha', u'Micheal', u'Sjors'])
+        expected = pd.Series(
+            [np.nan, u'JN', u'MRYN', u'BL', u'JN0N',
+             u'KR0', u'MXL', u'SJRS'])
+
+        phon = phonetic(values, method='metaphone')
+
+        pdt.assert_series_equal(phon, expected)
+
+    def test_encode_match_rating(self):
+
+        values = pd.Series([np.nan, u'John', u'Mary Ann', u'billy',
+                            u'Jonathan', u'Gretha', u'Micheal', u'Sjors'])
+        expected = pd.Series(
+            [np.nan, u'JHN', u'MRYNN', u'BLLY', u'JNTHN',
+             u'GRTH', u'MCHL', u'SJRS'])
+
+        phon = phonetic(values, method='match_rating')
+
+        pdt.assert_series_equal(phon, expected)
 
     def test_phonetic_does_not_exist(self):
 
