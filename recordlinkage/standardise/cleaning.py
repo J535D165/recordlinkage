@@ -140,7 +140,7 @@ def value_occurence(s):
     """
 
     Count the number of times each value occurs. This function returns the
-    values for each row, in contrast with `pandas.value_counts
+    counts for each row, in contrast with `pandas.value_counts
     <http://pandas.pydata.org/pandas-
     docs/stable/generated/pandas.Series.value_counts.html>`_.
 
