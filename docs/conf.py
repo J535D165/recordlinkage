@@ -15,7 +15,6 @@
 import sys
 import os
 import shlex
-import mock
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -23,19 +22,18 @@ import mock
 sys.path.insert(0, os.path.abspath('..'))
 # sys.path.insert(0, os.path.abspath('../recordlinkage'))
 
-MOCK_MODULES = [
+autodoc_mock_imports = [
   'numpy', 
   'scipy', 
   'scipy.sparse',   
   'pandas', 
+  'pandas.types.inference', 
   'sklearn', 
   'sklearn.feature_extraction',
   'sklearn.feature_extraction.text', 
+  'sklearn.utils.validation',
   'sklearn.preprocessing'
 ]
-
-for mod_name in MOCK_MODULES:
-	sys.modules[mod_name] = mock.Mock()
 
 import recordlinkage
 
