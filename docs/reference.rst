@@ -45,6 +45,7 @@ Classification is the step in the record linkage process were record pairs are c
 
 .. automodule:: recordlinkage.classifiers
 	:members:
+	:inherited-members:
 
 Evaluation 
 ==========
