@@ -71,7 +71,7 @@ class TestClassifyAPI(TestClassifyData):
         cl = recordlinkage.Classifier()
 
         with self.assertRaises(ValueError):
-            cl.probs(self.y, return_type='unknown_return_type')
+            cl.prob(self.y, return_type='unknown_return_type')
 
 # nosetests tests/test_classify.py:TestClassifyAlgorithms --with-coverage --cover-package=recordlinkage
 class TestClassifyAlgorithms(TestClassifyData):
