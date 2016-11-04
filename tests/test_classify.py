@@ -94,12 +94,55 @@ class TestClassifyAlgorithms(TestClassifyData):
         with self.assertRaises(Exception):
             kmeans.predict(self.y)
 
-    def test_logistic(self):
+    def test_logistic_regression_basic(self):
+        """
+
+        Test the LogisticRegressionClassifier by training it, predict on a
+        dataset and get the probabilities.
+
+        """
 
         logis = recordlinkage.LogisticRegressionClassifier()
+
+        # 
         logis.learn(self.y_train, self.matches_index)
         logis.predict(self.y)
         # logis.prob(self.y)
+
+
+    def test_logistic_regression_manual(self):
+        """
+
+        Test the LogisticRegressionClassifier in case of setting the
+        parameters manually.
+
+        """
+
+        # Make random test data.
+        numpy.random.seed(535)
+        manual_coefficients = numpy.random.randn(self.y_train.shape[1])
+        manual_intercept = numpy.random.rand()
+
+        # Initialize the LogisticRegressionClassifier
+        logis = recordlinkage.LogisticRegressionClassifier()
+
+        # Check if the cofficients and intercapt are None at this point
+        self.assertIsNone(logis.coefficients)
+        self.assertIsNone(logis.intercept)
+
+        # Set the parameters coefficients and intercept
+        logis.coefficients = manual_coefficients
+        logis.intercept = manual_intercept
+
+        # Perform the prediction
+        logis.predict(self.y)
+
+        # Train the classifier after manula setting
+        logis.learn(self.y_train, self.matches_index)
+        logis.predict(self.y)
+
+        self.assertEqual(logis.coefficients.shape, (self.y_train.shape[1],))
+        self.assertTrue(isinstance(logis.intercept, (float)))
 
     def test_logistic_advanced(self):
 

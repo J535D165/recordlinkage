@@ -260,13 +260,19 @@ class LogisticRegressionClassifier(Classifier):
 
     @property
     def coefficients(self):
-        return self.classifier_.coef_ \
-            if hasattr(self.classifier_, 'coef_') else None
+        # Return the coefficients if available
+        try:
+            return self.classifier_.coef_[0]
+        except Exception:
+            return None
 
     @property
     def intercept(self):
-        return self.classifier_.intercept_[0] \
-            if hasattr(self.classifier_, 'intercept_') else None
+
+        try:
+            return float(self.classifier_.intercept_[0])
+        except Exception:
+            return None
 
     @coefficients.setter
     def coefficients(self, value):
@@ -277,7 +283,8 @@ class LogisticRegressionClassifier(Classifier):
             if type(value) is not numpy.ndarray:
                 value = numpy.array(value)
 
-            self.classifier_.coef_ = numpy.array(value)
+            # print (numpy.array(value))
+            self.classifier_.coef_ = value.reshape((1, len(value)))
 
     @intercept.setter
     def intercept(self, value):
@@ -288,7 +295,7 @@ class LogisticRegressionClassifier(Classifier):
             if type(value) is not numpy.ndarray:
                 value = numpy.array([value])
 
-            self.classifier_.intercept_ = value
+        self.classifier_.intercept_ = value
 
     def learn(self, comparison_vectors, match_index, return_type='index'):
         """
