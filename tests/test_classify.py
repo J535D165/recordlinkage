@@ -68,7 +68,7 @@ class TestClassifyAPI(TestClassifyData):
 
     def test_probs(self):
 
-        cl = recordlinkage.Classifier()
+        cl = recordlinkage.LogisticRegressionClassifier()
 
         with self.assertRaises(ValueError):
             cl.prob(self.y, return_type='unknown_return_type')
