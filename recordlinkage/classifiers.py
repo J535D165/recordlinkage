@@ -377,34 +377,6 @@ class LogisticRegressionClassifier(Classifier):
 
         return pandas.Series(probs[0, :], index=comparison_vectors.index)
 
-    def set_params(self, coefficients, intercept):
-        """
-
-        Set the coefficients of the logistic regression classifier.
-        coefficients*features.T > intercept are matches, otherwise distinct
-        record pairs.
-
-        :param coefficients: The coefficients of logistic regression
-        :param intercept: The interception value (matches are positive and
-                non-matches negative)
-
-        :type coefficients: numpy.array, list
-        :type coefficients:
-        """
-
-        self.coefficients = coefficients
-        self.intercept = intercept
-
-        return
-
-
-def BernoulliNBClassifier(*args, **kwargs):
-
-    raise DeprecationWarning(
-        "This class is renamed. Use NaiveBayesClassifier instead of" +
-        " BernoulliNBClassifier."
-    )
-
 
 class NaiveBayesClassifier(Classifier):
     """
