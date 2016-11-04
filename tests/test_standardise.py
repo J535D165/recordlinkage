@@ -48,8 +48,11 @@ class TestCleaningStandardise(unittest.TestCase):
         # Check if ntohing happend.
         pdt.assert_series_equal(clean_series_nothing, values)
 
+    def test_clean_empty(self):
+        """ Test the cleaning of an empty Series"""
+
         # Check empty series
-        pdt.assert_series_equal(pd.Series(), pd.Series())
+        pdt.assert_series_equal(clean(pd.Series()), pd.Series())
 
     def test_clean_unicode(self):
 
@@ -137,6 +140,14 @@ class TestCleaningStandardise(unittest.TestCase):
         values_unicode = pd.Series([u'ősdfésdfë', u'without'])
         expected_unicode = pd.Series([u'osdfesdfe', u'without'])
 
+        values_callable = pd.Series([u'ősdfésdfë', u'without'])
+        expected_callable = pd.Series([u'ősdfésdfë', u'without'])
+
+        # # Callable.
+        # pdt.assert_series_equal(
+        #     clean(values_callable, strip_accents=lambda x: x),
+        #     expected_callable)
+
         # Check if series are identical.
         pdt.assert_series_equal(
             clean(values, strip_accents='unicode'),
@@ -156,6 +167,9 @@ class TestCleaningStandardise(unittest.TestCase):
         pdt.assert_series_equal(
             clean(values_unicode, strip_accents='ascii'),
             expected_unicode)
+
+        with self.assertRaises(ValueError):
+            clean(values, strip_accents='unknown_algorithm')
 
     def test_clean_phonenumbers(self):
 
