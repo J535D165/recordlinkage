@@ -29,13 +29,13 @@ class Classifier(object):
         # inheritance.
         self.classifier = None
 
-    def learn(self, comparison_vectors, match_index=None, return_type='index'):
+    def learn(self, comparison_vectors, match_index, return_type='index'):
         """
 
-        Train the classifer. In case of supervised learning, the second
-        argument can be used to label the matches (1) and non-matches (0).
+        Train the classifier.
 
-        :param comparison_vectors: The dataframe with comparison vectors.
+        :param comparison_vectors: The comparison vectors.
+        :param match_index: The true matches.
         :param return_type: The format to return the classification result.
                 The argument value 'index' will return the pandas.MultiIndex
                 of the matches. The argument value 'series' will return a
@@ -44,16 +44,21 @@ class Classifier(object):
                 and ones.
 
         :type comparison_vectors: pandas.DataFrame
+        :type match_index: pandas.MultiIndex
         :type return_type: 'index' (default), 'series', 'array'
 
         :return: A pandas Series with the labels 1 (for the matches) and 0
-                        (for the non-matches).
+                (for the non-matches).
         :rtype: pandas.Series
 
         """
+        train_series = pandas.Series(False, index=comparison_vectors.index)
+        train_series.loc[match_index & comparison_vectors.index] = True
 
-        raise NotImplementedError(
-            "Class {} has no method 'learn()' ".format(self.__name__))
+        self.classifier.fit(comparison_vectors.as_matrix(),
+                            numpy.array(train_series))
+
+        return self.predict(comparison_vectors, return_type)
 
     def predict(self, comparison_vectors, return_type='index'):
         """
@@ -69,20 +74,27 @@ class Classifier(object):
                 pandas.Series with zeros (distinct) and ones (matches). The
                 argument value 'array' will return a numpy.ndarray with zeros
                 and ones.
-
         :type comparison_vectors: pandas.DataFrame
         :type return_type: 'index' (default), 'series', 'array'
 
         :return: A pandas Series with the labels 1 (for the matches) and 0
-                        (for the non-matches).
+                (for the non-matches).
         :rtype: pandas.Series
 
         """
+        try:
+            prediction = self.classifier.predict(comparison_vectors.as_matrix())
+        except NotFittedError:
+            raise NotFittedError(
+                "This {} is not fitted yet. Call 'learn' with appropriate "
+                "arguments before using this method.".format(
+                    type(self).__name__
+                )
+            )
 
-        raise NotImplementedError(
-            "Class {} has no method 'predict()' ".format(self.__name__))
+        return self._return_result(prediction, return_type, comparison_vectors)
 
-    def prob(self, comparison_vectors):
+    def prob(self, comparison_vectors, return_type='series'):
         """
 
         Estimate the probability for each record pairs of being a match.
@@ -93,15 +105,25 @@ class Classifier(object):
         K-means clustering).
 
         :param comparison_vectors: The dataframe with comparison vectors.
+        :param return_type: Return a pandas series or numpy array. Default
+                'series'.
+
         :type comparison_vectors: pandas.DataFrame
+        :type return_type: 'series' or 'array'
 
-        :return: A pandas Series with pandas.MultiIndex with the probability
-                of being a match.
-        :rtype: pandas.Series
+        :return: The probability of being a match for each record pair.
+        :rtype: pandas.Series or numpy.ndarray
         """
+        probs = self.classifier.predict_proba(comparison_vectors.as_matrix())
 
-        raise NotImplementedError(
-            "Class {} has no method 'prob()' ".format(self.__name__))
+        if return_type == 'series':
+            return pandas.Series(probs[:, 0], index=comparison_vectors.index)
+        elif return_type == 'array':
+            return probs[:, 0]
+        else:
+            raise ValueError(
+                "return_type {} unknown. Choose 'index', 'series' or "
+                "'array'".format(return_type))
 
     def _return_result(
         self, result, return_type='index', comparison_vectors=None
@@ -134,8 +156,8 @@ class Classifier(object):
         # return_type not known
         else:
             raise ValueError(
-                "return_type {} unknown. Choose 'index', 'series' or" +
-                " 'array'".format(return_type))
+                "return_type {} unknown. Choose 'index', 'series' or "
+                "'array'".format(return_type))
 
 
 class KMeansClassifier(Classifier):
@@ -143,7 +165,7 @@ class KMeansClassifier(Classifier):
     KMeansClassifier()
 
     The K-means clusterings algorithm to classify the given record pairs into
-    matches and non- matches.
+    matches and non-matches.
 
     .. note::
 
@@ -195,39 +217,13 @@ class KMeansClassifier(Classifier):
 
         return self._return_result(prediction, return_type, comparison_vectors)
 
-    def predict(self, comparison_vectors, return_type='index'):
-        """ Predict the class for a set of comparison vectors.
+    def prob(self, *args, **kwargs):
 
-        After training the classifiers, this method can be used to classify
-        comparison vectors for which the class is unknown.
-
-        :param comparison_vectors: The dataframe with comparison vectors.
-        :param return_type: The format to return the classification result.
-                The argument value 'index' will return the pandas.MultiIndex
-                of the matches. The argument value 'series' will return a
-                pandas.Series with zeros (distinct) and ones (matches). The
-                argument value 'array' will return a numpy.ndarray with zeros
-                and ones.
-
-        :type comparison_vectors: pandas.DataFrame
-        :type return_type: 'index' (default), 'series', 'array'
-
-        :return: The prediction (see also the argument 'return_type')
-        :rtype: pandas.MultiIndex, pandas.Series or numpy.ndarray
-
-        """
-        try:
-            prediction = self.classifier.predict(comparison_vectors.as_matrix())
-        except NotFittedError:
-            raise NotFittedError(
-                "This KMeansClassifier instance is not fitted yet. " + \
-                "Call 'learn' with appropriate arguments before using this method.")
-
-        return self._return_result(prediction, return_type, comparison_vectors)
+        raise AttributeError(
+            "It is not possible to compute "
+            "probabilities for the KMeansClassfier")
 
 # DeterministicClassifier = LogisticRegressionClassifier
-
-
 class LogisticRegressionClassifier(Classifier):
     """
     LogisticRegressionClassifier(coefficients=None, intercept=None)
@@ -251,18 +247,18 @@ class LogisticRegressionClassifier(Classifier):
     def __init__(self, coefficients=None, intercept=None):
         super(self.__class__, self).__init__()
 
-        self.classifier_ = linear_model.LogisticRegression()
+        self.classifier = linear_model.LogisticRegression()
 
         self.coefficients = coefficients
         self.intercept = intercept
 
-        self.classifier_.classes_ = numpy.array([False, True])
+        self.classifier.classes_ = numpy.array([False, True])
 
     @property
     def coefficients(self):
         # Return the coefficients if available
         try:
-            return self.classifier_.coef_[0]
+            return self.classifier.coef_[0]
         except Exception:
             return None
 
@@ -270,7 +266,7 @@ class LogisticRegressionClassifier(Classifier):
     def intercept(self):
 
         try:
-            return float(self.classifier_.intercept_[0])
+            return float(self.classifier.intercept_[0])
         except Exception:
             return None
 
@@ -284,7 +280,7 @@ class LogisticRegressionClassifier(Classifier):
                 value = numpy.array(value)
 
             # print (numpy.array(value))
-            self.classifier_.coef_ = value.reshape((1, len(value)))
+            self.classifier.coef_ = value.reshape((1, len(value)))
 
     @intercept.setter
     def intercept(self, value):
@@ -295,87 +291,7 @@ class LogisticRegressionClassifier(Classifier):
             if type(value) is not numpy.ndarray:
                 value = numpy.array([value])
 
-        self.classifier_.intercept_ = value
-
-    def learn(self, comparison_vectors, match_index, return_type='index'):
-        """
-
-        Train the Logistic Regression classifier.
-
-        :param comparison_vectors: The dataframe with comparison vectors.
-        :param return_type: The format to return the classification result.
-                The argument value 'index' will return the pandas.MultiIndex
-                of the matches. The argument value 'series' will return a
-                pandas.Series with zeros (distinct) and ones (matches). The
-                argument value 'array' will return a numpy.ndarray with zeros
-                and ones.
-        :type comparison_vectors: pandas.DataFrame
-        :type return_type: 'index' (default), 'series', 'array'
-
-        :return: A pandas Series with the labels 1 (for the matches) and 0
-                (for the non-matches).
-        :rtype: pandas.Series
-
-        """
-        train_series = pandas.Series(False, index=comparison_vectors.index)
-        train_series.loc[match_index & comparison_vectors.index] = True
-
-        self.classifier_.fit(comparison_vectors.as_matrix(),
-                             numpy.array(train_series))
-
-        return self.predict(comparison_vectors, return_type)
-
-    def predict(self, comparison_vectors, return_type='index'):
-        """
-
-        Classify a set of record pairs based on their comparison vectors into
-        matches, non-matches and possible matches. The classifier has to be
-        trained to call this method.
-
-        :param comparison_vectors: The dataframe with comparison vectors.
-        :param return_type: The format to return the classification result.
-                The argument value 'index' will return the pandas.MultiIndex
-                of the matches. The argument value 'series' will return a
-                pandas.Series with zeros (distinct) and ones (matches). The
-                argument value 'array' will return a numpy.ndarray with zeros
-                and ones.
-        :type comparison_vectors: pandas.DataFrame
-        :type return_type: 'index' (default), 'series', 'array'
-
-        :return: A pandas Series with the labels 1 (for the matches) and 0
-                (for the non-matches).
-        :rtype: pandas.Series
-
-        """
-        try:
-            prediction = self.classifier_.predict(comparison_vectors.as_matrix())
-        except NotFittedError:
-            raise NotFittedError(
-                "This LogisticRegressionClassifier instance is not fitted yet. " + \
-                "Call 'learn' with appropriate arguments before using this method.")
-
-        return self._return_result(prediction, return_type, comparison_vectors)
-
-    def prob(self, comparison_vectors):
-        """
-
-        Estimate the probability for each record pairs of being a match.
-
-        The method computes the probability for each given record pair of
-        being a match. The probability of a non-match is 1 minus the result.
-        This method is not implemented for all classifiers (for example
-        K-means clustering).
-
-        :param comparison_vectors: The dataframe with comparison vectors.
-        :type comparison_vectors: pandas.DataFrame
-
-        :return: A pandas Series with pandas.MultiIndex with the probability
-                of being a match.
-        :rtype: pandas.Series
-        """
-        probs = self.classifier_.predict_proba(comparison_vectors.as_matrix())
-
-        return pandas.Series(probs[0, :], index=comparison_vectors.index)
+        self.classifier.intercept_ = value
 
 
 class NaiveBayesClassifier(Classifier):
@@ -392,87 +308,6 @@ class NaiveBayesClassifier(Classifier):
 
         self.classifier = naive_bayes.BernoulliNB()
 
-    def learn(self, comparison_vectors, match_index, return_type='index'):
-        """
-
-        Train the Bernoulli Naive Bayes classifier.
-
-        :param comparison_vectors: The dataframe with comparison vectors.
-        :param return_type: The format to return the classification result.
-                The argument value 'index' will return the pandas.MultiIndex
-                of the matches. The argument value 'series' will return a
-                pandas.Series with zeros (distinct) and ones (matches). The
-                argument value 'array' will return a numpy.ndarray with zeros
-                and ones.
-        :type comparison_vectors: pandas.DataFrame
-        :type return_type: 'index' (default), 'series', 'array'
-
-        :return: A pandas Series with the labels 1 (for the matches) and 0
-                (for the non-matches).
-        :rtype: pandas.Series
-
-        """
-        train_series = pandas.Series(False, index=comparison_vectors.index)
-        train_series.loc[match_index & comparison_vectors.index] = True
-
-        self.classifier.fit(comparison_vectors.as_matrix(),
-                            numpy.array(train_series))
-
-        return self.predict(comparison_vectors, return_type)
-
-    def predict(self, comparison_vectors, return_type='index'):
-        """
-
-        Classify a set of record pairs based on their comparison vectors into
-        matches, non-matches and possible matches. The classifier has to be
-        trained to call this method.
-
-        :param comparison_vectors: The dataframe with comparison vectors.
-        :param return_type: The format to return the classification result.
-                The argument value 'index' will return the pandas.MultiIndex
-                of the matches. The argument value 'series' will return a
-                pandas.Series with zeros (distinct) and ones (matches). The
-                argument value 'array' will return a numpy.ndarray with zeros
-                and ones.
-        :type comparison_vectors: pandas.DataFrame
-        :type return_type: 'index' (default), 'series', 'array'
-
-        :return: A pandas Series with the labels 1 (for the matches) and 0
-                (for the non-matches).
-        :rtype: pandas.Series
-
-        """
-        try:
-            prediction = self.classifier.predict(comparison_vectors.as_matrix())
-        except NotFittedError:
-            raise NotFittedError(
-                "This NaiveBayesClassifier instance is not fitted yet. " + \
-                "Call 'learn' with appropriate arguments before using this method.")
-
-        return self._return_result(prediction, return_type, comparison_vectors)
-
-    def prob(self, comparison_vectors):
-        """
-
-        Estimate the probability for each record pairs of being a match.
-
-        The method computes the probability for each given record pair of
-        being a match. The probability of a non-match is 1 minus the result.
-        This method is not implemented for all classifiers (for example
-        K-means clustering).
-
-        :param comparison_vectors: The dataframe with comparison vectors.
-        :type comparison_vectors: pandas.DataFrame
-
-        :return: A pandas Series with pandas.MultiIndex with the probability
-                of being a match.
-        :rtype: pandas.Series
-        """
-
-        probs = self.classifier.predict_proba(comparison_vectors.as_matrix())
-
-        return pandas.Series(probs[0, :], index=comparison_vectors.index)
-
 
 class SVMClassifier(Classifier):
     """
@@ -488,65 +323,11 @@ class SVMClassifier(Classifier):
 
         self.classifier = svm.LinearSVC()
 
-    def learn(self, comparison_vectors, match_index, return_type='index'):
-        """
+    def prob(self, *args, **kwargs):
 
-        Train the SVM classifier.
-
-        :param comparison_vectors: The dataframe with comparison vectors.
-        :param return_type: The format to return the classification result.
-                The argument value 'index' will return the pandas.MultiIndex
-                of the matches. The argument value 'series' will return a
-                pandas.Series with zeros (distinct) and ones (matches). The
-                argument value 'array' will return a numpy.ndarray with zeros
-                and ones.
-        :type comparison_vectors: pandas.DataFrame
-        :type return_type: 'index' (default), 'series', 'array'
-
-        :return: A pandas Series with the labels 1 (for the matches) and 0
-                (for the non-matches).
-        :rtype: pandas.Series
-
-        """
-        train_series = pandas.Series(False, index=comparison_vectors.index)
-        train_series.loc[match_index & comparison_vectors.index] = True
-
-        self.classifier.fit(comparison_vectors.as_matrix(),
-                            numpy.array(train_series))
-
-        return self.predict(comparison_vectors, return_type)
-
-    def predict(self, comparison_vectors, return_type='index'):
-        """
-
-        Classify a set of record pairs based on their comparison vectors into
-        matches, non-matches and possible matches. The classifier has to be
-        trained to call this method.
-
-        :param comparison_vectors: The dataframe with comparison vectors.
-        :param return_type: The format to return the classification result.
-                The argument value 'index' will return the pandas.MultiIndex
-                of the matches. The argument value 'series' will return a
-                pandas.Series with zeros (distinct) and ones (matches). The
-                argument value 'array' will return a numpy.ndarray with zeros
-                and ones.
-        :type comparison_vectors: pandas.DataFrame
-        :type return_type: 'index' (default), 'series', 'array'
-
-        :return: A pandas Series with the labels 1 (for the matches) and 0
-                (for the non-matches).
-        :rtype: pandas.Series
-
-        """
-        try:
-            prediction = self.classifier.predict(comparison_vectors.as_matrix())
-        except NotFittedError:
-            raise NotFittedError(
-                "This SVMClassifier instance is not fitted yet. " + \
-                "Call 'learn' with appropriate arguments before using this method.")
-
-        return self._return_result(prediction, return_type, comparison_vectors)
-
+        raise AttributeError(
+            "It is not possible to compute "
+            "probabilities for the SVMClassfier")
 
 class FellegiSunter(Classifier):
     """

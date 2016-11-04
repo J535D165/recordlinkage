@@ -66,6 +66,12 @@ class TestClassifyAPI(TestClassifyData):
                 comparison_vectors=self.y
             )
 
+    def test_probs(self):
+
+        cl = recordlinkage.Classifier()
+
+        with self.assertRaises(ValueError):
+            cl.probs(self.y, return_type='unknown_return_type')
 
 # nosetests tests/test_classify.py:TestClassifyAlgorithms --with-coverage --cover-package=recordlinkage
 class TestClassifyAlgorithms(TestClassifyData):
@@ -76,7 +82,12 @@ class TestClassifyAlgorithms(TestClassifyData):
         kmeans.learn(self.y_train)
         kmeans.predict(self.y)
 
+        # There are no probabilities
+        with self.assertRaises(AttributeError):
+            kmeans.prob(self.y)
+
     def test_kmeans_no_training_data(self):
+        """ Kmeans, no training data"""
 
         kmeans = recordlinkage.KMeansClassifier()
 
@@ -104,10 +115,10 @@ class TestClassifyAlgorithms(TestClassifyData):
 
         logis = recordlinkage.LogisticRegressionClassifier()
 
-        # 
+        # Test the basics
         logis.learn(self.y_train, self.matches_index)
         logis.predict(self.y)
-        # logis.prob(self.y)
+        logis.prob(self.y)
 
 
     def test_logistic_regression_manual(self):
@@ -144,24 +155,23 @@ class TestClassifyAlgorithms(TestClassifyData):
         self.assertEqual(logis.coefficients.shape, (self.y_train.shape[1],))
         self.assertTrue(isinstance(logis.intercept, (float)))
 
-    def test_logistic_advanced(self):
-
-        logis = recordlinkage.LogisticRegressionClassifier()
-        logis.learn(self.y_train, self.matches_index)
-        logis.predict(self.y)
-        # logis.prob(self.y)
-
     def test_bernoulli_naive_bayes(self):
+        """Basic Naive Bayes"""
 
         bernb = recordlinkage.NaiveBayesClassifier()
         bernb.learn(self.y_train.round(), self.matches_index)
         bernb.predict(self.y.round())
+        bernb.prob(self.y.round())
 
     def test_svm(self):
 
         svm = recordlinkage.SVMClassifier()
         svm.learn(self.y_train, self.matches_index)
-        svm.predict(self.y.round())
+        svm.predict(self.y)
+
+        # There are no probabilities
+        with self.assertRaises(AttributeError):
+            svm.prob(self.y)
 
     def test_em(self):
 
