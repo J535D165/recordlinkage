@@ -97,12 +97,7 @@ class Classifier(object):
     def prob(self, comparison_vectors, return_type='series'):
         """
 
-        Estimate the probability for each record pairs of being a match.
-
-        The method computes the probability for each given record pair of
-        being a match. The probability of a non-match is 1 minus the result.
-        This method is not implemented for all classifiers (for example
-        K-means clustering).
+        For each pair of records, estimate the probability of being a match.
 
         :param comparison_vectors: The dataframe with comparison vectors.
         :param return_type: Return a pandas series or numpy array. Default
@@ -164,14 +159,18 @@ class KMeansClassifier(Classifier):
     """
     KMeansClassifier()
 
-    The K-means clusterings algorithm to classify the given record pairs into
-    matches and non-matches.
+    The `K-means clusterings algorithm (wikipedia)
+    <https://en.wikipedia.org/wiki/K-means_clustering>`_ partitions candidate
+    record pairs into matches and non-matches. Each comparison vector belongs
+    to the cluster with the nearest mean. The K-means algorithm does not need
+    trainings data, but it needs two starting points (one for the matches and
+    one for the non-matches). The K-means clustering problem is NP-hard.
 
     .. note::
 
             There are way better methods for linking records than the k-means
             clustering algorithm. However, this algorithm does not need
-            trainings data and is useful to do an initial guess.
+            trainings data and is useful to do an initial partition.
 
     """
 
@@ -228,13 +227,14 @@ class LogisticRegressionClassifier(Classifier):
     """
     LogisticRegressionClassifier(coefficients=None, intercept=None)
 
-    Use logistic regression to classify candidate record pairs into matches
-    and non-matches.
+    This classifier is an application of the `logistic regression model
+    (wikipedia) <https://en.wikipedia.org/wiki/Logistic_regression>`_. The
+    classifier partitions candidate record pairs into matches and non-matches.
 
     :param coefficients: The coefficients of the logistic regression.
     :param intercept: The interception value.
 
-    :type coefficients: numpy.array
+    :type coefficients: list, numpy.array
     :type intercept: float
 
     :var coefficients: The coefficients of the logistic regression.
@@ -296,25 +296,37 @@ class LogisticRegressionClassifier(Classifier):
 
 class NaiveBayesClassifier(Classifier):
     """
-    NaiveBayesClassifier()
+    NaiveBayesClassifier(alpha=1.0)
 
-    Bernoulli Naive Bayes classifier to classify the given record pairs into
-    matches and non- matches.
+    The `Naive Bayes classifier (wikipedia)
+    <https://en.wikipedia.org/wiki/Naive_Bayes_classifier>`_ partitions
+    candidate record pairs into matches and non-matches. The classifier is
+    based on probabilistic principles. The Naive Bayes classification method
+    is proven to be mathematical equivalent with the Fellegi and Sunter model.
+
+    :param alpha: Additive (Laplace/Lidstone) smoothing parameter
+            (0 for no smoothing).
+
+    :type alpha: float
 
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, alpha=1.0, *args, **kwargs):
         super(self.__class__, self).__init__(*args, **kwargs)
 
-        self.classifier = naive_bayes.BernoulliNB()
+        self.classifier = naive_bayes.BernoulliNB(alpha=alpha, binarize=None)
 
 
 class SVMClassifier(Classifier):
     """
     SVMClassifier()
 
-    Linear Support Vector Machine classifier to classify the given record
-    pairs into matches and non- matches.
+    The `Support Vector Machine classifier (wikipedia)
+    <https://en.wikipedia.org/wiki/Support_vector_machine>`_ partitions
+    candidate record pairs into matches and non-matches. This implementation
+    is a non-probabilistic binary linear classifier. Support vector machines
+    are supervised learning models. Therefore, the SVM classifiers needs
+    training-data.
 
     """
 
@@ -328,6 +340,7 @@ class SVMClassifier(Classifier):
         raise AttributeError(
             "It is not possible to compute "
             "probabilities for the SVMClassfier")
+
 
 class FellegiSunter(Classifier):
     """
