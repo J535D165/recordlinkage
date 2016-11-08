@@ -175,8 +175,8 @@ class CompareCore(object):
         labelsB = list(set(labelsB))
 
         # Make selections of columns
-        dataA = _resample(self.df_a[labelsA], self.pairs, 1)
-        dataB = _resample(self.df_b[labelsB], self.pairs, 0)
+        dataA = _resample(self.df_a[labelsA], self.pairs, 0)
+        dataB = _resample(self.df_b[labelsB], self.pairs, 1)
 
         for comp_func, lbls_a, lbls_b, args, kwargs in self._batch_functions:
 
