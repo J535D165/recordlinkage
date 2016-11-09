@@ -5,7 +5,7 @@ import pandas
 from recordlinkage.datasets import load_febrl1, \
     load_febrl2, load_febrl3, load_febrl4, load_krebsregister
 
-
+# nosetests tests/test_datasets.py:TestDatasets
 class TestDatasets(unittest.TestCase):
 
     def test_datasets_existance(self):
@@ -33,3 +33,7 @@ class TestDatasets(unittest.TestCase):
 
         # load not existing block
         self.assertRaises(ValueError, load_krebsregister, 11)
+
+        # missing values
+        krebs_data_block10, krebs_matches = load_krebsregister(10, missing_values=0)
+        self.assertEqual(krebs_data_block10.isnull().sum().sum(), 0)
