@@ -74,8 +74,8 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'Record Linkage Toolkit'
-copyright = u'2015, Jonathan de Bruin'
+project = u'Python Record Linkage Toolkit'
+copyright = u'2016, Jonathan de Bruin'
 author = u'Jonathan de Bruin'
 
 # The version info for the project you're documenting, acts as replacement for
