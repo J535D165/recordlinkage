@@ -384,7 +384,7 @@ class Compare(CompareCore):
             elif method == 'levenshtein':
                 str_sim_alg = levenshtein_similarity
 
-            elif method in ['dameraulevenshtein', 'dameraulevenshtein']:
+            elif method in ['dameraulevenshtein', 'damerau_levenshtein']:
                 str_sim_alg = damerau_levenshtein_similarity
 
             elif method == 'q_gram' or method == 'qgram':
