@@ -1,11 +1,15 @@
 
-from .indexing import *
-from .comparing import *
-from .classifiers import *
-from .measures import *
+from recordlinkage.indexing import *
+from recordlinkage.comparing import *
+from recordlinkage.classifiers import *
+from recordlinkage.measures import *
 
-from ._version import get_versions
+# # import standardise
+# from recordlinkage.standardise.cleaning import *
+# from recordlinkage.standardise.encoding import *
+
+from recordlinkage._version import get_versions
 __version__ = get_versions()['version']
 del get_versions
 
-__all__ = ['standardise.cleaning', 'standardise.phonetic', 'datasets']
+__all__ = ['datasets']

@@ -4,8 +4,8 @@ import zipfile
 
 import pandas
 
-from ..compat.six import BytesIO
-from ..compat.six.moves.urllib.request import urlopen
+from recordlinkage.compat.six import BytesIO
+from recordlinkage.compat.six.moves.urllib.request import urlopen
 
 
 def load_krebsregister(block=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]):

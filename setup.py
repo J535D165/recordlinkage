@@ -25,8 +25,13 @@ setup(
     url="http://recordlinkage.readthedocs.io/",
 
     install_requires=["numpy", "pandas", "scipy", "sklearn"],
-    packages=['recordlinkage', 'recordlinkage.datasets',
-              'recordlinkage.standardise'],
+    packages=[
+        'recordlinkage',
+        'recordlinkage.datasets',
+        'recordlinkage.standardise',
+        'recordlinkage.algorithms',
+        'recordlinkage.compat'
+    ],
     include_package_data=True,
     package_dir={'recordlinkage': 'recordlinkage'},
     package_data={'recordlinkage': ['datasets/*/*.csv']},

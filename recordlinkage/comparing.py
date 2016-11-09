@@ -11,9 +11,13 @@ from recordlinkage.utils import _resample
 from recordlinkage.algorithms.distance import _1d_distance, _haversine_distance
 from recordlinkage.algorithms.numeric import _step_sim, \
     _linear_sim, _squared_sim, _exp_sim, _gauss_sim
-from recordlinkage.algorithms.string import jaro_similarity, \
-    jarowinkler_similarity, levenshtein_similarity, \
-    damerau_levenshtein_similarity, qgram_similarity, cosine_similarity
+from recordlinkage.algorithms.string import \
+    jaro_similarity, \
+    jarowinkler_similarity, \
+    levenshtein_similarity, \
+    damerau_levenshtein_similarity, \
+    qgram_similarity, \
+    cosine_similarity
 
 
 def fillna_decorator(missing_value=np.nan):

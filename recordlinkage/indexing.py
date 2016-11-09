@@ -6,7 +6,7 @@ import pandas
 import numpy
 
 from recordlinkage.utils import IndexError, merge_dicts, split_or_pass
-from recordlinkage.comparing import qgram_similarity
+from recordlinkage.algorithms.string import qgram_similarity
 
 
 def check_index_names(func):

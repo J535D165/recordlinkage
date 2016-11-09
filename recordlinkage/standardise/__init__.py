@@ -1,2 +1,2 @@
-from .cleaning import *
-from .encoding import *
+from recordlinkage.standardise.cleaning import *
+from recordlinkage.standardise.encoding import *
