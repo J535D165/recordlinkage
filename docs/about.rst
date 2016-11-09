@@ -24,9 +24,10 @@ framework. It is easy to include your own indexing algorithms,
 comparison/similarity measures and classifiers. The main features of the ``recordlinkage`` package are:
 
 -  Clean and standardise data with easy to use tools
--  Make pairs of records with smart indexing methods
+-  Make pairs of records with smart indexing methods such as
+   **blocking** and **sorted neighbourhood indexing**
 -  Compare records with a large number of comparison and similarity
-   measures
+   measures for different types of variables such as strings, numbers and dates.
 -  Several classifications algorithms, both supervised and unsupervised
    algorithms.
 -  Common record linkage evaluation tools
