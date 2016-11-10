@@ -5,13 +5,13 @@ About
 Introduction
 ============
 
-The **recordlinkage** toolkit is a library to link records in or between data
-sources. The library provides tools needed for record linkage and
-deduplication. The package contains indexing methods, functions to compare
-attributes and classifiers. The package is developed for research and the
-linkage of small or medium sized files.
+The **Python Record Linkage Toolkit** is a library to link records in or
+between data sources. The toolkit provides most of the tools needed for 
+record linkage and deduplication. The package contains indexing methods, 
+functions to compare records and classifiers. The package is developed 
+for research and the linking of small or medium sized files.
 
-The *recordlinkage* project is inspired by the `Freely Extensible Biomedical
+The project is inspired by the `Freely Extensible Biomedical
 Record Linkage (FEBRL) <https://sourceforge.net/projects/febrl/>`__ project,
 which is a great project. In contrast with FEBRL, the recordlinkage project makes extensive use of data
 manipulation tools like `pandas <http://pandas.pydata.org/>`__ and `numpy <http://www.numpy.org/>`__. The use of *pandas*, a flexible and powerful data analysis and
