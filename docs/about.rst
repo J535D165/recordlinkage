@@ -21,7 +21,7 @@ record linkage directly into existing data manipulation projects.
 
 One of the aims of this project is to make an extensible record linkage
 framework. It is easy to include your own indexing algorithms,
-comparison/similarity measures and classifiers. The main features of the ``recordlinkage`` package are:
+comparison/similarity measures and classifiers. The main features of the Python Record Linkage Toolkit are:
 
 -  Clean and standardise data with easy to use tools
 -  Make pairs of records with smart indexing methods such as
@@ -39,7 +39,7 @@ What is record linkage?
 
 The term record linkage is used to indicate the procedure of bringing together information from two or more records that are believed to belong to the same entity. Record linkage is used to link data from multiple data sources or to find duplicates in a single data source. In computer science, record linkage is also known as data matching or deduplication (in case of search duplicate records within a single file). 
 
-In record linkage, the attributes of the entity (stored in a record) are used to link two or more records. Attributes can be unique entity identifiers (SSN, license plate number), but also attributes like (sur)name, date of birth and car model/colour. The record linkage procedure can be represented as a workflow [Christen, 2012]. The steps are: cleaning, indexing, comparing, classifying and evaluation. If needed, the classified record pairs flow back to improve the previous step. The ``recordlinkage`` package follows this workflow. 
+In record linkage, the attributes of the entity (stored in a record) are used to link two or more records. Attributes can be unique entity identifiers (SSN, license plate number), but also attributes like (sur)name, date of birth and car model/colour. The record linkage procedure can be represented as a workflow [Christen, 2012]. The steps are: cleaning, indexing, comparing, classifying and evaluation. If needed, the classified record pairs flow back to improve the previous step. The Python Record Linkage Toolkit follows this workflow. 
 
 .. seealso::
 
