@@ -316,4 +316,4 @@ texinfo_domain_indices = False
 
 autodoc_member_order = 'bysource' 
 
-
+nbsphinx_execute = 'never'
