@@ -12,6 +12,10 @@ import warnings
 warnings.simplefilter(action="ignore", category=FutureWarning)
 
 
+class LearningError(Exception):
+    """Learning error"""
+
+
 class Classifier(object):
     """
 
@@ -52,11 +56,30 @@ class Classifier(object):
         :rtype: pandas.Series
 
         """
-        train_series = pandas.Series(False, index=comparison_vectors.index)
-        train_series.loc[match_index & comparison_vectors.index] = True
 
-        self.classifier.fit(comparison_vectors.as_matrix(),
-                            numpy.array(train_series))
+        if isinstance(match_index, (pandas.MultiIndex, pandas.Index)):
+
+            # The match_index variable is of type MultiIndex
+            train_series = pandas.Series(False, index=comparison_vectors.index)
+
+            try:
+                train_series.loc[match_index & comparison_vectors.index] = True
+
+            except pandas.IndexError as err:
+
+                # The are no matches. So training is not possible.
+                if len(match_index & comparison_vectors.index) == 0:
+                    raise LearningError(
+                        "both matches and non-matches needed in the" +
+                        "trainingsdata, only non-matches found"
+                    )
+                else:
+                    raise err
+
+        self.classifier.fit(
+            comparison_vectors.as_matrix(),
+            numpy.array(train_series)
+        )
 
         return self.predict(comparison_vectors, return_type)
 
