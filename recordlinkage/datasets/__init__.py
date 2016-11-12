@@ -8,7 +8,7 @@ from recordlinkage.compat.six import BytesIO
 from recordlinkage.compat.six.moves.urllib.request import urlopen
 
 
-def load_krebsregister(block=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], missing_values=None):
+def load_krebsregister(block=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], missing_values=None, shuffle=True):
     """
 
     This dataset of comparison patterns was obtained in a epidemiological
@@ -47,6 +47,10 @@ def load_krebsregister(block=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], missing_values=Non
     :param block: An integer or a list with integers between 1 and 10. The
             blocks are the blocks explained in the description.
     :param missing_values: The value of the missing values. Default NaN.
+    :param shuffle: Shuffle the record pairs. Default True.
+
+    :type missing_values: object, int, float
+    :type shuffle: bool
 
     :return: A data frame with comparison vectors and a multi index with the
             indices of the matches.
@@ -70,6 +74,9 @@ def load_krebsregister(block=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], missing_values=Non
     else:
 
         data = _krebsregister_block(block)
+
+    if shuffle:
+        data = data.sample(frac=1, random_state=535)
 
     match_index = data.index[data['is_match']]
     del data['is_match']

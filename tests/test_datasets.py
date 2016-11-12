@@ -37,3 +37,16 @@ class TestDatasets(unittest.TestCase):
         # missing values
         krebs_data_block10, krebs_matches = load_krebsregister(10, missing_values=0)
         self.assertEqual(krebs_data_block10.isnull().sum().sum(), 0)
+
+
+    def test_krebs_missings(self):
+
+        # missing values
+        krebs_data_block10, krebs_matches = load_krebsregister(10, missing_values=0)
+        self.assertEqual(krebs_data_block10.isnull().sum().sum(), 0)
+
+
+    def test_krebs_shuffle(self):
+
+        # missing values
+        krebs_data_block10, krebs_matches = load_krebsregister(10, shuffle=False)
