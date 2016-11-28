@@ -1,6 +1,6 @@
-************************************
-Record Linkage Toolkit Documentation
-************************************
+*******************************************
+Python Record Linkage Toolkit Documentation
+*******************************************
 
 All you need to start linking records.
 
@@ -15,7 +15,7 @@ All you need to start linking records.
 	All you need to know about the project.
 
 :doc:`installation`
-	Install the `Python Record Linkage Toolkit` package.
+	Install the Python Record Linkage Toolkit.
 
 First steps
 ===========
@@ -47,7 +47,7 @@ Record linkage
 	notebooks/performance.ipynb
 
 :doc:`notebooks/classifiers`
-	The full API reference of the `Record Linkage Toolkit` package is found here.
+	The full API reference of the Python Record Linkage Toolkit package is found here.
 
 :doc:`notebooks/advanced_indexing`
 	Are the built-in indexing algorithms not sufficient? Build your own!
@@ -65,10 +65,15 @@ Reference
 
 	reference
 
+	contributing
+
 	changelog
 
 :doc:`reference`
-	The full API reference of the recordlinkage package is found here.
+	The full API reference of the Python Record Linkage Toolkit is found here.
+
+:doc:`contributing`
+	Contribute to the Python Record Linkage Toolkit
 
 :doc:`changelog` 
 	Stay up to date about development and API changes.
