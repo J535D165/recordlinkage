@@ -1,17 +1,15 @@
 import unittest
 
 import pandas.util.testing as pdt
-import numpy.testing as npt
 import recordlinkage
 
 import numpy as np
 from numpy import nan, arange
 import pandas
 
-from test_compare import TestCompare
-
 STRING_SIM_ALGORITHMS = [
-    'jaro', 'q_gram', 'cosine', 'jaro_winkler', 'dameraulevenshtein', 'levenshtein'
+    'jaro', 'q_gram', 'cosine', 'jaro_winkler', 'dameraulevenshtein',
+    'levenshtein'
 ]
 
 NUMERIC_SIM_ALGORITHMS = [
@@ -19,7 +17,7 @@ NUMERIC_SIM_ALGORITHMS = [
 ]
 
 # nosetests tests/test_compare_algorithms.py:TestCompareAlgorithms
-class TestCompareAlgorithms(TestCompare):
+class TestCompareAlgorithms(unittest.TestCase):
 
     @classmethod
     def setUpClass(self):

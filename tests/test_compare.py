@@ -9,7 +9,8 @@ from numpy import nan, arange
 import pandas
 
 STRING_SIM_ALGORITHMS = [
-    'jaro', 'q_gram', 'cosine', 'jaro_winkler', 'dameraulevenshtein', 'levenshtein'
+    'jaro', 'q_gram', 'cosine', 'jaro_winkler', 'dameraulevenshtein',
+    'levenshtein'
 ]
 
 NUMERIC_SIM_ALGORITHMS = [
@@ -74,9 +75,50 @@ class TestCompareAPI(TestCompare):
             self.assertIsInstance(result, pandas.Series)
             self.assertEqual(result.name, None)
 
+    def test_instance_dedup(self):
+
+        comp = recordlinkage.Compare(self.index_AB, self.A)
+
+        result = comp.exact('given_name', 'given_name')
+        self.assertIsInstance(result, pandas.Series)
+        self.assertEqual(result.name, None)
+
+        result = comp.numeric('age', 'age', offset=2, scale=2)
+        self.assertIsInstance(result, pandas.Series)
+        self.assertEqual(result.name, None)
+
+        for alg in STRING_SIM_ALGORITHMS:
+
+            # Missing values
+            result = comp.string('given_name', 'given_name', method=alg)
+
+            self.assertIsInstance(result, pandas.Series)
+            self.assertEqual(result.name, None)
+
     def test_name_series_linking(self):
 
         comp = recordlinkage.Compare(self.index_AB, self.A, self.B)
+
+        result = comp.exact('given_name', 'given_name', name="given_name_comp")
+        self.assertIsInstance(result, pandas.Series)
+        self.assertEqual(result.name, "given_name_comp")
+
+        result = comp.numeric('age', 'age', offset=2, scale=2, name="given_name_comp")
+        self.assertIsInstance(result, pandas.Series)
+        self.assertEqual(result.name, "given_name_comp")
+
+        for alg in STRING_SIM_ALGORITHMS:
+
+            # Missing values
+            result = comp.string('given_name', 'given_name',
+                                 method=alg, name="given_name_comp")
+
+            self.assertIsInstance(result, pandas.Series)
+            self.assertEqual(result.name, "given_name_comp")
+
+    def test_name_series_dedup(self):
+
+        comp = recordlinkage.Compare(self.index_AB, self.A)
 
         result = comp.exact('given_name', 'given_name', name="given_name_comp")
         self.assertIsInstance(result, pandas.Series)
