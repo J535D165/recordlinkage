@@ -74,7 +74,7 @@ class CompareCore(object):
 
         # The dataframes
         self.df_a = df_a
-        self.df_b = df_b
+        self.df_b = df_b if df_b is not None else df_a
 
         # The candidate record pairs
         self.pairs = pairs
