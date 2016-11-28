@@ -26,34 +26,27 @@ class TestCompare(unittest.TestCase):
     @classmethod
     def setUpClass(self):
 
-        self.A = pandas.DataFrame([
-            [u'Donell', u'Gerlach', 20, u'New York'],
-            [nan, u'Smit', 17, u'Boston'],
-            [u'Kalie', u'Flatley', 33, u'Boston'],
-            [u'Kittie', u'Schuster', 27, nan],
-            [nan, nan, nan, u'South Devyn']
-        ],
-            columns=['given_name', 'lastname', 'age', 'place'])
+        self.A = pandas.DataFrame({
+            'age': [20.0, 17.0, 33.0, 27.0, nan],
+            'given_name': [u'Donell', nan, u'Kalie', u'Kittie', nan],
+            'lastname': [u'Gerlach', u'Smit', u'Flatley', u'Schuster', nan],
+            'place': [u'New York', u'Boston', u'Boston', nan, u'South Devyn']
+        })
 
         self.A.index.name = 'index_df1'
 
-        self.B = pandas.DataFrame([
-            [u'Donel', u'Gerleach', 20, u'New York'],
-            [nan, u'Smith', 17, u'Boston'],
-            [u'Kaly', u'Flatley', 33, u'Boston'],
-            [u'Kittie', nan, 20, nan],
-            [u'Bob', u'Armstrong', 70, u'Lake Gavinmouth']
-        ],
-            columns=['given_name', 'lastname', 'age', 'place'])
+        self.B = pandas.DataFrame({
+            'age': [20, 17, 33, 20, 70],
+            'given_name': [u'Donel', nan, u'Kaly', u'Kittie', u'Bob'],
+            'lastname': [u'Gerleach', u'Smith', u'Flatley', nan, u'Armstrong'],
+            'place': [u'New York', u'Boston', u'Boston', nan, u'Lake Gavinmouth']
+        })
 
         self.B.index.name = 'index_df2'
 
         self.index_AB = pandas.MultiIndex.from_arrays(
             [arange(len(self.A)), arange(len(self.B))],
             names=[self.A.index.name, self.B.index.name])
-
-# nosetests tests/test_compare.py:TestCompareAPI
-class TestCompareAPI(TestCompare):
 
     def test_instance_linking(self):
 
@@ -157,6 +150,6 @@ class TestCompareAPI(TestCompare):
     def test_batch_compare_error(self):
 
         comp = recordlinkage.Compare(self.index_AB, self.A, self.B, batch=True)
-        
+
         self.assertRaises(Exception, comp.run)
 
