@@ -1,10 +1,14 @@
 from __future__ import absolute_import, division, print_function
 
+import numpy as np
+
 import recordlinkage as rl
 from recordlinkage.datasets import load_febrl1, load_febrl4
 
 
 class CompareRecordLinkage(object):
+
+    timeout = 30*60
 
     def setup(self):
 
@@ -64,6 +68,8 @@ class CompareRecordLinkage(object):
 
 class CompareDeduplication(object):
 
+    timeout = 30*60
+
     def setup(self):
 
         # download data
@@ -122,14 +128,22 @@ class CompareDeduplication(object):
 
 class CompareAlgorithms(object):
 
+    timeout = 30*60
+
     def setup(self):
 
         # download data
         self.A, self.B = load_febrl4()
 
+        # Add numbers (age)
+        self.A['postcode'] = self.A['postcode'].astype(float)
+        self.B['postcode'] = self.B['postcode'].astype(float)
+
         # make pairs
         c_pairs = rl.Pairs(self.A, self.B)
         self.pairs = c_pairs.full()[0:5e4]
+
+# ************* STRING *************
 
     def time_string_jaro(self):
 
@@ -141,12 +155,32 @@ class CompareAlgorithms(object):
         c_compare = rl.Compare(self.pairs, self.A, self.B)
         c_compare.string('given_name', 'given_name', method='jarowinkler')
 
+    def time_string_qgram(self):
+
+        c_compare = rl.Compare(self.pairs, self.A, self.B)
+        c_compare.string('given_name', 'given_name', method='qgram')
+
+    def time_string_cosine(self):
+
+        c_compare = rl.Compare(self.pairs, self.A, self.B)
+        c_compare.string('given_name', 'given_name', method='cosine')
+
     def time_string_levenshtein(self):
 
         c_compare = rl.Compare(self.pairs, self.A, self.B)
         c_compare.string('given_name', 'given_name', method='levenshtein')
 
+# ************* Exact *************
+
     def time_exact(self):
 
         c_compare = rl.Compare(self.pairs, self.A, self.B)
         c_compare.exact('state', 'state')
+
+# ************* NUMERIC *************
+
+    def time_numeric_gauss(self):
+
+        c_compare = rl.Compare(self.pairs, self.A, self.B)
+        c_compare.numeric('age', 'age', method='gauss', scale=2)
+

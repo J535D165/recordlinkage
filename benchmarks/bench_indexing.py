@@ -6,6 +6,8 @@ from recordlinkage.datasets import load_febrl1, load_febrl4
 
 class PairsRecordLinkage(object):
 
+    timeout = 30*60
+
     def setup(self):
 
         # download data
@@ -45,6 +47,8 @@ class PairsRecordLinkage(object):
 
 
 class PairsDeduplication(object):
+
+    timeout = 30*60
 
     def setup(self):
 
