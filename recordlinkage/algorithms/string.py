@@ -1,5 +1,7 @@
 from __future__ import division
 
+import warnings
+
 import pandas
 import numpy as np
 
@@ -11,6 +13,9 @@ try:
     import jellyfish
 except ImportError:
     pass
+
+# Ingore zero devision errors in cosine and qgram algorithms
+warnings.filterwarnings("ignore")
 
 ################################
 #      STRING SIMILARITY       #
