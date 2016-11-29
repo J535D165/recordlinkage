@@ -139,14 +139,36 @@ class TestCompare(unittest.TestCase):
 
         self.assertEqual(result.name, "given_name_comp")
 
+    @parameterized.expand(COMPARE_ALGORITHMS)
+    def test_incorrect_labels_linking(self, method_to_call, s1, s2, *args, **kwargs):
+
+        kwargs["name"] = "given_name_comp"
+        s2 = "not_existing_label"
+
+        comp = recordlinkage.Compare(self.index_AB, self.A, self.B)
+
+        with self.assertRaises(KeyError):
+            getattr(comp, method_to_call)(s1, s2, *args, **kwargs)
+
+    @parameterized.expand(COMPARE_ALGORITHMS)
+    def test_incorrect_labels_dedup(self, method_to_call, s1, s2, *args, **kwargs):
+
+        kwargs["name"] = "given_name_comp"
+        s2 = "not_existing_label"
+
+        comp = recordlinkage.Compare(self.index_AB, self.A)
+
+        with self.assertRaises(KeyError):
+            getattr(comp, method_to_call)(s1, s2, *args, **kwargs)
+
     def test_deprecated_run(self):
 
-        comp = recordlinkage.Compare(self.index_AB, self.A, self.B, batch_compare=True)
+        comp = recordlinkage.Compare(
+            self.index_AB, self.A, self.B, batch_compare=True
+        )
 
         with self.assertRaises(AttributeError):
             comp.run()
-
-
 
 
 def ones_compare(s1, s2):
