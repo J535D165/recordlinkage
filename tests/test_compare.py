@@ -1,4 +1,5 @@
 import unittest
+from nose_parameterized import parameterized, param
 
 import pandas.util.testing as pdt
 import numpy.testing as npt
@@ -17,10 +18,32 @@ NUMERIC_SIM_ALGORITHMS = [
     'step', 'linear', 'squared', 'exp', 'gauss'
 ]
 
+COMPARE_ALGORITHMS = [
+    # string
+    param('string', 'given_name', 'given_name', method='jaro'),
+    param('string', 'given_name', 'given_name', method='jarowinkler'),
+    param('string', 'given_name', 'given_name', method='levenshtein'),
+    param('string', 'given_name', 'given_name', method='damerau_levenshtein'),
+    param('string', 'given_name', 'given_name', method='qgram'),
+    param('string', 'given_name', 'given_name', method='cosine'),
+
+    # numeric
+    param('numeric', 'age', 'age', method='step', offset=3, origin=2),
+    param('numeric', 'age', 'age', method='linear', offset=3, scale=3, origin=2),
+    param('numeric', 'age', 'age', method='exp', offset=3, scale=3, origin=2),
+    param('numeric', 'age', 'age', method='gauss', offset=3, scale=3, origin=2),
+    param('numeric', 'age', 'age', method='squared', offset=3, scale=3, origin=2),
+
+    # exact
+    param('exact', 'given_name', 'given_name')
+
+]
+
+
 # Run all tests in this file with:
 # nosetests tests/test_compare.py
 
-# nosetests tests/test_compare.py:TestCompare
+# nosetests -v tests/test_compare.py:TestCompare
 class TestCompare(unittest.TestCase):
 
     @classmethod
@@ -48,108 +71,70 @@ class TestCompare(unittest.TestCase):
             [arange(len(self.A)), arange(len(self.B))],
             names=[self.A.index.name, self.B.index.name])
 
-    def test_instance_linking(self):
+    @parameterized.expand(COMPARE_ALGORITHMS)
+    def test_instance_linking(self, method_to_call, *args, **kwargs):
 
         comp = recordlinkage.Compare(self.index_AB, self.A, self.B)
+        result = getattr(comp, method_to_call)(*args, **kwargs)
 
-        result = comp.exact('given_name', 'given_name')
         self.assertIsInstance(result, pandas.Series)
-        self.assertEqual(result.name, None)
 
-        result = comp.numeric('age', 'age', offset=2, scale=2)
-        self.assertIsInstance(result, pandas.Series)
-        self.assertEqual(result.name, None)
-
-        for alg in STRING_SIM_ALGORITHMS:
-
-            # Missing values
-            result = comp.string('given_name', 'given_name', method=alg)
-
-            self.assertIsInstance(result, pandas.Series)
-            self.assertEqual(result.name, None)
-
-    def test_instance_dedup(self):
+    @parameterized.expand(COMPARE_ALGORITHMS)
+    def test_instance_dedup(self, method_to_call, *args, **kwargs):
 
         comp = recordlinkage.Compare(self.index_AB, self.A)
+        result = getattr(comp, method_to_call)(*args, **kwargs)
 
-        result = comp.exact('given_name', 'given_name')
         self.assertIsInstance(result, pandas.Series)
-        self.assertEqual(result.name, None)
 
-        result = comp.numeric('age', 'age', offset=2, scale=2)
-        self.assertIsInstance(result, pandas.Series)
-        self.assertEqual(result.name, None)
-
-        for alg in STRING_SIM_ALGORITHMS:
-
-            # Missing values
-            result = comp.string('given_name', 'given_name', method=alg)
-
-            self.assertIsInstance(result, pandas.Series)
-            self.assertEqual(result.name, None)
-
-    def test_name_series_linking(self):
+    @parameterized.expand(COMPARE_ALGORITHMS)
+    def test_len_result_linking(self, method_to_call, *args, **kwargs):
 
         comp = recordlinkage.Compare(self.index_AB, self.A, self.B)
+        result = getattr(comp, method_to_call)(*args, **kwargs)
 
-        result = comp.exact('given_name', 'given_name', name="given_name_comp")
-        self.assertIsInstance(result, pandas.Series)
-        self.assertEqual(result.name, "given_name_comp")
+        self.assertEqual(len(result), len(self.index_AB))
 
-        result = comp.numeric('age', 'age', offset=2, scale=2, name="given_name_comp")
-        self.assertIsInstance(result, pandas.Series)
-        self.assertEqual(result.name, "given_name_comp")
-
-        for alg in STRING_SIM_ALGORITHMS:
-
-            # Missing values
-            result = comp.string('given_name', 'given_name',
-                                 method=alg, name="given_name_comp")
-
-            self.assertIsInstance(result, pandas.Series)
-            self.assertEqual(result.name, "given_name_comp")
-
-    def test_name_series_dedup(self):
+    @parameterized.expand(COMPARE_ALGORITHMS)
+    def test_len_result_dedup(self, method_to_call, *args, **kwargs):
 
         comp = recordlinkage.Compare(self.index_AB, self.A)
+        result = getattr(comp, method_to_call)(*args, **kwargs)
 
-        result = comp.exact('given_name', 'given_name', name="given_name_comp")
-        self.assertIsInstance(result, pandas.Series)
+        self.assertEqual(len(result), len(self.index_AB))
+
+    @parameterized.expand(COMPARE_ALGORITHMS)
+    def test_name_default_linking(self, method_to_call, *args, **kwargs):
+
+        comp = recordlinkage.Compare(self.index_AB, self.A, self.B)
+        result = getattr(comp, method_to_call)(*args, **kwargs)
+
+        self.assertEqual(result.name, None)
+
+    @parameterized.expand(COMPARE_ALGORITHMS)
+    def test_name_default_dedup(self, method_to_call, *args, **kwargs):
+
+        comp = recordlinkage.Compare(self.index_AB, self.A)
+        result = getattr(comp, method_to_call)(*args, **kwargs)
+
+        self.assertEqual(result.name, None)
+
+    @parameterized.expand(COMPARE_ALGORITHMS)
+    def test_name_custom_linking(self, method_to_call, *args, **kwargs):
+
+        kwargs["name"] = "given_name_comp"
+
+        comp = recordlinkage.Compare(self.index_AB, self.A, self.B)
+        result = getattr(comp, method_to_call)(*args, **kwargs)
+
         self.assertEqual(result.name, "given_name_comp")
 
-        result = comp.numeric('age', 'age', offset=2, scale=2, name="given_name_comp")
-        self.assertIsInstance(result, pandas.Series)
+    @parameterized.expand(COMPARE_ALGORITHMS)
+    def test_name_custom_dedup(self, method_to_call, *args, **kwargs):
+
+        kwargs["name"] = "given_name_comp"
+
+        comp = recordlinkage.Compare(self.index_AB, self.A)
+        result = getattr(comp, method_to_call)(*args, **kwargs)
+
         self.assertEqual(result.name, "given_name_comp")
-
-        for alg in STRING_SIM_ALGORITHMS:
-
-            # Missing values
-            result = comp.string('given_name', 'given_name',
-                                 method=alg, name="given_name_comp")
-
-            self.assertIsInstance(result, pandas.Series)
-            self.assertEqual(result.name, "given_name_comp")
-
-    def test_batch_compare(self):
-
-        comp = recordlinkage.Compare(self.index_AB, self.A, self.B, batch=True)
-
-        comp.exact('given_name', 'given_name', name="given_name_comp")
-        comp.exact('lastname', 'lastname', name="lastname_comp")
-        comp.numeric('age', 'age', offset=2, scale=2, name="age_comp")
-        comp.run()
-
-        self.assertIsInstance(comp.vectors, pandas.DataFrame)
-        self.assertEqual(
-            comp.vectors.columns.tolist(),
-            ["given_name_comp", "lastname_comp", "age_comp"])
-
-        for v in comp.vectors.columns:
-            self.assertTrue(comp.vectors[v].notnull().any())
-
-    def test_batch_compare_error(self):
-
-        comp = recordlinkage.Compare(self.index_AB, self.A, self.B, batch=True)
-
-        self.assertRaises(Exception, comp.run)
-
