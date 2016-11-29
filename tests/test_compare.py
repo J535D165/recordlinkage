@@ -189,6 +189,7 @@ class TestCompareLarge(unittest.TestCase):
 
         self.assertIsInstance(result, pandas.Series)
         self.assertEqual(len(result), self.n_records**2)
+        self.assertTrue(result.index.is_unique)
 
     def test_instance_dedup(self):
 
@@ -197,3 +198,5 @@ class TestCompareLarge(unittest.TestCase):
 
         self.assertIsInstance(result, pandas.Series)
         self.assertEqual(len(result), self.n_records**2)
+        self.assertTrue(result.index.is_unique)
+
