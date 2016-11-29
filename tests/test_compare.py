@@ -139,6 +139,15 @@ class TestCompare(unittest.TestCase):
 
         self.assertEqual(result.name, "given_name_comp")
 
+    def test_deprecated_run(self):
+
+        comp = recordlinkage.Compare(self.index_AB, self.A, self.B, batch_compare=True)
+
+        with self.assertRaises(AttributeError):
+            comp.run()
+
+
+
 
 def ones_compare(s1, s2):
 
@@ -151,19 +160,21 @@ class TestCompareLarge(unittest.TestCase):
     @classmethod
     def setUpClass(self):
 
+        self.n_records = 2131
+
         self.A = pandas.DataFrame({
-            'var1': np.arange(2131),
-            'var2': np.arange(2131),
-            'var3': np.arange(2131),
-            'var4': np.arange(2131)
+            'var1': np.arange(self.n_records),
+            'var2': np.arange(self.n_records),
+            'var3': np.arange(self.n_records),
+            'var4': np.arange(self.n_records)
         })
         self.A.index.name = 'index_df1'
 
         self.B = pandas.DataFrame({
-            'var1': np.arange(2131),
-            'var2': np.arange(2131),
-            'var3': np.arange(2131),
-            'var4': np.arange(2131)
+            'var1': np.arange(self.n_records),
+            'var2': np.arange(self.n_records),
+            'var3': np.arange(self.n_records),
+            'var4': np.arange(self.n_records)
         })
         self.B.index.name = 'index_df2'
 
@@ -177,6 +188,7 @@ class TestCompareLarge(unittest.TestCase):
         result = comp.compare(ones_compare, 'var1', 'var1')
 
         self.assertIsInstance(result, pandas.Series)
+        self.assertEqual(len(result), self.n_records**2)
 
     def test_instance_dedup(self):
 
@@ -184,3 +196,4 @@ class TestCompareLarge(unittest.TestCase):
         result = comp.compare(ones_compare, 'var1', 'var1')
 
         self.assertIsInstance(result, pandas.Series)
+        self.assertEqual(len(result), self.n_records**2)
