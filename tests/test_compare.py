@@ -138,3 +138,49 @@ class TestCompare(unittest.TestCase):
         result = getattr(comp, method_to_call)(*args, **kwargs)
 
         self.assertEqual(result.name, "given_name_comp")
+
+
+def ones_compare(s1, s2):
+
+    return np.ones(len(s1))
+
+
+# nosetests -v tests/test_compare.py:TestCompareLarge
+class TestCompareLarge(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(self):
+
+        self.A = pandas.DataFrame({
+            'var1': np.arange(2131),
+            'var2': np.arange(2131),
+            'var3': np.arange(2131),
+            'var4': np.arange(2131)
+        })
+        self.A.index.name = 'index_df1'
+
+        self.B = pandas.DataFrame({
+            'var1': np.arange(2131),
+            'var2': np.arange(2131),
+            'var3': np.arange(2131),
+            'var4': np.arange(2131)
+        })
+        self.B.index.name = 'index_df2'
+
+        self.index_AB = pandas.MultiIndex.from_product(
+            [arange(len(self.A)), arange(len(self.B))],
+            names=[self.A.index.name, self.B.index.name])
+
+    def test_instance_linking(self):
+
+        comp = recordlinkage.Compare(self.index_AB, self.A, self.B)
+        result = comp.compare(ones_compare, 'var1', 'var1')
+
+        self.assertIsInstance(result, pandas.Series)
+
+    def test_instance_dedup(self):
+
+        comp = recordlinkage.Compare(self.index_AB, self.A)
+        result = comp.compare(ones_compare, 'var1', 'var1')
+
+        self.assertIsInstance(result, pandas.Series)
