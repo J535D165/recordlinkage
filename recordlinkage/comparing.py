@@ -130,6 +130,20 @@ class CompareCore(object):
 
         return data
 
+    def _check_labels(self, labels, columns):
+
+        # Sample the data and add it to the arguments.
+        labels = [labels] if not is_list_like(labels) else labels
+
+        # Do some checks
+        for label in labels:
+            if label not in columns:
+                raise KeyError(
+                    'the label [%s] is not in the dataframe' % label
+                )
+
+        return labels
+
     def compare(self, comp_func, labels_a, labels_b, *args, **kwargs):
         """
 
@@ -173,24 +187,8 @@ class CompareCore(object):
         store = kwargs.pop('store', True)
 
         # Sample the data and add it to the arguments.
-        labels_a = [labels_a] if not is_list_like(labels_a) else labels_a
-        labels_b = [labels_b] if not is_list_like(labels_b) else labels_b
-
-        # Do some checks
-        cols_a = list(self.df_a)
-        for label_a in labels_a:
-            if label_a not in cols_a:
-                raise KeyError(
-                    'the label [%s] is not in the dataframe' % label_a
-                )
-
-        # Do some checks
-        cols_b = list(self.df_b)
-        for label_b in labels_b:
-            if label_b not in cols_b:
-                raise KeyError(
-                    'the label [%s] is not in the dataframe' % label_b
-                )
+        labels_a = self._check_labels(labels_a, list(self.df_a))
+        labels_b = self._check_labels(labels_b, list(self.df_b))
 
         if self.low_memory:  # index only columns needed
 
