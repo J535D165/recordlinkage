@@ -2,6 +2,7 @@ from __future__ import division
 from __future__ import unicode_literals
 
 import warnings
+import multiprocessing as mp
 
 import pandas
 from pandas.types.inference import is_list_like
@@ -70,7 +71,7 @@ class CompareCore(object):
 
     """
 
-    def __init__(self, pairs, df_a=None, df_b=None, batch=False):
+    def __init__(self, pairs, df_a=None, df_b=None, low_memory=False, block_size=1e6, njobs=1, **kwargs):
 
         # The dataframes
         self.df_a = df_a
@@ -79,13 +80,55 @@ class CompareCore(object):
         # The candidate record pairs
         self.pairs = pairs
 
-        self.batch = batch
-        self._batch_functions = []
+        self.low_memory = low_memory
+        self.block_size = block_size
+        self.njobs = njobs
+
+        self._df_a_indexed = None
+        self._df_b_indexed = None
 
         # The resulting data
         self.vectors = pandas.DataFrame(index=pairs)
 
-        # self.ndim = self._compute_dimension(pairs)
+        if 'batch_compare' in kwargs:
+            warnings.warn(
+                "Compare.run() is deprecated." +
+                "Use low_memory=True for fast comparisons.",
+                DeprecationWarning
+            )
+
+    def _pandas_indexing(self, frame, multi_index, level_i, chunk_size=1e6):
+        """
+        Indexing a pandas.Series or pandas.DataFrame with one level of a
+        MultiIndex.
+        """
+
+        # Number of chunks
+        chunks = int(np.ceil(len(multi_index) / chunk_size))
+
+        if chunks > 1:  # More than 1 chunk
+
+            # Collect parts to concat in the end.
+            parts = []
+
+            for i in range(0, chunks):
+
+                # Slice the MultiIndex
+                m_ind = multi_index[i * chunk_size:(i + 1) * chunk_size]
+                ind = m_ind.get_level_values(level_i)
+
+                # Append to list named parts
+                parts.append(frame.loc[ind])
+
+            data = pandas.concat(parts, axis=0, copy=False)
+
+        else:  # Only one chunk
+            data = frame.loc[multi_index.get_level_values(level_i)]
+
+        # Add MultiIndex (Is this step important?)
+        data.index = multi_index
+
+        return data
 
     def compare(self, comp_func, labels_a, labels_b, *args, **kwargs):
         """
@@ -121,107 +164,106 @@ class CompareCore(object):
         :rtype: standardise.DataFrame
         """
 
-        # Add to batch compare functions
-        self._batch_functions.append(
-            (comp_func, labels_a, labels_b, args, kwargs)
-        )
+        if len(self.pairs) == 0:
+            raise ValueError(
+                "The method compare() needs at least one record pair"
+            )
 
-        # Run directly if not batch
-        if not self.batch:
-            return self.run()
+        name = kwargs.pop('name', None)
+        store = kwargs.pop('store', True)
 
-    def run(self):
-        """
+        # Sample the data and add it to the arguments.
+        labels_a = [labels_a] if not is_list_like(labels_a) else labels_a
+        labels_b = [labels_b] if not is_list_like(labels_b) else labels_b
 
-        Batch method for comparing records. This method excecutes the methods
-        called before in one time. This method may decrease the computation
-        time. This function works ONLY when ``batch=True`` is set in the class
-        ``Compare`` and ``run`` is called in the end.
+        # Do some checks
+        cols_a = list(self.df_a)
+        for label_a in labels_a:
+            if label_a not in cols_a:
+                raise KeyError(
+                    'the label [%s] is not in the dataframe' % label_a
+                )
 
-        Example:
+        # Do some checks
+        cols_b = list(self.df_b)
+        for label_b in labels_b:
+            if label_b not in cols_b:
+                raise KeyError(
+                    'the label [%s] is not in the dataframe' % label_b
+                )
 
-        .. code-block:: python
+        if self.low_memory:  # index only columns needed
 
-            >>> # This example is almost 3 times faster than the traditional one.
-            >>> comp = recordlinkage.Compare(..., batch=True)
-            >>> comp.exact('first_name', 'name')
-            >>> comp.exact('surname', 'surname')
-            >>> comp.exact('date_of_birth', 'dob')
-            >>> comp.run()
+            data_a = self.df_a[labels_a]
+            data_b = self.df_b[labels_b]
 
-        :return: The comparison vectors (Compare.vectors)
-        :rtype: standardise.DataFrame
-        """
+        else:  # Index all columns
 
-        if not self._batch_functions:
-            raise Exception("No batch functions found. \
-                Check if batch=True in recordlinkage.Compare")
+            data_a = self.df_a
+            data_b = self.df_b
 
-        # Collect the labels
-        labelsA = []
-        labelsB = []
+        if self._df_a_indexed is None or self._df_b_indexed is None:
 
-        for comp_func, lbls_a, lbls_b, args, kwargs in self._batch_functions:
+            # Make selections of columns
+            self._df_a_indexed = self._pandas_indexing(data_a, self.pairs, 0, self.block_size)
+            self._df_b_indexed = self._pandas_indexing(data_b, self.pairs, 1, self.block_size)
 
-            if isinstance(lbls_a, (tuple, list)):
-                labelsA.extend(lbls_a)
-            else:
-                labelsA.append(lbls_a)
+        if self.njobs > 1:
 
-        for comp_func, lbls_a, lbls_b, args, kwargs in self._batch_functions:
+            jobs = []
 
-            if isinstance(lbls_b, (tuple, list)):
-                labelsB.extend(lbls_b)
-            else:
-                labelsB.append(lbls_b)
+            chunk_size = np.ceil(self.njobs / len(self.pairs))
 
-        labelsA = list(set(labelsA))
-        labelsB = list(set(labelsB))
+            # each job
+            for i in range(0, self.njobs):
 
-        # Make selections of columns
-        dataA = _resample(self.df_a[labelsA], self.pairs, 0)
-        dataB = _resample(self.df_b[labelsB], self.pairs, 1)
+                # The data arguments
+                args_a = tuple(self._df_a_indexed.loc[i*chunk_size:(i+1)*chunk_size, da] for da in labels_a)
+                args_b = tuple(self._df_b_indexed.loc[i*chunk_size:(i+1)*chunk_size, db] for db in labels_b)
 
-        for comp_func, lbls_a, lbls_b, args, kwargs in self._batch_functions:
+                p = mp.Process(target=comp_func, args=args_a + args_b + args, kwargs=kwargs)
+                jobs.append(p)
 
-            # The name of the comparison
-            name = kwargs.pop('name', None)
+            for proc in jobs:
 
-            # # always true, but if passed then ignored
-            # store = kwargs.pop('store', True)
-            if 'store' in kwargs.keys():
-                warnings.warn("The argument store might be removed \
-                    in the next version.", DeprecationWarning)
+                # Start the process
+                p.start()
+                proc.join()
 
-            # Sample the data and add it to the arguments.
-            lbls_b = [lbls_b] if not is_list_like(lbls_b) else lbls_b
-            lbls_a = [lbls_a] if not is_list_like(lbls_a) else lbls_a
+            # merge parts
+            c = pandas.concat(jobs, axis=0, copy=False)
 
-            args = tuple(dataA.loc[:, da] for da in reversed(lbls_a)) + \
-                tuple(dataB.loc[:, db] for db in reversed(lbls_b)) + args
+        else:
+
+            # The data arguments
+            args_a = tuple(self._df_a_indexed.loc[:, da] for da in labels_a)
+            args_b = tuple(self._df_b_indexed.loc[:, db] for db in labels_b)
 
             # Compute the comparison
-            c = comp_func(*tuple(args), **kwargs)
+            c = comp_func(*tuple(args_a + args_b + args), **kwargs)
 
-            # if a pandas series is returned, overwrite the index. The
-            # returned index can be different than the MultiIndex passed to
-            # the compare function.
-            if isinstance(c, pandas.Series):
-                c.index = self.vectors.index
+        # if a pandas series is returned, overwrite the index. The
+        # returned index can be different than the MultiIndex passed to
+        # the compare function.
+        if isinstance(c, pandas.Series):
+            c.index = self.vectors.index
 
+        if store:
             # append column to Compare.vectors
             name_or_id = name if name else len(self.vectors.columns)
             self.vectors[name_or_id] = c
 
-        # Reset the batch functions
-        self._batch_functions = []
+        return self.vectors[name_or_id].rename(name)
 
-        # Return the Series
-        if not self.batch:
-            return self.vectors[name_or_id].rename(name)
-        # Return the DataFrame
-        else:
-            return self.vectors
+    def run(self):
+        """
+
+        This method is decrecated. Use the comparing.Compare(...,
+        low_memory=False) for better performance.
+
+        """
+
+        raise AttributeError("method run() is deprecated")
 
 
 class Compare(CompareCore):
