@@ -125,15 +125,16 @@ Dependencies, installation and license
 
 The following packages are required. You probably have it already ;)
 
--  `numpy <http://www.numpy.org>`__: 1.7.0 or higher
--  `pandas <https://github.com/pydata/pandas>`__: 0.17.0 or higher
+-  `numpy <http://www.numpy.org>`__
+-  `pandas <https://github.com/pydata/pandas>`__
 -  `scipy <https://www.scipy.org/>`__
 -  `sklearn <http://scikit-learn.org/>`__
+-  `jellyfish <https://github.com/jamesturk/jellyfish>`__: Needed for
+   approximate string comparison and string encoding. 
 
 The following packages are recommanded
 
--  `jellyfish <https://github.com/jamesturk/jellyfish>`__: Needed for
-   approximate string comparison. Version 0.5.0 or higher.
+- numexpr: Used to speed up numeric comparisons. 
 
 Install the package with pip
 

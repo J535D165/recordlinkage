@@ -399,13 +399,6 @@ class Compare(CompareCore):
                 and 1.
         :rtype: pandas.Series
 
-        .. note::
-
-            The 'jarowinkler', 'jaro', 'levenshtein' and 'damerau_levenshtein'
-            algorithms use the package 'jellyfish' for string similarity
-            measures. It can be installed with pip (``pip install
-            jellyfish``).
-
         """
 
         @fillna_decorator(0)
