@@ -116,8 +116,8 @@ def _blockindex(df_a, df_b, on=None, left_on=None, right_on=None):
         left_on, right_on = on, on
 
     # Rows with missing values on the on attributes are dropped.
-    data_left = df_a[left_on].dropna(axis=0)
-    data_right = df_b[right_on].dropna(axis=0)
+    data_left = df_a.dropna(axis=0, how='any', subset=numpy.unique(left_on))
+    data_right = df_b.dropna(axis=0, how='any', subset=numpy.unique(right_on))
 
     # Join
     pairs = data_left.reset_index().merge(
