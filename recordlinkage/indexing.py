@@ -539,7 +539,7 @@ class Pairs(object):
         # """
 
         if self.deduplication:
-            max_pairs = (len(self.df_a) * (len(self.df_b) - 1)) / 2
+            max_pairs = (len(self.df_a) * (len(self.df_a) - 1)) / 2
         else:
             max_pairs = len(self.df_a) * len(self.df_b)
 
