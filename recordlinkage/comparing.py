@@ -5,7 +5,7 @@ import warnings
 import multiprocessing as mp
 
 import pandas
-from pandas.types.inference import is_list_like
+from recordlinkage.types import is_list_like
 import numpy as np
 
 from recordlinkage.utils import _resample

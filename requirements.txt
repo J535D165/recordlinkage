@@ -1,3 +1,4 @@
+six>=1.10.0
 jellyfish>=0.5.4
 numpy>=1.9.0
 pandas>=0.16.0
