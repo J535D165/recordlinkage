@@ -12,7 +12,7 @@ import numpy as np
 from numbers import Number
 from six import string_types, binary_type, text_type
 
-string_and_binary_types = tuple(string_types) + tuple(binary_type)
+string_and_binary_types = (string_types,) + (binary_type,)
 
 
 def is_number(obj):
