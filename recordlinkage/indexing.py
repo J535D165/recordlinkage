@@ -5,7 +5,7 @@ from functools import wraps
 import pandas
 import numpy
 
-from recordlinkage.utils import IndexError, merge_dicts, split_or_pass
+from recordlinkage.utils import IndexError, merge_dicts, max_number_of_pairs
 from recordlinkage.algorithms.string import qgram_similarity
 
 
@@ -25,20 +25,17 @@ def check_index_names(func):
             df_a_index_name = df_a.index.name
             df_b_index_name = df_b.index.name
 
-            rightname = 'index_y'
-            while rightname in df_b.columns.tolist():
-                rightname = rightname + '_'
-
-            leftname = 'index_x'
-            while leftname in df_a.columns.tolist():
-                leftname = leftname + '_'
-
-            df_a.index.name = leftname
-            df_b.index.name = rightname
+            # temp update of the index name in each datatframe
+            df_a.index.name = _save_label(list(df_a), s='index_x')
+            df_b.index.name = _save_label(list(df_b), s='index_y')
 
             pairs = func(df_a, df_b, *args, **kwargs)
 
+            # update the name of the index
             pairs.names = [df_a_index_name, df_b_index_name]
+
+            df_a.index.name = df_a_index_name
+            df_b.index.name = df_b_index_name
 
             return pairs
 
@@ -48,62 +45,111 @@ def check_index_names(func):
 
     return index_name_checker
 
+
+def _save_label(labels, s='label'):
+
+    i = 0
+
+    while s in list(labels):
+
+        i = i + 1
+        s = s + '_' + str(i)
+
+    return s
+
 ###########################
 #       Algorithms        #
 ###########################
 
 
-def _randomindex(df_a, df_b, n_pairs):
+def _random_large_dedup(df_a, n, random_state=None):
 
-    if type(n_pairs) is not int or n_pairs <= 0:
-        raise ValueError("n_pairs must be an positive integer")
+    numpy.random.seed(random_state)
 
-    if n_pairs < 0.25 * len(df_a) * len(df_b):
+    n_max = max_number_of_pairs(df_a)
 
-        n_count = 0
+    if not isinstance(n, int) or n <= 0 or n > n_max:
+        raise ValueError("n must be a integer satisfying 0<n<=%s" % n_max)
 
-        while n_count < n_pairs:
+    full_index = _fullindex_dedup(df_a)
+    sample = numpy.random.choice(
+        numpy.arange(len(full_index)), n, replace=False
+    )
 
-            random_index_a = numpy.random.choice(
-                df_a.index.values, n_pairs - n_count)
-            random_index_b = numpy.random.choice(
-                df_b.index.values, n_pairs - n_count)
+    return full_index[sample]
 
-            sub_ind = pandas.MultiIndex.from_arrays(
-                [random_index_a, random_index_b],
-                names=[df_a.index.name, df_b.index.name]
-            )
 
-            ind = sub_ind if n_count == 0 else ind.append(sub_ind)
-            ind = ind.drop_duplicates()
+def _random_large_link(df_a, df_b, n):
 
-            n_count = len(ind)
+    n_max = max_number_of_pairs(df_a, df_b)
 
-        return ind
+    if not isinstance(n, int) or n <= 0 or n > n_max:
+        raise ValueError("n must be a integer satisfying 0<n<=%s" % n_max)
 
-    else:
+    full_index = _fullindex_link(df_a, df_b)
+    sample = numpy.random.choice(
+        numpy.arange(len(full_index)), n, replace=False
+    )
 
-        full_index = _fullindex(df_a, df_b)
+    return full_index[sample]
 
-        return full_index[
-            numpy.random.choice(
-                numpy.arange(len(full_index)), n_pairs, replace=False)
-        ]
+
+def _random_small_link(df_a, df_b, n):
+
+    n_max = max_number_of_pairs(df_a, df_b)
+
+    if not isinstance(n, int) or n <= 0 or n > n_max:
+        raise ValueError("n must be a integer satisfying 0<n<=%s" % n_max)
+
+    levels = [df_a.index.values, df_b.index.values]
+    names = [df_a.index.name, df_b.index.name]
+
+    # Initialize pandas MultiIndex
+    pairs = pandas.MultiIndex(levels=levels, labels=[[], []], names=names)
+
+    # Run as long as the number of pairs is less than the requested number
+    # of pairs n.
+    while len(pairs) < n:
+
+        # The number of pairs to sample (sample twice as much record pairs
+        # because the duplicates are dropped).
+        n_sample = (n - len(pairs)) * 2
+        sample_a = numpy.random.randint(len(df_a), size=n_sample)
+        sample_b = numpy.random.randint(len(df_b), size=n_sample)
+
+        # Make a pandas MultiIndex of the sample above
+        pairs_sample = pandas.MultiIndex(
+            levels=levels, labels=[sample_a, sample_b], names=names
+        )
+
+        pairs = pairs.append(pairs_sample).drop_duplicates()
+
+    return pairs[0:n]
 
 
 def _eye(df_a, df_b):
 
     return pandas.MultiIndex.from_arrays(
+        [df_a.index.values, df_b[0:len(df_a)].index.values],
+        names=[df_a.index.name, df_b.index.name]
+    )
+
+
+def _fullindex_link(df_a, df_b):
+
+    return pandas.MultiIndex.from_product(
         [df_a.index.values, df_b.index.values],
         names=[df_a.index.name, df_b.index.name]
     )
 
 
-def _fullindex(df_a, df_b):
+def _fullindex_dedup(df_a):
 
-    return pandas.MultiIndex.from_product(
-        [df_a.index.values, df_b.index.values],
-        names=[df_a.index.name, df_b.index.name]
+    return pandas.MultiIndex(
+        levels=[df_a.index.values, df_a.index.values],
+        labels=numpy.triu_indices(len(df_a.index), k=1),
+        names=[df_a.index.name, df_a.index.name],
+        verify_integrity=False
     )
 
 
@@ -221,15 +267,110 @@ def _qgram(df_a, df_b, on=None, left_on=None, right_on=None, threshold=0.8):
         names=[df_a.index.name, df_b.index.name]
     )
 
-    bool_index = (qgram_similarity(df_a.loc[fi.get_level_values(
-        0), left_on], df_b.loc[fi.get_level_values(1), right_on]) >= threshold)
+    if len(fi) > 0:
+        bool_index = qgram_similarity(
+            df_a.loc[fi.get_level_values(0), left_on],
+            df_b.loc[fi.get_level_values(1), right_on]
+        ) >= threshold
 
-    return fi[bool_index]
+        return fi[bool_index]
+
+    else:
+        return fi
 
 
-class Pairs(object):
+class PairsCore(object):
     """
 
+    Core class for making record pairs.
+
+    """
+
+    def __init__(self, df_a, df_b=None, chunks=None, verify_integrity=True):
+
+        self.df_a = df_a
+        self.df_b = df_b
+        self.chunks = chunks
+
+        self.deduplication = True if df_b is None else False
+
+        if verify_integrity:
+
+            if not self.df_a.index.is_unique:
+                raise IndexError('index of DataFrame df_a is not unique.')
+
+            if not self.deduplication and not self.df_b.index.is_unique:
+                raise IndexError('index of DataFrame df_b is not unique.')
+
+        self.n_pairs = 0
+
+    @property
+    def maximum_number_of_pairs(self):
+        """ the maximum number of record pairs """
+
+        if self.deduplication:
+            return max_number_of_pairs(self.df_a)
+        else:
+            return max_number_of_pairs(self.df_a, self.df_b)
+
+    # -- Index methods ------------------------------------------------------
+
+    def index(self, index_func, *args, **kwargs):
+        """
+
+        Use a custom function to make record pairs of one or two dataframes.
+        Each function should return a pandas.MultiIndex with record pairs.
+
+        :param index_func: An indexing function
+        :type index_func: function
+
+        :return: MultiIndex
+        :rtype: pandas.MultiIndex
+        """
+
+        # linking
+        if not self.deduplication:
+
+            pairs = index_func(self.df_a, self.df_b, *args, **kwargs)
+
+        # deduplication
+        else:
+
+            if index_func.__name__.endswith('_dedup'):
+
+                pairs = index_func(self.df_a, *args, **kwargs)
+
+            else:
+
+                pairs = index_func(self.df_a, self.df_a.copy(),
+                                   *args, **kwargs)
+                # Remove all double pairs!
+                pairs = pairs[
+                    pairs.get_level_values(0) < pairs.get_level_values(1)
+                ]
+
+        # If there are no chunks, then use the first item of the generator
+        if self.chunks is None:
+            return pairs
+
+        # Use the chunks
+        else:
+            return self._iter_pairs(pairs)
+
+    def _iter_pairs(self, pairs):
+
+        if not isinstance(self.chunks, int):
+            raise ValueError('argument chunks needs to be integer type')
+
+        bins = numpy.arange(0, len(pairs), step=self.chunks)
+
+        for b in bins:
+
+            yield pairs[b:b + self.chunks]
+
+
+class Pairs(PairsCore):
+    """
     This class can be used to make record pairs. Multiple indexation methods
     can be used to make a smart selection of record pairs. Indexation methods
     included:
@@ -245,9 +386,14 @@ class Pairs(object):
 
     :param df_a: The first dataframe.
     :param df_b: The second dataframe.
+    :param chunks: The chunks to divide the result in.
+    :param verify_integrity: Verify the integrity of the dataframes
+            (default True).
 
     :type df_a: pandas.DataFrame
     :type df_b: pandas.DataFrame
+    :type chunks: int
+    :type verify_integrity: bool
 
     :returns: Candidate links
     :rtype: pandas.MultiIndex
@@ -281,64 +427,8 @@ class Pairs(object):
 
     """
 
-    def __init__(self, df_a, df_b=None, chunks=None):
-
-        self.df_a = df_a
-        self.chunks = chunks
-
-        # Linking two datasets
-        if df_b is not None:
-
-            self.df_b = df_b
-            self.deduplication = False
-
-            if not self.df_a.index.is_unique or not self.df_b.index.is_unique:
-                raise IndexError('DataFrame index is not unique.')
-
-        # Deduplication of one dataset
-        else:
-            self.deduplication = True
-
-            # if self.df_a.index.name == None:
-            #   raise IndexError('DataFrame has no index name.')
-
-            if not self.df_a.index.is_unique:
-                raise IndexError('DataFrame index is not unique.')
-
-        self.n_pairs = 0
-
-        self._index_factors = None
-
-    # -- Index methods ------------------------------------------------------
-
-    def index(self, index_func, *args, **kwargs):
+    def full(self):
         """
-
-        Use a custom function to make record pairs of one or two dataframes.
-        Each function should return a pandas.MultiIndex with record pairs.
-
-        :param index_func: An indexing function
-        :type index_func: function
-
-        :return: MultiIndex
-        :rtype: pandas.MultiIndex
-        """
-
-        # If there are no chunks, then use the first item of the generator
-        if self.chunks is None or self.chunks == (None, None):
-
-            d = next(self._iterindex(index_func, *args, **kwargs))
-
-            return d
-
-        # Use the chunks
-        else:
-            return self._iterindex(index_func, *args, **kwargs)
-
-    def full(self, *args, **kwargs):
-        """
-        full()
-
         Make an index with all possible record pairs. In case of linking two
         dataframes (A and B), the number of pairs is len(A)*len(B). In case of
         deduplicating a dataframe A, the number of pairs is
@@ -347,12 +437,13 @@ class Pairs(object):
         :return: The index of the candidate record pairs
         :rtype: pandas.MultiIndex
         """
-        return self.index(_fullindex, *args, **kwargs)
+        if self.deduplication:
+            return self.index(_fullindex_dedup)
+        else:
+            return self.index(_fullindex_link)
 
-    def block(self, *args, **kwargs):
+    def block(self, on=None, left_on=None, right_on=None):
         """
-        block(on=None, left_on=None, right_on=None)
-
         Return all record pairs that agree on the passed attribute(s). This
         method is known as *blocking*
 
@@ -370,12 +461,16 @@ class Pairs(object):
         :return: The index of the candidate record pairs
         :rtype: pandas.MultiIndex
         """
-        return self.index(_blockindex, *args, **kwargs)
+        return self.index(
+            _blockindex,
+            on=on, left_on=left_on, right_on=right_on
+        )
 
-    def sortedneighbourhood(self, *args, **kwargs):
+    def sortedneighbourhood(
+        self, on, window=3, sorting_key_values=None, block_on=[],
+        block_left_on=[], block_right_on=[]
+    ):
         """
-        sortedneighbourhood(on, window=3, sorting_key_values=None, block_on=[], block_left_on=[], block_right_on=[])
-
         Create a Sorted Neighbourhood index.
 
         :param on: Specify the on to make a sorted index
@@ -397,22 +492,42 @@ class Pairs(object):
         :return: The index of the candidate record pairs
         :rtype: pandas.MultiIndex
         """
-        return self.index(_sortedneighbourhood, *args, **kwargs)
 
-    def random(self, *args, **kwargs):
+        # if self.batch and not sorting_key_values:
+
+        #     if self.deduplication:
+        #         sorting_key_values = numpy.sort(numpy.unique(self.df_a[on].values))
+        #     else:
+        #         sorting_key_values = numpy.sort(numpy.unique(
+        #             numpy.concatenate([self.df_a[on].values, self.df_b[on].values])
+        #         ))
+
+        return self.index(
+            _sortedneighbourhood,
+            on, window=window, sorting_key_values=sorting_key_values,
+            block_on=block_on, block_left_on=block_left_on,
+            block_right_on=block_right_on)
+
+    def random(self, n):
         """
-        random(n_pairs)
+        random(n)
 
         Make an index of randomly selected record pairs
 
-        :param n_pairs: The number of record pairs to return. The integer
-                        n_pairs should satisfy 0 < n_pairs <= len(A)*len(B).
-        :type n_pairs: int
+        :param n: The number of record pairs to return. The integer
+                n should satisfy 0 < n <= len(A)*len(B).
+        :type n: int
 
         :return: The index of the candidate record pairs
         :rtype: pandas.MultiIndex
         """
-        return self.index(_randomindex, *args, **kwargs)
+        if self.deduplication:
+            return self.index(_random_large_dedup, n)
+        else:
+            if n < 0.1 * self.maximum_number_of_pairs:
+                return self.index(_random_large_link, n)
+            else:
+                return self.index(_random_small_link, n)
 
     def qgram(self, *args, **kwargs):
         """
@@ -439,90 +554,10 @@ class Pairs(object):
         """
         return self.index(_qgram, *args, **kwargs)
 
-    def eye(self, *args, **kwargs):
+    def eye(self):
         # Only for internal use
 
-        return self.index(_eye, *args, **kwargs)
-
-    # -- Iterative index methods ----------------------------------------------
-
-    def _iterindex(self, index_func, *args, **kwargs):
-        """
-
-        Iterative function that returns records pairs based on a user-defined
-        indexing function. The number of iterations can be adjusted to prevent
-        memory problems.
-
-        :param index_func: A user defined indexing function.
-        :param chunks: The number of records used to split up the data. First
-            arugment of the tuple is the number of records in DataFrame 1 and
-            the second argument is the number of records in DataFrame 2 (or 1
-            in case of deduplication)
-
-        :type index_func: function
-        :type chunks: tuple, int
-
-        :return: The index of the candidate record pairs
-        :rtype: pandas.MultiIndex
-        """
-
-        blocks = self.make_grid()
-
-        # Reset the number of pairs counter
-        self.n_pairs = 0
-
-        for bl0, bl1, bl2, bl3 in blocks:
-
-            # If not deduplication, make pairs of records with one record from
-            # the first dataset and one of the second dataset
-            if not self.deduplication:
-
-                pairs = index_func(
-                    self.df_a[bl0:bl2],
-                    self.df_b[bl1:bl3],
-                    *args, **kwargs
-                )
-
-            # If deduplication, remove the record pairs that are already
-            # included. For example: (a1, a1), (a1, a2), (a2, a1), (a2, a2)
-            # results in (a1, a2) or (a2, a1)
-            elif self.deduplication:
-
-                pairs = index_func(
-                    self.df_a[bl0:bl2],
-                    self.df_a[bl1:bl3],
-                    *args, **kwargs
-                )
-
-                # Remove all double pairs!
-                pairs = pairs[pairs.get_level_values(
-                    0) < pairs.get_level_values(1)]
-
-            self.n_pairs = len(pairs)
-
-            yield pairs
-
-    # -- Tools for indexing ----------------------------------------------
-
-    def make_grid(self):
-
-        # Generate blocks to evaluate
-        len_block_a, len_block_b = split_or_pass(self.chunks)
-
-        # If len_block is None, then use the length of the DataFrame
-        len_block_a = len_block_a if len_block_a else len(self.df_a)
-        len_a = len(self.df_a)
-
-        if not self.deduplication:
-            len_block_b = len_block_b if len_block_b else len(self.df_b)
-            len_b = len(self.df_b)
-        else:
-            len_block_b = len_block_b if len_block_b else len(self.df_a)
-            len_b = len(self.df_a)
-
-        return [(a, b, a + len_block_a, b + len_block_b)
-                for a in numpy.arange(0, len_a, len_block_a)
-                for b in numpy.arange(0, len_b, len_block_b)]
+        return self.index(_eye)
 
     @property
     def reduction(self):
@@ -538,9 +573,4 @@ class Pairs(object):
         # :rtype: float
         # """
 
-        if self.deduplication:
-            max_pairs = (len(self.df_a) * (len(self.df_a) - 1)) / 2
-        else:
-            max_pairs = len(self.df_a) * len(self.df_b)
-
-        return 1 - self.n_pairs / max_pairs
+        return 1 - self.n_pairs / self.maximum_number_of_pairs
