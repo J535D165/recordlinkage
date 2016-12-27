@@ -109,6 +109,9 @@ def qgram_similarity(s1, s2, include_wb=True, ngram=(2, 2)):
     if len(s1) != len(s2):
         raise ValueError('Arrays or Series have to be same length.')
 
+    if len(s1) == len(s2) == 0:
+        return []
+
     # include word boundaries or not
     analyzer = 'char_wb' if include_wb is True else 'char'
 
@@ -136,6 +139,9 @@ def cosine_similarity(s1, s2, include_wb=True, ngram=(2, 2)):
 
     if len(s1) != len(s2):
         raise ValueError('Arrays or Series have to be same length.')
+
+    if len(s1) == len(s2) == 0:
+        return []
 
     # include word boundaries or not
     analyzer = 'char_wb' if include_wb is True else 'char'
