@@ -521,6 +521,10 @@ class Pairs(PairsCore):
         :return: The index of the candidate record pairs
         :rtype: pandas.MultiIndex
         """
+
+        if not isinstance(n, int):
+            raise ValueError("an integer is required")
+
         if self.deduplication:
             return self.index(_random_large_dedup, n)
         else:
