@@ -1,6 +1,7 @@
 import sys
 
-import pandas
+import numpy
+
 
 # Errors and Exception handlers
 class IndexError(Exception):
@@ -78,3 +79,15 @@ def _check_jellyfish(raise_error=True):
             )
         else:
             return False
+
+
+def max_number_of_pairs(*args):
+    """ Compute the maximum number of pairs """
+
+    if not args:
+        raise ValueError('expected at least one dataframe')
+
+    if len(args) == 1:
+        return len(args[0]) * (len(args[0]) - 1) / 2
+    else:
+        return numpy.prod([len(arg) for arg in args])
