@@ -2,11 +2,11 @@ from __future__ import print_function
 
 import unittest
 
-import recordlinkage
 import numpy as np
 import pandas as pd
+from nose_parameterized import parameterized, param
 
-from recordlinkage import datasets
+import recordlinkage
 from recordlinkage.utils import IndexError
 
 # Two larger numeric dataframes
@@ -16,521 +16,374 @@ df_large_numeric_2 = pd.DataFrame(np.arange(1000))
 df_large_numeric_2.index.name = None
 
 
-# nosetests tests/test_indexing.py:TestIndexApi
+INDEX_ALGORITHMS = [
+
+    # full
+    param('full'),
+
+    # blocking
+    param('block', 'name'),
+    param('block', left_on='name', right_on='name'),
+    param('block', left_on=['name'], right_on=['name']),
+    param('block', left_on=['name', 'hometown'],
+          right_on=['name', 'hometown']),
+    param('block', left_on=['name', 'hometown'], right_on=['name', 'name']),
+
+    # sni
+    param('sortedneighbourhood', 'name', 3),
+    param('sortedneighbourhood', 'name', 5),
+    param('sortedneighbourhood', 'name', 49),
+    param('sortedneighbourhood', 'name', 3, block_on='hometown'),
+
+    # dev
+    param('eye'),
+    param('random', 3),  # random_small
+    param('random', 3000),  # random_large
+
+    # qgram
+    param('qgram', 'name')
+
+]
+
+dA = pd.DataFrame({
+    'name': ['Bob', 'Anne', 'Micheal', 'Charly B', 'Ana'],
+    'age': [40, 45, 69, 90, 70],
+    'hometown': ['town 1', 'town 1', 'town 1', 'town 3', 'town 1']
+})
+
+dB = pd.DataFrame({
+    'name': ['Bob', 'Anne', 'Micheal', 'Charly', 'Ana'],
+    'age': [40, 45, 68, 89, 70],
+    'hometown': ['town 1', 'town 1', 'town 2', 'town 3', 'town 1']
+})
+
+
+# nosetests -v tests/test_indexing.py
 class TestIndexApi(unittest.TestCase):
 
     @classmethod
     def setUpClass(self):
 
-        self.data_A = {
-            'name': ['Bob', 'Anne', 'Micheal', 'Charly B', 'Ana'],
-            'age': [40, 45, 69, 90, 70],
-            'hometown': ['town 1', 'town 1', 'town 1', 'town 3', 'town 1']
-        }
-        self.data_B = {
-            'name': ['Bob', 'Anne', 'Micheal', 'Charly', 'Ana'],
-            'age': [40, 45, 68, 89, 70],
-            'hometown': ['town 1', 'town 1', 'town 2', 'town 3', 'town 1']
+        n_a = 100
+        n_b = 150
+
+        self.A = {
+            'name': np.random.choice(dA['name'], n_a),
+            'age': np.random.choice(dA['age'], n_a),
+            'hometown': np.random.choice(dA['hometown'], n_a)
         }
 
-        self.index = ['rec1', 'rec2', 'rec3', 'rec4', 'rec5']
-        self.bad_index = ['rec1', 'rec1', 'rec3', 'rec4', 'rec5']
+        self.B = {
+            'name': np.random.choice(dB['name'], n_b),
+            'age': np.random.choice(dB['age'], n_b),
+            'hometown': np.random.choice(dB['hometown'], n_b)
+        }
 
-    def test_instance(self):
+        self.index_a = ['rec%s' % i for i in range(0, n_a)]
+        self.index_b = ['rec%s' % i for i in range(0, n_b)]
 
-        A = pd.DataFrame(self.data_A)
-        B = pd.DataFrame(self.data_B)
+        self.bad_index_a = np.random.choice(
+            ['rec1', 'rec1', 'rec3', 'rec4', 'rec5'],
+            n_a
+        )
 
-        index_cl = recordlinkage.Pairs(A, B)
 
-        # index full
-        pairs = index_cl.full()
+# nosetests -v tests/test_indexing.py:TestIndexApiDedup
+class TestIndexApiDedup(TestIndexApi):
+
+    @parameterized.expand(INDEX_ALGORITHMS)
+    def test_instance_dedup(self, method_to_call, *args, **kwargs):
+
+        df_A = pd.DataFrame(self.A)
+
+        index_cl = recordlinkage.Pairs(df_A)
+        pairs = getattr(index_cl, method_to_call)(*args, **kwargs)
+
         self.assertIsInstance(pairs, pd.MultiIndex)
 
-        # prevent that the index name is changed
-        self.assertEqual(A.index.name, None)
-        self.assertEqual(B.index.name, None)
+    @parameterized.expand(INDEX_ALGORITHMS)
+    def test_empty_dataframes_dedup(self, method_to_call, *args, **kwargs):
 
-        # index block
-        pairs = index_cl.block('name')
-        self.assertIsInstance(pairs, pd.MultiIndex)
-        self.assertEqual(A.index.name, None)
-        self.assertEqual(B.index.name, None)
+        df_A = pd.DataFrame(columns=self.A.keys())
 
-        # index sni
-        pairs = index_cl.sortedneighbourhood('name', 3)
-        self.assertIsInstance(pairs, pd.MultiIndex)
-        self.assertEqual(A.index.name, None)
-        self.assertEqual(B.index.name, None)
+        if method_to_call != 'random':
 
-        # index eye
-        pairs = index_cl.eye()
-        self.assertIsInstance(pairs, pd.MultiIndex)
-        self.assertEqual(A.index.name, None)
-        self.assertEqual(B.index.name, None)
+            index_cl = recordlinkage.Pairs(df_A)
+            pairs = getattr(index_cl, method_to_call)(*args, **kwargs)
 
-        # index random
-        pairs = index_cl.random(3)
-        self.assertIsInstance(pairs, pd.MultiIndex)
-        self.assertEqual(A.index.name, None)
-        self.assertEqual(B.index.name, None)
+            self.assertIsInstance(pairs, pd.MultiIndex)
 
-        # index qgram
-        pairs = index_cl.qgram('name')
-        self.assertIsInstance(pairs, pd.MultiIndex)
-        self.assertEqual(A.index.name, None)
-        self.assertEqual(B.index.name, None)
+    @parameterized.expand(INDEX_ALGORITHMS)
+    def test_amount_of_pairs_dedup(self, method_to_call, *args, **kwargs):
 
-    def test_index_names_different(self):
+        df_A = pd.DataFrame(self.A)
 
-        index_A = pd.Index(self.index, name='left')
-        index_B = pd.Index(self.index, name='right')
+        index_cl = recordlinkage.Pairs(df_A)
+        pairs = getattr(index_cl, method_to_call)(*args, **kwargs)
 
-        A = pd.DataFrame(self.data_A, index=index_A)
-        B = pd.DataFrame(self.data_B, index=index_B)
+        # Test is the amount of pairs is less than A*B
+        self.assertTrue(len(pairs) <= len(df_A) * (len(df_A) - 1) / 2)
 
-        # index full
-        index_cl = recordlinkage.Pairs(A, B)
-        pairs = index_cl.full()
-        self.assertEqual(pairs.names, ['left', 'right'])
-        self.assertEqual(A.index.name, 'left')
-        self.assertEqual(B.index.name, 'right')
+    def test_index_unique_dedup(self):
 
-        # index block
-        index_cl = recordlinkage.Pairs(A, B)
-        pairs = index_cl.block('name')
-        self.assertEqual(pairs.names, ['left', 'right'])
-        self.assertEqual(A.index.name, 'left')
-        self.assertEqual(B.index.name, 'right')
-
-        # index sni
-        index_cl = recordlinkage.Pairs(A, B)
-        pairs = index_cl.sortedneighbourhood('name')
-        self.assertEqual(pairs.names, ['left', 'right'])
-        self.assertEqual(A.index.name, 'left')
-        self.assertEqual(B.index.name, 'right')
-
-        # index eye
-        index_cl = recordlinkage.Pairs(A, B)
-        pairs = index_cl.eye()
-        self.assertEqual(pairs.names, ['left', 'right'])
-        self.assertEqual(A.index.name, 'left')
-        self.assertEqual(B.index.name, 'right')
-
-        # index random
-        index_cl = recordlinkage.Pairs(A, B)
-        pairs = index_cl.random(3)
-        self.assertEqual(pairs.names, ['left', 'right'])
-        self.assertEqual(A.index.name, 'left')
-        self.assertEqual(B.index.name, 'right')
-
-        # index qgram
-        index_cl = recordlinkage.Pairs(A, B)
-        pairs = index_cl.qgram('name')
-        self.assertEqual(pairs.names, ['left', 'right'])
-        self.assertEqual(A.index.name, 'left')
-        self.assertEqual(B.index.name, 'right')
-
-    def test_index_names_equal(self):
-
-        index_A = pd.Index(self.index, name='leftright')
-        index_B = pd.Index(self.index, name='leftright')
-
-        A = pd.DataFrame(self.data_A, index=index_A)
-        B = pd.DataFrame(self.data_B, index=index_B)
-
-        # index full
-        index_cl = recordlinkage.Pairs(A, B)
-        pairs = index_cl.full()
-        self.assertEqual(pairs.names, ['leftright', 'leftright'])
-        self.assertEqual(A.index.name, 'leftright')
-        self.assertEqual(B.index.name, 'leftright')
-
-        # index block
-        index_cl = recordlinkage.Pairs(A, B)
-        pairs = index_cl.block('name')
-        self.assertEqual(pairs.names, ['leftright', 'leftright'])
-        self.assertEqual(A.index.name, 'leftright')
-        self.assertEqual(B.index.name, 'leftright')
-
-        # index sni
-        index_cl = recordlinkage.Pairs(A, B)
-        pairs = index_cl.sortedneighbourhood('name')
-        self.assertEqual(pairs.names, ['leftright', 'leftright'])
-        self.assertEqual(A.index.name, 'leftright')
-        self.assertEqual(B.index.name, 'leftright')
-
-        # index eye
-        index_cl = recordlinkage.Pairs(A, B)
-        pairs = index_cl.eye()
-        self.assertEqual(pairs.names, ['leftright', 'leftright'])
-        self.assertEqual(A.index.name, 'leftright')
-        self.assertEqual(B.index.name, 'leftright')
-
-        # index random
-        index_cl = recordlinkage.Pairs(A, B)
-        pairs = index_cl.random(3)
-        self.assertEqual(pairs.names, ['leftright', 'leftright'])
-        self.assertEqual(A.index.name, 'leftright')
-        self.assertEqual(B.index.name, 'leftright')
-
-        # index random
-        index_cl = recordlinkage.Pairs(A, B)
-        pairs = index_cl.qgram('name')
-        self.assertEqual(pairs.names, ['leftright', 'leftright'])
-        self.assertEqual(A.index.name, 'leftright')
-        self.assertEqual(B.index.name, 'leftright')
-
-    def test_index_names_none(self):
-
-        index_A = pd.Index(self.index)
-        index_B = pd.Index(self.index)
-
-        A = pd.DataFrame(self.data_A, index=index_A)
-        B = pd.DataFrame(self.data_B, index=index_B)
-
-        # index full
-        index_cl = recordlinkage.Pairs(A, B)
-        pairs = index_cl.full()
-        self.assertEqual(pairs.names, [None, None])
-        self.assertEqual(A.index.name, None)
-        self.assertEqual(B.index.name, None)
-
-        # index block
-        index_cl = recordlinkage.Pairs(A, B)
-        pairs = index_cl.block('name')
-        self.assertEqual(pairs.names, [None, None])
-        self.assertEqual(A.index.name, None)
-        self.assertEqual(B.index.name, None)
-
-        # index sni
-        index_cl = recordlinkage.Pairs(A, B)
-        pairs = index_cl.sortedneighbourhood('name')
-        self.assertEqual(pairs.names, [None, None])
-        self.assertEqual(A.index.name, None)
-        self.assertEqual(B.index.name, None)
-
-        # index eye
-        index_cl = recordlinkage.Pairs(A, B)
-        pairs = index_cl.eye()
-        self.assertEqual(pairs.names, [None, None])
-        self.assertEqual(A.index.name, None)
-        self.assertEqual(B.index.name, None)
-
-        # index random
-        index_cl = recordlinkage.Pairs(A, B)
-        pairs = index_cl.random(3)
-        self.assertEqual(pairs.names, [None, None])
-        self.assertEqual(A.index.name, None)
-        self.assertEqual(B.index.name, None)
-
-        # index random
-        index_cl = recordlinkage.Pairs(A, B)
-        pairs = index_cl.qgram('name')
-        self.assertEqual(pairs.names, [None, None])
-        self.assertEqual(A.index.name, None)
-        self.assertEqual(B.index.name, None)
-
-    def test_index_names_one_none(self):
-
-        index_A = pd.Index(self.index)
-        index_B = pd.Index(self.index)
-
-        A = pd.DataFrame(self.data_A, index=index_A)
-        B = pd.DataFrame(self.data_B, index=pd.Index(index_B, name='right'))
-
-        # index full
-        index_cl = recordlinkage.Pairs(A, B)
-        pairs = index_cl.full()
-        self.assertEqual(pairs.names, [None, 'right'])
-        self.assertEqual(A.index.name, None)
-        self.assertEqual(B.index.name, 'right')
-
-        # index block
-        index_cl = recordlinkage.Pairs(A, B)
-        pairs = index_cl.block('name')
-        self.assertEqual(pairs.names, [None, 'right'])
-        self.assertEqual(A.index.name, None)
-        self.assertEqual(B.index.name, 'right')
-
-        # index sni
-        index_cl = recordlinkage.Pairs(A, B)
-        pairs = index_cl.sortedneighbourhood('name')
-        self.assertEqual(pairs.names, [None, 'right'])
-        self.assertEqual(A.index.name, None)
-        self.assertEqual(B.index.name, 'right')
-
-        # index eye
-        index_cl = recordlinkage.Pairs(A, B)
-        pairs = index_cl.eye()
-        self.assertEqual(pairs.names, [None, 'right'])
-        self.assertEqual(A.index.name, None)
-        self.assertEqual(B.index.name, 'right')
-
-        # index random
-        index_cl = recordlinkage.Pairs(A, B)
-        pairs = index_cl.random(3)
-        self.assertEqual(pairs.names, [None, 'right'])
-        self.assertEqual(A.index.name, None)
-        self.assertEqual(B.index.name, 'right')
-
-        # index random
-        index_cl = recordlinkage.Pairs(A, B)
-        pairs = index_cl.qgram('name')
-        self.assertEqual(pairs.names, [None, 'right'])
-        self.assertEqual(A.index.name, None)
-        self.assertEqual(B.index.name, 'right')
-
-    def test_dedupe_index_name_none(self):
-
-        index_A = pd.Index(self.index)
-        A = pd.DataFrame(self.data_A, index=index_A)
-
-        # index full
-        index_cl = recordlinkage.Pairs(A)
-        pairs = index_cl.full()
-        self.assertEqual(pairs.names, [None, None])
-        self.assertEqual(A.index.name, None)
-
-        # index block
-        index_cl = recordlinkage.Pairs(A)
-        pairs = index_cl.block('name')
-        self.assertEqual(pairs.names, [None, None])
-        self.assertEqual(A.index.name, None)
-
-        # index sni
-        index_cl = recordlinkage.Pairs(A)
-        pairs = index_cl.sortedneighbourhood('name')
-        self.assertEqual(pairs.names, [None, None])
-        self.assertEqual(A.index.name, None)
-
-        # index eye
-        index_cl = recordlinkage.Pairs(A)
-        pairs = index_cl.eye()
-        self.assertEqual(pairs.names, [None, None])
-        self.assertEqual(A.index.name, None)
-
-        # index random
-        index_cl = recordlinkage.Pairs(A)
-        pairs = index_cl.random(3)
-        self.assertEqual(pairs.names, [None, None])
-        self.assertEqual(A.index.name, None)
-
-        # index random
-        index_cl = recordlinkage.Pairs(A)
-        pairs = index_cl.qgram('name')
-        self.assertEqual(pairs.names, [None, None])
-        self.assertEqual(A.index.name, None)
-
-    def test_dedupe_index_name_not_none(self):
-
-        index_A = pd.Index(self.index, name='dedup')
-        A = pd.DataFrame(self.data_A, index=index_A)
-
-        # index full
-        index_cl = recordlinkage.Pairs(A)
-        pairs = index_cl.full()
-        self.assertEqual(pairs.names, ['dedup', 'dedup'])
-        self.assertEqual(A.index.name, 'dedup')
-
-        # index block
-        index_cl = recordlinkage.Pairs(A)
-        pairs = index_cl.block('name')
-        self.assertEqual(pairs.names, ['dedup', 'dedup'])
-        self.assertEqual(A.index.name, 'dedup')
-
-        # index sni
-        index_cl = recordlinkage.Pairs(A)
-        pairs = index_cl.sortedneighbourhood('name')
-        self.assertEqual(pairs.names, ['dedup', 'dedup'])
-        self.assertEqual(A.index.name, 'dedup')
-
-        # index eye
-        index_cl = recordlinkage.Pairs(A)
-        pairs = index_cl.eye()
-        self.assertEqual(pairs.names, ['dedup', 'dedup'])
-        self.assertEqual(A.index.name, 'dedup')
-
-        # index random
-        index_cl = recordlinkage.Pairs(A)
-        pairs = index_cl.random(3)
-        self.assertEqual(pairs.names, ['dedup', 'dedup'])
-        self.assertEqual(A.index.name, 'dedup')
-
-        # index random
-        index_cl = recordlinkage.Pairs(A)
-        pairs = index_cl.qgram('name')
-        self.assertEqual(pairs.names, ['dedup', 'dedup'])
-        self.assertEqual(A.index.name, 'dedup')
-
-    def test_reduction_ratio(self):
-
-        index_A = pd.Index(self.index)
-        index_B = pd.Index(self.index)
-
-        A = pd.DataFrame(self.data_A, index=index_A)
-        B = pd.DataFrame(self.data_B, index=index_B)
-
-        index = recordlinkage.Pairs(A, B)
-        index.full()
-
-        rr = index.reduction
-
-        self.assertEqual(rr, 0)
-
-    def test_full_iter_index_linking(self):
-
-        dfA, dfB = datasets.load_febrl4()
-
-        index_chucks = recordlinkage.Pairs(dfA, dfB, chunks=(100, 200))
-        index = recordlinkage.Pairs(dfA, dfB)
-
-        # Compute pairs in one iteration
-        pairs_single = index.full()
-
-        # Compute pairs in iterations
-        n_pairs_iter = 0
-        for pairs in index_chucks.full():
-
-            print (len(pairs))
-            n_pairs_iter += len(pairs)
-
-            # Check if index is unique
-            self.assertTrue(pairs.is_unique)
-
-        self.assertEqual(len(pairs_single), n_pairs_iter)
-
-        # Check is number of pairs is correct
-        self.assertEqual(n_pairs_iter, len(dfA) * len(dfB))
-
-    def test_full_iter_index_deduplication(self):
-
-        dfA = datasets.load_febrl1()
-
-        # Compute pairs in one iteration
-        index = recordlinkage.Pairs(dfA)
-        pairs_single = index.full()
-
-        # Compute pairs in iterations
-        n_pairs_iter = 0
-
-        index_chucks = recordlinkage.Pairs(dfA, chunks=100)
-
-        for pairs in index_chucks.full():
-
-            print (len(pairs))
-            n_pairs_iter += len(pairs)
-
-            # Check if index is unique
-            self.assertTrue(pairs.is_unique)
-
-        self.assertEqual(len(pairs_single), n_pairs_iter)
-
-        # Check is number of pairs is correct
-        self.assertEqual(n_pairs_iter, (len(dfA) - 1) * len(dfA) / 2)
-
-    def test_index_unique(self):
-
-        index_A = pd.Index(self.bad_index, name='left')
-        index_B = pd.Index(self.index, name='right')
-
-        A = pd.DataFrame(self.data_A, index=index_A)
-        B = pd.DataFrame(self.data_B, index=index_B)
-
-        with self.assertRaises(IndexError):
-            recordlinkage.Pairs(A, B)
+        index_A = pd.Index(self.bad_index_a, name='left')
+        A = pd.DataFrame(self.A, index=index_A)
 
         with self.assertRaises(IndexError):
             recordlinkage.Pairs(A)
 
+    @parameterized.expand(INDEX_ALGORITHMS)
+    def test_full_iter_index_dedup(self, method_to_call, *args, **kwargs):
 
-# nosetests tests/test_indexing.py:TestIndexOnDatasets
-class TestIndexOnDatasets(unittest.TestCase):
+        df_A = pd.DataFrame(self.A)
 
-    @classmethod
-    def setUpClass(self):
+        index_cl = recordlinkage.Pairs(df_A, chunks=100)
+        index = recordlinkage.Pairs(df_A)
 
-        self.A, self.B = datasets.load_febrl4()
+        # Compute pairs in one iteration
+        pairs_single = getattr(index, method_to_call)(*args, **kwargs)
 
-    def test_reduction_ratio(self):
+        # Compute pairs in iterations
+        n_pairs_iter = 0
+        for pairs in getattr(index_cl, method_to_call)(*args, **kwargs):
 
-        index = recordlinkage.Pairs(self.A, self.B)
-        index.full()
+            print (len(pairs))
+            n_pairs_iter += len(pairs)
 
-        rr = index.reduction
+            # Check if index is unique
+            self.assertTrue(pairs.is_unique)
 
-        self.assertEqual(rr, 0)
+        self.assertEqual(len(pairs_single), n_pairs_iter)
 
-    def test_random_index_linking(self):
+    @parameterized.expand(INDEX_ALGORITHMS)
+    def test_index_names_none_dedup(self, method_to_call, *args, **kwargs):
 
-        index = recordlinkage.Pairs(self.A, self.B)
-        pairs = index.random(1000)
+        # setup A
+        index_A = pd.Index(self.index_a)
+        df_A = pd.DataFrame(self.A, index=index_A)
 
-        # Check if index is unique
+        # Make pairs
+        index_cl = recordlinkage.Pairs(df_A)
+        pairs = getattr(index_cl, method_to_call)(*args, **kwargs)
+
+        self.assertEqual(pairs.names, [None, None])
+        self.assertEqual(df_A.index.name, None)
+
+    @parameterized.expand(INDEX_ALGORITHMS)
+    def test_index_names_not_none_dedup(self, method_to_call, *args, **kwargs):
+
+        # setup A
+        index_A = pd.Index(self.index_a, name='dedup')
+        df_A = pd.DataFrame(self.A, index=index_A)
+
+        # Make pairs
+        index_cl = recordlinkage.Pairs(df_A)
+        pairs = getattr(index_cl, method_to_call)(*args, **kwargs)
+
+        self.assertEqual(pairs.names, ['dedup', 'dedup'])
+        self.assertEqual(df_A.index.name, 'dedup')
+
+    @parameterized.expand(INDEX_ALGORITHMS)
+    def test_reduction_ratio_dedup(self, method_to_call, *args, **kwargs):
+
+        df_A = pd.DataFrame(self.A)
+
+        index_cl = recordlinkage.Pairs(df_A)
+        getattr(index_cl, method_to_call)(*args, **kwargs)
+
+        rr = index_cl.reduction
+
+        self.assertTrue((rr >= 0.0) & (rr <= 1.0))
+
+
+# nosetests -v tests/test_indexing.py:TestIndexApiLink
+class TestIndexApiLink(TestIndexApi):
+
+    @parameterized.expand(INDEX_ALGORITHMS)
+    def test_instance_linking(self, method_to_call, *args, **kwargs):
+
+        df_A = pd.DataFrame(self.A)
+        df_B = pd.DataFrame(self.B)
+
+        index_cl = recordlinkage.Pairs(df_A, df_B)
+        pairs = getattr(index_cl, method_to_call)(*args, **kwargs)
+
+        self.assertIsInstance(pairs, pd.MultiIndex)
+
+    @parameterized.expand(INDEX_ALGORITHMS)
+    def test_empty_dataframes_linking(self, method_to_call, *args, **kwargs):
+
+        df_A = pd.DataFrame(columns=self.A.keys())
+        df_B = pd.DataFrame(columns=self.B.keys())
+
+        if method_to_call != 'random':
+
+            index_cl = recordlinkage.Pairs(df_A, df_B)
+            pairs = getattr(index_cl, method_to_call)(*args, **kwargs)
+
+            self.assertIsInstance(pairs, pd.MultiIndex)
+
+    @parameterized.expand(INDEX_ALGORITHMS)
+    def test_index_names_linking(self, method_to_call, *args, **kwargs):
+        """ Check modification of index name """
+
+        df_A = pd.DataFrame(self.A)
+        df_B = pd.DataFrame(self.B)
+
+        index_cl = recordlinkage.Pairs(df_A, df_B)
+        getattr(index_cl, method_to_call)(*args, **kwargs)
+
+        # prevent that the index name is changed
+        self.assertEqual(df_A.index.name, None)
+        self.assertEqual(df_B.index.name, None)
+
+    @parameterized.expand(INDEX_ALGORITHMS)
+    def test_index_names_diff_linking(self, method_to_call, *args, **kwargs):
+
+        # setup A
+        index_A = pd.Index(self.index_a, name='left')
+        df_A = pd.DataFrame(self.A, index=index_A)
+
+        # setup B
+        index_B = pd.Index(self.index_b, name='right')
+        df_B = pd.DataFrame(self.B, index=index_B)
+
+        # Make pairs
+        index_cl = recordlinkage.Pairs(df_A, df_B)
+        pairs = getattr(index_cl, method_to_call)(*args, **kwargs)
+
+        self.assertEqual(pairs.names, ['left', 'right'])
+        self.assertEqual(df_A.index.name, 'left')
+        self.assertEqual(df_B.index.name, 'right')
+
+    @parameterized.expand(INDEX_ALGORITHMS)
+    def test_index_names_eq_linking(self, method_to_call, *args, **kwargs):
+
+        # setup A
+        index_A = pd.Index(self.index_a, name='leftright')
+        df_A = pd.DataFrame(self.A, index=index_A)
+
+        # setup B
+        index_B = pd.Index(self.index_b, name='leftright')
+        df_B = pd.DataFrame(self.B, index=index_B)
+
+        # Make pairs
+        index_cl = recordlinkage.Pairs(df_A, df_B)
+        pairs = getattr(index_cl, method_to_call)(*args, **kwargs)
+
+        self.assertEqual(pairs.names, ['leftright', 'leftright'])
+        self.assertEqual(df_A.index.name, 'leftright')
+        self.assertEqual(df_B.index.name, 'leftright')
+
+    @parameterized.expand(INDEX_ALGORITHMS)
+    def test_index_names_none_linking(self, method_to_call, *args, **kwargs):
+
+        # setup A
+        index_A = pd.Index(self.index_a)
+        df_A = pd.DataFrame(self.A, index=index_A)
+
+        # setup B
+        index_B = pd.Index(self.index_b)
+        df_B = pd.DataFrame(self.B, index=index_B)
+
+        # Make pairs
+        index_cl = recordlinkage.Pairs(df_A, df_B)
+        pairs = getattr(index_cl, method_to_call)(*args, **kwargs)
+
+        self.assertEqual(pairs.names, [None, None])
+        self.assertEqual(df_A.index.name, None)
+        self.assertEqual(df_B.index.name, None)
+
+    @parameterized.expand(INDEX_ALGORITHMS)
+    def test_index_names_one_none_linking(self, method_to_call,
+                                          *args, **kwargs):
+
+        # setup A
+        index_A = pd.Index(self.index_a, name=None)
+        df_A = pd.DataFrame(self.A, index=pd.Index(index_A, name=None))
+
+        # setup B
+        index_B = pd.Index(self.index_b, name=None)
+        df_B = pd.DataFrame(self.B, index=pd.Index(index_B, name='right'))
+
+        # Make pairs
+        index_cl = recordlinkage.Pairs(df_A, df_B)
+        pairs = getattr(index_cl, method_to_call)(*args, **kwargs)
+
+        print (pairs.names)
+        print (df_A.index.name)
+
+        self.assertEqual(pairs.names, [None, 'right'])
+        self.assertEqual(df_A.index.name, None)
+        self.assertEqual(df_B.index.name, 'right')
+
+    @parameterized.expand(INDEX_ALGORITHMS)
+    def test_amount_of_pairs_linking(self, method_to_call, *args, **kwargs):
+
+        df_A = pd.DataFrame(self.A)
+        df_B = pd.DataFrame(self.B)
+
+        index_cl = recordlinkage.Pairs(df_A, df_B)
+        pairs = getattr(index_cl, method_to_call)(*args, **kwargs)
+
+        # Test is the amount of pairs is less than A*B
+        self.assertTrue(len(pairs) <= len(df_A) * len(df_B))
+
+    def test_index_unique_linking(self):
+
+        index_A = pd.Index(self.bad_index_a, name='left')
+        index_B = pd.Index(self.index_b, name='right')
+
+        A = pd.DataFrame(self.A, index=index_A)
+        B = pd.DataFrame(self.B, index=index_B)
+
+        with self.assertRaises(IndexError):
+            recordlinkage.Pairs(A, B)
+
+    @parameterized.expand(INDEX_ALGORITHMS)
+    def test_pairs_are_unique_linking(self, method_to_call, *args, **kwargs):
+
+        df_A = pd.DataFrame(self.A)
+        df_B = pd.DataFrame(self.B)
+
+        index_cl = recordlinkage.Pairs(df_A, df_B)
+        pairs = getattr(index_cl, method_to_call)(*args, **kwargs)
+
         self.assertTrue(pairs.is_unique)
 
-        # Check is number of pairs is correct
-        self.assertTrue(len(pairs) <= 1000)
+    @parameterized.expand(INDEX_ALGORITHMS)
+    def test_full_iter_index_linking(self, method_to_call, *args, **kwargs):
 
-    def test_full_index_linking(self):
+        df_A = pd.DataFrame(self.A)
+        df_B = pd.DataFrame(self.B)
 
-        index = recordlinkage.Pairs(self.A, self.B)
-        pairs = index.full()
+        index_cl = recordlinkage.Pairs(df_A, df_B, chunks=100)
+        index = recordlinkage.Pairs(df_A, df_B)
 
-        # Check if index is unique
-        self.assertTrue(pairs.is_unique)
+        # Compute pairs in one iteration
+        pairs_single = getattr(index, method_to_call)(*args, **kwargs)
 
-        # Check is number of pairs is correct
-        self.assertEqual(len(pairs), len(self.A) * len(self.B))
+        # Compute pairs in iterations
+        n_pairs_iter = 0
+        for pairs in getattr(index_cl, method_to_call)(*args, **kwargs):
 
-    def test_block_index_linking(self):
+            print (len(pairs))
+            n_pairs_iter += len(pairs)
 
-        index = recordlinkage.Pairs(self.A, self.B)
-        pairs = index.block('given_name')
+            # Check if index is unique
+            self.assertTrue(pairs.is_unique)
 
-        # Check if index is unique
-        self.assertTrue(pairs.is_unique)
+        self.assertEqual(len(pairs_single), n_pairs_iter)
 
-    def test_qgram_index_linking(self):
+    @parameterized.expand(INDEX_ALGORITHMS)
+    def test_reduction_ratio_linking(self, method_to_call, *args, **kwargs):
 
-        index = recordlinkage.Pairs(self.A, self.B)
+        df_A = pd.DataFrame(self.A)
+        df_B = pd.DataFrame(self.B)
 
-        index = recordlinkage.Pairs(self.A[0:100], self.B[0:100])
-        pairs = index.qgram('given_name')
+        index_cl = recordlinkage.Pairs(df_A, df_B)
+        getattr(index_cl, method_to_call)(*args, **kwargs)
 
-        # Check if index is unique
-        self.assertTrue(pairs.is_unique)
+        rr = index_cl.reduction
 
-    def test_sorted_index_linking(self):
-
-        index = recordlinkage.Pairs(self.A, self.B)
-        pairs = index.sortedneighbourhood('given_name')
-
-        # Check if index is unique
-        self.assertTrue(pairs.is_unique)
-
-    def test_small_random_index(self):
-
-        n_pairs = 10000
-
-        index = recordlinkage.Pairs(self.A, self.B)
-        pairs = index.random(n_pairs)
-
-        # Check if index is unique
-        self.assertTrue(pairs.is_unique)
-
-        # Check is number of pairs is correct
-        self.assertEqual(len(pairs), n_pairs)
-
-    def test_large_random_index(self):
-
-        n_pairs = 300000
-
-        index = recordlinkage.Pairs(self.A, self.B)
-        pairs = index.random(n_pairs)
-
-        # Check if index is unique
-        self.assertTrue(pairs.is_unique)
-
-        # Check is number of pairs is correct
-        self.assertEqual(len(pairs), n_pairs)
+        self.assertTrue((rr >= 0.0) & (rr <= 1.0))
