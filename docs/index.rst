@@ -43,14 +43,14 @@ Record linkage
 	:hidden:
 
 	notebooks/classifiers.ipynb
-	notebooks/advanced_indexing.ipynb
+	notebooks/custom_algorithms.ipynb
 	performance.rst
 
 :doc:`notebooks/classifiers`
 	The full API reference of the Python Record Linkage Toolkit package is found here.
 
-:doc:`notebooks/advanced_indexing`
-	Are the built-in indexing algorithms not sufficient? Build your own!
+:doc:`notebooks/custom_algorithms`
+	Are the built-in algorithms not sufficient? Build your own!
 
 :doc:`performance`
 	Improve the performance of your record linkage.
