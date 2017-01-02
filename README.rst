@@ -56,17 +56,17 @@ class and the available comparison/similarity functions.
 
 .. code:: python
 
-    compare = recordlinkage.Compare(candidate_links, df_a, df_b)
+    c = recordlinkage.Compare(candidate_links, df_a, df_b)
 
-    compare.string('name', 'name', method='jarowinkler', threshold=0.85)
-    compare.exact('sex', 'gender')
-    compare.exact('dob', 'date_of_birth')
-    compare.string('streetname', 'streetname', method='damerau_levenshtein', threshold=0.7)
-    compare.exact('place', 'placename')
-    compare.exact('haircolor', 'haircolor', missing_value=9)
+    c.string('name_a', 'name_b', method='jarowinkler', threshold=0.85)
+    c.exact('sex', 'gender')
+    c.exact('dob', 'date_of_birth')
+    c.string('streetname', 'streetname', method='damerau_levenshtein', threshold=0.7)
+    c.exact('place', 'placename')
+    c.exact('haircolor', 'haircolor', missing_value=9)
 
     # The comparison vectors
-    compare.vectors
+    c.vectors
 
 This record linkage package contains several classification alogirthms.
 Plenty of the algorithms need trainings data (supervised learning) while
@@ -77,14 +77,14 @@ others are unsupervised. An example of supervised learning:
     logrg = recordlinkage.LogisticRegressionClassifier()
     logrg.learn(TRAINING_COMPARISON_VECTORS, TRAINING_CLASSES)
 
-    logrg.predict(compare.vectors)
+    logrg.predict(c.vectors)
 
 and an example of unsupervised learning (the well known ECM-algorithm):
 
 .. code:: python
 
     ecm = recordlinkage.BernoulliEMClassifier()
-    ecm.learn(compare.vectors)
+    ecm.learn(c.vectors)
 
 Main Features
 -------------
