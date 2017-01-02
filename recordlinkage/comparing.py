@@ -179,8 +179,6 @@ class CompareCore(object):
         labels_a = listify(labels_a)
         labels_b = listify(labels_b)
 
-        print (type(labels_a))
-
         data_a = []
 
         for label_a in labels_a:
