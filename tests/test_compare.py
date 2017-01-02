@@ -28,16 +28,35 @@ COMPARE_ALGORITHMS = [
     param('string', 'given_name', 'given_name', method='cosine'),
 
     # numeric
-    param('numeric', 'age', 'age', method='step', offset=3, origin=2),
-    param('numeric', 'age', 'age', method='linear', offset=3, scale=3, origin=2),
-    param('numeric', 'age', 'age', method='exp', offset=3, scale=3, origin=2),
-    param('numeric', 'age', 'age', method='gauss', offset=3, scale=3, origin=2),
-    param('numeric', 'age', 'age', method='squared', offset=3, scale=3, origin=2),
+    param('numeric', 'age', 'age', method='step',
+          offset=3, origin=2),
+    param('numeric', 'age', 'age', method='linear',
+          offset=3, scale=3, origin=2),
+    param('numeric', 'age', 'age', method='exp',
+          offset=3, scale=3, origin=2),
+    param('numeric', 'age', 'age', method='gauss',
+          offset=3, scale=3, origin=2),
+    param('numeric', 'age', 'age', method='squared',
+          offset=3, scale=3, origin=2),
 
     # exact
     param('exact', 'given_name', 'given_name')
 
 ]
+
+
+FIRST_NAMES = [u'Ronald', u'Amy', u'Andrew', u'William', u'Frank', u'Jessica',
+               u'Kevin', u'Tyler', u'Yvonne', nan]
+LAST_NAMES = [u'Graham', u'Smith', u'Holt', u'Pope', u'Hernandez',
+              u'Gutierrez', u'Rivera', nan, u'Crane', u'Padilla']
+STREET = [u'Oliver Neck', nan, u'Melissa Way', u'Sara Dale',
+          u'Keith Green', u'Olivia Terrace', u'Williams Trail',
+          u'Durham Mountains', u'Anna Circle', u'Michelle Squares']
+JOB = [u'Designer, multimedia', u'Designer, blown glass/stained glass',
+       u'Chiropractor', u'Engineer, mining', u'Quantity surveyor',
+       u'Phytotherapist', u'Teacher, English as a foreign language',
+       u'Electrical engineer', u'Research officer, government', u'Economist']
+AGES = [23, 40, 70, 45, 23, 57, 38, nan, 45, 46]
 
 
 # Run all tests in this file with:
@@ -49,22 +68,24 @@ class TestCompare(unittest.TestCase):
     @classmethod
     def setUpClass(self):
 
+        N_A = 100
+        N_B = 100
+
         self.A = pandas.DataFrame({
-            'age': [20.0, 17.0, 33.0, 27.0, nan],
-            'given_name': [u'Donell', nan, u'Kalie', u'Kittie', nan],
-            'lastname': [u'Gerlach', u'Smit', u'Flatley', u'Schuster', nan],
-            'place': [u'New York', u'Boston', u'Boston', nan, u'South Devyn']
+            'age': np.random.choice(AGES, N_A),
+            'given_name': np.random.choice(FIRST_NAMES, N_A),
+            'lastname': np.random.choice(LAST_NAMES, N_A),
+            'street': np.random.choice(STREET, N_A)
+        })
+
+        self.B = pandas.DataFrame({
+            'age': np.random.choice(AGES, N_B),
+            'given_name': np.random.choice(FIRST_NAMES, N_B),
+            'lastname': np.random.choice(LAST_NAMES, N_B),
+            'street': np.random.choice(STREET, N_B)
         })
 
         self.A.index.name = 'index_df1'
-
-        self.B = pandas.DataFrame({
-            'age': [20, 17, 33, 20, 70],
-            'given_name': [u'Donel', nan, u'Kaly', u'Kittie', u'Bob'],
-            'lastname': [u'Gerleach', u'Smith', u'Flatley', nan, u'Armstrong'],
-            'place': [u'New York', u'Boston', u'Boston', nan, u'Lake Gavinmouth']
-        })
-
         self.B.index.name = 'index_df2'
 
         self.index_AB = pandas.MultiIndex.from_arrays(
@@ -73,22 +94,44 @@ class TestCompare(unittest.TestCase):
 
     @parameterized.expand(COMPARE_ALGORITHMS)
     def test_instance_linking(self, method_to_call, *args, **kwargs):
+        """result is pandas series (link)"""
 
         comp = recordlinkage.Compare(self.index_AB, self.A, self.B)
         result = getattr(comp, method_to_call)(*args, **kwargs)
 
+        # returns a pandas.Series
         self.assertIsInstance(result, pandas.Series)
+
+        # resulting series has a pandas.MultiIndex
+        self.assertIsInstance(result.index, pandas.MultiIndex)
 
     @parameterized.expand(COMPARE_ALGORITHMS)
     def test_instance_dedup(self, method_to_call, *args, **kwargs):
+        """result is pandas series (dedup)"""
 
         comp = recordlinkage.Compare(self.index_AB, self.A)
         result = getattr(comp, method_to_call)(*args, **kwargs)
 
+        # returns a pandas.Series
         self.assertIsInstance(result, pandas.Series)
+
+        # resulting series has a pandas.MultiIndex
+        self.assertIsInstance(result.index, pandas.MultiIndex)
+
+    @parameterized.expand(COMPARE_ALGORITHMS)
+    def test_index_names_linking(self, method_to_call, *args, **kwargs):
+        """result is pandas series (link)"""
+
+        comp = recordlinkage.Compare(self.index_AB, self.A, self.B)
+        result = getattr(comp, method_to_call)(*args, **kwargs)
+
+        # returns a pandas.Series
+        self.assertEqual(result.index.names,
+                         [self.A.index.name, self.B.index.name])
 
     @parameterized.expand(COMPARE_ALGORITHMS)
     def test_len_result_linking(self, method_to_call, *args, **kwargs):
+        """result has correct number of records (link)"""
 
         comp = recordlinkage.Compare(self.index_AB, self.A, self.B)
         result = getattr(comp, method_to_call)(*args, **kwargs)
@@ -97,6 +140,7 @@ class TestCompare(unittest.TestCase):
 
     @parameterized.expand(COMPARE_ALGORITHMS)
     def test_len_result_dedup(self, method_to_call, *args, **kwargs):
+        """result has correct number of records (dedup)"""
 
         comp = recordlinkage.Compare(self.index_AB, self.A)
         result = getattr(comp, method_to_call)(*args, **kwargs)
