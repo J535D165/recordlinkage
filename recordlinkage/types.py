@@ -8,15 +8,17 @@ License BSD
 
 import collections
 import re
-import numpy as np
 from numbers import Number
+
+import numpy
+import pandas
 from six import string_types, binary_type, text_type
 
 string_and_binary_types = (string_types,) + (binary_type,)
 
 
 def is_number(obj):
-    return isinstance(obj, (Number, np.number))
+    return isinstance(obj, (Number, numpy.number))
 
 
 def is_string_like(obj):
@@ -98,3 +100,13 @@ def is_sequence(x):
         return not isinstance(x, string_and_binary_types)
     except (TypeError, AttributeError):
         return False
+
+
+def is_pandas_like(x):
+
+    return isinstance(x, (pandas.Series, pandas.DataFrame))
+
+
+def is_numpy_like(x):
+
+    return isinstance(x, (numpy.ndarray))
