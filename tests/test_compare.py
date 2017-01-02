@@ -214,6 +214,44 @@ class TestCompare(unittest.TestCase):
         with self.assertRaises(AttributeError):
             comp.run()
 
+    def test_memory_low(self):
+
+        c = recordlinkage.Compare(
+            self.index_AB, self.A, self.B, low_memory=True
+        )
+
+        c.numeric('age', 'age', method='linear', offset=0, scale=3)
+        c.exact('given_name', 'given_name')
+        c.string('lastname', 'lastname', method='levenshtein')
+        c.string('street', 'street', method='levenshtein')
+
+        cols = c.vectors.columns.tolist()
+        self.assertEqual(len(cols), 4)
+
+    def test_memory_high(self):
+
+        c = recordlinkage.Compare(
+            self.index_AB, self.A, self.B, low_memory=False
+        )
+
+        c.numeric('age', 'age', method='linear', offset=0, scale=3)
+        c.exact('given_name', 'given_name')
+        c.string('lastname', 'lastname', method='levenshtein')
+        c.string('street', 'street', method='levenshtein')
+
+        # Check if all columns are there
+        cols = c.vectors.columns.tolist()
+        self.assertEqual(len(cols), 4)
+
+        # Check is the records are there
+        self.assertIsNotNone(c._df_a_indexed)
+        self.assertIsNotNone(c._df_b_indexed)
+
+        # Check memory clearing function
+        c.clear_memory()
+        self.assertIsNone(c._df_a_indexed)
+        self.assertIsNone(c._df_b_indexed)
+
 
 def ones_compare(s1, s2):
 
