@@ -16,9 +16,9 @@ class IndexError(Exception):
 def listify(x):
     """ make a list of the argument """
 
-    if is_list_like(x):
+    if isinstance(x, list):
         return x
-    elif is_numpy_like(x):
+    elif isinstance(x, tuple):
         return list(x)
     else:
         return [x]
