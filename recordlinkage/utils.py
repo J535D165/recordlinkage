@@ -2,6 +2,8 @@ import sys
 
 import numpy
 
+from recordlinkage.types import is_list_like, is_numpy_like
+
 
 # Errors and Exception handlers
 class IndexError(Exception):
@@ -9,6 +11,23 @@ class IndexError(Exception):
     pass
 
 # Checks and conversions
+
+
+def listify(x):
+    """ make a list of the argument """
+
+    if is_list_like(x):
+        return x
+    elif is_numpy_like(x):
+        return list(x)
+    else:
+        return [x]
+
+
+def unique(x):
+    """ return the unique values in a list (return_type list)"""
+
+    return list(set(x))
 
 
 def _resample(frame, index, level_i):
