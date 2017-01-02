@@ -5,20 +5,25 @@ import warnings
 import multiprocessing as mp
 
 import pandas
-from recordlinkage.types import is_list_like
 import numpy as np
 
-from recordlinkage.utils import _resample
-from recordlinkage.algorithms.distance import _1d_distance, _haversine_distance
-from recordlinkage.algorithms.numeric import _step_sim, \
-    _linear_sim, _squared_sim, _exp_sim, _gauss_sim
-from recordlinkage.algorithms.string import \
-    jaro_similarity, \
-    jarowinkler_similarity, \
-    levenshtein_similarity, \
-    damerau_levenshtein_similarity, \
-    qgram_similarity, \
-    cosine_similarity
+from recordlinkage.types import (is_list_like,
+                                 is_pandas_like,
+                                 is_numpy_like)
+from recordlinkage.utils import listify, unique
+from recordlinkage.algorithms.distance import (_1d_distance,
+                                               _haversine_distance)
+from recordlinkage.algorithms.numeric import (_step_sim,
+                                              _linear_sim,
+                                              _squared_sim,
+                                              _exp_sim,
+                                              _gauss_sim)
+from recordlinkage.algorithms.string import (jaro_similarity,
+                                             jarowinkler_similarity,
+                                             levenshtein_similarity,
+                                             damerau_levenshtein_similarity,
+                                             qgram_similarity,
+                                             cosine_similarity)
 
 
 def fillna_decorator(missing_value=np.nan):
@@ -31,7 +36,8 @@ def fillna_decorator(missing_value=np.nan):
 
             result = func(*args, **kwargs)
 
-            # fill missing values if missing_value is not a missing value like NaN or None.
+            # fill missing values if missing_value is not a missing value like
+            # NaN or None.
             if pandas.notnull(mv):
                 if isinstance(result, (np.ndarray)):
                     result[np.isnan(result)] = mv
@@ -45,23 +51,17 @@ def fillna_decorator(missing_value=np.nan):
     return real_decorator
 
 
-# def _label_or_column(label_or_column, dataframe):
-#     """
+def _check_labels(labels, df):
 
-#     This internal function to check if the argument is a column label or a
-#     pandas.Series or pandas.DataFrame. If the argument is a Series or
-#     DataFrame, nothing is done.
+    labels = [labels] if not is_list_like(labels) else labels
+    cols = df.columns.tolist() if isinstance(df, pandas.DataFrame) else df
 
-#     """
-#     try:
-#         return dataframe[label_or_column]
-#     except Exception:
-
-#         if isinstance(label_or_column, (pandas.Series, pandas.DataFrame)):
-#             return label_or_column
-#         else:
-#             raise ValueError("The label or column has to be a valid label " +
-#                              "or pandas.Series or pandas.DataFrame. ")
+    # Do some checks
+    for label in labels:
+        if label not in cols:
+            raise KeyError(
+                'label [%s] not in dataframe' % label
+            )
 
 
 class CompareCore(object):
@@ -71,7 +71,8 @@ class CompareCore(object):
 
     """
 
-    def __init__(self, pairs, df_a=None, df_b=None, low_memory=False, block_size=1e6, njobs=1, **kwargs):
+    def __init__(self, pairs, df_a=None, df_b=None, low_memory=False,
+                 block_size=1e6, njobs=1, **kwargs):
 
         # The dataframes
         self.df_a = df_a
@@ -97,11 +98,13 @@ class CompareCore(object):
                 DeprecationWarning
             )
 
-    def _pandas_indexing(self, frame, multi_index, level_i, chunk_size=1e6):
+    def _loc2(self, frame, multi_index, level_i):
         """
         Indexing a pandas.Series or pandas.DataFrame with one level of a
         MultiIndex.
         """
+
+        chunk_size = self.block_size
 
         # Number of chunks
         chunks = int(np.ceil(len(multi_index) / chunk_size))
@@ -129,20 +132,6 @@ class CompareCore(object):
         data.index = multi_index
 
         return data
-
-    def _check_labels(self, labels, columns):
-
-        # Sample the data and add it to the arguments.
-        labels = [labels] if not is_list_like(labels) else labels
-
-        # Do some checks
-        for label in labels:
-            if label not in columns:
-                raise KeyError(
-                    'the label [%s] is not in the dataframe' % label
-                )
-
-        return labels
 
     def compare(self, comp_func, labels_a, labels_b, *args, **kwargs):
         """
@@ -180,31 +169,80 @@ class CompareCore(object):
 
         if len(self.pairs) == 0:
             raise ValueError(
-                "The method compare() needs at least one record pair"
+                "need at least one record pair"
             )
 
+        # the name and store arguments
         name = kwargs.pop('name', None)
         store = kwargs.pop('store', True)
 
-        # Sample the data and add it to the arguments.
-        labels_a = self._check_labels(labels_a, list(self.df_a))
-        labels_b = self._check_labels(labels_b, list(self.df_b))
+        labels_a = listify(labels_a)
+        labels_b = listify(labels_b)
 
-        if self.low_memory:  # index only columns needed
+        print (type(labels_a))
 
-            data_a = self.df_a[labels_a]
-            data_b = self.df_b[labels_b]
+        data_a = []
 
-        else:  # Index all columns
+        for label_a in labels_a:
 
-            data_a = self.df_a
-            data_b = self.df_b
+            # the label is a numpy or pandas object
+            if is_numpy_like(label_a) or is_pandas_like(label_a):
+                data_a.append(label_a)
 
-        if self._df_a_indexed is None or self._df_b_indexed is None:
+            else:
+                # check requested labels (for better error messages)
+                _check_labels(labels_a, self.df_a)
 
-            # Make selections of columns
-            self._df_a_indexed = self._pandas_indexing(data_a, self.pairs, 0, self.block_size)
-            self._df_b_indexed = self._pandas_indexing(data_b, self.pairs, 1, self.block_size)
+                # # get the unique labels
+                # unique_labels_a = unique(labels_a)
+
+                if self.low_memory:
+
+                    df_a_label = self._loc2(self.df_a[label_a], self.pairs, 0)
+                    data_a.append(df_a_label)
+
+                # not low memory
+                else:
+                    if self._df_a_indexed is None:
+
+                        self._df_a_indexed = self._loc2(
+                            self.df_a, self.pairs, 0)
+
+                    data_a.append(self._df_a_indexed[label_a])
+
+        data_a = tuple(data_a)
+
+        data_b = []
+
+        for label_b in labels_b:
+
+            # the label is a numpy or pandas object
+            if is_numpy_like(label_b) or is_pandas_like(label_b):
+                data_b.append(label_b)
+
+            else:
+                # check requested labels (for better error messages)
+                _check_labels(labels_b, self.df_b)
+
+                # # get the unique labels
+                # unique_labels_b = unique(labels_b)
+
+                if self.low_memory:
+
+                    df_b_label = self._loc2(self.df_b[label_b], self.pairs, 1)
+                    data_b.append(df_b_label)
+
+                # not low memory
+                else:
+                    if self._df_b_indexed is None:
+
+                        self._df_b_indexed = self._loc2(
+                            self.df_b, self.pairs, 1)
+
+                    data_b.append(self._df_b_indexed[label_b])
+
+        data_b = tuple(data_b)
+
 
         if self.njobs > 1:
 
@@ -216,8 +254,8 @@ class CompareCore(object):
             for i in range(0, self.njobs):
 
                 # The data arguments
-                args_a = tuple(self._df_a_indexed.loc[i*chunk_size:(i+1)*chunk_size, da] for da in labels_a)
-                args_b = tuple(self._df_b_indexed.loc[i*chunk_size:(i+1)*chunk_size, db] for db in labels_b)
+                args_a = tuple(df_a_indexed.loc[i*chunk_size:(i+1)*chunk_size, da] for da in labels_a)
+                args_b = tuple(df_b_indexed.loc[i*chunk_size:(i+1)*chunk_size, db] for db in labels_b)
 
                 p = mp.Process(target=comp_func, args=args_a + args_b + args, kwargs=kwargs)
                 jobs.append(p)
@@ -233,12 +271,12 @@ class CompareCore(object):
 
         else:
 
-            # The data arguments
-            args_a = tuple(self._df_a_indexed.loc[:, da] for da in labels_a)
-            args_b = tuple(self._df_b_indexed.loc[:, db] for db in labels_b)
+            # # The data arguments
+            # args_a = tuple(df_a_indexed.loc[:, da] for da in labels_a)
+            # args_b = tuple(df_b_indexed.loc[:, db] for db in labels_b)
 
             # Compute the comparison
-            c = comp_func(*tuple(args_a + args_b + args), **kwargs)
+            c = comp_func(*tuple(data_a + data_b + args), **kwargs)
 
         # if a pandas series is returned, overwrite the index. The
         # returned index can be different than the MultiIndex passed to
@@ -246,8 +284,8 @@ class CompareCore(object):
         if isinstance(c, pandas.Series):
             c.index = self.vectors.index
 
+        # append column to Compare.vectors
         if store:
-            # append column to Compare.vectors
             name_or_id = name if name else len(self.vectors.columns)
             self.vectors[name_or_id] = c
 
@@ -262,6 +300,14 @@ class CompareCore(object):
         """
 
         raise AttributeError("method run() is deprecated")
+
+    def clear_memory(self):
+        """
+        Clear some memory when low_memory was set to True.
+        """
+
+        self._df_a_indexed = None
+        self._df_b_indexed = None
 
 
 class Compare(CompareCore):
