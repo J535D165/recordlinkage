@@ -252,6 +252,32 @@ class TestCompare(unittest.TestCase):
         self.assertIsNone(c._df_a_indexed)
         self.assertIsNone(c._df_b_indexed)
 
+    def test_series_argument(self):
+
+        # The columns with data
+        col_A = self.A['given_name']
+        col_B = self.B['given_name']
+
+        pairs = pandas.MultiIndex.from_arrays(
+            [arange(len(self.A)), arange(len(self.B))],
+            names=[self.A.index.name, self.B.index.name])
+
+        c = recordlinkage.Compare(
+            pairs, self.A, self.B, low_memory=True
+        )
+
+        # Check exact with column arguments
+        result = c.exact(col_A, col_B)
+
+        # check result is series
+        self.assertIsInstance(result, pandas.Series)
+
+        # resulting series has a pandas.MultiIndex
+        self.assertIsInstance(result.index, pandas.MultiIndex)
+
+        # resulting series has a pandas.MultiIndex
+        self.assertEqual(len(result), len(col_A))
+
 
 def ones_compare(s1, s2):
 
