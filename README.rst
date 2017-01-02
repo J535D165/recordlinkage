@@ -32,27 +32,25 @@ linkage and import the data manipulation framework **pandas**.
     import recordlinkage
     import pandas
 
-For examples, you try to link two datasets with personal information
-like name, sex and date of birth. Load these datasets into a pandas
-``DataFrame``.
+Load your data into pandas DataFrames. 
 
 .. code:: python
 
     df_a = pandas.DataFrame(YOUR_FIRST_DATASET)
     df_b = pandas.DataFrame(YOUR_SECOND_DATASET)
 
-Comparing all record can be computationally intensive. Therefore, we
-make smart set of candidate links with one of the built-in indexing
-techniques like **blocking**. Only records pairs that agree on the
-surname are included.
+Comparing all record can be computationally intensive. Therefore, we make
+smart set of candidate links with one of the built-in indexing techniques like
+**blocking**. In this example, only pairs or records that agree on the surname
+are included.
 
 .. code:: python
 
     index = recordlinkage.Pairs(df_a, df_b)
     candidate_links = index.block('surname')
 
-For each candidate link, compare the pair of records with the Compare
-class and the available comparison/similarity functions.
+For each candidate link, compare the records with one of the
+comparison or similarity algorithms in the Compare class.
 
 .. code:: python
 
@@ -68,7 +66,7 @@ class and the available comparison/similarity functions.
     # The comparison vectors
     c.vectors
 
-This record linkage package contains several classification alogirthms.
+This Python Record Linkage Toolkit contains multiple classification alogirthms.
 Plenty of the algorithms need trainings data (supervised learning) while
 others are unsupervised. An example of supervised learning:
 
@@ -123,7 +121,8 @@ Dependencies, installation and license
 .. |codecov| image:: https://codecov.io/gh/J535D165/recordlinkage/branch/master/graph/badge.svg
   :target: https://codecov.io/gh/J535D165/recordlinkage
 
-The following packages are required. You probably have it already ;)
+The following packages are required. You probably have most of them already
+installed.
 
 -  `numpy <http://www.numpy.org>`__
 -  `pandas <https://github.com/pydata/pandas>`__
