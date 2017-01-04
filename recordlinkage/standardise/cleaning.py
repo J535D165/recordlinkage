@@ -9,62 +9,56 @@ from sklearn.feature_extraction.text import strip_accents_ascii, \
 def clean(s, lowercase=True, replace_by_none=r'[^ \-\_A-Za-z0-9]+',
           replace_by_whitespace=r'[\-\_]', strip_accents=None,
           remove_brackets=True, encoding='utf-8', decode_error='strict'):
-    """
+    """Clean string variables.
 
     Clean strings in the Series by removing unwanted tokens, whitespace and
     brackets.
 
-    :param s: A Series to clean.
-    :param lower: Convert strings in the Series to lowercase. Default True.
-    :param replace_by_none: The matches of this regular expression are
-            replaced by ''.
-    :param replace_by_whitespace: The matches of this regular expression are
-            replaced by a whitespace.
-    :param remove_brackets: Remove all content between brackets and the
-            brackets themselves. Default True.
-    :param strip_accents: Remove accents during the preprocessing step.
-            'ascii' is a fast method that only works on characters that have
-            an direct ASCII mapping.
-            'unicode' is a slightly slower method that works on any characters.
-            None (default) does nothing.
-    :param encoding: If bytes are given, this encoding is used to
-            decode.
-    :param decode_error: Instruction on what to do if a byte Series is given
-            that contains characters not of the given `encoding`. By default,
-            it is 'strict', meaning that a UnicodeDecodeError will be raised.
-            Other values are 'ignore' and 'replace'.
+    Parameters
+    ----------
+    s : pandas.Series
+        A Series to clean.
+    lower : bool
+        Convert strings in the Series to lowercase. Default True.
+    replace_by_none : str
+        The matches of this regular expression are replaced by ''.
+    replace_by_whitespace : str
+        The matches of this regular expression are replaced by a whitespace.
+    remove_brackets : bool
+        Remove all content between brackets and the brackets themselves.
+        Default True.
+    strip_accents : {'ascii', 'unicode', None}
+        Remove accents during the preprocessing step. 'ascii' is a fast method
+        that only works on characters that have an direct ASCII mapping.
+        'unicode' is a slightly slower method that works on any characters.
+        None (default) does nothing.
+    encoding : string, default='utf-8'
+        If bytes are given, this encoding is used to decode.
+    decode_error : {'strict', 'ignore', 'replace'}
+        Instruction on what to do if a byte Series is given that contains
+        characters not of the given `encoding`. By default, it is 'strict',
+        meaning that a UnicodeDecodeError will be raised. Other values are
+        'ignore' and 'replace'.
 
-    :type s: pandas.Series
-    :type lower: bool
-    :type replace_by_none: str
-    :type replace_by_whitespace: str
-    :type remove_brackets: bool
-    :type strip_accents: {'ascii', 'unicode', None}
-    :type encoding: string, default='utf-8'
-    :type decode_error: {'strict', 'ignore', 'replace'}
+    Example
+    -------
+    >>> import pandas
+    >>> from recordlinkage.standardise import clean
+    >>>
+    >>> name = ['Mary-ann', 'Bob :)', 'Angel', 'Bob (alias Billy)', None]
+    >>> s = pandas.Series(names)
+    >>> print(clean(s))
+    0    mary ann
+    1         bob
+    2       angel
+    3         bob
+    4         NaN
+    dtype: object
 
-    :return: A cleaned Series of strings.
-    :rtype: pandas.Series
-
-    Example:
-
-    .. code:: python
-
-        >>> import pandas
-        >>> from recordlinkage.standardise import clean
-
-        >>> name = ['Mary-ann', 'Bob :)', 'Angel', 'Bob (alias Billy)', None]
-        >>> s = pandas.Series(names)
-
-        >>> print(clean(s))
-
-        0    mary ann
-        1         bob
-        2       angel
-        3         bob
-        4         NaN
-        dtype: object
-
+    Returns
+    -------
+    pandas.Series:
+        A cleaned Series of strings.
 
     """
 
@@ -120,15 +114,18 @@ def clean(s, lowercase=True, replace_by_none=r'[^ \-\_A-Za-z0-9]+',
 
 
 def phonenumbers(s):
-    """
+    """Clean phonenumbers by removing all non-numbers (except +).
 
-    Clean phonenumbers by removing all non-numbers (except +).
+    Parameters
+    ----------
+    s: pandas.Series
+        A Series to clean.
 
-    :param s: A Series to clean.
-    :type s: pandas.Series
+    Returns
+    -------
+    pandas.Series
+        A Series with cleaned phonenumbers.
 
-    :return: A Series with cleaned phonenumbers.
-    :rtype: pandas.Series
     """
 
     # Remove all special tokens
@@ -138,15 +135,17 @@ def phonenumbers(s):
 
 
 def value_occurence(s):
-    """
+    """Count the number of times each value occurs.
 
-    Count the number of times each value occurs. This function returns the
-    counts for each row, in contrast with `pandas.value_counts
-    <http://pandas.pydata.org/pandas-
+    This function returns the counts for each row, in contrast with
+    `pandas.value_counts <http://pandas.pydata.org/pandas-
     docs/stable/generated/pandas.Series.value_counts.html>`_.
 
-    :return: A Series with value counts.
-    :rtype: pandas.Series
+    Returns
+    -------
+    pandas.Series
+        A Series with value counts.
+
     """
 
     # https://github.com/pydata/pandas/issues/3729

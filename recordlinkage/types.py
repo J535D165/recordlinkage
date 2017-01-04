@@ -78,6 +78,7 @@ def is_hashable(arg):
     >>> is_hashable(a)
     False
     """
+
     # unfortunately, we can't use isinstance(arg, collections.Hashable), which
     # can be faster than calling hash, because numpy scalars on Python 3 fail
     # this test

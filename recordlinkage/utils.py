@@ -14,7 +14,7 @@ class IndexError(Exception):
 
 
 def listify(x):
-    """ make a list of the argument """
+    """Make a list of the argument if it is not a list."""
 
     if isinstance(x, list):
         return x
@@ -25,7 +25,7 @@ def listify(x):
 
 
 def unique(x):
-    """ return the unique values in a list (return_type list)"""
+    """Convert a list in a unique list."""
 
     return list(set(x))
 
@@ -57,13 +57,12 @@ def split_or_pass(v):
     """
     Make a tuple of a single value or return the tuple.
 
-    :Example:
-
-            >>> v1, v2 = split_or_tuple(3)
-            v1 is 3 and v2 and 3
-
-            >>> v1, v2 = split_or_tuple((3,4))
-            v1 is 3 and v2 and 4
+    Example
+    -------
+    >>> v1, v2 = split_or_tuple(3)
+    v1 is 3 and v2 and 3
+    >>> v1, v2 = split_or_tuple((3,4))
+    v1 is 3 and v2 and 4
 
     """
 
@@ -80,7 +79,7 @@ def split_or_pass(v):
 
 
 def _check_jellyfish(raise_error=True):
-    """
+    """Check if jellyfish is installed.
 
     Check if the jellyfish is imported. If it is imported, return True. If not
     succesfully imported, raise if raise_error == True and return false if
@@ -101,7 +100,7 @@ def _check_jellyfish(raise_error=True):
 
 
 def max_number_of_pairs(*args):
-    """ Compute the maximum number of pairs """
+    """Compute the maximum number of pairs."""
 
     if not args:
         raise ValueError('expected at least one dataframe')

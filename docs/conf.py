@@ -56,6 +56,7 @@ import recordlinkage
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.doctest',
+    'sphinx.ext.napoleon',
     'nbsphinx'
 ]
 
@@ -317,3 +318,16 @@ texinfo_domain_indices = False
 autodoc_member_order = 'bysource' 
 
 nbsphinx_execute = 'never'
+
+# -- Napoleon options ---------------------------------------------------
+
+napoleon_google_docstring = False
+napoleon_numpy_docstring = True
+napoleon_include_private_with_doc = False
+napoleon_include_special_with_doc = False
+napoleon_use_admonition_for_examples = False
+napoleon_use_admonition_for_notes = True
+napoleon_use_admonition_for_references = True
+napoleon_use_ivar = False
+napoleon_use_param = True
+napoleon_use_rtype = False

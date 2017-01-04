@@ -9,7 +9,7 @@ from recordlinkage.compat.six.moves.urllib.request import urlopen
 
 
 def load_krebsregister(block=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], missing_values=None, shuffle=True):
-    """
+    """Dataset 'Krebsregister'
 
     This dataset of comparison patterns was obtained in a epidemiological
     cancer study in Germany. The comparison patterns were created by the
@@ -17,44 +17,47 @@ def load_krebsregister(block=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], missing_values=Non
     and the University Medical Center of Johannes Gutenberg University
     (Mainz, Germany). The dataset is available for research online.
 
-            *"The records represent individual data including first and family
-            name, sex, date of birth and postal code, which were collected
-            through iterative insertions in the course of several years. The
-            comparison patterns in this data set are based on a sample of
-            100.000 records dating from 2005 to 2008. Data pairs were
-            classified as "match" or "non-match" during  an extensive manual
-            review where several documentarists were involved.  The resulting
-            classification formed the basis for assessing the quality of the
-            registry's own record linkage procedure.*
+        "The records represent individual data including first and family
+        name, sex, date of birth and postal code, which were collected
+        through iterative insertions in the course of several years. The
+        comparison patterns in this data set are based on a sample of
+        100.000 records dating from 2005 to 2008. Data pairs were
+        classified as "match" or "non-match" during  an extensive manual
+        review where several documentarists were involved.  The resulting
+        classification formed the basis for assessing the quality of the
+        registry's own record linkage procedure.
 
-            *In order to limit the amount of patterns a blocking procedure was
-            applied, which selects only record pairs that meet specific
-            agreement conditions. The results of the following six blocking
-            iterations were merged together:*
+        In order to limit the amount of patterns a blocking procedure was
+        applied, which selects only record pairs that meet specific
+        agreement conditions. The results of the following six blocking
+        iterations were merged together:
 
-            1. *Phonetic equality of first name and family name, equality of
-                    date of birth.*
-            2. *Phonetic equality of first name, equality of day of birth.*
-            3. *Phonetic equality of first name, equality of month of birth.*
-            4. *Phonetic equality of first name, equality of year of birth.*
-            5. *Equality of complete date of birth.*
-            6. *Phonetic equality of family name, equality of sex.*
+        1. Phonetic equality of first name and family name, equality of date of birth.
+        2. Phonetic equality of first name, equality of day of birth.
+        3. Phonetic equality of first name, equality of month of birth.
+        4. Phonetic equality of first name, equality of year of birth.
+        5. Equality of complete date of birth.
+        6. Phonetic equality of family name, equality of sex.
 
-            *This procedure resulted in 5.749.132 record pairs, of which
-            20.931 are matches. The data set is split into 10 blocks of
-            (approximately) equal size and ratio of matches to non-matches."*
+        This procedure resulted in 5.749.132 record pairs, of which
+        20.931 are matches. The data set is split into 10 blocks of
+        (approximately) equal size and ratio of matches to non-matches."
 
-    :param block: An integer or a list with integers between 1 and 10. The
-            blocks are the blocks explained in the description.
-    :param missing_values: The value of the missing values. Default NaN.
-    :param shuffle: Shuffle the record pairs. Default True.
+    Parameters
+    ----------
+    block : int, list
+        An integer or a list with integers between 1 and 10. The blocks are
+        the blocks explained in the description.
+    missing_values : object, int, float
+        The value of the missing values. Default NaN.
+    shuffle : bool
+        Shuffle the record pairs. Default True.
 
-    :type missing_values: object, int, float
-    :type shuffle: bool
-
-    :return: A data frame with comparison vectors and a multi index with the
-            indices of the matches.
-    :rtype: (pandas.DataFrame, pandas.MultiIndex)
+    Returns
+    -------
+    (pandas.DataFrame, pandas.MultiIndex)
+        A data frame with comparison vectors and a multi index with the
+        indices of the matches.
 
     """
 
@@ -130,7 +133,7 @@ def _krebsregister_block(block):
 
 
 def load_febrl1():
-    """
+    """FEBRL dataset 1
 
     The Freely Extensible Biomedical Record Linkage (Febrl) package was
     distributed with a dataset generator and four datasets generated with the
@@ -140,8 +143,10 @@ def load_febrl1():
             *"This data set contains 1000 records (500 original and 500
             duplicates, with exactly one duplicate per original record."*
 
-    :return: A pandas DataFrame with Febrl dataset1.csv.
-    :rtype: pandas.DataFrame
+    Returns
+    -------
+    pandas.DataFrame
+        A pandas DataFrame with Febrl dataset1.csv.
 
     """
 
@@ -149,7 +154,7 @@ def load_febrl1():
 
 
 def load_febrl2():
-    """
+    """FEBRL dataset 2
 
     The Freely Extensible Biomedical Record Linkage (Febrl) package was
     distributed with a dataset generator and four datasets generated with the
@@ -167,8 +172,10 @@ def load_febrl2():
             114 originals records have 1 duplicate record
             572 originals records have no duplicate record"*
 
-    :return: A pandas DataFrame with Febrl dataset2.csv.
-    :rtype: pandas.DataFrame
+    Returns
+    -------
+    pandas.DataFrame
+        A pandas DataFrame with Febrl dataset2.csv.
 
     """
 
@@ -176,7 +183,7 @@ def load_febrl2():
 
 
 def load_febrl3():
-    """
+    """FEBRL dataset 3
 
     The Freely Extensible Biomedical Record Linkage (Febrl) package was
     distributed with a dataset generator and four datasets generated with the
@@ -194,8 +201,10 @@ def load_febrl3():
             368 originals records have 1 duplicate record
             1835 originals records have no duplicate record"*
 
-    :return: A pandas DataFrame with Febrl dataset3.csv.
-    :rtype: pandas.DataFrame
+    Returns
+    -------
+    pandas.DataFrame
+        A pandas DataFrame with Febrl dataset3.csv.
 
     """
 
@@ -203,7 +212,7 @@ def load_febrl3():
 
 
 def load_febrl4():
-    """
+    """FEBRL dataset 4
 
     The Freely Extensible Biomedical Record Linkage (Febrl) package was
     distributed with a dataset generator and four datasets generated with the
@@ -217,9 +226,12 @@ def load_febrl4():
             (containing the 5000 duplicate records) These two data sets can be
             used for testing linkage procedures."*
 
-    :return: A pandas DataFrame with Febrl dataset4a.csv and a pandas
-            DataFrame with Febrl dataset4b.csv.
-    rtype: (pandas.DataFrame, pandas.DataFrame)
+
+    Returns
+    -------
+    (pandas.DataFrame, pandas.DataFrame)
+        A pandas DataFrame with Febrl dataset4a.csv and a pandas dataframe
+        with Febrl dataset4b.csv.
 
     """
 

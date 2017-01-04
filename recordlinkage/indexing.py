@@ -280,9 +280,7 @@ def _qgram(df_a, df_b, on=None, left_on=None, right_on=None, threshold=0.8):
 
 
 class PairsCore(object):
-    """
-
-    Core class for making record pairs.
+    """Core class for making record pairs.
 
     """
 
@@ -316,16 +314,23 @@ class PairsCore(object):
     # -- Index methods ------------------------------------------------------
 
     def index(self, index_func, *args, **kwargs):
-        """
+        """Main function to make an index of record pairs.
 
         Use a custom function to make record pairs of one or two dataframes.
         Each function should return a pandas.MultiIndex with record pairs.
 
-        :param index_func: An indexing function
-        :type index_func: function
+        Parameters
+        ----------
+        index_func: function
+            An indexing function
 
-        :return: MultiIndex
-        :rtype: pandas.MultiIndex
+        Returns
+        -------
+        pandas.MultiIndex
+            A pandas multiindex with record pairs. The first position in the
+            index is the index of a record in dataframe A and the second
+            position is the index of a record in dataframe B.
+
         """
 
         # linking
@@ -370,7 +375,8 @@ class PairsCore(object):
 
 
 class Pairs(PairsCore):
-    """
+    """Make record pairs.
+
     This class can be used to make record pairs. Multiple indexation methods
     can be used to make a smart selection of record pairs. Indexation methods
     included:
@@ -384,58 +390,59 @@ class Pairs(PairsCore):
     For more information about indexing and methods to reduce the number of
     record pairs, see Christen 2012 [christen2012]_.
 
-    :param df_a: The first dataframe.
-    :param df_b: The second dataframe.
-    :param chunks: The chunks to divide the result in.
-    :param verify_integrity: Verify the integrity of the dataframes
+    Parameters
+    ----------
+    df_a : pandas.DataFrame
+        The first dataframe.
+    df_b : pandas.DataFrame
+        The second dataframe.
+    chunks : int
+        The chunks to divide the result in.
+    verify_integrity : bool
+        Verify the integrity of the dataframes
             (default True).
 
-    :type df_a: pandas.DataFrame
-    :type df_b: pandas.DataFrame
-    :type chunks: int
-    :type verify_integrity: bool
+    Attributes
+    ----------
+    df_a : pandas.DataFrame
+        The first DataFrame.
+    df_b : pandas.DataFrame
+        The second DataFrame.
+    n_pairs : int
+        The number of candidate record pairs.
+    reduction : float
+        The reduction ratio.
 
-    :returns: Candidate links
-    :rtype: pandas.MultiIndex
-
-    :var df_a: The first DataFrame.
-    :var df_b: The second DataFrame.
-    :var n_pairs: The number of candidate record pairs.
-    :var reduction: The reduction ratio.
-
-    :vartype df_a: pandas.DataFrame
-    :vartype df_b: pandas.DataFrame
-    :vartype n_pairs: int
-    :vartype reduction: float
-
-    Example:
-
+    Examples
+    --------
     In the following example, the record pairs are made for two historical
     datasets with census data. The datasets are named ``census_data_1980``
     and ``census_data_1990``.
 
-    .. code:: python
+    >>> pcl = recordlinkage.Pairs(census_data_1980, census_data_1990)
+    >>> pcl.block('first_name')
 
-            >>> pcl = recordlinkage.Pairs(census_data_1980, census_data_1990)
-            >>> pcl.block('first_name')
-
-    .. seealso::
-
-            .. [christen2012] Christen, 2012. Data Matching Concepts and
-                    Techniques for Record Linkage, Entity Resolution, and
-                    Duplicate Detection
+    References
+    ----------
+    .. [christen2012] Christen, 2012. Data Matching Concepts and
+            Techniques for Record Linkage, Entity Resolution, and
+            Duplicate Detection
 
     """
 
     def full(self):
-        """
+        """Make a full index (all possible pairs).
+
         Make an index with all possible record pairs. In case of linking two
         dataframes (A and B), the number of pairs is len(A)*len(B). In case of
         deduplicating a dataframe A, the number of pairs is
         len(A)*(len(A)-1)/2.
 
-        :return: The index of the candidate record pairs
-        :rtype: pandas.MultiIndex
+        Returns
+        -------
+        pandas.MultiIndex
+            The index of the candidate record pairs
+
         """
         if self.deduplication:
             return self.index(_fullindex_dedup)
@@ -443,23 +450,28 @@ class Pairs(PairsCore):
             return self.index(_fullindex_link)
 
     def block(self, on=None, left_on=None, right_on=None):
-        """
+        """Make a block index.
+
         Return all record pairs that agree on the passed attribute(s). This
         method is known as *blocking*
 
-        :param on: A column name or a list of column names. These columns are
-                used to block on.
-        :param left_on: A column name or a list of column names of dataframe
-                A. These columns are used to block on.
-        :param right_on: A column name or a list of column names of dataframe
-                B. These columns are used to block on.
+        Parameters
+        ----------
+        on : label
+            A column name or a list of column names. These columns are used to
+            block on.
+        left_on : label
+            A column name or a list of column names of dataframe A. These
+            columns are used to block on.
+        right_on : label
+            A column name or a list of column names of dataframe B. These
+            columns are used to block on.
 
-        :type on: label
-        :type left_on: label
-        :type right_on: label
+        Returns
+        -------
+        pandas.MultiIndex
+            The index of the candidate record pairs
 
-        :return: The index of the candidate record pairs
-        :rtype: pandas.MultiIndex
         """
         return self.index(
             _blockindex,
@@ -470,37 +482,31 @@ class Pairs(PairsCore):
         self, on, window=3, sorting_key_values=None, block_on=[],
         block_left_on=[], block_right_on=[]
     ):
+        """Make a Sorted Neighbourhood index.
+
+        Parameters
+        ----------
+        on: label
+            Specify the on to make a sorted index
+        window: int
+            The width of the window, default is 3
+        sorting_key_values: array
+            A list of sorting key values (optional).
+        block_on: label
+            Additional columns to use standard blocking on
+        block_left_on: label
+            Additional columns of the left dataframe to use standard blocking
+            on.
+        block_right_on: label
+            Additional columns of the right dataframe to use standard
+            blocking on
+
+        Returns
+        -------
+        pandas.MultiIndex
+            The index of the candidate record pairs
+
         """
-        Create a Sorted Neighbourhood index.
-
-        :param on: Specify the on to make a sorted index
-        :param window: The width of the window, default is 3
-        :param sorting_key_values: A list of sorting key values (optional).
-        :param block_on: Additional columns to use standard blocking on
-        :param block_left_on: Additional columns in the left dataframe to use
-                standard blocking on
-        :param block_right_on: Additional columns in the right dataframe to
-                use standard blocking on
-
-        :type on: label
-        :type window: int
-        :type sorting_key_values: array
-        :type on: label
-        :type left_on: label
-        :type right_on: label
-
-        :return: The index of the candidate record pairs
-        :rtype: pandas.MultiIndex
-        """
-
-        # if self.batch and not sorting_key_values:
-
-        #     if self.deduplication:
-        #         sorting_key_values = numpy.sort(numpy.unique(self.df_a[on].values))
-        #     else:
-        #         sorting_key_values = numpy.sort(numpy.unique(
-        #             numpy.concatenate([self.df_a[on].values, self.df_b[on].values])
-        #         ))
 
         return self.index(
             _sortedneighbourhood,
@@ -509,17 +515,19 @@ class Pairs(PairsCore):
             block_right_on=block_right_on)
 
     def random(self, n):
-        """
-        random(n)
+        """Make an index of randomly selected record pairs.
 
-        Make an index of randomly selected record pairs
+        Parameters
+        ----------
+        n : int
+            The number of record pairs to return. The integer n should satisfy
+            0 < n <= len(A)*len(B).
 
-        :param n: The number of record pairs to return. The integer
-                n should satisfy 0 < n <= len(A)*len(B).
-        :type n: int
+        Returns
+        -------
+        pandas.MultiIndex
+            The index of the candidate record pairs
 
-        :return: The index of the candidate record pairs
-        :rtype: pandas.MultiIndex
         """
 
         if not isinstance(n, int):
@@ -539,22 +547,26 @@ class Pairs(PairsCore):
 
         Use Q-gram string comparing metric to make an index.
 
-        :param on: A column name or a list of column names. These columns are
-                used to index on
-        :param left_on: A column name or a list of column names of dataframe
-                A. These columns are used to index on
-        :param right_on: A column name or a list of column names of dataframe
-                B. These columns are used to index on
-        :param threshold: Record pairs with a similarity above the threshold
-                are candidate record pairs. [Default 0.8]
+        Parameters
+        ----------
+        on : label
+            A column name or a list of column names. These columns are used to
+            index on.
+        left_on : label
+            A column name or a list of column names of dataframe A. These
+            columns are used to index on.
+        right_on : label
+            A column name or a list of column names of dataframe B. These
+            columns are used to index on.
+        threshold : float
+            Record pairs with a similarity above the threshold are candidate
+            record pairs. [Default 0.8]
 
-        :type on: label
-        :type left_on: label
-        :type right_on: label
-        :type threshold: float
+        Returns
+        -------
+        pandas.MultiIndex
+            The index of the candidate record pairs
 
-        :return: The index of the candidate record pairs
-        :rtype: pandas.MultiIndex
         """
         return self.index(_qgram, *args, **kwargs)
 
@@ -565,16 +577,5 @@ class Pairs(PairsCore):
 
     @property
     def reduction(self):
-        # """
-
-        # The relative reduction of records pairs as the result of indexing.
-
-        # :param n_pairs: The number of record pairs.
-
-        # :type n_pairs: int
-
-        # :return: Value between 0 and 1
-        # :rtype: float
-        # """
 
         return 1 - self.n_pairs / self.maximum_number_of_pairs

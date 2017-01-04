@@ -17,11 +17,10 @@ class LearningError(Exception):
 
 
 class Classifier(object):
-    """
+    """Base class for classification of records pairs.
 
-    Base class for classification of records pairs. This class contains
-    methods for training the classifier. Distinguish different types of
-    training, such as supervised and unsupervised learning.
+    This class contains methods for training the classifier. Distinguish
+    different types of training, such as supervised and unsupervised learning.
 
     """
 
@@ -34,26 +33,26 @@ class Classifier(object):
         self.classifier = None
 
     def learn(self, comparison_vectors, match_index, return_type='index'):
-        """
+        """Train the classifier.
 
-        Train the classifier.
+        Parameters
+        ----------
+        comparison_vectors : pandas.DataFrame
+            The comparison vectors.
+        match_index : pandas.MultiIndex
+            The true matches.
+        return_type : 'index' (default), 'series', 'array'
+            The format to return the classification result. The argument value
+            'index' will return the pandas.MultiIndex of the matches. The
+            argument value 'series' will return a pandas.Series with zeros
+            (distinct) and ones (matches). The argument value 'array' will
+            return a numpy.ndarray with zeros and ones.
 
-        :param comparison_vectors: The comparison vectors.
-        :param match_index: The true matches.
-        :param return_type: The format to return the classification result.
-                The argument value 'index' will return the pandas.MultiIndex
-                of the matches. The argument value 'series' will return a
-                pandas.Series with zeros (distinct) and ones (matches). The
-                argument value 'array' will return a numpy.ndarray with zeros
-                and ones.
-
-        :type comparison_vectors: pandas.DataFrame
-        :type match_index: pandas.MultiIndex
-        :type return_type: 'index' (default), 'series', 'array'
-
-        :return: A pandas Series with the labels 1 (for the matches) and 0
-                (for the non-matches).
-        :rtype: pandas.Series
+        Returns
+        -------
+        pandas.Series
+            A pandas Series with the labels 1 (for the matches) and 0 (for the
+            non-matches).
 
         """
 
@@ -84,29 +83,34 @@ class Classifier(object):
         return self.predict(comparison_vectors, return_type)
 
     def predict(self, comparison_vectors, return_type='index'):
-        """
+        """Predict the class of the record pairs.
 
         Classify a set of record pairs based on their comparison vectors into
         matches, non-matches and possible matches. The classifier has to be
         trained to call this method.
 
-        :param comparison_vectors: The dataframe with comparison vectors.
-        :param return_type: The format to return the classification result.
-                The argument value 'index' will return the pandas.MultiIndex
-                of the matches. The argument value 'series' will return a
-                pandas.Series with zeros (distinct) and ones (matches). The
-                argument value 'array' will return a numpy.ndarray with zeros
-                and ones.
-        :type comparison_vectors: pandas.DataFrame
-        :type return_type: 'index' (default), 'series', 'array'
 
-        :return: A pandas Series with the labels 1 (for the matches) and 0
-                (for the non-matches).
-        :rtype: pandas.Series
+        Parameters
+        ----------
+        comparison_vectors : pandas.DataFrame
+            Dataframe with comparison vectors.
+        return_type : 'index' (default), 'series', 'array'
+            The format to return the classification result. The argument value
+            'index' will return the pandas.MultiIndex of the matches. The
+            argument value 'series' will return a pandas.Series with zeros
+            (distinct) and ones (matches). The argument value 'array' will
+            return a numpy.ndarray with zeros and ones.
+
+        Returns
+        -------
+        pandas.Series
+            A pandas Series with the labels 1 (for the matches) and 0 (for the
+            non-matches).
 
         """
         try:
-            prediction = self.classifier.predict(comparison_vectors.as_matrix())
+            prediction = self.classifier.predict(
+                comparison_vectors.as_matrix())
         except NotFittedError:
             raise NotFittedError(
                 "This {} is not fitted yet. Call 'learn' with appropriate "
@@ -118,20 +122,24 @@ class Classifier(object):
         return self._return_result(prediction, return_type, comparison_vectors)
 
     def prob(self, comparison_vectors, return_type='series'):
-        """
+        """Compute the probabilities for each record pair.
 
         For each pair of records, estimate the probability of being a match.
 
-        :param comparison_vectors: The dataframe with comparison vectors.
-        :param return_type: Return a pandas series or numpy array. Default
-                'series'.
+        Parameters
+        ----------
+        comparison_vectors : pandas.DataFrame
+            The dataframe with comparison vectors.
+        return_type : 'series' or 'array'
+            Return a pandas series or numpy array. Default 'series'.
 
-        :type comparison_vectors: pandas.DataFrame
-        :type return_type: 'series' or 'array'
+        Returns
+        -------
+        pandas.Series or numpy.ndarray
+            The probability of being a match for each record pair.
 
-        :return: The probability of being a match for each record pair.
-        :rtype: pandas.Series or numpy.ndarray
         """
+
         probs = self.classifier.predict_proba(comparison_vectors.as_matrix())
 
         if return_type == 'series':
@@ -146,10 +154,7 @@ class Classifier(object):
     def _return_result(
         self, result, return_type='index', comparison_vectors=None
     ):
-        """
-
-        Internal function to return different formatted classification
-        results.
+        """Return different formatted classification results.
 
         """
 
@@ -179,8 +184,7 @@ class Classifier(object):
 
 
 class KMeansClassifier(Classifier):
-    """
-    KMeansClassifier()
+    """KMeans classifier.
 
     The `K-means clusterings algorithm (wikipedia)
     <https://en.wikipedia.org/wiki/K-means_clustering>`_ partitions candidate
@@ -189,11 +193,11 @@ class KMeansClassifier(Classifier):
     trainings data, but it needs two starting points (one for the matches and
     one for the non-matches). The K-means clustering problem is NP-hard.
 
-    .. note::
-
-            There are way better methods for linking records than the k-means
-            clustering algorithm. However, this algorithm does not need
-            trainings data and is useful to do an initial partition.
+    Note
+    ----
+    There are way better methods for linking records than the k-means
+    clustering algorithm. However, this algorithm does not need trainings data
+    and is useful to do an initial partition.
 
     """
 
@@ -203,27 +207,28 @@ class KMeansClassifier(Classifier):
         self.classifier = cluster.KMeans(n_clusters=2, n_init=1)
 
     def learn(self, comparison_vectors, return_type='index'):
-        """
+        """Train the K-means classifier.
 
-        Train the K-means classifier. The K-means classifier is unsupervised
-        and therefore does not need labels. The K-means classifier classifies
-        the data into two sets of links and non- links. The starting point of
-        the cluster centers are 0.05 for the non-matches and 0.95 for the
-        matches.
+        The K-means classifier is unsupervised and therefore does not need
+        labels. The K-means classifier classifies the data into two sets of
+        links and non- links. The starting point of the cluster centers are
+        0.05 for the non-matches and 0.95 for the matches.
 
-        :param comparison_vectors: The dataframe with comparison vectors.
-        :param return_type: The format to return the classification result.
-                The argument value 'index' will return the pandas.MultiIndex
-                of the matches. The argument value 'series' will return a
-                pandas.Series with zeros (distinct) and ones (matches). The
-                argument value 'array' will return a numpy.ndarray with zeros
-                and ones.
+        Parameters
+        ----------
+        comparison_vectors : pandas.DataFrame
+            The dataframe with comparison vectors.
+        return_type : 'index' (default), 'series', 'array'
+            The format to return the classification result. The argument value
+            'index' will return the pandas.MultiIndex of the matches. The
+            argument value 'series' will return a pandas.Series with zeros
+            (distinct) and ones (matches). The argument value 'array' will
+            return a numpy.ndarray with zeros and ones.
 
-        :type comparison_vectors: pandas.DataFrame
-        :type return_type: 'index' (default), 'series', 'array'
-
-        :return: The prediction (see also the argument 'return_type')
-        :rtype: pandas.MultiIndex, pandas.Series or numpy.ndarray
+        Returns
+        -------
+        pandas.MultiIndex, pandas.Series or numpy.ndarray
+            The prediction (see also the argument 'return_type')
 
         """
 
@@ -245,26 +250,29 @@ class KMeansClassifier(Classifier):
             "It is not possible to compute "
             "probabilities for the KMeansClassfier")
 
+
 # DeterministicClassifier = LogisticRegressionClassifier
 class LogisticRegressionClassifier(Classifier):
-    """
-    LogisticRegressionClassifier(coefficients=None, intercept=None)
+    """Logistic Regression Classifier.
 
     This classifier is an application of the `logistic regression model
     (wikipedia) <https://en.wikipedia.org/wiki/Logistic_regression>`_. The
     classifier partitions candidate record pairs into matches and non-matches.
 
-    :param coefficients: The coefficients of the logistic regression.
-    :param intercept: The interception value.
+    Parameters
+    ----------
+    coefficients : list, numpy.array
+        The coefficients of the logistic regression.
+    intercept : float
+        The interception value.
 
-    :type coefficients: list, numpy.array
-    :type intercept: float
+    Attributes
+    ----------
+    coefficients : numpy.array
+        The coefficients of the logistic regression.
+    intercept : float
+        The interception value.
 
-    :var coefficients: The coefficients of the logistic regression.
-    :var intercept: The interception value.
-
-    :vartype coefficients: numpy.array
-    :vartype intercept: float
     """
 
     def __init__(self, coefficients=None, intercept=None):
@@ -321,16 +329,16 @@ class NaiveBayesClassifier(Classifier):
     """
     NaiveBayesClassifier(alpha=1.0)
 
+    Naive Bayes Classifier.
+
     The `Naive Bayes classifier (wikipedia)
     <https://en.wikipedia.org/wiki/Naive_Bayes_classifier>`_ partitions
     candidate record pairs into matches and non-matches. The classifier is
     based on probabilistic principles. The Naive Bayes classification method
     is proven to be mathematical equivalent with the Fellegi and Sunter model.
 
-    :param alpha: Additive (Laplace/Lidstone) smoothing parameter
-            (0 for no smoothing).
-
-    :type alpha: float
+    alpha : float
+        Additive (Laplace/Lidstone) smoothing parameter (0 for no smoothing).
 
     """
 
@@ -343,6 +351,8 @@ class NaiveBayesClassifier(Classifier):
 class SVMClassifier(Classifier):
     """
     SVMClassifier()
+
+    Support Vector Machines
 
     The `Support Vector Machine classifier (wikipedia)
     <https://en.wikipedia.org/wiki/Support_vector_machine>`_ partitions
@@ -366,7 +376,7 @@ class SVMClassifier(Classifier):
 
 
 class FellegiSunter(Classifier):
-    """
+    """Fellegi and Sunter framework.
 
     Base class for probabilistic classification of records pairs with the
     Fellegi and Sunter (1969) framework.
@@ -377,32 +387,12 @@ class FellegiSunter(Classifier):
 
         self.random_decision_rule = random_decision_rule
 
-    # def _params_valid(self):
-
-    #   try:
-    #       # Check labels
-    #       {self.u[col][label] for label in label_dict.iteritems() for col, label_dict in self.m.iteritems()}
-    #       {self.m[col][label] for label in label_dict.iteritems() for col, label_dict in self.u.iteritems()}
-
-    #       return True
-
-    #   except Exception:
-    #       return False
-
     @property
     def p(self):
         try:
             return self.algorithm._p
         except Exception:
             pass
-
-    # @property
-    # def w(self):
-
-    #   if _params_valid:
-    #       return {col:{label:numpy.log(self.m[col][label]/self.u[col][label]) for label in label_dict.iteritems()} for col, label_dict in self.m.iteritems()}
-    #   else:
-    #       raise ValueError
 
     def _decision_rule(self, probabilities, threshold, random_decision_rule=False):
 
@@ -414,7 +404,7 @@ class FellegiSunter(Classifier):
 
 
 class ECMClassifier(FellegiSunter):
-    """
+    """Expectation/Conditional Maxisation vlassifier.
 
     [EXPERIMENTAL] Expectation/Conditional Maximisation algorithm used as
     classifier. This probabilistic record linkage algorithm is used in
@@ -428,28 +418,31 @@ class ECMClassifier(FellegiSunter):
         self.algorithm = ECMEstimate()
 
     def learn(self, comparison_vectors, init='jaro', return_type='index'):
-        """
+        """ Train the algorithm.
 
         Train the Expectation-Maximisation classifier. This method is well-
         known as the ECM-algorithm implementation in the context of record
         linkage.
 
-        :param comparison_vectors: The dataframe with comparison vectors.
-        :param params_init: A dictionary with initial parameters of the ECM
-                algorithm (optional).
-        :param return_type: The format to return the classification result.
-                The argument value 'index' will return the pandas.MultiIndex
-                of the matches. The argument value 'series' will return a
-                pandas.Series with zeros (distinct) and ones (matches). The
-                argument value 'array' will return a numpy.ndarray with zeros
-                and ones.
-        :type comparison_vectors: pandas.DataFrame
-        :type params_init: dict
-        :type return_type: 'index' (default), 'series', 'array'
+        Parameters
+        ----------
+        comparison_vectors : pandas.DataFrame
+            The dataframe with comparison vectors.
+        params_init : dict
+            A dictionary with initial parameters of the ECM algorithm
+            (optional).
+        return_type : 'index' (default), 'series', 'array'
+            The format to return the classification result. The argument value
+            'index' will return the pandas.MultiIndex of the matches. The
+            argument value 'series' will return a pandas.Series with zeros
+            (distinct) and ones (matches). The argument value 'array' will
+            return a numpy.ndarray with zeros and ones.
 
-        :return: A pandas Series with the labels 1 (for the matches) and 0
-                (for the non-matches).
-        :rtype: pandas.Series
+        Returns
+        -------
+        pandas.Series
+            A pandas Series with the labels 1 (for the matches) and 0 (for the
+            non-matches).
 
         """
 
@@ -463,30 +456,33 @@ class ECMClassifier(FellegiSunter):
         return self._return_result(prediction, return_type, comparison_vectors)
 
     def predict(self, comparison_vectors, return_type='index', *args, **kwargs):
-        """
+        """Predict the class of reord pairs.
 
         Classify a set of record pairs based on their comparison vectors into
         matches, non-matches and possible matches. The classifier has to be
         trained to call this method.
 
-        :param comparison_vectors: The dataframe with comparison vectors.
-        :param return_type: The format to return the classification result.
-                The argument value 'index' will return the pandas.MultiIndex
-                of the matches. The argument value 'series' will return a
-                pandas.Series with zeros (distinct) and ones (matches). The
-                argument value 'array' will return a numpy.ndarray with zeros
-                and ones.
-        :type comparison_vectors: pandas.DataFrame
-        :type return_type: 'index' (default), 'series', 'array'
+        Parameters
+        ----------
+        comparison_vectors : pandas.DataFrame
+            The dataframe with comparison vectors.
+        return_type : 'index' (default), 'series', 'array'
+            The format to return the classification result. The argument value
+            'index' will return the pandas.MultiIndex of the matches. The
+            argument value 'series' will return a pandas.Series with zeros
+            (distinct) and ones (matches). The argument value 'array' will
+            return a numpy.ndarray with zeros and ones.
 
-        :return: A pandas Series with the labels 1 (for the matches) and 0
-                (for the non-matches).
-        :rtype: pandas.Series
+        Returns
+        -------
+        pandas.Series
+            A pandas Series with the labels 1 (for the matches) and 0 (for the
+            non-matches).
 
-        .. note::
-
-                Prediction is risky for this unsupervised learning method. Be
-                aware that the sample from the population is valid.
+        Note
+        ----
+        Prediction is risky for this unsupervised learning method. Be aware
+        that the sample from the population is valid.
 
 
         """
@@ -501,21 +497,22 @@ class ECMClassifier(FellegiSunter):
         return self._return_result(prediction, return_type, comparison_vectors)
 
     def prob(self, comparison_vectors):
-        """
+        """Compute the probabilities for each record pair.
 
-        Estimate the probability for each record pairs of being a match.
+        For each pair of records, estimate the probability of being a match.
 
-        The method computes the probability for each given record pair of
-        being a match. The probability of a non-match is 1 minus the result.
-        This method is not implemented for all classifiers (for example
-        K-means clustering).
+        Parameters
+        ----------
+        comparison_vectors : pandas.DataFrame
+            The dataframe with comparison vectors.
+        return_type : 'series' or 'array'
+            Return a pandas series or numpy array. Default 'series'.
 
-        :param comparison_vectors: The dataframe with comparison vectors.
-        :type comparison_vectors: pandas.DataFrame
+        Returns
+        -------
+        pandas.Series or numpy.ndarray
+            The probability of being a match for each record pair.
 
-        :return: A pandas Series with pandas.MultiIndex with the probability
-                of being a match.
-        :rtype: pandas.Series
         """
 
         enc_vectors = self.algorithm._transform_vectors(
