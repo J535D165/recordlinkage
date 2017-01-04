@@ -44,7 +44,7 @@ Record linkage
 
 	notebooks/classifiers.ipynb
 	notebooks/advanced_indexing.ipynb
-	notebooks/performance.ipynb
+	performance.rst
 
 :doc:`notebooks/classifiers`
 	The full API reference of the Python Record Linkage Toolkit package is found here.
