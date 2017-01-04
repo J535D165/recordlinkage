@@ -41,7 +41,7 @@ Load your data into pandas DataFrames.
 
 Comparing all record can be computationally intensive. Therefore, we make
 smart set of candidate links with one of the built-in indexing techniques like
-**blocking**. In this example, only pairs or records that agree on the surname
+**blocking**. In this example, only pairs of records that agree on the surname
 are included.
 
 .. code:: python
@@ -146,4 +146,4 @@ The license for this record linkage tool is GPLv3.
 Need help?
 ----------
 
-Stuck on your record linkage code or problem? Any other questions? Don't hestitate to send me an email (jonathandebruinhome@gmail.com).
+Stuck on your record linkage code or problem? Any other questions? Don't hestitate to send me an email (jonathandebruinos@gmail.com).
