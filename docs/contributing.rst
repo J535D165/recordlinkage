@@ -2,7 +2,8 @@
 Contributing
 ************
 
-Thanks for your interest in contributing to the Python Record Linkage Toolkit. There is a lot of work to do. The workflow for contributing:
+Thanks for your interest in contributing to the Python Record Linkage Toolkit.
+There is a lot of work to do. The workflow for contributing:
 
 - clone https://github.com/J535D165/recordlinkage.git
 - Make a branch with your modifications/contributions
@@ -28,7 +29,10 @@ Run the following command to test the package
 Performance
 ===========
 
-Performance is very important in record linkage. The performance is monitored for all serious modifications of the core API. The performance monitoring is performed with `Airspeed Velocity <http://github.com/spacetelescope/asv/>`_ (asv). 
+Performance is very important in record linkage. The performance is monitored
+for all serious modifications of the core API. The performance monitoring is
+performed with `Airspeed Velocity <http://github.com/spacetelescope/asv/>`_
+(asv).
 
 Install Airspeed Velocity:
 
@@ -36,7 +40,8 @@ Install Airspeed Velocity:
 
 	pip install asv
 
-Run the following command from the root of the repository to test the performance of the current version of the package:
+Run the following command from the root of the repository to test the
+performance of the current version of the package:
 
 .. code:: sh
 

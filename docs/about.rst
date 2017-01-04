@@ -11,23 +11,26 @@ record linkage and deduplication. The package contains indexing methods,
 functions to compare records and classifiers. The package is developed 
 for research and the linking of small or medium sized files.
 
-The project is inspired by the `Freely Extensible Biomedical
-Record Linkage (FEBRL) <https://sourceforge.net/projects/febrl/>`__ project,
-which is a great project. In contrast with FEBRL, the recordlinkage project makes extensive use of data
-manipulation tools like `pandas <http://pandas.pydata.org/>`__ and `numpy <http://www.numpy.org/>`__. The use of *pandas*, a flexible and powerful data analysis and
-manipulation library for Python, makes the record linkage process much easier
-and faster. The extensive *pandas* library can be used to integrate your
-record linkage directly into existing data manipulation projects.
+The project is inspired by the `Freely Extensible Biomedical Record Linkage
+(FEBRL) <https://sourceforge.net/projects/febrl/>`__ project, which is a great
+project. In contrast with FEBRL, the recordlinkage project makes extensive use
+of data manipulation tools like `pandas <http://pandas.pydata.org/>`__ and
+`numpy <http://www.numpy.org/>`__. The use of *pandas*, a flexible and
+powerful data analysis and manipulation library for Python, makes the record
+linkage process much easier and faster. The extensive *pandas* library can be
+used to integrate your record linkage directly into existing data manipulation
+projects.
 
 One of the aims of this project is to make an extensible record linkage
 framework. It is easy to include your own indexing algorithms,
-comparison/similarity measures and classifiers. The main features of the Python Record Linkage Toolkit are:
+comparison/similarity measures and classifiers. The main features of the
+Python Record Linkage Toolkit are:
 
 -  Clean and standardise data with easy to use tools
 -  Make pairs of records with smart indexing methods such as
    **blocking** and **sorted neighbourhood indexing**
--  Compare records with a large number of comparison and similarity
-   measures for different types of variables such as strings, numbers and dates.
+-  Compare records with a large number of comparison and similarity measures
+   for different types of variables such as strings, numbers and dates.
 -  Several classifications algorithms, both supervised and unsupervised
    algorithms.
 -  Common record linkage evaluation tools
@@ -37,19 +40,36 @@ comparison/similarity measures and classifiers. The main features of the Python 
 What is record linkage?
 =======================
 
-The term record linkage is used to indicate the procedure of bringing together information from two or more records that are believed to belong to the same entity. Record linkage is used to link data from multiple data sources or to find duplicates in a single data source. In computer science, record linkage is also known as data matching or deduplication (in case of search duplicate records within a single file). 
+The term record linkage is used to indicate the procedure of bringing together
+information from two or more records that are believed to belong to the same
+entity. Record linkage is used to link data from multiple data sources or to
+find duplicates in a single data source. In computer science, record linkage
+is also known as data matching or deduplication (in case of search duplicate
+records within a single file).
 
-In record linkage, the attributes of the entity (stored in a record) are used to link two or more records. Attributes can be unique entity identifiers (SSN, license plate number), but also attributes like (sur)name, date of birth and car model/colour. The record linkage procedure can be represented as a workflow [Christen, 2012]. The steps are: cleaning, indexing, comparing, classifying and evaluation. If needed, the classified record pairs flow back to improve the previous step. The Python Record Linkage Toolkit follows this workflow. 
+In record linkage, the attributes of the entity (stored in a record) are used
+to link two or more records. Attributes can be unique entity identifiers (SSN,
+license plate number), but also attributes like (sur)name, date of birth and
+car model/colour. The record linkage procedure can be represented as a
+workflow [Christen, 2012]. The steps are: cleaning, indexing, comparing,
+classifying and evaluation. If needed, the classified record pairs flow back
+to improve the previous step. The Python Record Linkage Toolkit follows this
+workflow.
 
 .. seealso::
 
-    *Christen, Peter. 2012. Data matching: concepts and techniques for record linkage, entity resolution, and duplicate detection. Springer Science & Business Media.*
+    *Christen, Peter. 2012. Data matching: concepts and techniques for record 
+    linkage, entity resolution, and duplicate detection. Springer Science & 
+    Business Media.*
 
-    *Fellegi, Ivan P and Alan B Sunter. 1969. “A theory for record linkage.” Journal of the American Statistical Association 64(328):1183–1210.*
+    *Fellegi, Ivan P and Alan B Sunter. 1969. “A theory for record linkage.” 
+    Journal of the American Statistical Association 64(328):1183–1210.*
 
-    *Dunn, Halbert L. 1946. “Record linkage.” American Journal of Public Health and the Nations Health 36(12):1412–1416.*
+    *Dunn, Halbert L. 1946. “Record linkage.” American Journal of Public 
+    Health and the Nations Health 36(12):1412–1416.*
 
-    *Herzog, Thomas N, Fritz J Scheuren and William E Winkler. 2007. Data quality and record linkage techniques. Vol. 1 Springer.*
+    *Herzog, Thomas N, Fritz J Scheuren and William E Winkler. 2007. Data 
+    quality and record linkage techniques. Vol. 1 Springer.*
 
 How to link records?
 ====================

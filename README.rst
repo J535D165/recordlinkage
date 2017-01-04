@@ -2,19 +2,20 @@ Python Record Linkage Toolkit
 =============================
 
 The **Python Record Linkage Toolkit** is a library to link records in or
-between data sources. The toolkit provides most of the tools needed for 
-record linkage and deduplication. The package contains indexing methods, 
-functions to compare records and classifiers. The package is developed 
-for research and the linking of small or medium sized files.
+between data sources. The toolkit provides most of the tools needed for
+record linkage and deduplication. The package contains indexing methods,
+functions to compare records and classifiers. The package is developed for
+research and the linking of small or medium sized files.
 
-This project is inspired by the `Freely Extensible Biomedical Record
-Linkage (FEBRL) <https://sourceforge.net/projects/febrl/>`__ project,
-which is a great project. In contrast with FEBRL, the recordlinkage project uses
-`pandas <http://pandas.pydata.org/>`__ and `numpy <http://www.numpy.org/>`__ for 
-data handling and computations. The use of *pandas*, a flexible and powerful data analysis and
-manipulation library for Python, makes the record linkage process much easier
-and faster. The extensive *pandas* library can be used to integrate your
-record linkage directly into existing data manipulation projects.
+This project is inspired by the `Freely Extensible Biomedical Record Linkage
+(FEBRL) <https://sourceforge.net/projects/febrl/>`__ project, which is a great
+project. In contrast with FEBRL, the recordlinkage project uses `pandas
+<http://pandas.pydata.org/>`__ and `numpy <http://www.numpy.org/>`__ for  data
+handling and computations. The use of *pandas*, a flexible and powerful data
+analysis and manipulation library for Python, makes the record linkage process
+much easier and faster. The extensive *pandas* library can be used to
+integrate your record linkage directly into existing data manipulation
+projects.
 
 One of the aims of this project is to make an easily extensible record 
 linkage framework. It is easy to include your own indexing algorithms,
@@ -104,7 +105,13 @@ Documentation
 -------------
 
 The most recent documentation and API reference can be found at
-`recordlinkage.readthedocs.org <http://recordlinkage.readthedocs.org/en/latest/>`__. The documentation provides some basic usage examples like `deduplication <http://recordlinkage.readthedocs.io/en/latest/notebooks/data_deduplication.html>`__ and `linking <http://recordlinkage.readthedocs.io/en/latest/notebooks/link_two_dataframes.html>`__ census data. More examples are coming soon. If you do have interesting examples to share, let us know.
+`recordlinkage.readthedocs.org
+<http://recordlinkage.readthedocs.org/en/latest/>`__. The documentation
+provides some basic usage examples like `deduplication <http://recordlinkage.r
+eadthedocs.io/en/latest/notebooks/data_deduplication.html>`__ and `linking <ht
+tp://recordlinkage.readthedocs.io/en/latest/notebooks/link_two_dataframes.html
+>`__ census data. More examples are coming soon. If you do have interesting
+examples to share, let us know.
 
 
 Dependencies, installation and license
@@ -146,4 +153,5 @@ The license for this record linkage tool is GPLv3.
 Need help?
 ----------
 
-Stuck on your record linkage code or problem? Any other questions? Don't hestitate to send me an email (jonathandebruinos@gmail.com).
+Stuck on your record linkage code or problem? Any other questions? Don't
+hestitate to send me an email (jonathandebruinos@gmail.com).

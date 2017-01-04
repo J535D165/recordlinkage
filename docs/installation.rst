@@ -5,13 +5,15 @@ Installation guide
 Installation
 ============
 
-The easiest way of installing the Python Record Linkage Toolkit is using ``pip``. It is as easy as typing:
+The easiest way of installing the Python Record Linkage Toolkit is using
+``pip``. It is as easy as typing:
 
 .. code:: sh
 
 	pip install --user recordlinkage
 
-You can also clone the project on Github. The license of this record linkage package is GPLv3.
+You can also clone the project on Github. The license of this record linkage
+package is GPLv3.
 
 Dependencies
 ============
