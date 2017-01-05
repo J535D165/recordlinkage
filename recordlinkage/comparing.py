@@ -10,7 +10,7 @@ import numpy as np
 from recordlinkage.types import (is_list_like,
                                  is_pandas_like,
                                  is_numpy_like)
-from recordlinkage.utils import listify, unique
+from recordlinkage.utils import listify
 from recordlinkage.algorithms.distance import (_1d_distance,
                                                _haversine_distance)
 from recordlinkage.algorithms.numeric import (_step_sim,
@@ -65,8 +65,35 @@ def _check_labels(labels, df):
 
 
 class CompareCore(object):
-    """Core class for comparing records.
+    """Core class to compare record pairs.
 
+    Core class to compare the attributes of candidate record pairs. This class
+    has no algorithms to compare record pairs except from the basic
+    ``compare`` method.
+
+    Parameters
+    ----------
+    pairs : pandas.MultiIndex
+        A MultiIndex of candidate record pairs.
+    df_a : pandas.DataFrame
+        The first dataframe.
+    df_b : pandas.DataFrame
+        The second dataframe.
+    low_memory : bool
+        Reduce the amount of memory used by the Compare class. Default False.
+    block_size : int
+        The maximum size of data blocks. Default 1,000,000.
+
+    Attributes
+    ----------
+    pairs : pandas.MultiIndex
+        The candidate record pairs.
+    df_a : pandas.DataFrame
+        The first DataFrame.
+    df_b : pandas.DataFrame
+        The second DataFrame.
+    vectors : pandas.DataFrame
+        The DataFrame with comparison data.
     """
 
     def __init__(self, pairs, df_a=None, df_b=None, low_memory=False,
@@ -96,12 +123,28 @@ class CompareCore(object):
                 DeprecationWarning
             )
 
-    def _loc2(self, frame, multi_index, level_i):
-        """Indexing a pandas.Series or pandas.DataFrame with one level of a
-        MultiIndex.
-        """
+    def _loc2(self, frame, multi_index, level_i, chunk_size=1e6):
+        """Indexing algorithm for MultiIndex on one level
 
-        chunk_size = self.block_size
+        This internal function is a modification ``.loc`` indexing method in
+        pandas. With this function, one level of a MultiIndex is used to index
+        a dataframe with. The multiindex is split into smaller pieces to
+        improve performance.
+
+        Arguments
+        ---------
+        frame : pandas.DataFrame
+            The datafrme to select records from.
+        multi_index : pandas.MultiIndex
+            A pandas multiindex were one fo the levels is used to sample the
+            dataframe with.
+        level_i : int, str
+            The level of the multiIndex to index on.
+        chunk_size : int
+            The analysis is split up into smaller blocks. This may make the
+            analysis faster. The default chunk_size is 1e6 records.
+
+        """
 
         # Number of chunks
         chunks = int(np.ceil(len(multi_index) / chunk_size))
@@ -324,10 +367,13 @@ class Compare(CompareCore):
         The first dataframe.
     df_b : pandas.DataFrame
         The second dataframe.
+    low_memory : bool
+        Reduce the amount of memory used by the Compare class. Default False.
+    block_size : int
+        The maximum size of data blocks. Default 1,000,000.
 
     Attributes
     ----------
-
     pairs : pandas.MultiIndex
         The candidate record pairs.
     df_a : pandas.DataFrame
@@ -339,7 +385,6 @@ class Compare(CompareCore):
 
     Examples
     --------
-
     In the following example, the record pairs of two historical datasets with
     census data are compared. The datasets are named ``census_data_1980`` and
     ``census_data_1990``. The ``candidate_pairs`` are the record pairs to
@@ -474,9 +519,9 @@ class Compare(CompareCore):
         """
         numeric(s1, s2, method='linear', offset, scale, origin=0, missing_value=0, name=None, store=True)
 
-        Similarity between two numeric values.
+        Compute the similarity of numeric values.
 
-        This method returns the similarity between two numeric values. The
+        This method returns the similarity of two numeric values. The
         implemented algorithms are: 'step', 'linear', 'exp', 'gauss' or
         'squared'. In case of agreement, the similarity is 1 and in case of
         complete disagreement it is 0. The implementation is similar with
@@ -557,6 +602,8 @@ class Compare(CompareCore):
         """
         geo(lat1, lng1, lat2, lng2, method='linear', offset, scale, origin=0, missing_value=0, name=None, store=True)
 
+        Compute the similarity of two WGS84 coordinates.
+
         Compare the geometric (haversine) distance between two WGS-
         coordinates. The similarity algorithms are 'step', 'linear', 'exp',
         'gauss' or 'squared'. The similarity functions are the same as in
@@ -633,7 +680,7 @@ class Compare(CompareCore):
         """
         date(self, s1, s2, swap_month_day=0.5, swap_months='default', missing_value=0, name=None, store=True)
 
-        Compare dates.
+        Compare two dates.
 
         Parameters
         ----------
