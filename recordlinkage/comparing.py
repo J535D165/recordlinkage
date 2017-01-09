@@ -230,12 +230,12 @@ class CompareCore(object):
             if is_numpy_like(label_a) or is_pandas_like(label_a):
                 data_a.append(label_a)
 
-            else:
-                # check requested labels (for better error messages)
-                _check_labels(labels_a, self.df_a)
+            # check requested labels (for better error messages)
+            elif label_a not in self.df_a.columns:
+                raise KeyError("label '%s' is not found in the first"
+                               "dataframe" % label_a)
 
-                # # get the unique labels
-                # unique_labels_a = unique(labels_a)
+            else:
 
                 if self.low_memory:
 
@@ -261,12 +261,13 @@ class CompareCore(object):
             if is_numpy_like(label_b) or is_pandas_like(label_b):
                 data_b.append(label_b)
 
-            else:
-                # check requested labels (for better error messages)
-                _check_labels(labels_b, self.df_b)
+            # check requested labels (for better error messages)
+            elif label_b not in self.df_b.columns:
 
-                # # get the unique labels
-                # unique_labels_b = unique(labels_b)
+                raise KeyError("label '%s' is not found in the second"
+                               "dataframe" % label_b)
+
+            else:
 
                 if self.low_memory:
 
