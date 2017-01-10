@@ -82,7 +82,7 @@ and an example of unsupervised learning (the well known ECM-algorithm):
 
 .. code:: python
 
-    ecm = recordlinkage.BernoulliEMClassifier()
+    ecm = recordlinkage.ECMClassifier()
     ecm.learn(c.vectors)
 
 Main Features
