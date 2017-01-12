@@ -1,3 +1,5 @@
+import os
+import shutil
 import unittest
 
 import pandas
@@ -29,7 +31,7 @@ class TestClassifyData(unittest.TestCase):
             ]
         )
 
-        self.matches_array = numpy.random.random_integers(0, 1, N)
+        self.matches_array = numpy.random.randint(0, 2, N)
         self.matches_series = pandas.Series(self.matches_array, index=self.y.index)
         self.matches_index = self.matches_series[self.matches_series == 1].index
 
@@ -152,7 +154,49 @@ class TestClassifyAlgorithms(TestClassifyData):
         logis.learn(self.y_train, self.matches_index)
         logis.predict(self.y)
 
-        self.assertEqual(logis.coefficients.shape, (self.y_train.shape[1],))
+        lc = numpy.array(logis.coefficients)
+        self.assertEqual(lc.shape, (self.y_train.shape[1],))
+        self.assertTrue(isinstance(logis.intercept, (float)))
+
+    def test_logistic_regression_params(self):
+        """
+
+        Test the LogisticRegressionClassifier in case of setting the
+        parameters manually.
+
+        """
+
+        # Make random test data.
+        numpy.random.seed(535)
+
+        params = {
+            'coefficients': numpy.random.randn(self.y_train.shape[1]),
+            'intercept': numpy.random.rand()
+        }
+
+        # Initialize the LogisticRegressionClassifier
+        logis = recordlinkage.LogisticRegressionClassifier()
+
+        self.assertIsInstance(logis.params, dict)
+        self.assertIsNone(logis.params['coefficients'])
+        self.assertIsNone(logis.params['intercept'])
+
+        # Set the parameters coefficients and intercept
+        logis.params = params
+
+        self.assertIsInstance(logis.params, dict)
+        self.assertIsNotNone(logis.params['coefficients'])
+        self.assertIsNotNone(logis.params['intercept'])
+
+        # Perform the prediction
+        logis.predict(self.y)
+
+        # Train the classifier after manula setting
+        logis.learn(self.y_train, self.matches_index)
+        logis.predict(self.y)
+
+        lc = numpy.array(logis.coefficients)
+        self.assertEqual(lc.shape, (self.y_train.shape[1],))
         self.assertTrue(isinstance(logis.intercept, (float)))
 
     def test_bernoulli_naive_bayes(self):

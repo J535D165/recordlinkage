@@ -1,6 +1,4 @@
-# classifier.py
-
-from recordlinkage.algorithms.em import ECMEstimate
+import warnings
 
 import pandas
 import numpy
@@ -8,7 +6,9 @@ import numpy
 from sklearn import cluster, linear_model, naive_bayes, svm
 from sklearn.utils.validation import NotFittedError
 
-import warnings
+from recordlinkage.algorithms.em import ECMEstimate
+
+# ignore warnings
 warnings.simplefilter(action="ignore", category=FutureWarning)
 
 
@@ -25,8 +25,6 @@ class Classifier(object):
     """
 
     def __init__(self):
-
-        self._params = {}
 
         # The actual classifier. Maybe this is slightly strange because of
         # inheritance.
@@ -268,7 +266,9 @@ class LogisticRegressionClassifier(Classifier):
 
     Attributes
     ----------
-    coefficients : numpy.array
+    classifier: sklearn.linear_model.LogisticRegression
+        The Logistic regression classifier in sklearn.
+    coefficients : list
         The coefficients of the logistic regression.
     intercept : float
         The interception value.
@@ -286,18 +286,26 @@ class LogisticRegressionClassifier(Classifier):
         self.classifier.classes_ = numpy.array([False, True])
 
     @property
+    def params(self):
+        return {
+            'coefficients': self.coefficients,
+            'intercept': self.intercept
+        }
+
+    @params.setter
+    def params(self, value):
+
+        if not isinstance(value, dict):
+            raise ValueError("parameters are of wrong type")
+
+        self.coefficients = value['coefficients']
+        self.intercept = value['intercept']
+
+    @property
     def coefficients(self):
         # Return the coefficients if available
         try:
-            return self.classifier.coef_[0]
-        except Exception:
-            return None
-
-    @property
-    def intercept(self):
-
-        try:
-            return float(self.classifier.intercept_[0])
+            return list(self.classifier.coef_[0])
         except Exception:
             return None
 
@@ -310,8 +318,15 @@ class LogisticRegressionClassifier(Classifier):
             if type(value) is not numpy.ndarray:
                 value = numpy.array(value)
 
-            # print (numpy.array(value))
             self.classifier.coef_ = value.reshape((1, len(value)))
+
+    @property
+    def intercept(self):
+
+        try:
+            return float(self.classifier.intercept_[0])
+        except Exception:
+            return None
 
     @intercept.setter
     def intercept(self, value):
