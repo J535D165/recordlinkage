@@ -59,10 +59,10 @@ comparison or similarity algorithms in the Compare class.
 
     c.string('name_a', 'name_b', method='jarowinkler', threshold=0.85)
     c.exact('sex', 'gender')
-    c.exact('dob', 'date_of_birth')
-    c.string('streetname', 'streetname', method='damerau_levenshtein', threshold=0.7)
+    c.date('dob', 'date_of_birth')
+    c.string('str_name', 'streetname', method='damerau_levenshtein', threshold=0.7)
     c.exact('place', 'placename')
-    c.exact('haircolor', 'haircolor', missing_value=9)
+    c.numeric('income', 'income', method='gauss', offset=3, scale=3, missing_value=0.5)
 
     # The comparison vectors
     c.vectors
