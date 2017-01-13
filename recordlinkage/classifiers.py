@@ -441,15 +441,57 @@ class NaiveBayesClassifier(Classifier):
     based on probabilistic principles. The Naive Bayes classification method
     is proven to be mathematical equivalent with the Fellegi and Sunter model.
 
+    Parameters
+    ----------
+    log_prior : list, numpy.array
+        The log propabaility of each class. 
+
+    Attributes
+    ----------
+    classifier: sklearn.linear_model.LogisticRegression
+        The Logistic regression classifier in sklearn.
+    coefficients : list
+        The coefficients of the logistic regression.
+    intercept : float
+        The interception value.
+
+    Parameters
+    ----------
     alpha : float
         Additive (Laplace/Lidstone) smoothing parameter (0 for no smoothing).
 
     """
 
-    def __init__(self, alpha=1.0, *args, **kwargs):
+    def __init__(self, log_prior=None, alpha=1.0, *args, **kwargs):
         super(self.__class__, self).__init__(*args, **kwargs)
 
         self.classifier = naive_bayes.BernoulliNB(alpha=alpha, binarize=None)
+
+        self.log_prior = log_prior
+
+    @property
+    def log_prior(self):
+
+        try:
+            return self.classifier.class_log_prior_.tolist()
+        except Exception:
+            return None
+
+    @log_prior.setter
+    def log_prior(self, value):
+
+        if isinstance(value, (list, numpy.ndarray)):
+
+            self.classifier.class_log_prior_ = numpy.array(value)
+
+        # value is None
+        elif value is None:
+            try:
+                del self.classifier.class_log_prior_
+            except AttributeError:
+                pass
+        else:
+            raise ValueError('incorrect type')
 
 
 class SVMClassifier(Classifier):
