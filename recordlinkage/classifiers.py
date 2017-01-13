@@ -191,18 +191,97 @@ class KMeansClassifier(Classifier):
     trainings data, but it needs two starting points (one for the matches and
     one for the non-matches). The K-means clustering problem is NP-hard.
 
+    Parameters
+    ----------
+    match_cluster_center : list, numpy.array
+        The center of the match cluster. The length of the list/array must
+        equal the number of comparison variables.
+    nonmatch_cluster_center : list, numpy.array
+        The center of the nonmatch (distinct) cluster. The length of the
+        list/array must equal the number of comparison variables.
+
+    Attributes
+    ----------
+    classifier: sklearn.cluster.KMeans
+        The Kmeans cluster class in sklearn.
+    match_cluster_center : list, numpy.array
+        The center of the match cluster.
+    nonmatch_cluster_center : list, numpy.array
+        The center of the nonmatch (distinct) cluster.
+
     Note
     ----
     There are way better methods for linking records than the k-means
     clustering algorithm. However, this algorithm does not need trainings data
     and is useful to do an initial partition.
-
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, match_cluster_center=None,
+                 nonmatch_cluster_center=None, *args, **kwargs):
         super(self.__class__, self).__init__(*args, **kwargs)
 
+        # initialize the classifier
         self.classifier = cluster.KMeans(n_clusters=2, n_init=1)
+
+        self._match_cluster_center = match_cluster_center
+        self._nonmatch_cluster_center = nonmatch_cluster_center
+
+        # set cluster centers if available
+        self._set_cluster_centers(
+            self._match_cluster_center, self._nonmatch_cluster_center)
+
+    @property
+    def match_cluster_center(self):
+        # Return the centers if available
+        try:
+            return self.classifier.cluster_centers_.tolist()[1]
+        except AttributeError:
+            return None
+
+    @match_cluster_center.setter
+    def match_cluster_center(self, value):
+
+        self._match_cluster_center = value
+
+        try:
+            self._set_cluster_centers(
+                self._match_cluster_center, self._nonmatch_cluster_center)
+        except ValueError:
+            pass
+
+    @property
+    def nonmatch_cluster_center(self):
+        # Return the centers if available
+        try:
+            return self.classifier.cluster_centers_.tolist()[0]
+        except AttributeError:
+            return None
+
+    @nonmatch_cluster_center.setter
+    def nonmatch_cluster_center(self, value):
+
+        self._nonmatch_cluster_center = value
+
+        try:
+            self._set_cluster_centers(
+                self._match_cluster_center, self._nonmatch_cluster_center)
+        except ValueError:
+            pass
+
+    def _set_cluster_centers(self, m_cluster_center, n_cluster_center):
+
+        if m_cluster_center is not None and n_cluster_center is not None:
+            self.classifier.cluster_centers_ = numpy.array(
+                [numpy.array(n_cluster_center), numpy.array(m_cluster_center)]
+            )
+        elif m_cluster_center is None and n_cluster_center is None:
+            try:
+                del self.classifier.cluster_centers_
+            except AttributeError:
+                pass
+        else:
+            raise ValueError("set the center of the match cluster and the " +
+                             "nonmatch cluster")
 
     def learn(self, comparison_vectors, return_type='index'):
         """Train the K-means classifier.
@@ -333,11 +412,21 @@ class LogisticRegressionClassifier(Classifier):
 
         if value is not None:
 
-            # Check if array if numpy array
-            if type(value) is not numpy.ndarray:
+            if not isinstance(value, (list)):
+                value = numpy.array(value)
+            else:
                 value = numpy.array([value])
 
-        self.classifier.intercept_ = value
+            self.classifier.intercept_ = value
+
+        # value is None
+        elif value is None:
+            try:
+                del self.classifier.intercept_
+            except AttributeError:
+                pass
+        else:
+            raise ValueError('incorrect type')
 
 
 class NaiveBayesClassifier(Classifier):

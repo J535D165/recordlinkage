@@ -107,6 +107,34 @@ class TestClassifyAlgorithms(TestClassifyData):
         with self.assertRaises(Exception):
             kmeans.predict(self.y)
 
+    def test_kmeans_manual(self):
+        """KMeansClassifier with manual cluster centers"""
+
+        # Make random test data.
+        numpy.random.seed(535)
+        manual_mcc = list(numpy.random.randn(self.y_train.shape[1]))
+        manual_nmcc = list(numpy.random.randn(self.y_train.shape[1]))
+
+        # Initialize the KMeansClassifier
+        kmeans = recordlinkage.KMeansClassifier()
+
+        # Check if the cluster centers are None
+        self.assertIsNone(kmeans.match_cluster_center)
+        self.assertIsNone(kmeans.nonmatch_cluster_center)
+
+        # Set the cluster centers
+        kmeans.match_cluster_center = manual_mcc
+        kmeans.nonmatch_cluster_center = manual_nmcc
+
+        # Perform the prediction
+        kmeans.predict(self.y)
+
+        # Check the match clusters
+        mcc = kmeans.match_cluster_center
+        nmcc = kmeans.nonmatch_cluster_center
+        self.assertEqual(mcc, manual_mcc)
+        self.assertEqual(nmcc, manual_nmcc)
+
     def test_logistic_regression_basic(self):
         """
 
@@ -122,10 +150,8 @@ class TestClassifyAlgorithms(TestClassifyData):
         logis.predict(self.y)
         logis.prob(self.y)
 
-
     def test_logistic_regression_manual(self):
         """
-
         Test the LogisticRegressionClassifier in case of setting the
         parameters manually.
 
@@ -146,47 +172,6 @@ class TestClassifyAlgorithms(TestClassifyData):
         # Set the parameters coefficients and intercept
         logis.coefficients = manual_coefficients
         logis.intercept = manual_intercept
-
-        # Perform the prediction
-        logis.predict(self.y)
-
-        # Train the classifier after manula setting
-        logis.learn(self.y_train, self.matches_index)
-        logis.predict(self.y)
-
-        lc = numpy.array(logis.coefficients)
-        self.assertEqual(lc.shape, (self.y_train.shape[1],))
-        self.assertTrue(isinstance(logis.intercept, (float)))
-
-    def test_logistic_regression_params(self):
-        """
-
-        Test the LogisticRegressionClassifier in case of setting the
-        parameters manually.
-
-        """
-
-        # Make random test data.
-        numpy.random.seed(535)
-
-        params = {
-            'coefficients': numpy.random.randn(self.y_train.shape[1]),
-            'intercept': numpy.random.rand()
-        }
-
-        # Initialize the LogisticRegressionClassifier
-        logis = recordlinkage.LogisticRegressionClassifier()
-
-        self.assertIsInstance(logis.params, dict)
-        self.assertIsNone(logis.params['coefficients'])
-        self.assertIsNone(logis.params['intercept'])
-
-        # Set the parameters coefficients and intercept
-        logis.params = params
-
-        self.assertIsInstance(logis.params, dict)
-        self.assertIsNotNone(logis.params['coefficients'])
-        self.assertIsNotNone(logis.params['intercept'])
 
         # Perform the prediction
         logis.predict(self.y)
