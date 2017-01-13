@@ -18,23 +18,24 @@ def clean(s, lowercase=True, replace_by_none=r'[^ \-\_A-Za-z0-9]+',
     ----------
     s : pandas.Series
         A Series to clean.
-    lower : bool
+    lower : bool, optional
         Convert strings in the Series to lowercase. Default True.
-    replace_by_none : str
+    replace_by_none : str, optional
         The matches of this regular expression are replaced by ''.
-    replace_by_whitespace : str
+    replace_by_whitespace : str, optional
         The matches of this regular expression are replaced by a whitespace.
-    remove_brackets : bool
+    remove_brackets : bool, optional
         Remove all content between brackets and the brackets themselves.
         Default True.
-    strip_accents : {'ascii', 'unicode', None}
+    strip_accents : {'ascii', 'unicode', None}, optional
         Remove accents during the preprocessing step. 'ascii' is a fast method
         that only works on characters that have an direct ASCII mapping.
         'unicode' is a slightly slower method that works on any characters.
         None (default) does nothing.
-    encoding : string, default='utf-8'
-        If bytes are given, this encoding is used to decode.
-    decode_error : {'strict', 'ignore', 'replace'}
+    encoding : string, optional
+        If bytes are given, this encoding is used to decode. Default is
+        'utf-8'.
+    decode_error : {'strict', 'ignore', 'replace'}, optional
         Instruction on what to do if a byte Series is given that contains
         characters not of the given `encoding`. By default, it is 'strict',
         meaning that a UnicodeDecodeError will be raised. Other values are
