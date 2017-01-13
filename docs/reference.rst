@@ -10,7 +10,9 @@ Standardising
 Cleaning and standardising your data may increase your record linkage
 accuracy. The Python Record Linkage Toolkit contains several tools for data
 cleaning and standardising. Some of the tools included are: phonetic encoding
-algorithms, gender imputation and string cleaning tools.
+algorithms and string cleaning tools. The tools are included in the submodule
+``standardise``. (Import example: ``from recordlinkage.standardise import clean,
+phonenumbers``)
 
 .. automodule:: recordlinkage.standardise
 	:members:
@@ -24,9 +26,9 @@ algorithms, gender imputation and string cleaning tools.
 Indexing
 ========
 
-This class ``recordlinkage.Pairs`` can be used to make pairs of records, also
-called candidate record pairs. There are several indexing algorithms available
-such as blocking and sorted neighborhood indexing.
+The class ``recordlinkage.Pairs`` is used to make pairs of records (indexing).
+These pairs are called candidate record pairs. There are several indexing
+algorithms available such as blocking and sorted neighborhood indexing.
 
 .. automodule:: recordlinkage.indexing
 
