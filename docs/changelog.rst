@@ -2,13 +2,92 @@
 Release notes
 *************
 
-Version 0.6
-===========
+Updated algorithms for comparing numberic variables. The new algorithms can
+compute the similarity with kernels like gaussian, linear and exponential.
+
+Version 0.8.0
+=============
+
+- Add additional arguments to the function that downloads and loads the 
+  krebsregister data. The argument ``missing_values`` is used to fill missing
+  values. Default: nothing is done. The argument ``shuffle`` is used to 
+  shuffle the records. Default is True.
+- Remove the lastest traces of the old package name. The new package name is
+  'Python Record Linkage Toolkit'
+- Better error messages when there are only matches or non-matches are passed
+  to train the classifier. 
+- Add AirSpeedVelocity tests to test the performance. 
+- Compare for deduplication fixed. It was broken.
+- Parameterized tests for the ``Compare`` class and its algorithms. Making use
+  of ``nose-parameterized`` module. 
+- Update documentation about contributing. 
+- Bugfix/improvement when blocking on multiple columns with missing values.
+- Fix bug #29 (https://github.com/J535D165/recordlinkage/issues/29). Package 
+  not working with pandas 0.18 and 0.17. Dropped support pandas 0.17 and fixed
+  support for 0.18. Also added multi-dendency tests for TravisCI.
+- Support for dedicated deduplication algorithms 
+- Special algorithm for full index in case of finding duplicates. Performce is
+  100x better. 
+- Function ``max_number_of_pairs`` to get the maximum number of pairs.
+- ``low_memory`` for compare class. 
+- Improved performance in case of comparing a large number of record pairs. 
+- New documentation about custom algorithms
+- New documentation about the use of classifiers. 
+- Possible to compare arrays and series directly without using labels. 
+- Make a dataframe with random comparison vectors with the 
+  ``binary_comparisons`` in the ``recordlinkage.datasets.random`` module.
+- Set KMeans cluster centers by hand. 
+- Various documentation updates and improvements.
+- Many small fixes and changes. Most of the changes cover the ``Compare`` 
+  module. Especially label handling is improved. 
+
+Version 0.7.2
+=============
+
+- Incorrect name of the Levenshtein method in the string comparison method
+  fixed.
+
+Version 0.7.1
+=============
+
+- Fix the generation of docs on ReadTheDocs.
+- Installation issue fixed. Packages not found. 
+- Import issues solved.
+
+Version 0.7.0
+=============
+
+- Rename the package into 'Python Record Linkage Toolkit'
+- Remove ``similar_values`` function
+- Remove gender imputation tool
+- Updated algorithms for comparing numberic variables. The new algorithms can
+  compute the similarity with kernels like gaussian, linear, squared and 
+  exponential. Tests for these numeric comparison algorithms are included. 
+- Better NaN handling for compare functions.
+- Algorithm added to compare dates.
+- Add tests for date comparing.
+- Divide the ``Compare`` class into two classes.
+- Add documentation about performance tricks and concepts.
+- Replace the comparison algorithms to a submodule. 
+- Include six in the package
+- Drop ``requests`` module and use builtin Python functions. 
+- Add metaphone phonetic algorithm.
+- Add match rating string comparing algorithm.
+- Manual parameter handling for logistic regression. The attributes are
+  ``coefficients`` and ``intercept``.
+- Drop class ``BernoulliNBClassifier``.
+- Various documentation updates.
+- Many small other updates.
+
+Version 0.6.0
+=============
 
 - Reformatting the code such that it follows PEP8.
 - Add Travis-CI and codecov support.
 - Switch to distributing wheels.
-- Fix bugs with depreciated pandas functions. ``__sub__`` is no longer used for computing the difference of Index objects. It is now replaced by ``INDEX.difference(OTHER_INDEX).
+- Fix bugs with depreciated pandas functions. ``__sub__`` is no longer used
+  for computing the difference of Index objects. It is now replaced by
+  ``INDEX.difference(OTHER_INDEX)``.
 - Exclude pairs with NaN's on the index-key in Q-gram indexing.
 - Add tests for krebsregister dataset.
 - Fix Python3 bug on krebsregister dataset.
@@ -19,8 +98,8 @@ Version 0.6
 - Improved deployment workflow
 - And much more
 
-Version 0.5
-===========
+Version 0.5.0
+=============
 
 - Batch comparing added. Signifant speed improvement.
 - rldatasets are now included in the package itself.
@@ -31,48 +110,57 @@ Version 0.5
 - Unit tests for indexing and comparing improved
 - Documentation updated
 
-Version 0.4
-===========
+Version 0.4.0
+=============
 
 - Fixes a serious bug with deduplication.
-- Fixes undesired behaviour for sorted neighbourhood indexing with missing values.
+- Fixes undesired behaviour for sorted neighbourhood indexing with missing 
+  values.
 - Add new datasets to the package like Febrl datasets
 - Move Krebsregister dataset to this package. 
 - Improve and add some tests
 - Various documentation updates 
 
-Version 0.3
-===========
+Version 0.3.0
+=============
 
-- Total restructure of compare functions (The end of changing the API is close to now.)
-- Compare method ``numerical`` is now named ``numeric`` and ``fuzzy`` is now named ``string``.
+- Total restructure of compare functions (The end of changing the API is close
+  to now.)
+- Compare method ``numerical`` is now named ``numeric`` and ``fuzzy`` is now 
+  named ``string``.
 - Add haversine formula to compare geographical records. 
 - Use numexpr for computing numeric comparisons.
 - Add step, linear and squared comparing.
 - Add eye index method.
 - Improve, update and add new tests.
 - Remove iterative indexing functions. 
-- New add chunks for indexing functions. These chunks are defined in the class Pairs. If chunks are defined, then the indexing functions returns a generator with an Index for each element.
+- New add chunks for indexing functions. These chunks are defined in the class 
+  Pairs. If chunks are defined, then the indexing functions returns a generator
+  with an Index for each element.
 - Update documentation.
 - Various bug fixes.
 
-
-Version 0.2
-===========
+Version 0.2.0
+=============
 
 - Full Python3 support
-- Update the parameters of the Logistic Regression Classifier manually. In literature, this is often denoted as the **deterministic record linkage**.
-- Expectation/Conditional Maximization algorithm completely rewritten. The performance of the algorithm is much better now. The algorithm is still experimental.
-- New string comparison metrics: Q-gram string comparing and Cosine string comparing. 
+- Update the parameters of the Logistic Regression Classifier manually. In 
+  literature, this is often denoted as the 'deterministic record linkage'.
+- Expectation/Conditional Maximization algorithm completely rewritten. The 
+  performance of the algorithm is much better now. The algorithm is still 
+  experimental.
+- New string comparison metrics: Q-gram string comparing and Cosine string
+  comparing. 
 - New indexing algorithm: Q-gram indexing.
 - Several internal tests.
 - Updated documentation.
-- BernoulliNBClassifier is now named NaiveBayesClassifier. No changes to the algorithm.
+- BernoulliNBClassifier is now named NaiveBayesClassifier. No changes to the 
+  algorithm.
 - Arguments order in compare functions corrected.
 - Function to clean phone numbers
 - Return the result of the classifier as index, numpy array or pandas series. 
 - Many bug fixes
 
-Version 0.1
-===========
+Version 0.1.0
+=============
 - Official release
