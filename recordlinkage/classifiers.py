@@ -286,37 +286,46 @@ class LogisticRegressionClassifier(Classifier):
         self.classifier.classes_ = numpy.array([False, True])
 
     @property
+    def params(self):
+        return {
+            'coefficients': self.coefficients,
+            'intercept': self.intercept
+        }
+
+    @params.setter
+    def params(self, value):
+
+        if not isinstance(value, dict):
+            raise ValueError("parameters are of wrong type")
+
+        self.coefficients = value['coefficients']
+        self.intercept = value['intercept']
+
+    @property
     def coefficients(self):
         # Return the coefficients if available
         try:
             return list(self.classifier.coef_[0])
-        except AttributeError:
+        except Exception:
             return None
 
     @coefficients.setter
     def coefficients(self, value):
 
-        # list like objects
-        if isinstance(value, (numpy.ndarray, list, tuple)):
+        if value is not None:
 
-            value = numpy.array(value)
+            # Check if array if numpy array
+            if type(value) is not numpy.ndarray:
+                value = numpy.array(value)
+
             self.classifier.coef_ = value.reshape((1, len(value)))
-
-        # value is None
-        elif value is None:
-            try:
-                del self.classifier.coef_
-            except AttributeError:
-                pass
-        else:
-            raise ValueError('incorrect type')
 
     @property
     def intercept(self):
 
         try:
             return float(self.classifier.intercept_[0])
-        except AttributeError:
+        except Exception:
             return None
 
     @intercept.setter
