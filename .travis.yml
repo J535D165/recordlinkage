@@ -9,13 +9,13 @@ env:
   - PANDAS_VERSION="pandas"
 
 before_script:
-  - pip install --upgrade pip 
   - pip install nose
   - pip install nose-parameterized
   - pip install codecov
 
 # install matrix versions, deps and optional deps
 install:
+  - pip install --upgrade pip setuptools wheel
   - pip install numpy
   - pip install scipy 
   - pip install scikit-learn 
