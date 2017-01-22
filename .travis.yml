@@ -9,6 +9,7 @@ env:
   - PANDAS_VERSION="pandas"
 
 before_script:
+  - pip install --upgrade pip 
   - pip install nose
   - pip install nose-parameterized
   - pip install codecov
