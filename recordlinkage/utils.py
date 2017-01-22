@@ -78,27 +78,6 @@ def split_or_pass(v):
         return (v, v)
 
 
-def _check_jellyfish(raise_error=True):
-    """Check if jellyfish is installed.
-
-    Check if the jellyfish is imported. If it is imported, return True. If not
-    succesfully imported, raise if raise_error == True and return false if
-    not.
-
-    """
-    if 'jellyfish' in sys.modules.keys():
-        return True
-    else:
-        if raise_error:
-            raise ImportError(
-                "Install the module 'jellyfish' to use the following " +
-                "string metrics: 'jaro', 'jarowinkler', 'levenshtein'" +
-                " and 'damerau_levenshtein'."
-            )
-        else:
-            return False
-
-
 def max_number_of_pairs(*args):
     """Compute the maximum number of pairs."""
 

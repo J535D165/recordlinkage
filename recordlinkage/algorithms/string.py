@@ -4,15 +4,10 @@ import warnings
 
 import pandas
 import numpy as np
+import jellyfish
 
 from sklearn.feature_extraction.text import CountVectorizer
 
-from recordlinkage.utils import _check_jellyfish
-
-try:
-    import jellyfish
-except ImportError:
-    pass
 
 # Ingore zero devision errors in cosine and qgram algorithms
 warnings.filterwarnings("ignore")
@@ -23,9 +18,6 @@ warnings.filterwarnings("ignore")
 
 
 def jaro_similarity(s1, s2):
-
-    # Check jellyfish
-    _check_jellyfish(raise_error=True)
 
     conc = pandas.concat([s1, s2], axis=1, ignore_index=True)
 
@@ -44,9 +36,6 @@ def jaro_similarity(s1, s2):
 
 def jarowinkler_similarity(s1, s2):
 
-    # Check jellyfish
-    _check_jellyfish(raise_error=True)
-
     conc = pandas.concat([s1, s2], axis=1, ignore_index=True)
 
     def jaro_winkler_apply(x):
@@ -63,9 +52,6 @@ def jarowinkler_similarity(s1, s2):
 
 
 def levenshtein_similarity(s1, s2):
-
-    # Check jellyfish
-    _check_jellyfish(raise_error=True)
 
     conc = pandas.concat([s1, s2], axis=1, ignore_index=True)
 
@@ -84,9 +70,6 @@ def levenshtein_similarity(s1, s2):
 
 
 def damerau_levenshtein_similarity(s1, s2):
-
-    # Check jellyfish
-    _check_jellyfish(raise_error=True)
 
     conc = pandas.concat([s1, s2], axis=1, ignore_index=True)
 

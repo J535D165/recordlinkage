@@ -3,12 +3,7 @@ import sys
 import numpy as np
 import pandas
 
-from recordlinkage.utils import _check_jellyfish
-
-try:
-    import jellyfish
-except ImportError:
-    pass
+import jellyfish
 
 
 def phonetic(s, method, concat=True, encoding='utf-8', decode_error='strict'):
@@ -49,9 +44,6 @@ def phonetic(s, method, concat=True, encoding='utf-8', decode_error='strict'):
     be installed with pip (``pip install jellyfish``).
 
     """
-
-    # import jellyfish if present
-    _check_jellyfish()
 
     # encoding
     if sys.version_info[0] == 2:
