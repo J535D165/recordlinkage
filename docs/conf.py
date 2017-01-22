@@ -36,7 +36,8 @@ MOCK_MODULES = [
     'sklearn.utils.validation',
     'sklearn.preprocessing',
     'jellyfish',
-    'six'
+    'six',
+    'six.moves.urllib.request'
 ]
 
 
