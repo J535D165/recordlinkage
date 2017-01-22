@@ -40,8 +40,12 @@ COMPARE_ALGORITHMS = [
           offset=3, scale=3, origin=2),
 
     # exact
-    param('exact', 'given_name', 'given_name')
-
+    param('exact', 'given_name', 'given_name'),
+    param('exact', 'given_name', 'given_name', missing_value=9),
+    param('exact', 'given_name', 'given_name',
+          disagree_value=9, missing_value=9),
+    param('exact', 'given_name', 'given_name',
+          agree_value=9, missing_value=9)
 ]
 
 
@@ -225,8 +229,9 @@ class TestCompare(unittest.TestCase):
         c.string('lastname', 'lastname', method='levenshtein')
         c.string('street', 'street', method='levenshtein')
 
-        cols = c.vectors.columns.tolist()
-        self.assertEqual(len(cols), 4)
+        nrows, ncols = c.vectors.shape
+        self.assertEqual(nrows, len(self.index_AB))
+        self.assertEqual(ncols, 4)
 
     def test_memory_high(self):
 
@@ -240,8 +245,9 @@ class TestCompare(unittest.TestCase):
         c.string('street', 'street', method='levenshtein')
 
         # Check if all columns are there
-        cols = c.vectors.columns.tolist()
-        self.assertEqual(len(cols), 4)
+        nrows, ncols = c.vectors.shape
+        self.assertEqual(nrows, len(self.index_AB))
+        self.assertEqual(ncols, 4)
 
         # Check is the records are there
         self.assertIsNotNone(c._df_a_indexed)
@@ -251,6 +257,27 @@ class TestCompare(unittest.TestCase):
         c.clear_memory()
         self.assertIsNone(c._df_a_indexed)
         self.assertIsNone(c._df_b_indexed)
+
+    @parameterized.expand(COMPARE_ALGORITHMS)
+    def test_block_size_linking(self, method_to_call, *args, **kwargs):
+
+        comp = recordlinkage.Compare(self.index_AB,
+                                     self.A, self.B, block_size=10)
+        result = getattr(comp, method_to_call)(*args, **kwargs)
+
+        # returns a pandas.Series
+        self.assertIsInstance(result, pandas.Series)
+        self.assertEqual(len(result), len(self.index_AB))
+
+    @parameterized.expand(COMPARE_ALGORITHMS)
+    def test_block_size_dedup(self, method_to_call, *args, **kwargs):
+
+        comp = recordlinkage.Compare(self.index_AB, self.A, block_size=10)
+        result = getattr(comp, method_to_call)(*args, **kwargs)
+
+        # returns a pandas.Series
+        self.assertIsInstance(result, pandas.Series)
+        self.assertEqual(len(result), len(self.index_AB))
 
     def test_series_argument(self):
 

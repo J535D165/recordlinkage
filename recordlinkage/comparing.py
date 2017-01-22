@@ -97,7 +97,7 @@ class CompareCore(object):
     """
 
     def __init__(self, pairs, df_a=None, df_b=None, low_memory=False,
-                 block_size=1e6, njobs=1, **kwargs):
+                 block_size=1000000, njobs=1, **kwargs):
 
         # The dataframes
         self.df_a = df_a
@@ -123,7 +123,7 @@ class CompareCore(object):
                 DeprecationWarning
             )
 
-    def _loc2(self, frame, multi_index, level_i, chunk_size=1e6):
+    def _loc2(self, frame, multi_index, level_i):
         """Indexing algorithm for MultiIndex on one level
 
         This internal function is a modification ``.loc`` indexing method in
@@ -140,32 +140,45 @@ class CompareCore(object):
             dataframe with.
         level_i : int, str
             The level of the multiIndex to index on.
-        chunk_size : int
-            The analysis is split up into smaller blocks. This may make the
-            analysis faster. The default chunk_size is 1e6 records.
 
         """
 
-        # Number of chunks
-        chunks = int(np.ceil(len(multi_index) / chunk_size))
+        if not isinstance(self.block_size, int):
+            raise TypeError("block_size must be of type int")
 
-        if chunks > 1:  # More than 1 chunk
+        if self.block_size <= 0:
+            raise ValueError("block_size must be a positive integer")
+
+        # Number of blocks
+        len_mi = len(multi_index)
+
+        if len_mi > self.block_size:  # More than 1 block
 
             # Collect parts to concat in the end.
             parts = []
+            start_slice = 0
 
-            for i in range(0, chunks):
+            while start_slice <= len_mi:
+
+                # Set the end of the slice
+                end_slice = start_slice + self.block_size
 
                 # Slice the MultiIndex
-                m_ind = multi_index[i * chunk_size:(i + 1) * chunk_size]
+                m_ind = multi_index[start_slice:end_slice]
                 ind = m_ind.get_level_values(level_i)
 
+                # The actual indexing
+                index_result = frame.loc[ind]
+
                 # Append to list named parts
-                parts.append(frame.loc[ind])
+                parts.append(index_result)
+
+                # Set new slice start
+                start_slice = end_slice
 
             data = pandas.concat(parts, axis=0, copy=False)
 
-        else:  # Only one chunk
+        else:  # Only one block
             data = frame.loc[multi_index.get_level_values(level_i)]
 
         # Add MultiIndex (Is this step important?)
