@@ -15,9 +15,12 @@ before_script:
 
 # install matrix versions, deps and optional deps
 install:
+  - pip install numpy
+  - pip install scipy 
+  - pip install scikit-learn 
+  - pip install six 
+  - pip install jellyfish
   - pip install -q $PANDAS_VERSION
-  - pip install numpy scipy scikit-learn six jellyfish
-  - pip install requests
 
 # run tests with coverage
 script: nosetests --with-coverage --cover-package=recordlinkage
