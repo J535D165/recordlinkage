@@ -38,6 +38,10 @@ Version 0.8.0
   ``binary_comparisons`` in the ``recordlinkage.datasets.random`` module.
 - Set KMeans cluster centers by hand. 
 - Various documentation updates and improvements.
+- Jellyfish is now a required dependency. Fixes bug #30 (
+  https://github.com/J535D165/recordlinkage/issues/30). 
+- Added ``tox.ini`` to test packaging and installation of package.
+- Drop requirements.txt file. 
 - Many small fixes and changes. Most of the changes cover the ``Compare`` 
   module. Especially label handling is improved. 
 
