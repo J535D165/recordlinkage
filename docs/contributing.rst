@@ -18,7 +18,7 @@ Install Nose:
 
 .. code:: sh
 
-	pip install nose
+	pip install nose nose-parameterized
 
 Run the following command to test the package
 
