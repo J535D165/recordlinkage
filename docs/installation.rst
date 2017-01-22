@@ -18,18 +18,16 @@ package is GPLv3.
 Dependencies
 ============
 
-The following packages are required. You probably have it already ;)
+The following packages are required. You probably have most of it already ;)
 
 -  `numpy <http://www.numpy.org>`__
--  `pandas <https://github.com/pydata/pandas>`__
+-  `pandas (>=0.18.0) <https://github.com/pydata/pandas>`__
 -  `scipy <https://www.scipy.org/>`__
 -  `sklearn <http://scikit-learn.org/>`__
 -  `jellyfish <https://github.com/jamesturk/jellyfish>`__: Needed for
    approximate string comparison and string encoding. 
-
-The following packages are recommanded
-
-- numexpr: Used to speed up numeric comparisons. 
+-  `numexpr (optional) <https://github.com/pydata/numexpr>`__: Used to speed up 
+   numeric comparisons. 
 
 
 
