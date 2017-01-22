@@ -88,7 +88,7 @@ and an example of unsupervised learning (the well known ECM-algorithm):
 Main Features
 -------------
 
-The main features of the **recordlinkage** package are:
+The main features of the **Python Record Linkage Toolkit** are:
 
 
 -  Clean and standardise data with easy to use tools
@@ -146,8 +146,6 @@ comparisons.
 .. _Scikit-learn: http://scikit-learn.org/
 .. _Jellyfish: https://github.com/jamesturk/jellyfish
 .. _Numexpr: https://github.com/pydata/numexpr
-
-The license for this record linkage tool is GPLv3.
 
 The license for this record linkage tool is GPLv3.
 
