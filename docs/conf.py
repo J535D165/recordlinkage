@@ -29,14 +29,14 @@ MOCK_MODULES = [
     'scipy',
     'scipy.sparse',
     'pandas',
-    'pandas.types',
-    'pandas.types.inference',
     'sklearn',
     'sklearn.feature_extraction',
     'sklearn.feature_extraction.text',
     'sklearn.utils',
     'sklearn.utils.validation',
-    'sklearn.preprocessing'
+    'sklearn.preprocessing',
+    'jellyfish',
+    'six'
 ]
 
 
