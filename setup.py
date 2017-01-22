@@ -24,7 +24,14 @@ setup(
     # Documentation
     url="http://recordlinkage.readthedocs.io/",
 
-    install_requires=["numpy", "pandas", "scipy", "sklearn"],
+    install_requires=[
+        "six>=1.10.0",
+        "jellyfish>=0.5.4",
+        "numpy>=1.9.0",
+        "pandas>=0.18.0",
+        "scipy>=0.17.1",
+        "scikit-learn>=0.17.1",
+    ],
     packages=[
         'recordlinkage',
         'recordlinkage.datasets',
