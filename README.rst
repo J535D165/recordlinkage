@@ -107,11 +107,15 @@ Documentation
 The most recent documentation and API reference can be found at
 `recordlinkage.readthedocs.org
 <http://recordlinkage.readthedocs.org/en/latest/>`__. The documentation
-provides some basic usage examples like `deduplication <http://recordlinkage.r
-eadthedocs.io/en/latest/notebooks/data_deduplication.html>`__ and `linking <ht
-tp://recordlinkage.readthedocs.io/en/latest/notebooks/link_two_dataframes.html
->`__ census data. More examples are coming soon. If you do have interesting
-examples to share, let us know.
+provides some basic usage examples like deduplication_ and linking_ census data. 
+More examples are coming soon. If you do have interesting examples to share, let 
+us know.
+
+.. _deduplication: http://recordlinkage.readthedocs.io/en/latest/notebooks/data_deduplication.html
+__ deduplication_
+
+.. _linking: http://recordlinkage.readthedocs.io/en/latest/notebooks/link_two_dataframes.html
+__ linking_
 
 
 Dependencies, installation and license
