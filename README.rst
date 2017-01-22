@@ -107,16 +107,12 @@ Documentation
 The most recent documentation and API reference can be found at
 `recordlinkage.readthedocs.org
 <http://recordlinkage.readthedocs.org/en/latest/>`__. The documentation
-provides some basic usage examples like deduplication_ and linking_ census data. 
-More examples are coming soon. If you do have interesting examples to share, let 
-us know.
+provides some basic usage examples like deduplication_ and linking_ census
+data. More examples are coming soon. If you do have interesting examples to
+share, let  us know.
 
 .. _deduplication: http://recordlinkage.readthedocs.io/en/latest/notebooks/data_deduplication.html
-__ deduplication_
-
 .. _linking: http://recordlinkage.readthedocs.io/en/latest/notebooks/link_two_dataframes.html
-__ linking_
-
 
 Dependencies, installation and license
 --------------------------------------
@@ -132,25 +128,26 @@ Dependencies, installation and license
 .. |codecov| image:: https://codecov.io/gh/J535D165/recordlinkage/branch/master/graph/badge.svg
   :target: https://codecov.io/gh/J535D165/recordlinkage
 
-The following packages are required. You probably have most of them already
-installed.
-
--  `numpy <http://www.numpy.org>`__
--  `pandas <https://github.com/pydata/pandas>`__
--  `scipy <https://www.scipy.org/>`__
--  `sklearn <http://scikit-learn.org/>`__
--  `jellyfish <https://github.com/jamesturk/jellyfish>`__: Needed for
-   approximate string comparison and string encoding. 
-
-The following packages are recommanded
-
-- numexpr: Used to speed up numeric comparisons. 
-
-Install the package with pip
+Install the Python Record Linkage Toolkit easily with pip
 
 .. code:: sh
 
     pip install recordlinkage
+
+The toolkit depends on Pandas_ (>=18.0), Numpy_, `Scikit-learn`_, Scipy_ and
+Jellyfish_. You probably have most of them already installed. The package
+``jellyfish`` is used for approximate string comparing and string encoding.
+The package Numexpr_ is an optional dependency to speed up numerical
+comparisons.
+
+.. _Numpy: http://www.numpy.org
+.. _Pandas: https://github.com/pydata/pandas
+.. _Scipy: https://www.scipy.org/
+.. _Scikit-learn: http://scikit-learn.org/
+.. _Jellyfish: https://github.com/jamesturk/jellyfish
+.. _Numexpr: https://github.com/pydata/numexpr
+
+The license for this record linkage tool is GPLv3.
 
 The license for this record linkage tool is GPLv3.
 
