@@ -14,6 +14,7 @@
 
 import sys
 import os
+import mock
 import shlex
 
 # If extensions (or modules to document with autodoc) are in another directory,
@@ -22,16 +23,27 @@ import shlex
 sys.path.insert(0, os.path.abspath('..'))
 # sys.path.insert(0, os.path.abspath('../recordlinkage'))
 
-autodoc_mock_imports = [
+# why does autodoc_mock_imports fail on rtd
+MOCK_MODULES = [
     'numpy',
-    'pandas',
+    'scipy',
     'scipy.sparse',
+    'pandas',
+    'sklearn',
+    'sklearn.feature_extraction',
     'sklearn.feature_extraction.text',
+    'sklearn.utils',
     'sklearn.utils.validation',
     'sklearn.preprocessing',
     'jellyfish',
     'six'
 ]
+
+
+for mod_name in MOCK_MODULES:
+
+    if mod_name not in sys.modules:
+        sys.modules[mod_name] = mock.Mock()
 
 import recordlinkage
 
@@ -321,3 +333,4 @@ napoleon_use_admonition_for_references = True
 napoleon_use_ivar = False
 napoleon_use_param = True
 napoleon_use_rtype = False
+
