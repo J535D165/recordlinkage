@@ -36,8 +36,7 @@ setup(
         'recordlinkage',
         'recordlinkage.datasets',
         'recordlinkage.standardise',
-        'recordlinkage.algorithms',
-        'recordlinkage.compat'
+        'recordlinkage.algorithms'
     ],
     include_package_data=True,
     package_dir={'recordlinkage': 'recordlinkage'},
