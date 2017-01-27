@@ -5,6 +5,17 @@ Release notes
 Updated algorithms for comparing numberic variables. The new algorithms can
 compute the similarity with kernels like gaussian, linear and exponential.
 
+Version 0.8.1
+=============
+
+- Issues solved with rendering docs on ReadTheDocs. Still not clear what is 
+  going on with the ``autodoc_mock_imports`` in the sphinx conf.py file. Maybe
+  a bug in sphinx. 
+- Move six to dependencies. 
+- The reference part of the docs is split into separate subsections. This 
+  makes the reference better readable. 
+- The landing page of the docs is slightly changed. 
+
 Version 0.8.0
 =============
 
