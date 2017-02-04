@@ -14,3 +14,5 @@ developing tools to generate your own datasets.
 .. autofunction:: recordlinkage.datasets.load_febrl3
 
 .. autofunction:: recordlinkage.datasets.load_febrl4
+
+.. autofunction:: recordlinkage.datasets.binary_vectors
