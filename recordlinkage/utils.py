@@ -30,18 +30,6 @@ def unique(x):
     return list(set(x))
 
 
-def _resample(frame, index, level_i):
-    """
-    Resample a pandas.Series or pandas.DataFrame with one level of a
-    MultiIndex.
-    """
-
-    data = frame.loc[index.get_level_values(level_i)]
-    data.index = index
-
-    return data
-
-
 def merge_dicts(*dict_args):
     '''
     Given any number of dicts, shallow copy and merge into a new dict,
@@ -51,31 +39,6 @@ def merge_dicts(*dict_args):
     for dictionary in dict_args:
         result.update(dictionary)
     return result
-
-
-def split_or_pass(v):
-    """
-    Make a tuple of a single value or return the tuple.
-
-    Example
-    -------
-    >>> v1, v2 = split_or_tuple(3)
-    v1 is 3 and v2 and 3
-    >>> v1, v2 = split_or_tuple((3,4))
-    v1 is 3 and v2 and 4
-
-    """
-
-    if isinstance(v, (tuple, list)):
-
-        if len(v) != 2:
-            raise ValueError(
-                'The number of elements in the list of tuple has to be 2. ')
-
-        return tuple(v)
-
-    else:
-        return (v, v)
 
 
 def max_number_of_pairs(*args):
