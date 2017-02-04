@@ -2,32 +2,35 @@ import pandas as pd
 import numpy as np
 
 
-def binary_comparisons(n, n_match, m=[0.9] * 8, u=[0.1] * 8,
-                       random_state=None):
+def binary_vectors(n, n_match, m=[0.9] * 8, u=[0.1] * 8,
+                   random_state=None):
     """Generate random binary comparison vectors
 
-    This function is used to generate random comparison vectors. The outcome
-    of each comparison is restricted to 0 and 1.
+    This function is used to generate random comparison vectors. The result of
+    each comparison is a binary value (0 or 1).
 
     Parameters
     ----------
     n : int
-        The number of comparison vectors.
+        The total number of comparison vectors.
     n_match : int
-        The number of matches.
+        The number of matching record pairs.
     m : list, default [0.9] * 8, optional
-        The probability of an agreeing comparison given the pairs is a match.
+        A list of m probabilities of each partially identifying variable. The
+        m probability is the probability that an identifier in matching
+        record pairs agrees.
     u : list, default [0.9] * 8, optional
-        The probability of an agreeing comparison given the records in the
-        pair do not belong to the same entity.
+        A list of u probabilities of each partially identifying variable. The
+        u probability is the probability that an identifier in non-matching
+        record pairs agrees.
     random_state : int or numpy.random.RandomState, optional
-        Seed for the random number generator (if int), or numpy RandomState
-        object.
+        Seed for the random number generator with an integer or numpy
+        RandomState object.
 
     Returns
     -------
-    dict
-        The dicitionary with your classifier parameters.
+    pandas.DataFrame
+        A dataframe with comparison vectors.
 
 
     """
