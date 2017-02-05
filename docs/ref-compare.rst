@@ -9,3 +9,4 @@ similarity measures, numerical measures and distance measures.
 
 .. autoclass:: Compare
 	:members:
+	:inherited-members:

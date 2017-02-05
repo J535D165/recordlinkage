@@ -9,3 +9,4 @@ algorithms available such as blocking and sorted neighborhood indexing.
 
 .. autoclass:: Pairs
 	:members:
+	:inherited-members:
