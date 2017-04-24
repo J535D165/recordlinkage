@@ -212,15 +212,14 @@ def _sortedneighbourhood(
     data_dict_A = {kl: df_a[kl] for kl in keys_left}
     data_dict_B = {kl: df_b[kl] for kl in keys_right}
 
+    sorted_index = pandas.Series(index=sorting_key_values, data=sorting_key_factors)
     sorted_df_A = pandas.DataFrame(
         merge_dicts(
             data_dict_A,
-            {column: df_a[column].replace(
-                sorting_key_values, sorting_key_factors),
+            {column: df_a[column].map(sorted_index),
              df_a.index.name: df_a.index.values}))
     sorted_df_B = pandas.DataFrame(
-        {column: df_b[column].replace(
-            sorting_key_values, sorting_key_factors),
+        {column: df_b[column].map(sorted_index),
             df_b.index.name: df_b.index.values})
 
     pairs_concat = None
