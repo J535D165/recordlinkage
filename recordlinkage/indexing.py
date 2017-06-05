@@ -5,8 +5,20 @@ from functools import wraps
 import pandas
 import numpy
 
-from recordlinkage.utils import IndexError, merge_dicts, max_number_of_pairs
+from recordlinkage.base import BaseIndexator
+from recordlinkage.utils import IndexError
+from recordlinkage.utils import merge_dicts
+from recordlinkage.utils import max_number_of_pairs
 from recordlinkage.algorithms.string import qgram_similarity
+from recordlinkage.utils import listify
+from recordlinkage.measures import reduction_ratio
+from recordlinkage.measures import max_pairs
+from recordlinkage.algorithms.indexing import \
+    random_pairs_with_replacement
+from recordlinkage.algorithms.indexing import \
+    random_pairs_without_replacement_small_frames
+from recordlinkage.algorithms.indexing import \
+    random_pairs_without_replacement_large_frames
 
 
 def check_index_names(func):
@@ -578,3 +590,396 @@ class Pairs(PairsCore):
     def reduction(self):
 
         return 1 - self.n_pairs / self.maximum_number_of_pairs
+
+
+##############################################################################
+#
+# This section contains the indexing classes for the new indexing API.
+#
+
+
+class FullIndex(BaseIndexator):
+    """Class to generate a 'full' index.
+
+    A full index is an index with all possible combinations of record pairs.
+    In case of linking, this indexation method generates the cartesian product
+    of both DataFrame's. In case of deduplicating DataFrame A, this indexation
+    method are the pairs defined by the upper triangular matrix of the A x A.
+
+    Note
+    ----
+    This indexation method can be slow for large DataFrame's. The number of
+    comparisons scales quadratic.
+    Also, not all classifiers work well with large numbers of record pairs
+    were most of the pairs are distinct.
+
+    References
+    ----------
+    .. [christen2012] Christen, P. (2012). Data matching: concepts and
+            techniques for record linkage, entity resolution, and duplicate
+            detection. Springer Science & Business Media.
+    .. [christen2008] Christen, P. (2008). Febrl - A Freely Available Record
+            Linkage System with a Graphical User Interface.
+
+    """
+
+    def __init__(self, *args, **kwargs):
+        super(FullIndex, self).__init__(*args, **kwargs)
+
+    def _link_index(self, df_a, df_b):
+        return pandas.MultiIndex.from_product(
+            [df_a.index.values, df_b.index.values],
+            names=[df_a.index.name, df_b.index.name]
+        )
+
+    def _dedup_index(self, df_a):
+
+        levels = [df_a.index.values, df_a.index.values]
+        labels = numpy.triu_indices(len(df_a.index), k=1)
+        names = [df_a.index.name, df_a.index.name]
+
+        return pandas.MultiIndex(
+            levels=levels,
+            labels=labels,
+            names=names,
+            verify_integrity=False
+        )
+
+
+class BlockIndex(BaseIndexator):
+    """Make candidate record pairs that agree on one or more variables.
+
+    Return all record pairs that agree on the passed attribute(s). This
+    method is known as *blocking*.
+
+    Parameters
+    ----------
+    on : label, optional
+        A column name or a list of column names. These columns are used to
+        block on.
+    left_on : label, optional
+        A column name or a list of column names of dataframe A. These
+        columns are used to block on. This argument is ignored when argument
+        'on' is given.
+    right_on : label, optional
+        A column name or a list of column names of dataframe B. These
+        columns are used to block on. This argument is ignored when argument
+        'on' is given.
+
+    Examples
+    --------
+    In the following example, the record pairs are made for two historical
+    datasets with census data. The datasets are named ``census_data_1980``
+    and ``census_data_1990``.
+
+    >>> indexer = recordlinkage.BlockIndex(on='first_name')
+    >>> indexer.index(census_data_1980, census_data_1990)
+
+
+    References
+    ----------
+    .. [christen2012] Christen, 2012. Data Matching Concepts and
+            Techniques for Record Linkage, Entity Resolution, and
+            Duplicate Detection
+
+    """
+
+    def __init__(self, on=None, left_on=None, right_on=None,
+                 *args, **kwargs):
+        super(BlockIndex, self).__init__(*args, **kwargs)
+
+        # variables to block on
+        self.on = on
+        self.left_on = left_on
+        self.right_on = right_on
+
+    def _link_index(self, df_a, df_b):
+        # Index name conflicts do not occur. They are handled in the
+        # decorator.
+
+        left_on = listify(self.left_on)
+        right_on = listify(self.right_on)
+
+        if self.on:
+            left_on, right_on = listify(self.on), listify(self.on)
+
+        if not left_on or not right_on:
+            raise KeyError("no column labels given")
+
+        if len(left_on) != len(right_on):
+            raise ValueError(
+                "length of left and right keys needs to be the same"
+            )
+
+        blocking_keys = ["blocking_key_%d" % i for i, v in enumerate(left_on)]
+
+        # make a dataset for the data on the left
+        data_left = df_a[left_on].dropna(axis=0, how='any', inplace=False)
+        data_left.columns = blocking_keys
+        data_left['index_x'] = data_left.index
+
+        # make a dataset for the data on the right
+        data_right = df_b[right_on].dropna(axis=0, how='any', inplace=False)
+        data_right.columns = blocking_keys
+        data_right['index_y'] = data_right.index
+
+        # merge the dataframes
+        pairs = data_left.merge(
+            data_right, how='inner', on=blocking_keys
+        ).set_index(['index_x', 'index_y'])
+
+        return pairs.index.rename([df_a.index.name, df_b.index.name])
+
+
+class SortedNeighbourhoodIndex(BaseIndexator):
+    """Make candidate record pairs with the SNI algorithm.
+
+    Return all record pairs that agree on the passed attribute(s). This
+    method is known as *blocking*.
+
+    Parameters
+    ----------
+    on: label
+        Specify the on to make a sorted index
+    window: int, optional
+        The width of the window, default is 3
+    sorting_key_values: array, optional
+        A list of sorting key values (optional).
+    block_on: label
+        Additional columns to use standard blocking on
+    block_left_on: label
+        Additional columns of the left dataframe to use standard blocking
+        on.
+    block_right_on: label
+        Additional columns of the right dataframe to use standard
+        blocking on
+
+
+    Examples
+    --------
+    In the following example, the record pairs are made for two historical
+    datasets with census data. The datasets are named ``census_data_1980``
+    and ``census_data_1990``.
+
+    >>> indexer = recordlinkage.SortedNeighbourhoodIndex(on='first_name', w=3)
+    >>> indexer.index(census_data_1980, census_data_1990)
+
+
+    References
+    ----------
+    .. [christen2012] Christen, 2012. Data Matching Concepts and
+            Techniques for Record Linkage, Entity Resolution, and
+            Duplicate Detection
+
+    """
+
+    def __init__(self, on, window=3, sorting_key_values=None, block_on=[],
+                 block_left_on=[], block_right_on=[], *args, **kwargs):
+        super(SortedNeighbourhoodIndex, self).__init__(*args, **kwargs)
+
+        # variables to block on
+        self.on = on
+        self.window = window
+        self.sorting_key_values = sorting_key_values
+        self.block_on = block_on
+        self.block_left_on = block_left_on
+        self.block_right_on = block_right_on
+
+    def _get_sorting_key_values(self, array1, array2):
+        """return the sorting key values as a series"""
+
+        return numpy.sort(numpy.unique(numpy.concatenate(
+            [array1, array2]
+        )))
+
+    def _link_index(self, df_a, df_b):
+        # Index name conflicts do not occur. They are handled in the
+        # decorator.
+
+        window = self.window
+
+        # Check if window is an odd number
+        if not isinstance(window, int) or (window < 0) or not bool(window % 2):
+            raise ValueError(
+                'window is not a positive and odd integer')
+
+        # sorting key is single column
+        if isinstance(self.on, (tuple, list, dict)):
+            raise ValueError(
+                "sorting key is not a label")
+
+        # make blocking keys correct
+        if self.block_on:
+            block_left_on = self.block_on
+            block_right_on = self.block_on
+
+        block_left_on = listify(self.block_left_on)
+        block_right_on = listify(self.block_right_on)
+
+        # drop missing values and columns without relevant information
+        data_left = df_a[listify(self.on) + block_left_on].dropna(
+            axis=0, how='any', inplace=False
+        ).rename(
+            columns={v: "blocking_key_%d" %
+                     i for i, v in enumerate(block_left_on)},
+        ).rename(
+            columns={self.on: 'sorting_key'}
+        )
+        data_left['index_x'] = data_left.index
+
+        data_right = df_b[listify(self.on) + block_right_on].dropna(
+            axis=0, how='any', inplace=False
+        ).rename(
+            columns={v: "blocking_key_%d" %
+                     i for i, v in enumerate(block_right_on)},
+        ).rename(
+            columns={self.on: 'sorting_key'}
+        )
+        data_right['index_y'] = data_right.index
+
+        # sorting_key_values is the terminology in Data Matching [Christen,
+        # 2012]
+        if self.sorting_key_values is None:
+
+            self.sorting_key_values = self._get_sorting_key_values(
+                data_left['sorting_key'].values,
+                data_right['sorting_key'].values
+            )
+
+        sorting_key_factors = pandas.Series(
+            numpy.arange(len(self.sorting_key_values)),
+            index=self.sorting_key_values)
+
+        data_left['sorting_key'] = data_left[
+            'sorting_key'].map(sorting_key_factors)
+        data_right['sorting_key'] = data_right[
+            'sorting_key'].map(sorting_key_factors)
+
+        # Internal window size
+        _window = int((window - 1) / 2)
+
+        def merge_lagged(x, y, w):
+            """Merge two dataframes with a lag on in the sorting key."""
+
+            y = y.copy()
+            y['sorting_key'] = y['sorting_key'] + w
+
+            return x.merge(y, how='inner')
+
+        pairs_concat = [merge_lagged(data_left, data_right, w)
+                        for w in range(-_window, _window + 1)]
+
+        pairs = pandas.concat(pairs_concat, axis=0).set_index(
+            ['index_x', 'index_y']
+        ).index.rename([df_a.index.name, df_b.index.name])
+
+        return pairs
+
+
+class RandomIndex(BaseIndexator):
+    """Class to generate an index of random pairs.
+
+    Make an index with random record pairs. The class supports the generation
+    of random record pairs with or without replacement.
+
+    Note
+    ----
+    A random index can be useful to train unsupervised learning methods.
+
+    Parameters
+    ----------
+    n : int
+        The number of record pairs to return. In case replace=False, the
+        integer n should be bounded by 0 < n <= n_max where n_max is the
+        maximum number of pairs possible.
+    replace : bool, optional
+        Whether the sample of record pairs is with or without replacement.
+        Default: True
+    random_state : int or numpy.random.RandomState, optional
+        Seed for the random number generator (if int), or numpy RandomState
+        object.
+
+    """
+
+    def __init__(self, n, replace=True, random_state=None, *args, **kwargs):
+        super(RandomIndex, self).__init__(*args, **kwargs)
+
+        self.n = n
+        self.replace = replace
+        self.random_state = random_state
+
+    def _link_index(self, df_a, df_b):
+
+        shape = (len(df_a), len(df_b))
+
+        # with replacement
+        if self.replace:
+            pairs = random_pairs_with_replacement(
+                self.n, shape, self.random_state)
+
+        # without replacement
+        else:
+
+            n_max = max_pairs(shape)
+
+            if not isinstance(self.n, int) or self.n <= 0 or self.n > n_max:
+                raise ValueError(
+                    "n must be a integer satisfying 0<n<=%s" % n_max)
+
+            # large dataframes
+            if n_max < 1e6:
+                pairs = random_pairs_without_replacement_small_frames(
+                    self.n, shape, self.random_state)
+            # small dataframes
+            else:
+                pairs = random_pairs_without_replacement_large_frames(
+                    self.n, shape, self.random_state)
+
+        levels = [df_a.index.values, df_b.index.values]
+        labels = pairs
+        names = [df_a.index.name, df_b.index.name]
+
+        return pandas.MultiIndex(
+            levels=levels,
+            labels=labels,
+            names=names,
+            verify_integrity=False
+        )
+
+    def _dedup_index(self, df_a):
+
+        shape = (len(df_a),)
+
+        # with replacement
+        if self.replace:
+            pairs = random_pairs_with_replacement(
+                self.n, shape, self.random_state)
+
+        # without replacement
+        else:
+
+            n_max = max_pairs(shape)
+
+            if not isinstance(self.n, int) or self.n <= 0 or self.n > n_max:
+                raise ValueError(
+                    "n must be a integer satisfying 0<n<=%s" % n_max)
+
+            # large dataframes
+            if n_max < 1e6:
+                pairs = random_pairs_without_replacement_small_frames(
+                    self.n, shape, self.random_state)
+            # small dataframes
+            else:
+                pairs = random_pairs_without_replacement_large_frames(
+                    self.n, shape, self.random_state)
+
+        levels = [df_a.index.values, df_a.index.values]
+        labels = pairs
+        names = [df_a.index.name, df_a.index.name]
+
+        return pandas.MultiIndex(
+            levels=levels,
+            labels=labels,
+            names=names,
+            verify_integrity=False
+        )
