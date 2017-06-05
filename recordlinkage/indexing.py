@@ -1,5 +1,6 @@
 from __future__ import division
 
+import warnings
 from functools import wraps
 
 import pandas
@@ -296,6 +297,11 @@ class PairsCore(object):
     """
 
     def __init__(self, df_a, df_b=None, chunks=None, verify_integrity=True):
+
+        warnings.warn(
+            "indexing api changed, see the documentation for the new format",
+            DeprecationWarning
+        )
 
         self.df_a = df_a
         self.df_b = df_b
