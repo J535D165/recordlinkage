@@ -3,6 +3,76 @@
 from __future__ import division
 
 import numpy
+import pandas
+
+
+def reduction_ratio(n, x):
+    """Compute the reduction ratio.
+
+    The reduction ratio is 1 minus the ratio candidate matches and the maximum
+    number of pairs possible.
+
+    Parameters
+    ----------
+    n: int, pandas.MultiIndex
+        The number of candidate record pairs or the pandas.MultiIndex with
+        record pairs.
+    x: a list of pandas.DataFrame objects
+        The data used to make the candidate record pairs.
+
+    Returns
+    -------
+    float
+        The reduction ratio.
+
+    """
+
+    n_max = max_pairs(x)
+
+    if isinstance(n, pandas.MultiIndex):
+        n = len(n)
+
+    if n > n_max:
+        raise ValueError("n has to be smaller of equal n_max")
+
+    return 1 - n / n_max
+
+
+def recall_score(candidate_links, true_matches):
+
+    return len(true_matches.intersection(candidate_links)) / len(true_matches)
+
+
+def _get_len(x):
+    """Return int or len(x)"""
+
+    return x if isinstance(x, int) else len(x)
+
+
+def _max_pairs_deduplication(x):
+    """Compute the maximum number of record pairs in case of deduplication."""
+
+    return int(x * (x - 1) / 2)
+
+
+def _max_pairs_linkage(x):
+    """Get the maximum number of record pairs in case of linking."""
+    return numpy.prod(x)
+
+
+def max_pairs(shape):
+    """Compute the maximum number of record pairs possible."""
+
+    if not isinstance(shape, (tuple, list)):
+        n = _max_pairs_deduplication(_get_len(shape))
+
+    elif (isinstance(shape, (tuple, list)) and len(shape) == 1):
+        n = _max_pairs_deduplication(_get_len(shape[0]))
+
+    else:
+        n = _max_pairs_linkage([_get_len(xi) for xi in shape])
+
+    return n
 
 
 def true_positives(true_match_index, matches_index):
