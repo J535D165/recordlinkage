@@ -77,10 +77,10 @@ class BaseIndexator(object):
         if isinstance(x.index, pandas.Index):
 
             if not x.index.is_unique:
-                raise IndexError('index of DataFrame is not unique')
+                raise ValueError('index of DataFrame is not unique')
 
         elif isinstance(x.index, pandas.MultiIndex):
-            raise IndexError(
+            raise ValueError(
                 'expected pandas.Index instead of pandas.MultiIndex'
             )
 
