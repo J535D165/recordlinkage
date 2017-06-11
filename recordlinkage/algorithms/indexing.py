@@ -32,6 +32,9 @@ def random_pairs_with_replacement(n, shape, random_state=None):
 
     n_max = max_pairs(shape)
 
+    if n_max <= 0:
+        raise ValueError('n_max must be larger than 0')
+
     # make random pairs
     indices = random_state.randint(0, n_max, n)
 
