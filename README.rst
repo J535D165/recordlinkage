@@ -40,15 +40,15 @@ Load your data into pandas DataFrames.
     df_a = pandas.DataFrame(YOUR_FIRST_DATASET)
     df_b = pandas.DataFrame(YOUR_SECOND_DATASET)
 
-Comparing all record can be computationally intensive. Therefore, we make
-smart set of candidate links with one of the built-in indexing techniques like
+Comparing all record can be computationally intensive. Therefore, we make 
+set of candidate links with one of the built-in indexing techniques like
 **blocking**. In this example, only pairs of records that agree on the surname
-are included.
+are returned.
 
 .. code:: python
 
-    index = recordlinkage.Pairs(df_a, df_b)
-    candidate_links = index.block('surname')
+    block_class = recordlinkage.Blocking(on='surname')
+    candidate_links = block_class.index(df_a, df_b)
 
 For each candidate link, compare the records with one of the
 comparison or similarity algorithms in the Compare class.
