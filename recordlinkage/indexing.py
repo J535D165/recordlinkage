@@ -196,7 +196,8 @@ def _sortedneighbourhood(
 
     # Check if window is an odd number
     if not isinstance(window, int) or (window < 0) or not bool(window % 2):
-        raise ValueError('The given window length is not a positive and odd integer.')
+        raise ValueError(
+            'The given window length is not a positive and odd integer.')
 
     block_on = [block_on] if type(block_on) != list else block_on
     block_left_on = [block_left_on] if type(
@@ -225,7 +226,8 @@ def _sortedneighbourhood(
     data_dict_A = {kl: df_a[kl] for kl in keys_left}
     data_dict_B = {kl: df_b[kl] for kl in keys_right}
 
-    sorted_index = pandas.Series(index=sorting_key_values, data=sorting_key_factors)
+    sorted_index = pandas.Series(
+        index=sorting_key_values, data=sorting_key_factors)
     sorted_df_A = pandas.DataFrame(
         merge_dicts(
             data_dict_A,
@@ -710,7 +712,7 @@ class BlockIndex(BaseIndexator):
             left_on, right_on = listify(self.on), listify(self.on)
 
         if not left_on or not right_on:
-            raise KeyError("no column labels given")
+            raise ValueError("no column labels given")
 
         if len(left_on) != len(right_on):
             raise ValueError(
@@ -779,12 +781,15 @@ class SortedNeighbourhoodIndex(BaseIndexator):
 
     """
 
-    def __init__(self, on, window=3, sorting_key_values=None, block_on=[],
-                 block_left_on=[], block_right_on=[], *args, **kwargs):
+    def __init__(self, on=None, left_on=None, right_on=None, window=3,
+                 sorting_key_values=None, block_on=[], block_left_on=[],
+                 block_right_on=[], *args, **kwargs):
         super(SortedNeighbourhoodIndex, self).__init__(*args, **kwargs)
 
         # variables to block on
         self.on = on
+        self.left_on = left_on
+        self.right_on = right_on
         self.window = window
         self.sorting_key_values = sorting_key_values
         self.block_on = block_on
@@ -794,13 +799,30 @@ class SortedNeighbourhoodIndex(BaseIndexator):
     def _get_sorting_key_values(self, array1, array2):
         """return the sorting key values as a series"""
 
-        return numpy.sort(numpy.unique(numpy.concatenate(
-            [array1, array2]
-        )))
+        concat_arrays = numpy.concatenate([array1, array2])
+        unique_values = numpy.unique(concat_arrays)
+
+        return numpy.sort(unique_values)
 
     def _link_index(self, df_a, df_b):
+
         # Index name conflicts do not occur. They are handled in the
         # decorator.
+
+        left_on = listify(self.left_on)
+        right_on = listify(self.right_on)
+
+        if self.on:
+            left_on = listify(self.on)
+            right_on = listify(self.on)
+
+        if not left_on or not right_on:
+            raise ValueError("no column labels given")
+
+        if len(left_on) != len(right_on):
+            raise ValueError(
+                "length of left and right keys needs to be the same"
+            )
 
         window = self.window
 
@@ -809,38 +831,33 @@ class SortedNeighbourhoodIndex(BaseIndexator):
             raise ValueError(
                 'window is not a positive and odd integer')
 
-        # sorting key is single column
-        if isinstance(self.on, (tuple, list, dict)):
-            raise ValueError(
-                "sorting key is not a label")
+        # # sorting key is single column
+        # if isinstance(self.on, (tuple, list, dict)):
+        #     raise ValueError(
+        #         "sorting key is not a label")
 
         # make blocking keys correct
-        if self.block_on:
-            block_left_on = self.block_on
-            block_right_on = self.block_on
 
         block_left_on = listify(self.block_left_on)
         block_right_on = listify(self.block_right_on)
 
+        if self.block_on:
+            block_left_on = listify(self.block_on)
+            block_right_on = listify(self.block_on)
+
         # drop missing values and columns without relevant information
-        data_left = df_a[listify(self.on) + block_left_on].dropna(
+        data_left = df_a[listify(left_on) + block_left_on].dropna(
             axis=0, how='any', inplace=False
-        ).rename(
-            columns={v: "blocking_key_%d" %
-                     i for i, v in enumerate(block_left_on)},
-        ).rename(
-            columns={self.on: 'sorting_key'}
         )
+        data_left.columns = ['sorting_key'] + ["blocking_key_%d" %
+                                               i for i, v in enumerate(block_left_on)]
         data_left['index_x'] = data_left.index
 
-        data_right = df_b[listify(self.on) + block_right_on].dropna(
+        data_right = df_b[listify(right_on) + block_right_on].dropna(
             axis=0, how='any', inplace=False
-        ).rename(
-            columns={v: "blocking_key_%d" %
-                     i for i, v in enumerate(block_right_on)},
-        ).rename(
-            columns={self.on: 'sorting_key'}
         )
+        data_right.columns = ['sorting_key'] + ["blocking_key_%d" %
+                                                i for i, v in enumerate(block_right_on)]
         data_right['index_y'] = data_right.index
 
         # sorting_key_values is the terminology in Data Matching [Christen,
@@ -917,18 +934,25 @@ class RandomIndex(BaseIndexator):
     def _link_index(self, df_a, df_b):
 
         shape = (len(df_a), len(df_b))
+        n_max = max_pairs(shape)
+
+        if not isinstance(self.n, int):
+            raise ValueError('n must be an integer')
 
         # with replacement
         if self.replace:
+
+            if n_max == 0:
+                raise ValueError(
+                    "one of the dataframes is empty")
+
             pairs = random_pairs_with_replacement(
                 self.n, shape, self.random_state)
 
         # without replacement
         else:
 
-            n_max = max_pairs(shape)
-
-            if not isinstance(self.n, int) or self.n <= 0 or self.n > n_max:
+            if self.n <= 0 or self.n > n_max:
                 raise ValueError(
                     "n must be a integer satisfying 0<n<=%s" % n_max)
 
