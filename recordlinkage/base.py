@@ -109,7 +109,7 @@ class BaseIndexator(object):
 
         raise AttributeError("indexing object has no attribute 'fit'")
 
-    def index(self, x):
+    def index(self, x, x_link=None):
         """Make an index of record pairs.
 
         Use a custom function to make record pairs of one or two dataframes.
@@ -128,7 +128,17 @@ class BaseIndexator(object):
 
         """
 
+        if x is None:  # error
+            raise ValueError("provide at least one dataframe")
+        elif x_link is not None:  # linking (two arg)
+            x = (x, x_link)
+        elif isinstance(x, (list, tuple)):  # dedup or linking (single arg)
+            x = tuple(x)
+        else:  # dedup (single arg)
+            x = (x,)
+
         if self.verify_integrity:
+
             for df in x:
                 self._verify_integrety(df)
 
@@ -145,7 +155,7 @@ class BaseIndexator(object):
             logging.info("link 2 dataframes")
             logging.info("indexation method: %s" % self.__class__.__name__)
 
-            pairs = self._dedup_index(x)
+            pairs = self._dedup_index(*x)
 
         # store the number of pairs
         self._n.append(pairs.shape[0])
