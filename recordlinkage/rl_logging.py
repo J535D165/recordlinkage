@@ -17,7 +17,14 @@
 #
 # Modifications copyright Jonathan de Bruin 2017
 
+# pylint: disable=unused-import
+
 import logging as _logging
+from logging import DEBUG
+from logging import ERROR
+from logging import FATAL
+from logging import INFO
+from logging import WARN
 import sys as _sys
 
 # Determine whether we are in an interactive environment
@@ -36,7 +43,7 @@ _logger = _logging.getLogger('recordlinkage')
 # If we are in an interactive environment (like jupyter), set loglevel to info
 # and pipe the output to stdout
 if _interactive:
-    _logger.setLevel(_logger.INFO)
+    _logger.setLevel(WARN)
     _logging_target = _sys.stdout
 else:
     _logging_target = _sys.stderr
