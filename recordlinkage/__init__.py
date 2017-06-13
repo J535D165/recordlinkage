@@ -1,8 +1,12 @@
 
+# pylint: disable=wildcard-import,g-bad-import-order,g-import-not-at-top
+
 from recordlinkage.indexing import *
 from recordlinkage.comparing import *
 from recordlinkage.classifiers import *
 from recordlinkage.measures import *
+
+from recordlinkage import rl_logging as logging
 
 # # import standardise
 # from recordlinkage.standardise.cleaning import *

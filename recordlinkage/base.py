@@ -145,15 +145,13 @@ class BaseIndexator(object):
         # linking
         if not self._deduplication(x):
 
-            logging.info("link 1 dataframe")
-            logging.info("indexation method: %s" % self.__class__.__name__)
+            logging.info("linking records between two DataFrames")
 
             pairs = self._link_index(*x)
 
         # deduplication
         else:
-            logging.info("link 2 dataframes")
-            logging.info("indexation method: %s" % self.__class__.__name__)
+            logging.info("linking records in DataFrame")
 
             pairs = self._dedup_index(*x)
 

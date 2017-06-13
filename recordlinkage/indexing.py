@@ -21,6 +21,9 @@ from recordlinkage.algorithms.indexing import \
 from recordlinkage.algorithms.indexing import \
     random_pairs_without_replacement_large_frames
 
+from recordlinkage import rl_logging as logging
+
+
 
 def check_index_names(func):
     # decorator to prevent index name conflicts. Used in functions like
@@ -635,12 +638,29 @@ class FullIndex(BaseIndexator):
         super(FullIndex, self).__init__(*args, **kwargs)
 
     def _link_index(self, df_a, df_b):
+
+        n_max = max_pairs((df_a, df_b))
+
+        if n_max > 1e7:
+            logging.warn(
+                "The number of record pairs is large. Consider a different "
+                "indexation algorithm for better performance. "
+            )
+
         return pandas.MultiIndex.from_product(
             [df_a.index.values, df_b.index.values],
             names=[df_a.index.name, df_b.index.name]
         )
 
     def _dedup_index(self, df_a):
+
+        n_max = max_pairs((df_a))
+
+        if n_max > 1e7:
+            logging.warn(
+                "The number of record pairs is large. Consider a different "
+                "indexation algorithm for better performance. "
+            )
 
         levels = [df_a.index.values, df_a.index.values]
         labels = numpy.triu_indices(len(df_a.index), k=1)
