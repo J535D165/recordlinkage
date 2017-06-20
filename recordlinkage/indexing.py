@@ -610,7 +610,8 @@ class Pairs(PairsCore):
 
 
 class FullIndex(BaseIndexator):
-    """Class to generate a 'full' index.
+    """FullIndex()
+    Class to generate a 'full' index.
 
     A full index is an index with all possible combinations of record pairs.
     In case of linking, this indexation method generates the cartesian product
@@ -623,14 +624,6 @@ class FullIndex(BaseIndexator):
     comparisons scales quadratic.
     Also, not all classifiers work well with large numbers of record pairs
     were most of the pairs are distinct.
-
-    References
-    ----------
-    .. [christen2012] Christen, P. (2012). Data matching: concepts and
-            techniques for record linkage, entity resolution, and duplicate
-            detection. Springer Science & Business Media.
-    .. [christen2008] Christen, P. (2008). Febrl - A Freely Available Record
-            Linkage System with a Graphical User Interface.
 
     """
 
@@ -675,10 +668,12 @@ class FullIndex(BaseIndexator):
 
 
 class BlockIndex(BaseIndexator):
-    """Make candidate record pairs that agree on one or more variables.
+    """BlockIndex(on=None, left_on=None, right_on=None)
+    Make candidate record pairs that agree on one or more variables.
 
-    Return all record pairs that agree on the passed attribute(s). This
-    method is known as *blocking*.
+    Returns all record pairs that agree on the given variable(s). This method
+    is known as *blocking*. Blocking is an effective way to make a subset of
+    the record space (A * B).
 
     Parameters
     ----------
@@ -702,13 +697,6 @@ class BlockIndex(BaseIndexator):
 
     >>> indexer = recordlinkage.BlockIndex(on='first_name')
     >>> indexer.index(census_data_1980, census_data_1990)
-
-
-    References
-    ----------
-    .. [christen2012] Christen, 2012. Data Matching Concepts and
-            Techniques for Record Linkage, Entity Resolution, and
-            Duplicate Detection
 
     """
 
@@ -760,10 +748,16 @@ class BlockIndex(BaseIndexator):
 
 
 class SortedNeighbourhoodIndex(BaseIndexator):
-    """Make candidate record pairs with the SNI algorithm.
+    """SortedNeighbourhoodIndex(on=None, left_on=None, right_on=None, window=3, sorting_key_values=None, block_on=[], block_left_on=[], block_right_on=[])
+    Make candidate record pairs with the SortedNeighbourhood algorithm.
 
-    Return all record pairs that agree on the passed attribute(s). This
-    method is known as *blocking*.
+    This algorithm returns record pairs that agree on the sorting key, but
+    also records pairs in their neighbourhood. A large window size results in
+    more record pairs. A window size of 1 returns the blocking index.
+
+    The Sorted Neighbourhood Index method is a great method when there is
+    relatively large amount of spelling mistakes. Blocking will fail in that
+    situation because it excludes to many records on minor spelling mistakes.
 
     Parameters
     ----------
@@ -789,15 +783,8 @@ class SortedNeighbourhoodIndex(BaseIndexator):
     datasets with census data. The datasets are named ``census_data_1980``
     and ``census_data_1990``.
 
-    >>> indexer = recordlinkage.SortedNeighbourhoodIndex(on='first_name', w=3)
+    >>> indexer = recordlinkage.SortedNeighbourhoodIndex(on='first_name', w=9)
     >>> indexer.index(census_data_1980, census_data_1990)
-
-
-    References
-    ----------
-    .. [christen2012] Christen, 2012. Data Matching Concepts and
-            Techniques for Record Linkage, Entity Resolution, and
-            Duplicate Detection
 
     """
 
@@ -920,14 +907,13 @@ class SortedNeighbourhoodIndex(BaseIndexator):
 
 
 class RandomIndex(BaseIndexator):
-    """Class to generate an index of random pairs.
+    """RandomIndex(n, replace=True, random_state=None)
+    Class to generate random pairs of records.
 
-    Make an index with random record pairs. The class supports the generation
-    of random record pairs with or without replacement.
-
-    Note
-    ----
-    A random index can be useful to train unsupervised learning methods.
+    This class returns random pairs of records with or without replacement.
+    Use the random_state parameter to seed the algorithm and reproduce
+    results. This way to make record pairs is useful for the training of
+    unsupervised learning models for record linkage.
 
     Parameters
     ----------

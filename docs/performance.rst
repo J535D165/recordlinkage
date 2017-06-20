@@ -33,8 +33,9 @@ record pairs agree on the given name **and** surname.
 
 .. code:: python
 
-    p = recordlinkage.Pairs(dfA, dfB)
-    pairs = p.block(left_on=['first_name', 'surname'], right_on=['name', 'surname'])
+    p = recordlinkage.BlockIndex(left_on=['first_name', 'surname'], 
+                                 right_on=['name', 'surname'])
+    pairs = p.index(dfA, dfB)
 
 You might exclude more links then desired. This can be solved by
 repeating the process with a different combinations of blocking
@@ -43,14 +44,19 @@ passes.
 
 .. code:: python
 
-    p = recordlinkage.Pairs(dfA, dfB)
-    pairs_name_surname = p.block(left_on=['first_name', 'surname'], right_on=['name', 'surname'])
-    pairs_name_age = p.block(left_on=['first_name', 'age'], right_on=['name', 'age'])
+    p_surname = recordlinkage.BlockIndex(left_on=['first_name', 'surname'], 
+                                         right_on=['name', 'surname'])
+    p_age = recordlinkage.BlockIndex(left_on=['first_name', 'age'], 
+                                     right_on=['name', 'age'])
 
-    pairs = pairs_name_surname.union(pairs_name_age)
+    pairs_surname = p_surname.index(dfA, dfB)
+    pairs_age = p_age.index(dfA, dfB)
 
-.. note:: Sorted Neighbourhood indexing supports also additional blocking
-        on variables. 
+    # make a union of the candidate links of both classes
+    pairs_surname.union(pairs_age)
+
+.. note:: Sorted Neighbourhood indexing supports, besides the sorted
+        neighbourhood, additional blocking on variables. 
 
 Make record pairs
 ~~~~~~~~~~~~~~~~~
@@ -112,16 +118,16 @@ blocks. Consider full indexing:
 
 .. code:: python
 
-    pcl_blocks = rl.Pairs(dfA, dfB, chunks=500)
+    import recordlinkage
+    import numpy
+
+    cl = recordlinkage.FullIndex()
     
-    for index_block in pcl_blocks.full():
+    for dfB_subset in numpy.split(dfB):
         
-        # Index returned
-        print(type(index_block))
-    
-        # Length of index block
-        print(len(index_block))
+        # a subset of record pairs
+        pairs_subset = cl.index(dfA, dfB_subset)
         
-        # Your analysis here
+        # Your analysis on pairs_subset here
 
 

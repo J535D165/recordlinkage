@@ -105,7 +105,6 @@ class BaseIndexator(object):
         return pairs
 
     def fit(self):
-        """Fit an indexing model to the data."""
 
         raise AttributeError("indexing object has no attribute 'fit'")
 
@@ -117,14 +116,18 @@ class BaseIndexator(object):
 
         Parameters
         ----------
-        x: tuple of DataFrame's
-            A single DataFrame in case of finding duplicates and a tuple of
-            two DataFrame's in case of linking two DataFrame's.
+        x: pandas.DataFrame
+            A pandas DataFrame. When `x_link` is None, the algorithm makes
+            record pairs within the DataFrame. When `x_link` is not empty,
+            the algorithm makes pairs between `x` and `x_link`.
+        x_link: pandas.DataFrame, optional
+            A second DataFrame to link with the DataFrame x.
 
         Returns
         -------
         pandas.MultiIndex
-            A pandas.MultiIndex with the indices of the record pairs.
+            A pandas.MultiIndex with record pairs. Each record pair contains
+            the index labels of two records.
 
         """
 
