@@ -47,7 +47,7 @@ are returned.
 
 .. code:: python
 
-    block_class = recordlinkage.Blocking(on='surname')
+    block_class = recordlinkage.BlockIndex('surname')
     candidate_links = block_class.index(df_a, df_b)
 
 For each candidate link, compare the records with one of the

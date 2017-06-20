@@ -98,8 +98,8 @@ surname are included.
 
 .. code:: python
 
-    index = recordlinkage.Index(df_a, df_b)
-    candidate_links = index.block('surname')
+    block_class = recordlinkage.BlockIndex('surname')
+    candidate_links = block_class.index(df_a, df_b)
 
 Each ``candidate_link`` needs to be compared on the comparable attributes.
 This can be done easily with the Compare class and the available comparison
