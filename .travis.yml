@@ -3,9 +3,11 @@ python:
   - "2.7"
   - "3.4"
   - "3.5"
+  - "3.6"
 
 env:
   - PANDAS_VERSION="pandas>=0.18,<0.19"
+  - PANDAS_VERSION="pandas>=0.19,<0.20"
   - PANDAS_VERSION="pandas"
 
 before_script:
