@@ -1,14 +1,12 @@
 from __future__ import absolute_import, division, print_function
 
-import numpy as np
-
 import recordlinkage as rl
 from recordlinkage.datasets import load_febrl1, load_febrl4
 
 
 class CompareRecordLinkage(object):
 
-    timeout = 30*60
+    timeout = 30 * 60
 
     def setup(self):
 
@@ -16,8 +14,8 @@ class CompareRecordLinkage(object):
         self.A, self.B = load_febrl4()
 
         # make pairs
-        c_pairs = rl.Pairs(self.A, self.B)
-        pairs = c_pairs.full()
+        c_pairs = rl.FullIndex()
+        pairs = c_pairs.index(self.A, self.B)
 
         # different sizes of pairs
         self.pairs_xsmall = pairs[0:5e3]
@@ -29,46 +27,54 @@ class CompareRecordLinkage(object):
 
         c_compare = rl.Compare(self.pairs_xsmall, self.A, self.B)
         c_compare.string('given_name', 'given_name', method='jaro')
-        c_compare.string('surname', 'surname', method='jarowinkler', threshold=0.85)
+        c_compare.string('surname', 'surname',
+                         method='jarowinkler', threshold=0.85)
         c_compare.date('date_of_birth', 'date_of_birth')
         c_compare.exact('suburb', 'suburb')
         c_compare.exact('state', 'state')
-        c_compare.string('address_1', 'address_1', method='levenshtein', threshold=0.85)
+        c_compare.string('address_1', 'address_1',
+                         method='levenshtein', threshold=0.85)
 
     def time_global_small(self):
 
         c_compare = rl.Compare(self.pairs_small, self.A, self.B)
         c_compare.string('given_name', 'given_name', method='jaro')
-        c_compare.string('surname', 'surname', method='jarowinkler', threshold=0.85)
+        c_compare.string('surname', 'surname',
+                         method='jarowinkler', threshold=0.85)
         c_compare.date('date_of_birth', 'date_of_birth')
         c_compare.exact('suburb', 'suburb')
         c_compare.exact('state', 'state')
-        c_compare.string('address_1', 'address_1', method='levenshtein', threshold=0.85)
+        c_compare.string('address_1', 'address_1',
+                         method='levenshtein', threshold=0.85)
 
     def time_global_medium(self):
 
         c_compare = rl.Compare(self.pairs_medium, self.A, self.B)
         c_compare.string('given_name', 'given_name', method='jaro')
-        c_compare.string('surname', 'surname', method='jarowinkler', threshold=0.85)
+        c_compare.string('surname', 'surname',
+                         method='jarowinkler', threshold=0.85)
         c_compare.date('date_of_birth', 'date_of_birth')
         c_compare.exact('suburb', 'suburb')
         c_compare.exact('state', 'state')
-        c_compare.string('address_1', 'address_1', method='levenshtein', threshold=0.85)
+        c_compare.string('address_1', 'address_1',
+                         method='levenshtein', threshold=0.85)
 
     def time_global_large(self):
 
         c_compare = rl.Compare(self.pairs_large, self.A, self.B)
         c_compare.string('given_name', 'given_name', method='jaro')
-        c_compare.string('surname', 'surname', method='jarowinkler', threshold=0.85)
+        c_compare.string('surname', 'surname',
+                         method='jarowinkler', threshold=0.85)
         c_compare.date('date_of_birth', 'date_of_birth')
         c_compare.exact('suburb', 'suburb')
         c_compare.exact('state', 'state')
-        c_compare.string('address_1', 'address_1', method='levenshtein', threshold=0.85)
+        c_compare.string('address_1', 'address_1',
+                         method='levenshtein', threshold=0.85)
 
 
 class CompareDeduplication(object):
 
-    timeout = 30*60
+    timeout = 30 * 60
 
     def setup(self):
 
@@ -76,8 +82,8 @@ class CompareDeduplication(object):
         self.A = load_febrl1()
 
         # make pairs
-        c_pairs = rl.Pairs(self.A)
-        pairs = c_pairs.full()
+        c_pairs = rl.FullIndex()
+        pairs = c_pairs.index(self.A)
 
         # different sizes of pairs
         self.pairs_xsmall = pairs[0:5e3]
@@ -89,46 +95,54 @@ class CompareDeduplication(object):
 
         c_compare = rl.Compare(self.pairs_xsmall, self.A)
         c_compare.string('given_name', 'given_name', method='jaro')
-        c_compare.string('surname', 'surname', method='jarowinkler', threshold=0.85)
+        c_compare.string('surname', 'surname',
+                         method='jarowinkler', threshold=0.85)
         c_compare.date('date_of_birth', 'date_of_birth')
         c_compare.exact('suburb', 'suburb')
         c_compare.exact('state', 'state')
-        c_compare.string('address_1', 'address_1', method='levenshtein', threshold=0.85)
+        c_compare.string('address_1', 'address_1',
+                         method='levenshtein', threshold=0.85)
 
     def time_global_small(self):
 
         c_compare = rl.Compare(self.pairs_small, self.A)
         c_compare.string('given_name', 'given_name', method='jaro')
-        c_compare.string('surname', 'surname', method='jarowinkler', threshold=0.85)
+        c_compare.string('surname', 'surname',
+                         method='jarowinkler', threshold=0.85)
         c_compare.date('date_of_birth', 'date_of_birth')
         c_compare.exact('suburb', 'suburb')
         c_compare.exact('state', 'state')
-        c_compare.string('address_1', 'address_1', method='levenshtein', threshold=0.85)
+        c_compare.string('address_1', 'address_1',
+                         method='levenshtein', threshold=0.85)
 
     def time_global_medium(self):
 
         c_compare = rl.Compare(self.pairs_medium, self.A)
         c_compare.string('given_name', 'given_name', method='jaro')
-        c_compare.string('surname', 'surname', method='jarowinkler', threshold=0.85)
+        c_compare.string('surname', 'surname',
+                         method='jarowinkler', threshold=0.85)
         c_compare.date('date_of_birth', 'date_of_birth')
         c_compare.exact('suburb', 'suburb')
         c_compare.exact('state', 'state')
-        c_compare.string('address_1', 'address_1', method='levenshtein', threshold=0.85)
+        c_compare.string('address_1', 'address_1',
+                         method='levenshtein', threshold=0.85)
 
     def time_global_large(self):
 
         c_compare = rl.Compare(self.pairs_large, self.A)
         c_compare.string('given_name', 'given_name', method='jaro')
-        c_compare.string('surname', 'surname', method='jarowinkler', threshold=0.85)
+        c_compare.string('surname', 'surname',
+                         method='jarowinkler', threshold=0.85)
         c_compare.date('date_of_birth', 'date_of_birth')
         c_compare.exact('suburb', 'suburb')
         c_compare.exact('state', 'state')
-        c_compare.string('address_1', 'address_1', method='levenshtein', threshold=0.85)
+        c_compare.string('address_1', 'address_1',
+                         method='levenshtein', threshold=0.85)
 
 
 class CompareAlgorithms(object):
 
-    timeout = 30*60
+    timeout = 30 * 60
 
     def setup(self):
 
@@ -140,8 +154,8 @@ class CompareAlgorithms(object):
         self.B['postcode'] = self.B['postcode'].astype(float)
 
         # make pairs
-        c_pairs = rl.Pairs(self.A, self.B)
-        self.pairs = c_pairs.full()[0:5e4]
+        c_pairs = rl.FullIndex()
+        self.pairs = c_pairs.index(self.A, self.B)[0:5e4]
 
 # ************* STRING *************
 
@@ -183,4 +197,3 @@ class CompareAlgorithms(object):
 
         c_compare = rl.Compare(self.pairs, self.A, self.B)
         c_compare.numeric('age', 'age', method='gauss', scale=2)
-
