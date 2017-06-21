@@ -10,7 +10,7 @@ research and the linking of small or medium sized files.
 This project is inspired by the `Freely Extensible Biomedical Record Linkage
 (FEBRL) <https://sourceforge.net/projects/febrl/>`__ project, which is a great
 project. In contrast with FEBRL, the recordlinkage project uses `pandas
-<http://pandas.pydata.org/>`__ and `numpy <http://www.numpy.org/>`__ for  data
+<http://pandas.pydata.org/>`__ and `numpy <http://www.numpy.org/>`__ for data
 handling and computations. The use of *pandas*, a flexible and powerful data
 analysis and manipulation library for Python, makes the record linkage process
 much easier and faster. The extensive *pandas* library can be used to
@@ -51,7 +51,7 @@ are returned.
     candidate_links = block_class.index(df_a, df_b)
 
 **Older versions of Python Record Linkage Toolkit use a different syntax for
-indexing.** `More info about migrating is found here.<#migrating>`_
+indexing.** `More info about migrating can be found here. <http://recordlinkage.readthedocs.io/en/latest/ref-index.html#migrating>`_
 
 For each candidate link, compare the records with one of the
 comparison or similarity algorithms in the Compare class.
@@ -70,8 +70,8 @@ comparison or similarity algorithms in the Compare class.
     # The comparison vectors
     c.vectors
 
-This Python Record Linkage Toolkit contains multiple classification alogirthms.
-Plenty of the algorithms need trainings data (supervised learning) while
+This Python Record Linkage Toolkit contains multiple classification algorithms.
+Plenty of the algorithms do need training data (supervised learning) while
 others are unsupervised. An example of supervised learning:
 
 .. code:: python
@@ -112,7 +112,7 @@ The most recent documentation and API reference can be found at
 <http://recordlinkage.readthedocs.org/en/latest/>`__. The documentation
 provides some basic usage examples like deduplication_ and linking_ census
 data. More examples are coming soon. If you do have interesting examples to
-share, let  us know.
+share, let us know.
 
 .. _deduplication: http://recordlinkage.readthedocs.io/en/latest/notebooks/data_deduplication.html
 .. _linking: http://recordlinkage.readthedocs.io/en/latest/notebooks/link_two_dataframes.html
