@@ -1,8 +1,4 @@
-import sys
-
 import numpy
-
-from recordlinkage.types import is_list_like, is_numpy_like
 
 
 # Errors and Exception handlers
