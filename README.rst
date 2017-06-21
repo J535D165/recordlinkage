@@ -50,6 +50,9 @@ are returned.
     block_class = recordlinkage.BlockIndex('surname')
     candidate_links = block_class.index(df_a, df_b)
 
+**Older versions of Python Record Linkage Toolkit use a different syntax for
+indexing.** `More info about migrating is found here.<#migrating>`_
+
 For each candidate link, compare the records with one of the
 comparison or similarity algorithms in the Compare class.
 
