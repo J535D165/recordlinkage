@@ -6,7 +6,7 @@ from recordlinkage.datasets import load_febrl1, load_febrl4
 
 class PairsRecordLinkage(object):
 
-    timeout = 30*60
+    timeout = 30 * 60
 
     def setup(self):
 
@@ -16,39 +16,39 @@ class PairsRecordLinkage(object):
     def time_full_index(self):
 
         # setup class
-        c_pairs = rl.Pairs(self.A, self.B)
+        c_pairs = rl.FullIndex()
 
         # Make pairs
-        c_pairs.full()
+        c_pairs.index(self.A, self.B)
 
     def time_block_index(self):
 
         # setup class
-        c_pairs = rl.Pairs(self.A, self.B)
+        c_pairs = rl.BlockIndex('given_name')
 
         # Make pairs
-        c_pairs.block('given_name')
+        c_pairs.index(self.A, self.B)
 
     def time_sni_index(self):
 
         # setup class
-        c_pairs = rl.Pairs(self.A, self.B)
+        c_pairs = rl.SortedNeighbourhoodIndex(on='given_name', w=5)
 
         # Make pairs
-        c_pairs.sortedneighbourhood('given_name', 5)
+        c_pairs.index(self.A, self.B)
 
     def time_random_index(self):
 
         # setup class
-        c_pairs = rl.Pairs(self.A, self.B)
+        c_pairs = rl.RandomIndex(2500)
 
         # Make pairs
-        c_pairs.random(2500)
+        c_pairs.index(self.A, self.B)
 
 
 class PairsDeduplication(object):
 
-    timeout = 30*60
+    timeout = 30 * 60
 
     def setup(self):
 
@@ -58,31 +58,31 @@ class PairsDeduplication(object):
     def time_full_index(self):
 
         # setup class
-        c_pairs = rl.Pairs(self.A)
+        c_pairs = rl.FullIndex()
 
         # Make pairs
-        c_pairs.full()
+        c_pairs.index(self.A)
 
     def time_block_index(self):
 
         # setup class
-        c_pairs = rl.Pairs(self.A)
+        c_pairs = rl.BlockIndex('given_name')
 
         # Make pairs
-        c_pairs.block('given_name')
+        c_pairs.index(self.A)
 
     def time_sni_index(self):
 
         # setup class
-        c_pairs = rl.Pairs(self.A)
+        c_pairs = rl.SortedNeighbourhoodIndex(on='given_name', w=5)
 
         # Make pairs
-        c_pairs.sortedneighbourhood('given_name', 5)
+        c_pairs.index(self.A)
 
     def time_random_index(self):
 
         # setup class
-        c_pairs = rl.Pairs(self.A)
+        c_pairs = rl.RandomIndex(2500)
 
         # Make pairs
-        c_pairs.random(2500)
+        c_pairs.index(self.A)
