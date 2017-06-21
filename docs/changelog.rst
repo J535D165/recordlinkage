@@ -2,8 +2,19 @@
 Release notes
 *************
 
-Updated algorithms for comparing numberic variables. The new algorithms can
-compute the similarity with kernels like gaussian, linear and exponential.
+Version 0.9.0
+=============
+
+- A new index API. The new index API is no longer a single class 
+  (``recordlinkage.Pairs(...)``) with all the functionality in it. The new API
+  is based on Tensorflow and FEBRL. With the new structure, it easier to 
+  parallise the record linkage process. In future releases, this will be 
+  implemented natively. `See the reference page for more information and migrating. <http://recordlinkage.readthedocs.io/en/latest/ref-index.html>`_
+- Significant speed improvement of the Sorted Neighbourhood Indexing 
+  algorithm. Thanks to @perryvais (PR #32). 
+- The function ``binary_comparisons`` is renamed. The new name of the function
+  is ``binary_vectors``. Documentation added to RTD. 
+- Add unit tests to test the generation of random comparison vectors. 
 
 Version 0.8.1
 =============
