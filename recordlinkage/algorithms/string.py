@@ -147,3 +147,9 @@ def cosine_similarity(s1, s2, include_wb=True, ngram=(2, 2)):
         return np.divide(ab, np.multiply(a, b)).A1
 
     return _metric_sparse_cosine(vec_fit[:len(s1)], vec_fit[len(s1):])
+
+def smith_waterman(s1, s2, match=1, mismatch=1, gap=1):
+    return 0
+
+def lcs(s1, s2):
+    return 0
