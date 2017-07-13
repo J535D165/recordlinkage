@@ -186,6 +186,12 @@ def smith_waterman(s1, s2, match=1, mismatch=-1, gap_start=-1, gap_continue=-0.2
         A pandas series with similarity values. Values equal or between 0
         and 1.
     """
+    # Assert that match is greater than or equal to mismatch, gap_start, and gap_conntinue.
+    assert match >= max(mismatch, gap_start, gap_continue), "match must greater than or equal to mismatch, gap_start, and gap_continue"
+
+    if len(s1) != len(s2):
+        raise ValueError('Arrays or Series have to be same length.')
+
     concat = pandas.concat([s1, s2], axis=1, ignore_index=True)
 
     def sw_apply(t):
@@ -235,7 +241,6 @@ def smith_waterman(s1, s2, match=1, mismatch=-1, gap_start=-1, gap_continue=-0.2
         try:
             if len(str1) == 0 or len(str2) == 0:
                 return 0
-
             return normalize(compute_score())
         except Exception as err:
             if pandas.isnull(t[0]) or pandas.isnull(t[1]):
