@@ -148,8 +148,99 @@ def cosine_similarity(s1, s2, include_wb=True, ngram=(2, 2)):
 
     return _metric_sparse_cosine(vec_fit[:len(s1)], vec_fit[len(s1):])
 
-def smith_waterman(s1, s2, match=1, mismatch=1, gap=1):
-    return 0
 
-def lcs(s1, s2):
-    return 0
+def smith_waterman(s1, s2, match=1, mismatch=-1, gap_start=-1, gap_continue=-0.2, norm="mean"):
+    """
+    string(s1, s2, match=1, mismatch=-1, gap_start=-1, gap_continue=-0.2, norm="mean")
+
+    An implementation of the Smith-Waterman string comparison algorithm.
+
+    Parameters
+    ----------
+    s1 : label, pandas.Series
+        Series or DataFrame to compare all fields.
+    s2 : label, pandas.Series
+        Series or DataFrame to compare all fields.
+    match : float
+        The value added to the match score if two characters match.
+        Greater than mismatch, gap_start, and gap_continue. Default: 1.
+    mismatch : float
+        The value added to the match score if two characters do not match.
+        Less than match. Default: -1.
+    gap_start : float
+        The value added to the match score upon encountering the start of
+        a gap. Default: -1.
+    gap_continue : float
+        The value added to the match score for positions where a previously
+        started gap is continuing. Default: -0.2.
+    norm : str
+        The name of the normalization metric to be used. Applied by dividing
+        the match score by the normalization metric multiplied by match. One
+        of "min", "max",or "mean". "min" will use the minimum string length
+        as the normalization metric. "max" and "mean" use the maximum and
+        mean string length respectively. Default: "mean""
+
+    Returns
+    -------
+    pandas.Series
+        A pandas series with similarity values. Values equal or between 0
+        and 1.
+    """
+    concat = pandas.concat([s1, s2], axis=1, ignore_index=True)
+
+    def sw_apply(t):
+        str1 = t[0]
+        str2 = t[1]
+
+        def compute_score():
+            # Create a matrix of zeros
+            m = [[0] * (1 + len(str2)) for i in range(1 + len(str1))]
+
+            highest = 0
+            in_gap = False
+            for x in range(1, 1 + len(str1)):
+                for y in range(1, 1 + len(str2)):
+                    if str1[x-1] == str2[y-1]:
+                        diagonal = m[x-1][y-1] + match
+                        in_gap = False
+                    else:
+                        diagonal = m[x-1][y-1] + mismatch
+                        in_gap = False
+
+                    if in_gap:
+                        gap_left = m[x-1][y] + gap_continue
+                        gap_above = m[x][y-1] + gap_continue
+                    else:
+                        gap_left = m[x-1][y] + gap_start
+                        gap_above = m[x][y-1] + gap_start
+                        in_gap = True
+
+                    m[x][y] = max(diagonal, gap_left, gap_above)
+
+                    if m[x][y] < 0:
+                        m[x][y] = 0
+
+                    if m[x][y] > highest:
+                        highest = m[x][y]
+            return highest
+
+        def normalize(score):
+            if norm == "min":
+                return score/(min(len(str1), len(str2)) * match)
+            if norm == "max":
+                return score/(max(len(str1), len(str2)) * match)
+            if norm == "mean":
+                return 2*score/(len(str1) + len(str2))
+
+        try:
+            if len(str1) == 0 or len(str2) == 0:
+                return 0
+
+            return normalize(compute_score())
+        except Exception as err:
+            if pandas.isnull(t[0]) or pandas.isnull(t[1]):
+                return np.nan
+            else:
+                raise err
+
+    return concat.apply(sw_apply, axis=1)
