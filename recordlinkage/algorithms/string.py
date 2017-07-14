@@ -186,7 +186,7 @@ def smith_waterman(s1, s2, match=5, mismatch=-5, gap_start=-5, gap_continue=-1, 
         A pandas series with similarity values. Values equal or between 0
         and 1.
     """
-    # Assert that match is greater than or equal to mismatch, gap_start, and gap_conntinue.
+    # Assert that match is greater than or equal to mismatch, gap_start, and gap_continue.
     assert match >= max(mismatch, gap_start, gap_continue), \
         "match must be greater than or equal to mismatch, gap_start, and gap_continue"
 
@@ -257,7 +257,7 @@ def smith_waterman(s1, s2, match=5, mismatch=-5, gap_start=-5, gap_continue=-1, 
             return normalize(compute_score())
         except Exception as err:
             if pandas.isnull(t[0]) or pandas.isnull(t[1]):
-                return np.nan
+                return 0
             else:
                 raise err
 
