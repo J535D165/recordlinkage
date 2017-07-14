@@ -9,7 +9,7 @@ import pandas
 
 STRING_SIM_ALGORITHMS = [
     'jaro', 'q_gram', 'cosine', 'jaro_winkler', 'dameraulevenshtein',
-    'levenshtein', 'lcs'
+    'levenshtein', 'lcs', 'smith_waterman'
 ]
 
 NUMERIC_SIM_ALGORITHMS = [
@@ -556,6 +556,9 @@ class TestCompareAlgorithms(unittest.TestCase):
             comp.string('numeric_value', 'numeric_value', method='levenshtein')
 
         with self.assertRaises(Exception):
+            comp.string('numeric_value', 'numeric_value', method='smith_waterman')
+
+        with self.assertRaises(Exception):
             comp.string('numeric_value', 'numeric_value', method='lcs')
 
     def test_fuzzy_nan(self):
@@ -583,8 +586,13 @@ class TestCompareAlgorithms(unittest.TestCase):
         pdt.assert_series_equal(result, expected)
 
         result = comp.string('numeric_value', 'numeric_value', method='levenshtein', missing_value=nan)
+        pdt.assert_series_equal(result, expected)
 
         result = comp.string('numeric_value', 'numeric_value', method='lcs', missing_value=nan)
+        pdt.assert_series_equal(result, expected)
+
+        result = comp.string('numeric_value', 'numeric_value', method='smith_waterman', missing_value=nan)
+        pdt.assert_series_equal(result, expected)
 
     def test_fuzzy_does_not_exist(self):
 
@@ -593,6 +601,72 @@ class TestCompareAlgorithms(unittest.TestCase):
         self.assertRaises(
             ValueError, comp.string, 'given_name',
             'given_name', name='y_name', method='unknown_algorithm')
+
+    def test_smith_waterman_correctness(self):
+        self.E = pandas.DataFrame([
+            [np.nan],
+            [np.nan],
+            ['Peter'],
+            [''],
+            [''],
+            ['Peter'],
+            ['Peter'],
+            ['Anne'],
+            ['Elizabeth'],
+            ['Sarah'],
+        ],
+            columns=['str_1'])
+        self.E.index.name = 'index_df5'
+
+        self.F = pandas.DataFrame([
+            ['Peter'],
+            [np.nan],
+            [np.nan],
+            ['Peter'],
+            [''],
+            [''],
+            ['Peter'],
+            ['Jill'],
+            ['Elisabeth'],
+            ['Sarrrrah'],
+        ],
+            columns=['str_2'])
+        self.F.index.name = 'index_df6'
+
+        self.index_EF = pandas.MultiIndex.from_arrays(
+            [arange(len(self.E)), arange(len(self.F))],
+            names=[self.E.index.name, self.F.index.name])
+
+        comp = recordlinkage.Compare(self.index_EF, self.E, self.F)
+        comp.string('str_1', 'str_2', method='smith_waterman', norm='min', name='min_1')
+        comp.string('str_1', 'str_2', method='smith_waterman', norm='max', name='max_1')
+        comp.string('str_1', 'str_2', method='smith_waterman', norm='mean', name='mean_1')
+
+        comp.string('str_1', 'str_2', method='smith_waterman', norm='min', gap_continue=-5, name='min_2')
+        comp.string('str_1', 'str_2', method='smith_waterman', norm='max', gap_continue=-5, name='max_2')
+        comp.string('str_1', 'str_2', method='smith_waterman', norm='mean', gap_continue=-5, name='mean_2')
+
+        expected_min_1 = pandas.Series([0, 0, 0, 0, 0, 0, 1, 0, 7/9, 3.6/5])
+        expected_max_1 = pandas.Series([0, 0, 0, 0, 0, 0, 1, 0, 7/9, 3.6/8])
+        expected_mean_1 = pandas.Series([0, 0, 0, 0, 0, 0, 1, 0, 7/9, 3.6/6.5])
+
+        expected_min_2 = pandas.Series([0, 0, 0, 0, 0, 0, 1, 0, 7/9, 3/5])
+        expected_max_2 = pandas.Series([0, 0, 0, 0, 0, 0, 1, 0, 7/9, 3/8])
+        expected_mean_2 = pandas.Series([0, 0, 0, 0, 0, 0, 1, 0, 7/9, 3/6.5])
+
+        SW_TEST_CASES = [
+            (comp.vectors['min_1'], expected_min_1, 'min_1'),
+            (comp.vectors['max_1'], expected_max_1, 'max_1'),
+            (comp.vectors['mean_1'], expected_mean_1, 'mean_1'),
+            (comp.vectors['min_2'], expected_min_2, 'min_2'),
+            (comp.vectors['max_2'], expected_max_2, 'max_2'),
+            (comp.vectors['mean_2'], expected_mean_2, 'mean_2'),
+        ]
+
+        for tup in SW_TEST_CASES:
+            assert(len(tup[0]) == len(tup[1]))
+            for i in range(0, len(tup[0])):
+                self.assertAlmostEqual(tup[0].iloc[i], tup[1].iloc[i], places=3, msg='Failed on test {} number {}'.format(tup[2], i))
 
     def test_lcs_correctness(self):
 
@@ -616,7 +690,7 @@ class TestCompareAlgorithms(unittest.TestCase):
         ],
             columns=['str_2'])
 
-        self.B.index.name = 'index_df4'
+        self.D.index.name = 'index_df4'
 
         self.index_CD = pandas.MultiIndex.from_arrays(
             [arange(len(self.C)), arange(len(self.D))],
