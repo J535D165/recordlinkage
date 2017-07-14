@@ -149,7 +149,7 @@ def cosine_similarity(s1, s2, include_wb=True, ngram=(2, 2)):
     return _metric_sparse_cosine(vec_fit[:len(s1)], vec_fit[len(s1):])
 
 
-def smith_waterman(s1, s2, match=1, mismatch=-1, gap_start=-1, gap_continue=-0.2, norm="mean"):
+def smith_waterman(s1, s2, match=5, mismatch=-5, gap_start=-5, gap_continue=-1, norm="mean"):
     """
     string(s1, s2, match=1, mismatch=-1, gap_start=-1, gap_continue=-0.2, norm="mean")
 
@@ -187,7 +187,8 @@ def smith_waterman(s1, s2, match=1, mismatch=-1, gap_start=-1, gap_continue=-0.2
         and 1.
     """
     # Assert that match is greater than or equal to mismatch, gap_start, and gap_conntinue.
-    assert match >= max(mismatch, gap_start, gap_continue), "match must greater than or equal to mismatch, gap_start, and gap_continue"
+    assert match >= max(mismatch, gap_start, gap_continue), \
+        "match must be greater than or equal to mismatch, gap_start, and gap_continue"
 
     if len(s1) != len(s2):
         raise ValueError('Arrays or Series have to be same length.')
@@ -199,35 +200,56 @@ def smith_waterman(s1, s2, match=1, mismatch=-1, gap_start=-1, gap_continue=-0.2
         str2 = t[1]
 
         def compute_score():
-            # Create a matrix of zeros
+            # Initialize the score matrix
             m = [[0] * (1 + len(str2)) for i in range(1 + len(str1))]
+            # Initialize the trace matrix the initial
+            t = [[[] for _ in range(1 + len(str2))] for _ in range(1 + len(str1))]
 
             highest = 0
-            in_gap = False
+
             for x in range(1, 1 + len(str1)):
                 for y in range(1, 1 + len(str2)):
                     if str1[x-1] == str2[y-1]:
                         diagonal = m[x-1][y-1] + match
-                        in_gap = False
                     else:
                         diagonal = m[x-1][y-1] + mismatch
-                        in_gap = False
 
-                    if in_gap:
+                    if "L" in t[x-1][y]:
                         gap_left = m[x-1][y] + gap_continue
-                        gap_above = m[x][y-1] + gap_continue
                     else:
                         gap_left = m[x-1][y] + gap_start
+
+                    if "A" in t[x][y-1]:
+                        gap_above = m[x][y-1] + gap_continue
+                    else:
                         gap_above = m[x][y-1] + gap_start
-                        in_gap = True
 
-                    m[x][y] = max(diagonal, gap_left, gap_above)
+                    score = max(diagonal, gap_left, gap_above)
 
-                    if m[x][y] < 0:
-                        m[x][y] = 0
+                    if score <= 0:
+                        score = 0
+                    else:
+                        if score == diagonal:
+                            t[x][y].append("D")
+                        if score == gap_above:
+                            t[x][y].append("A")
+                        if score == gap_left:
+                            t[x][y].append("L")
 
-                    if m[x][y] > highest:
-                        highest = m[x][y]
+                    if score > highest:
+                        highest = score
+
+                    m[x][y] = score
+
+            df = pandas.DataFrame(t)
+            print(df)
+            for r in m:
+                print(r)
+            print("*******************")
+            for r in t:
+                print(r)
+            print("===================")
+            print(highest)
             return highest
 
         def normalize(score):
@@ -236,7 +258,7 @@ def smith_waterman(s1, s2, match=1, mismatch=-1, gap_start=-1, gap_continue=-0.2
             if norm == "max":
                 return score/(max(len(str1), len(str2)) * match)
             if norm == "mean":
-                return 2*score/(len(str1) + len(str2))
+                return 2*score/((len(str1) + len(str2)) * match)
 
         try:
             if len(str1) == 0 or len(str2) == 0:
