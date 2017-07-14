@@ -207,7 +207,7 @@ def smith_waterman_similarity(s1, s2, match=5, mismatch=-5, gap_start=-5, gap_co
             # Initialize the score matrix
             m = [[0] * (1 + len(str2)) for i in range(1 + len(str1))]
             # Initialize the trace matrix the initial
-            t = [[[] for _ in range(1 + len(str2))] for _ in range(1 + len(str1))]
+            trace = [[[] for _ in range(1 + len(str2))] for _ in range(1 + len(str1))]
 
             highest = 0
 
@@ -218,12 +218,12 @@ def smith_waterman_similarity(s1, s2, match=5, mismatch=-5, gap_start=-5, gap_co
                     else:
                         diagonal = m[x-1][y-1] + mismatch
 
-                    if "L" in t[x-1][y]:
+                    if "L" in trace[x-1][y]:
                         gap_left = m[x-1][y] + gap_continue
                     else:
                         gap_left = m[x-1][y] + gap_start
 
-                    if "A" in t[x][y-1]:
+                    if "A" in trace[x][y-1]:
                         gap_above = m[x][y-1] + gap_continue
                     else:
                         gap_above = m[x][y-1] + gap_start
@@ -234,11 +234,11 @@ def smith_waterman_similarity(s1, s2, match=5, mismatch=-5, gap_start=-5, gap_co
                         score = 0
                     else:
                         if score == diagonal:
-                            t[x][y].append("D")
+                            trace[x][y].append("D")
                         if score == gap_above:
-                            t[x][y].append("A")
+                            trace[x][y].append("A")
                         if score == gap_left:
-                            t[x][y].append("L")
+                            trace[x][y].append("L")
 
                     if score > highest:
                         highest = score
