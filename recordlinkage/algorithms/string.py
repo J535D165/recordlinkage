@@ -241,15 +241,6 @@ def smith_waterman(s1, s2, match=5, mismatch=-5, gap_start=-5, gap_continue=-1, 
 
                     m[x][y] = score
 
-            df = pandas.DataFrame(t)
-            print(df)
-            for r in m:
-                print(r)
-            print("*******************")
-            for r in t:
-                print(r)
-            print("===================")
-            print(highest)
             return highest
 
         def normalize(score):
