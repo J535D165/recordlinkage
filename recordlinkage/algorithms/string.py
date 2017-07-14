@@ -194,6 +194,9 @@ def smith_waterman_similarity(s1, s2, match=5, mismatch=-5, gap_start=-5, gap_co
     if len(s1) != len(s2):
         raise ValueError('Arrays or Series have to be same length.')
 
+    if len(s1) == len(s2) == 0:
+        return []
+
     concat = pandas.concat([s1, s2], axis=1, ignore_index=True)
 
     def sw_apply(t):
