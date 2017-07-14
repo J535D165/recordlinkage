@@ -26,6 +26,9 @@ COMPARE_ALGORITHMS = [
     param('string', 'given_name', 'given_name', method='damerau_levenshtein'),
     param('string', 'given_name', 'given_name', method='qgram'),
     param('string', 'given_name', 'given_name', method='cosine'),
+    param('string', 'given_name', 'given_name', method='lcs', norm='dice'),
+    param('string', 'given_name', 'given_name', method='lcs', norm='jaccard'),
+    param('string', 'given_name', 'given_name', method='lcs', norm='overlap'),
 
     # numeric
     param('numeric', 'age', 'age', method='step',

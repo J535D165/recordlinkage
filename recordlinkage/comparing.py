@@ -24,7 +24,8 @@ from recordlinkage.algorithms.string import (jaro_similarity,
                                              damerau_levenshtein_similarity,
                                              qgram_similarity,
                                              cosine_similarity,
-                                             smith_waterman)
+                                             smith_waterman_similarity,
+                                             longest_common_substring_similarity)
 
 
 def fillna_decorator(missing_value=np.nan):
@@ -472,7 +473,7 @@ class Compare(CompareCore):
         method : str
             A approximate string comparison method. Options are ['jaro',
             'jarowinkler', 'levenshtein', 'damerau_levenshtein', 'qgram',
-            'cosine', smith_waterman]. Default: 'levenshtein'
+            'cosine', 'smith_waterman', 'lcs']. Default: 'levenshtein'
         threshold : float, tuple of floats
             A threshold value. All approximate string comparisons higher or
             equal than this threshold are 1. Otherwise 0.
@@ -517,7 +518,11 @@ class Compare(CompareCore):
                 str_sim_alg = cosine_similarity
 
             elif method == 'smith_waterman' or method == "smithwaterman":
-                str_sim_alg = smith_waterman
+                str_sim_alg = smith_waterman_similarity
+
+            elif method == 'lcs':
+                str_sim_alg = longest_common_substring_similarity
+
             else:
                 raise ValueError("The algorithm '{}' is not known.".format(method))
 
