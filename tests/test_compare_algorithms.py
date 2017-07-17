@@ -614,6 +614,9 @@ class TestCompareAlgorithms(unittest.TestCase):
             ['Anne'],
             ['Elizabeth'],
             ['Sarah'],
+            ['University of Waterloo'],
+            ['tyler'],
+            ['Betty']
         ],
             columns=['str_1'])
         self.E.index.name = 'index_df5'
@@ -629,6 +632,9 @@ class TestCompareAlgorithms(unittest.TestCase):
             ['Jill'],
             ['Elisabeth'],
             ['Sarrrrah'],
+            ['University Waterloo'],
+            ['Betty'],
+            ['tyler']
         ],
             columns=['str_2'])
         self.F.index.name = 'index_df6'
@@ -646,13 +652,13 @@ class TestCompareAlgorithms(unittest.TestCase):
         comp.string('str_1', 'str_2', method='smith_waterman', norm='max', gap_continue=-5, name='max_2')
         comp.string('str_1', 'str_2', method='smith_waterman', norm='mean', gap_continue=-5, name='mean_2')
 
-        expected_min_1 = pandas.Series([0, 0, 0, 0, 0, 0, 1, 0, 7/9, 3.6/5])
-        expected_max_1 = pandas.Series([0, 0, 0, 0, 0, 0, 1, 0, 7/9, 3.6/8])
-        expected_mean_1 = pandas.Series([0, 0, 0, 0, 0, 0, 1, 0, 7/9, 3.6/6.5])
+        expected_min_1 = pandas.Series([0, 0, 0, 0, 0, 0, 1, 0, 7/9, 3.6/5, 17.6/19, 2/5, 2/5])
+        expected_max_1 = pandas.Series([0, 0, 0, 0, 0, 0, 1, 0, 7/9, 3.6/8, 17.6/22, 2/5, 2/5])
+        expected_mean_1 = pandas.Series([0, 0, 0, 0, 0, 0, 1, 0, 7/9, 3.6/6.5, 17.6/20.5, 2/5, 2/5])
 
-        expected_min_2 = pandas.Series([0, 0, 0, 0, 0, 0, 1, 0, 7/9, 3/5])
-        expected_max_2 = pandas.Series([0, 0, 0, 0, 0, 0, 1, 0, 7/9, 3/8])
-        expected_mean_2 = pandas.Series([0, 0, 0, 0, 0, 0, 1, 0, 7/9, 3/6.5])
+        expected_min_2 = pandas.Series([0, 0, 0, 0, 0, 0, 1, 0, 7/9, 3/5, 16/19, 2/5, 2/5])
+        expected_max_2 = pandas.Series([0, 0, 0, 0, 0, 0, 1, 0, 7/9, 3/8, 16/22, 2/5, 2/5])
+        expected_mean_2 = pandas.Series([0, 0, 0, 0, 0, 0, 1, 0, 7/9, 3/6.5, 16/20.5, 2/5, 2/5])
 
         SW_TEST_CASES = [
             (comp.vectors['min_1'], expected_min_1, 'min_1'),
