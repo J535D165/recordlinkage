@@ -377,6 +377,9 @@ def longest_common_substring_similarity(s1, s2, norm='dice', min_len=2):
         adapted from
         https://en.wikibooks.org/wiki/Algorithm_Implementation/Strings/Longest_common_substring.
         but oriented towards the iterative approach described by Christen, Peter (2012).
+
+        :param x: A tuple of strings for this step.
+        :return: A tuple of strings and a substring length i.e. ((str, str), int).
         """
 
         str1 = x[0]
@@ -387,26 +390,34 @@ def longest_common_substring_similarity(s1, s2, norm='dice', min_len=2):
             new_str1 = None
             new_str2 = None
         else:
-            # Creating a matrix of 0s
+            # Creating a matrix of 0s for preprocessing
             m = [[0] * (1 + len(str2)) for _ in range(1 + len(str1))]
 
+            # Track length of longest substring seen
             longest = 0
+
+            # Track the ending position of this substring in str1 (x) and str2(y)
             x_longest = 0
             y_longest = 0
 
+            # Create matrix of substring lengths
             for x in range(1, 1 + len(str1)):
                 for y in range(1, 1 + len(str2)):
                     # Check if the chars match
                     if str1[x - 1] == str2[y - 1]:
                         # add 1 to the diagnol
                         m[x][y] = m[x - 1][y - 1] + 1
+                        # Update values if longer than previous longest substring
                         if m[x][y] > longest:
                             longest = m[x][y]
                             x_longest = x
                             y_longest = y
                     else:
+                        # If there is no match, start from zero
                         m[x][y] = 0
 
+            # Copy str1 and str2, but substracting the longest common substring
+            # for the next iteration.
             new_str1 = str1[0:x_longest-longest]+str1[x_longest:]
             new_str2 = str2[0:y_longest-longest]+str2[y_longest:]
 
@@ -420,28 +431,41 @@ def longest_common_substring_similarity(s1, s2, norm='dice', min_len=2):
         # Compute lcs value with first ordering.
         lcs_acc_1 = 0
         new_x_1 = (x[0], x[1])
-
         while True:
+            # Get new string pair (iter_x) and length (iter_lcs)
+            # for this iteration.
             iter_x, iter_lcs = lcs_iteration(new_x_1)
             if iter_lcs < min_len:
+                # End if the longest substring is below the threshold
                 break
             else:
+                # Otherwise, accumulate length and start a new iteration
+                # with the new string pair.
                 new_x_1 = iter_x
                 lcs_acc_1 = lcs_acc_1 + iter_lcs
 
         # Compute lcs value with second ordering.
         lcs_acc_2 = 0
         new_x_2 = (x[1], x[0])
-
         while True:
+            # Get new string pair (iter_x) and length (iter_lcs)
+            # for this iteration.
             iter_x, iter_lcs = lcs_iteration(new_x_2)
             if iter_lcs < min_len:
+                # End if the longest substring is below the threshold
                 break
             else:
+                # Otherwise, accumulate length and start a new iteration
+                # with the new string pair.
                 new_x_2 = iter_x
                 lcs_acc_2 = lcs_acc_2 + iter_lcs
 
         def normalize_lcs(lcs_value):
+            """
+            Apply one of the normalization schemes described in in Christen, Peter (2012).
+            :param float lcs_value: The raw lcs length.
+            :return: The normalized lcs length.
+            """
             if norm == 'overlap':
                 return lcs_value / min(len(x[0]), len(x[1]))
             elif norm == 'jaccard':
@@ -452,7 +476,7 @@ def longest_common_substring_similarity(s1, s2, norm='dice', min_len=2):
                 warnings.warn('Unrecognized longest common substring normalization. Defaulting to "dice" method.')
                 return lcs_value*2 / (len(x[0])+len(x[1]))
 
-        # Average the two orderings.
+        # Average the two orderings, since lcs may be sensitive to comparison order.
         return (normalize_lcs(lcs_acc_1)+normalize_lcs(lcs_acc_2)) / 2
 
     return conc.apply(lcs_apply, axis=1)
