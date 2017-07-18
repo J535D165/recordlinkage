@@ -151,7 +151,7 @@ def cosine_similarity(s1, s2, include_wb=True, ngram=(2, 2)):
 
 def smith_waterman_similarity(s1, s2, match=5, mismatch=-5, gap_start=-5, gap_continue=-1, norm="mean"):
     """
-    string(s1, s2, match=1, mismatch=-1, gap_start=-1, gap_continue=-0.2, norm="mean")
+    smith_waterman_similarity(s1, s2, match=1, mismatch=-1, gap_start=-1, gap_continue=-0.2, norm="mean")
 
     An implementation of the Smith-Waterman string comparison algorithm
     described in Christen, Peter (2012).
@@ -201,7 +201,7 @@ def smith_waterman_similarity(s1, s2, match=5, mismatch=-5, gap_start=-5, gap_co
 
     def sw_apply(t):
         """
-        sw_apply()
+        sw_apply(t)
 
         A helper function that is applied to each pair of records
         in s1 and s2. Assigns a similarity score to each pair,
@@ -336,7 +336,9 @@ def smith_waterman_similarity(s1, s2, match=5, mismatch=-5, gap_start=-5, gap_co
             if norm == "mean":
                 # Normalize by the mean length of the two strings
                 return 2*score/((len(str1) + len(str2)) * match)
-
+            else:
+                warnings.warn('Unrecognized longest common substring normalization. Defaulting to "mean" method.')
+                return 2*score/((len(str1) + len(str2)) * match)
         try:
             if len(str1) == 0 or len(str2) == 0:
                 return 0
@@ -353,14 +355,26 @@ def smith_waterman_similarity(s1, s2, match=5, mismatch=-5, gap_start=-5, gap_co
 
 def longest_common_substring_similarity(s1, s2, norm='dice', min_len=2):
     """
+    longest_common_substring_similarity(s1, s2, norm='dice', min_len=2)
+
     An implementation of the longest common substring similarity algorithm
     described in Christen, Peter (2012).
 
-    :param pd.Series s1: Comparison data.
-    :param pd.Series s2: Comparison data.
-    :param str norm: The normalization applied to the raw length computed by the lcs algorithm.
-    :param int min_len: The minimum length of substring to be considered.
-    :return: A pd.Series of normalized similarity values.
+    Parameters
+    ----------
+    s1 : label, pandas.Series
+        Series or DataFrame to compare all fields.
+    s2 : label, pandas.Series
+        Series or DataFrame to compare all fields.
+    norm : str
+        The name of the normalization applied to the raw length computed by
+        the lcs algorithm. One of "overlap", "jaccard", or "dice". Default:
+        "dice""
+
+    Returns
+    -------
+    pandas.Series
+        A pandas series with normalized similarity values.
     """
 
     if len(s1) != len(s2):
@@ -373,13 +387,20 @@ def longest_common_substring_similarity(s1, s2, norm='dice', min_len=2):
 
     def lcs_iteration(x):
         """
+        lcs_iteration(x)
+
         A helper function implementation of a single iteration longest common substring algorithm,
         adapted from
         https://en.wikibooks.org/wiki/Algorithm_Implementation/Strings/Longest_common_substring.
         but oriented towards the iterative approach described by Christen, Peter (2012).
 
-        :param x: A tuple of strings for this step.
-        :return: A tuple of strings and a substring length i.e. ((str, str), int).
+        Parameters
+        ----------
+        x : A series containing the two strings to be compared.
+
+        Returns
+        -------
+        A tuple of strings and a substring length i.e. ((str, str), int).
         """
 
         str1 = x[0]
@@ -405,7 +426,7 @@ def longest_common_substring_similarity(s1, s2, norm='dice', min_len=2):
                 for y in range(1, 1 + len(str2)):
                     # Check if the chars match
                     if str1[x - 1] == str2[y - 1]:
-                        # add 1 to the diagnol
+                        # add 1 to the diagonal
                         m[x][y] = m[x - 1][y - 1] + 1
                         # Update values if longer than previous longest substring
                         if m[x][y] > longest:
@@ -416,7 +437,7 @@ def longest_common_substring_similarity(s1, s2, norm='dice', min_len=2):
                         # If there is no match, start from zero
                         m[x][y] = 0
 
-            # Copy str1 and str2, but substracting the longest common substring
+            # Copy str1 and str2, but subtract the longest common substring
             # for the next iteration.
             new_str1 = str1[0:x_longest-longest]+str1[x_longest:]
             new_str2 = str2[0:y_longest-longest]+str2[y_longest:]
@@ -424,7 +445,23 @@ def longest_common_substring_similarity(s1, s2, norm='dice', min_len=2):
         return (new_str1, new_str2), longest
 
     def lcs_apply(x):
+        """
+        lcs_apply(x)
 
+        A helper function that is applied to each pair of records
+        in s1 and s2. Assigns a similarity score to each pair,
+        between 0 and 1. Used by the pandas.apply method.
+
+        Parameters
+        ----------
+        x : pandas.Series
+          A pandas Series containing two strings to be compared.
+
+        Returns
+        -------
+        Float
+          A normalized similarity score.
+        """
         if pandas.isnull(x[0]) or pandas.isnull(x[1]):
             return np.nan
 
@@ -462,9 +499,23 @@ def longest_common_substring_similarity(s1, s2, norm='dice', min_len=2):
 
         def normalize_lcs(lcs_value):
             """
-            Apply one of the normalization schemes described in in Christen, Peter (2012).
-            :param float lcs_value: The raw lcs length.
-            :return: The normalized lcs length.
+            normalize_lcs(lcs_value)
+
+            A helper function used to normalize the score produced by
+            compute_score() to a score between 0 and 1. Applies one of
+            the normalization schemes described in in Christen, Peter (2012).
+            The normalization method is determined by the norm argument provided
+            to the parent, longest_common_substring_similarity function.
+
+            Parameters
+            ----------
+            lcs_value : Float
+                The raw lcs length.
+
+            Returns
+            -------
+            Float
+                The normalized lcs length.
             """
             if norm == 'overlap':
                 return lcs_value / min(len(x[0]), len(x[1]))
