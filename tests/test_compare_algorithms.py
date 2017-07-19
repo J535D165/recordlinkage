@@ -680,22 +680,22 @@ class TestCompareAlgorithms(unittest.TestCase):
     def test_lcs_correctness(self):
 
         self.C = pandas.DataFrame([
-            ['peter christen'],
-            ['peter christen'],
-            ['prap'],
-            ['résumé'],
-            ['aba'],
+            [u'peter christen'],
+            [u'peter christen'],
+            [u'prap'],
+            [u'résumé'],
+            [u'aba'],
         ],
             columns=['str_1'])
 
         self.C.index.name = 'index_df3'
 
         self.D = pandas.DataFrame([
-            ['christian pedro'],
-            ['christen peter'],
-            ['papr'],
-            ['resume'],
-            ['abbaba']
+            [u'christian pedro'],
+            [u'christen peter'],
+            [u'papr'],
+            [u'resume'],
+            [u'abbaba']
         ],
             columns=['str_2'])
 
