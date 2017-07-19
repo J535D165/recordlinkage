@@ -734,4 +734,7 @@ class TestCompareAlgorithms(unittest.TestCase):
         for tup in LCS_TEST_CASES:
             assert(len(tup[0]) == len(tup[1]))
             for i in range(0, len(tup[0])):
-                self.assertAlmostEqual(tup[0].iloc[i], tup[1].iloc[i], places=3, msg='Failed on test {} number {}'.format(tup[2], i))
+                self.assertAlmostEqual(tup[0].iloc[i], tup[1].iloc[i], places=3,
+                                       msg='Failed on test {} number {} ({} != {})'.format(
+                                           tup[2], i, tup[0].iloc[i], tup[1].iloc[i])
+                                       )
