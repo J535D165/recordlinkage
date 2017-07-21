@@ -58,7 +58,7 @@ comparison or similarity algorithms in the Compare class.
 
 .. code:: python
 
-    c = recordlinkage.Compare(candidate_links, df_a, df_b)
+    c = recordlinkage.Compare()
 
     c.string('name_a', 'name_b', method='jarowinkler', threshold=0.85)
     c.exact('sex', 'gender')
@@ -68,7 +68,7 @@ comparison or similarity algorithms in the Compare class.
     c.numeric('income', 'income', method='gauss', offset=3, scale=3, missing_value=0.5)
 
     # The comparison vectors
-    c.vectors
+    c.compute(candidate_links, df_a, df_b)
 
 This Python Record Linkage Toolkit contains multiple classification alogirthms.
 Plenty of the algorithms need trainings data (supervised learning) while
