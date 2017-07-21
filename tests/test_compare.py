@@ -8,6 +8,7 @@ import recordlinkage
 import numpy as np
 from numpy import nan, arange
 import pandas
+from pandas import DataFrame
 
 STRING_SIM_ALGORITHMS = [
     'jaro', 'q_gram', 'cosine', 'jaro_winkler', 'dameraulevenshtein',
@@ -72,8 +73,8 @@ AGES = [23, 40, 70, 45, 23, 57, 38, nan, 45, 46]
 # Run all tests in this file with:
 # nosetests tests/test_compare.py
 
-# nosetests -v tests/test_compare.py:TestCompare
-class TestCompare(unittest.TestCase):
+# nosetests -v tests/test_compare.py:TestData
+class TestData(unittest.TestCase):
 
     @classmethod
     def setUpClass(self):
@@ -81,14 +82,14 @@ class TestCompare(unittest.TestCase):
         N_A = 100
         N_B = 100
 
-        self.A = pandas.DataFrame({
+        self.A = DataFrame({
             'age': np.random.choice(AGES, N_A),
             'given_name': np.random.choice(FIRST_NAMES, N_A),
             'lastname': np.random.choice(LAST_NAMES, N_A),
             'street': np.random.choice(STREET, N_A)
         })
 
-        self.B = pandas.DataFrame({
+        self.B = DataFrame({
             'age': np.random.choice(AGES, N_B),
             'given_name': np.random.choice(FIRST_NAMES, N_B),
             'lastname': np.random.choice(LAST_NAMES, N_B),
@@ -102,214 +103,96 @@ class TestCompare(unittest.TestCase):
             [arange(len(self.A)), arange(len(self.B))],
             names=[self.A.index.name, self.B.index.name])
 
+
+# tests/test_compare.py:TestCompareApi
+class TestCompareApi(TestData):
+    """General unittest for the compare API."""
+
     @parameterized.expand(COMPARE_ALGORITHMS)
     def test_instance_linking(self, method_to_call, *args, **kwargs):
-        """result is pandas series (link)"""
 
-        comp = recordlinkage.Compare(self.index_AB, self.A, self.B)
-        result = getattr(comp, method_to_call)(*args, **kwargs)
+        comp = recordlinkage.Compare()
+        comp.string('given_name', 'given_name', method='jaro')
+        comp.numeric('age', 'age', method='step', offset=3, origin=2)
+        comp.numeric('age', 'age', method='step', offset=0, origin=2)
+        result = comp.compute(self.index_AB, self.A, self.B)
 
         # returns a pandas.Series
-        self.assertIsInstance(result, pandas.Series)
+        self.assertIsInstance(result, DataFrame)
 
         # resulting series has a pandas.MultiIndex
         self.assertIsInstance(result.index, pandas.MultiIndex)
 
-    @parameterized.expand(COMPARE_ALGORITHMS)
-    def test_instance_dedup(self, method_to_call, *args, **kwargs):
-        """result is pandas series (dedup)"""
-
-        comp = recordlinkage.Compare(self.index_AB, self.A)
-        result = getattr(comp, method_to_call)(*args, **kwargs)
-
-        # returns a pandas.Series
-        self.assertIsInstance(result, pandas.Series)
-
-        # resulting series has a pandas.MultiIndex
-        self.assertIsInstance(result.index, pandas.MultiIndex)
-
-    @parameterized.expand(COMPARE_ALGORITHMS)
-    def test_index_names_linking(self, method_to_call, *args, **kwargs):
-        """result is pandas series (link)"""
-
-        comp = recordlinkage.Compare(self.index_AB, self.A, self.B)
-        result = getattr(comp, method_to_call)(*args, **kwargs)
-
-        # returns a pandas.Series
+        # indexnames are oke
         self.assertEqual(result.index.names,
                          [self.A.index.name, self.B.index.name])
 
-    @parameterized.expand(COMPARE_ALGORITHMS)
-    def test_len_result_linking(self, method_to_call, *args, **kwargs):
-        """result has correct number of records (link)"""
-
-        comp = recordlinkage.Compare(self.index_AB, self.A, self.B)
-        result = getattr(comp, method_to_call)(*args, **kwargs)
-
         self.assertEqual(len(result), len(self.index_AB))
 
     @parameterized.expand(COMPARE_ALGORITHMS)
-    def test_len_result_dedup(self, method_to_call, *args, **kwargs):
-        """result has correct number of records (dedup)"""
+    def test_instance_dedup(self, method_to_call, *args, **kwargs):
 
-        comp = recordlinkage.Compare(self.index_AB, self.A)
-        result = getattr(comp, method_to_call)(*args, **kwargs)
-
-        self.assertEqual(len(result), len(self.index_AB))
-
-    @parameterized.expand(COMPARE_ALGORITHMS)
-    def test_name_default_linking(self, method_to_call, *args, **kwargs):
-
-        comp = recordlinkage.Compare(self.index_AB, self.A, self.B)
-        result = getattr(comp, method_to_call)(*args, **kwargs)
-
-        self.assertEqual(result.name, None)
-
-    @parameterized.expand(COMPARE_ALGORITHMS)
-    def test_name_default_dedup(self, method_to_call, *args, **kwargs):
-
-        comp = recordlinkage.Compare(self.index_AB, self.A)
-        result = getattr(comp, method_to_call)(*args, **kwargs)
-
-        self.assertEqual(result.name, None)
-
-    @parameterized.expand(COMPARE_ALGORITHMS)
-    def test_name_custom_linking(self, method_to_call, *args, **kwargs):
-
-        kwargs["name"] = "given_name_comp"
-
-        comp = recordlinkage.Compare(self.index_AB, self.A, self.B)
-        result = getattr(comp, method_to_call)(*args, **kwargs)
-
-        self.assertEqual(result.name, "given_name_comp")
-
-    @parameterized.expand(COMPARE_ALGORITHMS)
-    def test_name_custom_dedup(self, method_to_call, *args, **kwargs):
-
-        kwargs["name"] = "given_name_comp"
-
-        comp = recordlinkage.Compare(self.index_AB, self.A)
-        result = getattr(comp, method_to_call)(*args, **kwargs)
-
-        self.assertEqual(result.name, "given_name_comp")
-
-    @parameterized.expand(COMPARE_ALGORITHMS)
-    def test_incorrect_labels_linking(self, method_to_call, s1, s2, *args, **kwargs):
-
-        kwargs["name"] = "given_name_comp"
-        s2 = "not_existing_label"
-
-        comp = recordlinkage.Compare(self.index_AB, self.A, self.B)
-
-        with self.assertRaises(KeyError):
-            getattr(comp, method_to_call)(s1, s2, *args, **kwargs)
-
-    @parameterized.expand(COMPARE_ALGORITHMS)
-    def test_incorrect_labels_dedup(self, method_to_call, s1, s2, *args, **kwargs):
-
-        kwargs["name"] = "given_name_comp"
-        s2 = "not_existing_label"
-
-        comp = recordlinkage.Compare(self.index_AB, self.A)
-
-        with self.assertRaises(KeyError):
-            getattr(comp, method_to_call)(s1, s2, *args, **kwargs)
-
-    def test_deprecated_run(self):
-
-        comp = recordlinkage.Compare(
-            self.index_AB, self.A, self.B, batch_compare=True
-        )
-
-        with self.assertRaises(AttributeError):
-            comp.run()
-
-    def test_memory_low(self):
-
-        c = recordlinkage.Compare(
-            self.index_AB, self.A, self.B, low_memory=True
-        )
-
-        c.numeric('age', 'age', method='linear', offset=0, scale=3)
-        c.exact('given_name', 'given_name')
-        c.string('lastname', 'lastname', method='levenshtein')
-        c.string('street', 'street', method='levenshtein')
-
-        nrows, ncols = c.vectors.shape
-        self.assertEqual(nrows, len(self.index_AB))
-        self.assertEqual(ncols, 4)
-
-    def test_memory_high(self):
-
-        c = recordlinkage.Compare(
-            self.index_AB, self.A, self.B, low_memory=False
-        )
-
-        c.numeric('age', 'age', method='linear', offset=0, scale=3)
-        c.exact('given_name', 'given_name')
-        c.string('lastname', 'lastname', method='levenshtein')
-        c.string('street', 'street', method='levenshtein')
-
-        # Check if all columns are there
-        nrows, ncols = c.vectors.shape
-        self.assertEqual(nrows, len(self.index_AB))
-        self.assertEqual(ncols, 4)
-
-        # Check is the records are there
-        self.assertIsNotNone(c._df_a_indexed)
-        self.assertIsNotNone(c._df_b_indexed)
-
-        # Check memory clearing function
-        c.clear_memory()
-        self.assertIsNone(c._df_a_indexed)
-        self.assertIsNone(c._df_b_indexed)
-
-    @parameterized.expand(COMPARE_ALGORITHMS)
-    def test_block_size_linking(self, method_to_call, *args, **kwargs):
-
-        comp = recordlinkage.Compare(self.index_AB,
-                                     self.A, self.B, block_size=10)
-        result = getattr(comp, method_to_call)(*args, **kwargs)
+        comp = recordlinkage.Compare()
+        comp.string('given_name', 'given_name', method='jaro')
+        comp.numeric('age', 'age', method='step', offset=3, origin=2)
+        comp.numeric('age', 'age', method='step', offset=0, origin=2)
+        result = comp.compute(self.index_AB, self.A)
 
         # returns a pandas.Series
-        self.assertIsInstance(result, pandas.Series)
-        self.assertEqual(len(result), len(self.index_AB))
-
-    @parameterized.expand(COMPARE_ALGORITHMS)
-    def test_block_size_dedup(self, method_to_call, *args, **kwargs):
-
-        comp = recordlinkage.Compare(self.index_AB, self.A, block_size=10)
-        result = getattr(comp, method_to_call)(*args, **kwargs)
-
-        # returns a pandas.Series
-        self.assertIsInstance(result, pandas.Series)
-        self.assertEqual(len(result), len(self.index_AB))
-
-    def test_series_argument(self):
-
-        # The columns with data
-        col_A = self.A['given_name']
-        col_B = self.B['given_name']
-
-        pairs = pandas.MultiIndex.from_arrays(
-            [arange(len(self.A)), arange(len(self.B))],
-            names=[self.A.index.name, self.B.index.name])
-
-        c = recordlinkage.Compare(
-            pairs, self.A, self.B, low_memory=True
-        )
-
-        # Check exact with column arguments
-        result = c.exact(col_A, col_B)
-
-        # check result is series
-        self.assertIsInstance(result, pandas.Series)
+        self.assertIsInstance(result, DataFrame)
 
         # resulting series has a pandas.MultiIndex
         self.assertIsInstance(result.index, pandas.MultiIndex)
 
-        # resulting series has a pandas.MultiIndex
-        self.assertEqual(len(result), len(col_A))
+        # indexnames are oke
+        self.assertEqual(result.index.names,
+                         [self.A.index.name, self.B.index.name])
+
+        self.assertEqual(len(result), len(self.index_AB))
+
+    # @parameterized.expand(COMPARE_ALGORITHMS)
+    # def test_name_custom_linking(self, method_to_call, *args, **kwargs):
+
+    #     kwargs["name"] = "given_name_comp"
+
+    #     comp = recordlinkage.Compare(self.index_AB, self.A, self.B)
+    #     result = getattr(comp, method_to_call)(*args, **kwargs)
+
+    #     self.assertEqual(result.name, "given_name_comp")
+
+    # @parameterized.expand(COMPARE_ALGORITHMS)
+    # def test_name_custom_dedup(self, method_to_call, *args, **kwargs):
+
+    #     kwargs["name"] = "given_name_comp"
+
+    #     comp = recordlinkage.Compare(self.A, self.index_AB)
+    #     result = getattr(comp, method_to_call)(*args, **kwargs)
+
+    #     self.assertEqual(result.name, "given_name_comp")
+
+    # @parameterized.expand(COMPARE_ALGORITHMS)
+    # def test_incorrect_labels_linking(self, method_to_call, s1, s2, *args,
+    # **kwargs):
+
+    #     kwargs["name"] = "given_name_comp"
+    #     s2 = "not_existing_label"
+
+    #     comp = recordlinkage.Compare(self.index_AB, self.A, self.B)
+
+    #     with self.assertRaises(KeyError):
+    #         getattr(comp, method_to_call)(s1, s2, *args, **kwargs)
+
+    # @parameterized.expand(COMPARE_ALGORITHMS)
+    # def test_incorrect_labels_dedup(self, method_to_call, s1, s2, *args,
+    # **kwargs):
+
+    #     kwargs["name"] = "given_name_comp"
+    #     s2 = "not_existing_label"
+
+    #     comp = recordlinkage.Compare(self.A, self.index_AB)
+
+    #     with self.assertRaises(KeyError):
+    #         getattr(comp, method_to_call)(s1, s2, *args, **kwargs)
 
 
 def ones_compare(s1, s2):
@@ -317,49 +200,613 @@ def ones_compare(s1, s2):
     return np.ones(len(s1))
 
 
-# nosetests -v tests/test_compare.py:TestCompareLarge
-class TestCompareLarge(unittest.TestCase):
+# tests/test_compare.py:TestCompareExact
+class TestCompareExact(TestData):
+    """Test the exact comparison method."""
 
-    @classmethod
-    def setUpClass(self):
+    def test_exact_str_type(self):
 
-        self.n_records = 2131
+        A = DataFrame({'col': ['abc', 'abc', 'abc', 'abc', 'abc']})
+        B = DataFrame({'col': ['abc', 'abd', 'abc', 'abc', '123']})
+        ix = pandas.MultiIndex.from_arrays([A.index.values, B.index.values])
 
-        self.A = pandas.DataFrame({
-            'var1': np.arange(self.n_records),
-            'var2': np.arange(self.n_records),
-            'var3': np.arange(self.n_records),
-            'var4': np.arange(self.n_records)
-        })
-        self.A.index.name = 'index_df1'
+        expected = pandas.DataFrame([1, 0, 1, 1, 0], index=ix)
 
-        self.B = pandas.DataFrame({
-            'var1': np.arange(self.n_records),
-            'var2': np.arange(self.n_records),
-            'var3': np.arange(self.n_records),
-            'var4': np.arange(self.n_records)
-        })
-        self.B.index.name = 'index_df2'
+        comp = recordlinkage.Compare()
+        comp.exact('col', 'col')
+        result = comp.compute(ix, A, B)
 
-        self.index_AB = pandas.MultiIndex.from_product(
-            [arange(len(self.A)), arange(len(self.B))],
-            names=[self.A.index.name, self.B.index.name])
+        pdt.assert_frame_equal(result, expected)
 
-    def test_instance_linking(self):
+    def test_exact_num_type(self):
+
+        A = DataFrame({'col': [42, 42, 41, 43, nan]})
+        B = DataFrame({'col': [42, 42, 42, 42, 42]})
+        ix = pandas.MultiIndex.from_arrays([A.index.values, B.index.values])
+
+        expected = pandas.DataFrame([1, 1, 0, 0, 0], index=ix)
+
+        comp = recordlinkage.Compare()
+        comp.exact('col', 'col')
+        result = comp.compute(ix, A, B)
+
+        pdt.assert_frame_equal(result, expected)
+
+    def test_link_exact_missing(self):
+
+        A = DataFrame({'col': [u'a', u'b', u'c', u'd', nan]})
+        B = DataFrame({'col': [u'a', u'b', u'd', nan, nan]})
+        ix = pandas.MultiIndex.from_arrays([A.index.values, B.index.values])
+
+        comp = recordlinkage.Compare()
+        comp.exact('col', 'col', label='na_')
+        comp.exact('col', 'col', missing_value=0, label='na_0')
+        comp.exact('col', 'col', missing_value=9, label='na_9')
+        comp.exact('col', 'col', missing_value=nan, label='na_na')
+        comp.exact('col', 'col', missing_value='str', label='na_str')
+        result = comp.compute(ix, A, B)
+
+        # Missing values as default
+        expected = pandas.Series([1, 1, 0, 0, 0], index=ix, name='na_')
+        pdt.assert_series_equal(result['na_'], expected)
+
+        # Missing values as 0
+        expected = pandas.Series([1, 1, 0, 0, 0], index=ix, name='na_0')
+        pdt.assert_series_equal(result['na_0'], expected)
+
+        # Missing values as 9
+        expected = pandas.Series([1, 1, 0, 9, 9], index=ix, name='na_9')
+        pdt.assert_series_equal(result['na_9'], expected)
+
+        # Missing values as nan
+        expected = pandas.Series([1, 1, 0, nan, nan], index=ix, name='na_na')
+        pdt.assert_series_equal(result['na_na'], expected)
+
+        # Missing values as string
+        expected = pandas.Series(
+            [1, 1, 0, 'str', 'str'], index=ix, name='na_str')
+        pdt.assert_series_equal(result['na_str'], expected)
+
+    def test_link_exact_disagree(self):
+
+        A = DataFrame({'col': [u'a', u'b', u'c', u'd', nan]})
+        B = DataFrame({'col': [u'a', u'b', u'd', nan, nan]})
+        ix = pandas.MultiIndex.from_arrays([A.index.values, B.index.values])
+
+        comp = recordlinkage.Compare()
+        comp.exact('col', 'col', label='d_')
+        comp.exact('col', 'col', disagree_value=0, label='d_0')
+        comp.exact('col', 'col', disagree_value=9, label='d_9')
+        comp.exact('col', 'col', disagree_value=nan, label='d_na')
+        comp.exact('col', 'col', disagree_value='str', label='d_str')
+        result = comp.compute(ix, A, B)
+
+        # disagree values as default
+        expected = pandas.Series([1, 1, 0, 0, 0], index=ix, name='d_')
+        pdt.assert_series_equal(result['d_'], expected)
+
+        # disagree values as 0
+        expected = pandas.Series([1, 1, 0, 0, 0], index=ix, name='d_0')
+        pdt.assert_series_equal(result['d_0'], expected)
+
+        # disagree values as 9
+        expected = pandas.Series([1, 1, 9, 0, 0], index=ix, name='d_9')
+        pdt.assert_series_equal(result['d_9'], expected)
+
+        # disagree values as nan
+        expected = pandas.Series([1, 1, nan, 0, 0], index=ix, name='d_na')
+        pdt.assert_series_equal(result['d_na'], expected)
+
+        # disagree values as string
+        expected = pandas.Series([1, 1, 'str', 0, 0], index=ix, name='d_str')
+        pdt.assert_series_equal(result['d_str'], expected)
+
+
+# tests/test_compare.py:TestCompareNumeric
+class TestCompareNumeric(TestData):
+    """Test the numeric comparison methods."""
+
+    def test_numeric(self):
+
+        A = DataFrame({'col': [1, 1, 1, nan, 0]})
+        B = DataFrame({'col': [1, 2, 3, nan, nan]})
+        ix = pandas.MultiIndex.from_arrays([A.index.values, B.index.values])
+
+        comp = recordlinkage.Compare()
+        comp.numeric('col', 'col', 'step', offset=2)
+        comp.numeric('col', 'col', method='step', offset=2)
+        comp.numeric('col', 'col', 'step', 2)
+        result = comp.compute(ix, A, B)
+
+        # Basics
+        expected = pandas.Series([1, 1, 1, 0, 0], index=ix, name=0)
+        pdt.assert_series_equal(result[0], expected)
+
+        # Basics
+        expected = pandas.Series([1, 1, 1, 0, 0], index=ix, name=1)
+        pdt.assert_series_equal(result[1], expected)
+
+        # Basics
+        expected = pandas.Series([1, 1, 1, 0, 0], index=ix, name=2)
+        pdt.assert_series_equal(result[2], expected)
+
+    def test_numeric_with_missings(self):
+        """Test missing value handling."""
+
+        A = DataFrame({'col': [1, 1, 1, nan, 0]})
+        B = DataFrame({'col': [1, 1, 1, nan, nan]})
+        ix = pandas.MultiIndex.from_arrays([A.index.values, B.index.values])
+
+        comp = recordlinkage.Compare()
+        comp.numeric('col', 'col', scale=2)
+        comp.numeric('col', 'col', scale=2, missing_value=0)
+        comp.numeric('col', 'col', scale=2, missing_value=123.45)
+        comp.numeric('col', 'col', scale=2, missing_value=nan)
+        comp.numeric('col', 'col', scale=2, missing_value='str')
+        result = comp.compute(ix, A, B)
+
+        # Missing values as default
+        expected = pandas.Series(
+            [1, 1, 1, 0, 0], index=ix, dtype=np.float64, name=0)
+        pdt.assert_series_equal(result[0], expected)
+
+        # Missing values as 0
+        expected = pandas.Series(
+            [1, 1, 1, 0, 0], index=ix, dtype=np.float64, name=1)
+        pdt.assert_series_equal(result[1], expected)
+
+        # Missing values as 123.45
+        expected = pandas.Series(
+            [1, 1, 1, 123.45, 123.45], index=ix, name=2)
+        pdt.assert_series_equal(result[2], expected)
+
+        # Missing values as nan
+        expected = pandas.Series([1, 1, 1, nan, nan], index=ix, name=3)
+        pdt.assert_series_equal(result[3], expected)
+
+        # Missing values as string
+        expected = pandas.Series(
+            [1, 1, 1, 'str', 'str'], index=ix, dtype=object, name=4)
+        pdt.assert_series_equal(result[4], expected)
+
+    def test_numeric_algorithms(self):
+
+        A = DataFrame({'col': [1, 1, 1, 1, 1]})
+        B = DataFrame({'col': [1, 2, 3, 4, 5]})
+        ix = pandas.MultiIndex.from_arrays([A.index.values, B.index.values])
+
+        comp = recordlinkage.Compare()
+        comp.numeric('col', 'col', method='step', offset=1, label='step')
+        comp.numeric('col', 'col', method='linear',
+                     offset=1, scale=2, label='linear')
+        comp.numeric('col', 'col', method='squared',
+                     offset=1, scale=2, label='squared')
+        comp.numeric('col', 'col', method='exp',
+                     offset=1, scale=2, label='exp')
+        comp.numeric('col', 'col', method='gauss',
+                     offset=1, scale=2, label='gauss')
+        result_df = comp.compute(ix, A, B)
+
+        for alg in ['step', 'linear', 'squared', 'exp', 'gauss']:
+
+            result = result_df[alg]
+
+            # All values between 0 and 1.
+            self.assertTrue((result >= 0).all())
+            self.assertTrue((result <= 1).all())
+
+            if alg is not 'step':
+
+                # sim(scale) = 0.5
+                expected_bool = pandas.Series(
+                    [False, False, False, True, False], index=ix, name=alg)
+                pdt.assert_series_equal(result == 0.5, expected_bool)
+
+                # sim(offset) = 1
+                expected_bool = pandas.Series(
+                    [True, True, False, False, False], index=ix, name=alg)
+                pdt.assert_series_equal(result == 1, expected_bool)
+
+                # sim(scale) larger than 0.5
+                expected_bool = pandas.Series(
+                    [False, False, True, False, False], index=ix, name=alg)
+                pdt.assert_series_equal(
+                    (result > 0.5) & (result < 1), expected_bool)
+
+                # sim(scale) smaller than 0.5
+                expected_bool = pandas.Series(
+                    [False, False, False, False, True], index=ix, name=alg)
+                pdt.assert_series_equal(
+                    (result < 0.5) & (result >= 0), expected_bool)
+
+    def test_numeric_alg_errors(self):
 
         comp = recordlinkage.Compare(self.index_AB, self.A, self.B)
-        result = comp.compare(ones_compare, 'var1', 'var1')
 
-        self.assertIsInstance(result, pandas.Series)
-        self.assertEqual(len(result), self.n_records**2)
-        self.assertTrue(result.index.is_unique)
+        with self.assertRaises(ValueError):
+            comp.numeric('age', 'age', method='linear', offset=2, scale=-2)
 
-    def test_instance_dedup(self):
+        with self.assertRaises(ValueError):
+            comp.numeric('age', 'age', method='exp', offset=2, scale=-2)
 
-        comp = recordlinkage.Compare(self.index_AB, self.A)
-        result = comp.compare(ones_compare, 'var1', 'var1')
+        with self.assertRaises(ValueError):
+            comp.numeric('age', 'age', method='gauss', offset=2, scale=-2)
 
-        self.assertIsInstance(result, pandas.Series)
-        self.assertEqual(len(result), self.n_records**2)
-        self.assertTrue(result.index.is_unique)
+        with self.assertRaises(ValueError):
+            comp.numeric('age', 'age', method='squared', offset=2, scale=-2)
 
+        # offset negative
+        with self.assertRaises(ValueError):
+            comp.numeric('age', 'age', method='step', offset=-2)
+
+        with self.assertRaises(ValueError):
+            comp.numeric('age', 'age', method='linear', offset=-2, scale=2)
+
+        with self.assertRaises(ValueError):
+            comp.numeric('age', 'age', method='exp', offset=-2, scale=2)
+
+        with self.assertRaises(ValueError):
+            comp.numeric('age', 'age', method='gauss', offset=-2, scale=2)
+
+        with self.assertRaises(ValueError):
+            comp.numeric('age', 'age', method='squared', offset=-2, scale=2)
+
+    def test_numeric_does_not_exist(self):
+        """
+        Raise error is the algorithm doesn't exist.
+        """
+
+        A = DataFrame({'col': [1, 1, 1, nan, 0]})
+        B = DataFrame({'col': [1, 1, 1, nan, nan]})
+        ix = pandas.MultiIndex.from_arrays([A.index.values, B.index.values])
+
+        comp = recordlinkage.Compare()
+
+        with self.assertRaises(ValueError):
+            comp.numeric('col', 'col', method='unknown_algorithm')
+            comp.compute(ix, A, B)
+
+# tests/test_compare.py:TestCompareDates
+
+
+class TestCompareDates(TestData):
+    """Test the exact comparison method."""
+
+    def test_dates(self):
+
+        A = DataFrame({'col':
+                       pandas.to_datetime(
+                           ['2005/11/23',
+                            np.nan,
+                            '2004/11/23',
+                            '2010/01/10',
+                            '2010/10/30']
+                       )})
+        B = DataFrame({'col':
+                       pandas.to_datetime(
+                           ['2005/11/23',
+                            '2010/12/31',
+                            '2005/11/23',
+                            '2010/10/01',
+                            '2010/9/30']
+                       )})
+        ix = pandas.MultiIndex.from_arrays([A.index.values, B.index.values])
+
+        comp = recordlinkage.Compare()
+        comp.date('col', 'col')
+        result = comp.compute(ix, A, B)[0]
+
+        expected = pandas.Series([1, 0, 0, 0.5, 0.5], index=ix, name=0)
+
+        pdt.assert_series_equal(result, expected)
+
+    def test_date_incorrect_dtype(self):
+
+        A = DataFrame({'col': ['2005/11/23',
+                               np.nan,
+                               '2004/11/23',
+                               '2010/01/10',
+                               '2010/10/30']})
+        B = DataFrame({'col': ['2005/11/23',
+                               '2010/12/31',
+                               '2005/11/23',
+                               '2010/10/01',
+                               '2010/9/30']})
+        ix = pandas.MultiIndex.from_arrays([A.index.values, B.index.values])
+
+        A['col1'] = pandas.to_datetime(A['col'])
+        B['col1'] = pandas.to_datetime(B['col'])
+
+        comp = recordlinkage.Compare()
+        comp.date('col', 'col1')
+        self.assertRaises(ValueError, comp.compute, ix, A, B)
+
+        comp = recordlinkage.Compare()
+        comp.date('col1', 'col')
+        self.assertRaises(ValueError, comp.compute, ix, A, B)
+
+    def test_dates_with_missings(self):
+
+        A = DataFrame({'col':
+                       pandas.to_datetime(
+                           ['2005/11/23',
+                            np.nan,
+                            '2004/11/23',
+                            '2010/01/10',
+                            '2010/10/30']
+                       )})
+        B = DataFrame({'col':
+                       pandas.to_datetime(
+                           ['2005/11/23',
+                            '2010/12/31',
+                            '2005/11/23',
+                            '2010/10/01',
+                            '2010/9/30']
+                       )})
+        ix = pandas.MultiIndex.from_arrays([A.index.values, B.index.values])
+
+        comp = recordlinkage.Compare()
+        comp.date('col', 'col', label='m_')
+        comp.date('col', 'col', missing_value=0, label='m_0')
+        comp.date('col', 'col', missing_value=123.45, label='m_float')
+        comp.date('col', 'col', missing_value=nan, label='m_na')
+        comp.date('col', 'col', missing_value='str', label='m_str')
+        result = comp.compute(ix, A, B)
+
+        # Missing values as default
+        expected = pandas.Series([1, 0, 0, 0.5, 0.5], index=ix, name='m_')
+        pdt.assert_series_equal(result['m_'], expected)
+
+        # Missing values as 0
+        expected = pandas.Series([1, 0, 0, 0.5, 0.5], index=ix, name='m_0')
+        pdt.assert_series_equal(result['m_0'], expected)
+
+        # Missing values as 123.45
+        expected = pandas.Series(
+            [1, 123.45, 0, 0.5, 0.5], index=ix, name='m_float')
+        pdt.assert_series_equal(result['m_float'], expected)
+
+        # Missing values as nan
+        expected = pandas.Series([1, nan, 0, 0.5, 0.5], index=ix, name='m_na')
+        pdt.assert_series_equal(result['m_na'], expected)
+
+        # Missing values as string
+        expected = pandas.Series(
+            [1, 'str', 0, 0.5, 0.5], index=ix, dtype=object, name='m_str')
+        pdt.assert_series_equal(result['m_str'], expected)
+
+    def test_dates_with_swap(self):
+
+        months_to_swap = [
+            (9, 10, 123.45),
+            (10, 9, 123.45),
+            (1, 2, 123.45),
+            (2, 1, 123.45)
+        ]
+
+        A = DataFrame({'col':
+                       pandas.to_datetime(
+                           ['2005/11/23',
+                            np.nan,
+                            '2004/11/23',
+                            '2010/01/10',
+                            '2010/10/30']
+                       )})
+        B = DataFrame({'col':
+                       pandas.to_datetime(
+                           ['2005/11/23',
+                            '2010/12/31',
+                            '2005/11/23',
+                            '2010/10/01',
+                            '2010/9/30']
+                       )})
+        ix = pandas.MultiIndex.from_arrays([A.index.values, B.index.values])
+
+        comp = recordlinkage.Compare()
+        comp.date('col', 'col', label='s_')
+        comp.date('col', 'col', swap_month_day=0,
+                  swap_months='default', label='s_1')
+        comp.date('col', 'col', swap_month_day=123.45,
+                  swap_months='default', label='s_2')
+        comp.date('col', 'col', swap_month_day=123.45,
+                  swap_months=months_to_swap, label='s_3')
+        comp.date('col', 'col', swap_month_day=nan,
+                  swap_months='default', missing_value=nan, label='s_4')
+        comp.date('col', 'col', swap_month_day='str', label='s_5')
+        result = comp.compute(ix, A, B)
+
+        # swap_month_day as default
+        expected = pandas.Series([1, 0, 0, 0.5, 0.5], index=ix, name='s_')
+        pdt.assert_series_equal(result['s_'], expected)
+
+        # swap_month_day and swap_months as 0
+        expected = pandas.Series([1, 0, 0, 0, 0.5], index=ix, name='s_1')
+        pdt.assert_series_equal(result['s_1'], expected)
+
+        # swap_month_day 123.45 (float)
+        expected = pandas.Series([1, 0, 0, 123.45, 0.5], index=ix, name='s_2')
+        pdt.assert_series_equal(result['s_2'], expected)
+
+        # swap_month_day and swap_months 123.45 (float)
+        expected = pandas.Series(
+            [1, 0, 0, 123.45, 123.45], index=ix, name='s_3')
+        pdt.assert_series_equal(result['s_3'], expected)
+
+        # swap_month_day and swap_months as nan
+        expected = pandas.Series([1, nan, 0, nan, 0.5], index=ix, name='s_4')
+        pdt.assert_series_equal(result['s_4'], expected)
+
+        # swap_month_day as string
+        expected = pandas.Series(
+            [1, 0, 0, 'str', 0.5], index=ix, dtype=object, name='s_5')
+        pdt.assert_series_equal(result['s_5'], expected)
+
+
+# tests/test_compare.py:TestCompareGeo
+class TestCompareGeo(TestData):
+    """Test the geo comparison method."""
+
+    def test_geo(self):
+
+        # Utrecht, Amsterdam, Rotterdam (Cities in The Netherlands)
+        A = DataFrame({
+            'lat': [52.0842455, 52.3747388, 51.9280573],
+            'lng': [5.0124516, 4.7585305, 4.4203581]
+        })
+        B = DataFrame({
+            'lat': [52.3747388, 51.9280573, 52.0842455],
+            'lng': [4.7585305, 4.4203581, 5.0124516]
+        })
+        ix = pandas.MultiIndex.from_arrays([A.index.values, B.index.values])
+
+        comp = recordlinkage.Compare()
+        comp.geo('lat', 'lng', 'lat', 'lng',
+                 method='step', offset=50)  # 50 km range
+        result = comp.compute(ix, A, B)
+
+        # Missing values as default [36.639460, 54.765854, 44.092472]
+        expected = pandas.Series([1, 0, 1], index=ix, name=0)
+        pdt.assert_series_equal(result[0], expected)
+
+    def test_geo_batch(self):
+
+        # Utrecht, Amsterdam, Rotterdam (Cities in The Netherlands)
+        A = DataFrame({
+            'lat': [52.0842455, 52.3747388, 51.9280573],
+            'lng': [5.0124516, 4.7585305, 4.4203581]
+        })
+        B = DataFrame({
+            'lat': [52.3747388, 51.9280573, 52.0842455],
+            'lng': [4.7585305, 4.4203581, 5.0124516]
+        })
+        ix = pandas.MultiIndex.from_arrays([A.index.values, B.index.values])
+
+        comp = recordlinkage.Compare()
+        comp.geo('lat', 'lng', 'lat', 'lng',
+                 method='step', offset=1, label='step')
+        comp.geo('lat', 'lng', 'lat', 'lng', method='linear',
+                 offset=1, scale=2, label='linear')
+        comp.geo('lat', 'lng', 'lat', 'lng', method='squared',
+                 offset=1, scale=2, label='squared')
+        comp.geo('lat', 'lng', 'lat', 'lng', method='exp',
+                 offset=1, scale=2, label='exp')
+        comp.geo('lat', 'lng', 'lat', 'lng', method='gauss',
+                 offset=1, scale=2, label='gauss')
+        result_df = comp.compute(ix, A, B)
+
+        print (result_df)
+
+        for alg in ['step', 'linear', 'squared', 'exp', 'gauss']:
+
+            result = result_df[alg]
+
+            # All values between 0 and 1.
+            self.assertTrue((result >= 0).all())
+            self.assertTrue((result <= 1).all())
+
+    def test_geo_does_not_exist(self):
+
+        # Utrecht, Amsterdam, Rotterdam (Cities in The Netherlands)
+        A = DataFrame({
+            'lat': [52.0842455, 52.3747388, 51.9280573],
+            'lng': [5.0124516, 4.7585305, 4.4203581]
+        })
+        B = DataFrame({
+            'lat': [52.3747388, 51.9280573, 52.0842455],
+            'lng': [4.7585305, 4.4203581, 5.0124516]
+        })
+        ix = pandas.MultiIndex.from_arrays([A.index.values, B.index.values])
+
+        comp = recordlinkage.Compare()
+        comp.geo('lat', 'lng', 'lat', 'lng', method='unknown')
+
+        self.assertRaises(ValueError, comp.compute, ix, A, B)
+
+
+# tests/test_compare.py:TestCompareStrings
+class TestCompareStrings(TestData):
+    """Test the exact comparison method."""
+
+    def test_fuzzy(self):
+
+        A = DataFrame(
+            {'col': [u'str_abc', u'str_abc', u'str_abc', nan, u'hsdkf']})
+        B = DataFrame({'col': [u'str_abc', u'str_abd', u'jaskdfsd', nan, nan]})
+        ix = pandas.MultiIndex.from_arrays([A.index.values, B.index.values])
+
+        comp = recordlinkage.Compare()
+        comp.string('col', 'col', method='jaro', missing_value=0)
+        comp.string('col', 'col', method='q_gram', missing_value=0)
+        comp.string('col', 'col', method='cosine', missing_value=0)
+        comp.string('col', 'col', method='jaro_winkler', missing_value=0)
+        comp.string('col', 'col', method='dameraulevenshtein', missing_value=0)
+        comp.string('col', 'col', method='levenshtein', missing_value=0)
+        result = comp.compute(ix, A, B)
+
+        print (result)
+
+        self.assertFalse(result.isnull().all(1).all(0))
+        self.assertTrue((result[result.notnull()] >= 0).all(1).all(0))
+        self.assertTrue((result[result.notnull()] <= 1).all(1).all(0))
+
+    @parameterized.expand(STRING_SIM_ALGORITHMS)
+    def test_incorrect_input(self, alg):
+
+        A = DataFrame({'col': [1, 1, 1, nan, 0]})
+        B = DataFrame({'col': [1, 1, 1, nan, nan]})
+        ix = pandas.MultiIndex.from_arrays([A.index.values, B.index.values])
+
+        with self.assertRaises(Exception):
+            comp = recordlinkage.Compare()
+            comp.string('col', 'col', method=alg)
+            comp.compute(ix, A, B)
+
+    @parameterized.expand(STRING_SIM_ALGORITHMS)
+    def test_string_algorithms_nan(self, alg):
+
+        A = DataFrame({'col': [nan, nan, nan, nan, nan]})
+        B = DataFrame({'col': [nan, nan, nan, nan, nan]})
+        ix = pandas.MultiIndex.from_arrays([A.index.values, B.index.values])
+
+        expected = pandas.Series([0.0, 0.0, 0.0, 0.0, 0.0], index=ix, name=0)
+        comp = recordlinkage.Compare()
+        comp.string('col', 'col', method=alg)
+        result = comp.compute(ix, A, B)[0]
+        pdt.assert_series_equal(result, expected)
+
+        expected = pandas.Series([nan, nan, nan, nan, nan], index=ix, name=0)
+        comp = recordlinkage.Compare()
+        comp.string('col', 'col', method=alg, missing_value=nan)
+        result = comp.compute(ix, A, B)[0]
+        pdt.assert_series_equal(result, expected)
+
+    @parameterized.expand(STRING_SIM_ALGORITHMS)
+    def test_string_algorithms(self, alg):
+
+        A = DataFrame(
+            {'col': [u'str_abc', u'str_abc', u'str_abc', nan, u'hsdkf']})
+        B = DataFrame({'col': [u'str_abc', u'str_abd', u'jaskdfsd', nan, nan]})
+        ix = pandas.MultiIndex.from_arrays([A.index.values, B.index.values])
+
+        comp = recordlinkage.Compare()
+        comp.string('col', 'col', method=alg, missing_value=0)
+        result = comp.compute(ix, A, B)[0]
+
+        self.assertFalse(result.isnull().any())
+
+        self.assertTrue((result >= 0).all())
+        self.assertTrue((result <= 1).all())
+
+        self.assertTrue((result > 0).any())
+        self.assertTrue((result < 1).any())
+
+    def test_fuzzy_does_not_exist(self):
+
+        A = DataFrame({'col': [1, 1, 1, nan, 0]})
+        B = DataFrame({'col': [1, 1, 1, nan, nan]})
+        ix = pandas.MultiIndex.from_arrays([A.index.values, B.index.values])
+
+        comp = recordlinkage.Compare()
+        comp.string('col', 'col', method='unknown_algorithm')
+
+        self.assertRaises(ValueError, comp.compute, ix, A, B)
