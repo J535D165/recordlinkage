@@ -11,7 +11,7 @@ import pandas
 
 STRING_SIM_ALGORITHMS = [
     'jaro', 'q_gram', 'cosine', 'jaro_winkler', 'dameraulevenshtein',
-    'levenshtein'
+    'levenshtein', 'lcs', 'smith_waterman'
 ]
 
 NUMERIC_SIM_ALGORITHMS = [
@@ -26,6 +26,12 @@ COMPARE_ALGORITHMS = [
     param('string', 'given_name', 'given_name', method='damerau_levenshtein'),
     param('string', 'given_name', 'given_name', method='qgram'),
     param('string', 'given_name', 'given_name', method='cosine'),
+    param('string', 'given_name', 'given_name', method='lcs', norm='dice'),
+    param('string', 'given_name', 'given_name', method='lcs', norm='jaccard'),
+    param('string', 'given_name', 'given_name', method='lcs', norm='overlap'),
+    param('string', 'given_name', 'given_name', method='smith_waterman', norm='min'),
+    param('string', 'given_name', 'given_name', method='smith_waterman', norm='max'),
+    param('string', 'given_name', 'given_name', method='smith_waterman', norm='mean'),
 
     # numeric
     param('numeric', 'age', 'age', method='step',
