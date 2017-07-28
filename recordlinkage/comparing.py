@@ -346,6 +346,7 @@ class CompareCore(object):
             name_or_id = name if name else len(self.vectors.columns)
             self.vectors[name_or_id] = c
 
+        # TODO: Encountered error when store = False (2017-07-27)
         return self.vectors[name_or_id].rename(name)
 
     def run(self):
