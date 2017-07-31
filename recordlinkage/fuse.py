@@ -25,7 +25,7 @@ from recordlinkage.algorithms.conflict_resolution import (annotated_concat,
 
 class FuseCore(object):
     def __init__(self):
-        pass
+        self.resolution_queue = []
 
     def resolve(self, fun, data):
         # Integrate values in vals (Series of tuples) using optional
@@ -37,7 +37,18 @@ class FuseCore(object):
         # Integrate values in vals (Series of tuples) using optional
         # meta (Series of tuples) by applying the conflict resolution function fun
         # to the series of tuples.
-        pass
+        self.resolution_queue.append(
+            {
+                'fun': fun,
+                'c1': c1,
+                'c2': c2,
+                'm1': m1,
+                'm2': m2,
+                'trans_c': trans_c,
+                'trans_m': trans_m,
+                'kwargs': kwargs
+            }
+        )
 
     def _format_resolve(self, c1, c2, m1=None, m2=None, trans_c=None, trans_m=None, **kwargs):
         # No implementation provided.
