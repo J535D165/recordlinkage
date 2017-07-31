@@ -137,14 +137,15 @@ def no_gossip(x):
 
 
 @conflict_resolution_function(metadata=False, param=True)
-def compute_metric(x):
+def compute_metric(x, method):
     """
     Returns a numerical aggregation of values.
 
-    :param tuple x: Values to resolve, aggregation method.
+    :param tuple x: Values to resolve
+    :param str method: Aggregation method.
     :return: A numerical aggregation of vals.
     """
-    vals, method = x
+    vals, = x
     length = len(vals)
     if length == 0:
         return np.nan
@@ -159,14 +160,15 @@ def compute_metric(x):
 
 
 @conflict_resolution_function(metadata=True, param=True)
-def choose(x):
+def choose(x, trusted):
     """
     Choose a value from a trusted source.
 
-    :param tuple x: Values to resolve, tuple of value sources, trusted source identifier.
+    :param tuple x: Values to resolve, tuple of value sources
+    :param trusted: Trusted source identifier.
     :return: A trusted value.
     """
-    vals, meta, trusted = x
+    vals, meta = x
     length = len(vals)
     if length == 0:
         return np.nan
