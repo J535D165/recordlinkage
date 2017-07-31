@@ -25,13 +25,18 @@ from recordlinkage.algorithms.conflict_resolution import (annotated_concat,
 
 class FuseCore(object):
     def __init__(self):
+        self.vectors = None
+        self.df_a = None
+        self.df_b = None
+        self.suffix_a = None
+        self.suffix_b = None
         self.resolution_queue = []
 
     def resolve(self, fun, data):
         # Integrate values in vals (Series of tuples) using optional
         # meta (Series of tuples) by applying the conflict resolution function fun
         # to the series of tuples.
-        pass
+        return data.apply(fun)
 
     def queue_resolve(self, fun, c1, c2, m1=None, m2=None, trans_c=None, trans_m=None, **kwargs):
         # Integrate values in vals (Series of tuples) using optional
@@ -50,10 +55,10 @@ class FuseCore(object):
             }
         )
 
-    def _format_resolve(self, c1, c2, m1=None, m2=None, trans_c=None, trans_m=None, **kwargs):
+    def _prep_resolution_data(self, c1, c2, m1=None, m2=None, trans_c=None, trans_m=None, **kwargs):
         # No implementation provided.
         # Override in subclass.
-        pass
+        return pd.Series()
 
     # Conflict Resolution Realizations
 
@@ -66,12 +71,47 @@ class FuseCore(object):
     def roll_the_dice(self, c1, c2):
         self.queue_resolve(choose_random, c1, c2)
 
+    def prep_fuse(self):
+        # No implementation provided.
+        # Override in subclass.
+        pass
+
     # Turn collected metadata into a final result.
     def fuse(self, vectors, df_a, df_b, suffix_a='_a', suffix_b='_b'):
         # Apply refinements to vectors / index
         # Make calls to `resolve` using accumulated metadata
         # Return the fused data frame
-        pass
+
+        # Save references to input data.
+        self.vectors = vectors
+        self.df_a = df_a
+        self.df_b = df_b
+        self.suffix_a = suffix_a
+        self.suffix_b = suffix_b
+
+        # Subclass-specific data fusion preparation.
+        self.prep_fuse()
+
+        # Compute resolved values for output.
+        # TODO: Optionally include comparison vectors.
+        # TODO: Optionally include pre-resolution column data.
+        # TODO: Optionally include non-resolved column data.
+
+        fused = []
+
+        for job in self.resolution_queue:
+            fused.append(
+                self.resolve(job['fun'],
+                             self._prep_resolution_data(job['c1'],
+                                                        job['c2'],
+                                                        m1=job['m1'],
+                                                        m2=job['m2'],
+                                                        trans_c=job['trans_c'],
+                                                        trans_m=job['trans_m'],
+                                                        **job['kwargs']))
+            )
+
+        return pd.concat(fused)
 
 
 class FuseClusters(FuseCore):
@@ -82,7 +122,10 @@ class FuseClusters(FuseCore):
     def _find_clusters(self, method):
         pass
 
-    def _format_resolve(self, c1, c2, m1=None, m2=None, trans_c=None, trans_m=None, *args, **kwargs):
+    def prep_fuse(self):
+        pass
+
+    def _prep_resolution_data(self, c1, c2, m1=None, m2=None, trans_c=None, trans_m=None, *args, **kwargs):
         pass
 
 
@@ -95,5 +138,8 @@ class FuseLinks(FuseCore):
     def _apply_refinement(self):
         pass
 
-    def _format_resolve(self, c1, c2, m1=None, m2=None, trans_c=None, trans_m=None, *args, **kwargs):
+    def prep_fuse(self):
+        pass
+
+    def _prep_resolution_data(self, c1, c2, m1=None, m2=None, trans_c=None, trans_m=None, *args, **kwargs):
         pass
