@@ -18,8 +18,8 @@ from recordlinkage.algorithms.conflict_resolution import (annotated_concat,
                                                           compute_metric,
                                                           count,
                                                           group,
-                                                          maximize_metadata_value,
-                                                          minimize_metadata_value,
+                                                          choose_metadata_max,
+                                                          choose_metadata_min,
                                                           no_gossip,
                                                           vote)
 
@@ -35,21 +35,23 @@ class FuseCore(object):
         self.suffix_b = None
         self.resolution_queue = []
 
-    def resolve(self, fun, data, *args):
+    def resolve(self, fun, data, params):
         """
         Perform conflict resolution on reorganized data.
 
         :param function fun: A conflict resolution function.
         :param pd.Series data: A pandas Series of nested tuples.
+        :param tuple params: A list of extra parameters to be passed to the conflict resolution function.
         :return: pd.Series of resolved values.
         """
-        return data.apply(fun, args=args)
+        return data.apply(fun, args=params)
 
-    def queue_resolve(self, fun, values_a, values_b, meta_a=None, meta_b=None,
-                      transform_vals=None, transform_meta=None, **kwargs):
+    def queue_resolve(self, fun, values_a, values_b, meta_a=None, meta_b=None, transform_vals=None,
+                      transform_meta=None, static_meta=False, params=None, **kwargs):
         # Integrate values in vals (Series of tuples) using optional
         # meta (Series of tuples) by applying the conflict resolution function fun
         # to the series of tuples.
+        # TODO: Add column names for output
         self.resolution_queue.append(
             {
                 'fun': fun,
@@ -59,12 +61,14 @@ class FuseCore(object):
                 'meta_b': meta_b,
                 'transform_vals': transform_vals,
                 'transform_meta': transform_meta,
+                'static_meta': static_meta,
+                'params': params,
                 'kwargs': kwargs
             }
         )
 
-    def _prep_resolution_data(self, values_a, values_b, meta_a=None, meta_b=None,
-                              transform_vals=None, transform_meta=None, **kwargs):
+    def _make_resolution_series(self, values_a, values_b, meta_a=None, meta_b=None,
+                                transform_vals=None, transform_meta=None, static_meta=False, **kwargs):
         # No implementation provided.
         # Override in subclass.
         return pd.Series()
@@ -72,7 +76,7 @@ class FuseCore(object):
     # Conflict Resolution Realizations
 
     def trust_your_friends(self, c1, c2, trusted):
-        self.queue_resolve(choose, c1, c2, trust=trusted)
+        self.queue_resolve(choose, c1, c2, meta_a='a', meta_b='b', static_meta=True, params=(trusted, ))
 
     def no_gossiping(self, c1, c2):
         self.queue_resolve(no_gossip, c1, c2)
@@ -80,18 +84,15 @@ class FuseCore(object):
     def roll_the_dice(self, c1, c2):
         self.queue_resolve(choose_random, c1, c2)
 
-    def prep_fuse(self):
+    def cry_with_the_wolves(self, c1, c2):
+        self.queue_resolve(vote, c1, c2)
+
+    def _fusion_setup(self):
         # No implementation provided.
         # Override in subclass.
         pass
 
-    # Turn collected metadata into a final result.
-    def fuse(self, vectors, df_a, df_b, predictions=None, suffix_a='_a', suffix_b='_b'):
-        # Apply refinements to vectors / index
-        # Make calls to `resolve` using accumulated metadata
-        # Return the fused data frame
-
-        # Save references to input data.
+    def _fusion_init(self, vectors, df_a, df_b, predictions, suffix_a, suffix_b):
         self.vectors = vectors
         self.index = vectors.index.to_frame()
         self.predictions = predictions
@@ -100,29 +101,38 @@ class FuseCore(object):
         self.suffix_a = suffix_a
         self.suffix_b = suffix_b
 
-        # Subclass-specific data fusion preparation.
-        self.prep_fuse()
+    def fuse(self, vectors, df_a, df_b, predictions=None, suffix_a='_a', suffix_b='_b'):
+        # Apply refinements to vectors / index
+        # Make calls to `resolve` using accumulated metadata
+        # Return the fused data frame
+
+        # Save references to input data.
+        self._fusion_init(vectors, df_a, df_b, predictions, suffix_a, suffix_b)
+
+        # Subclass-specific setup (e.g. applying refinements or detecting clusters).
+        self._fusion_setup()
 
         # Compute resolved values for output.
         # TODO: Optionally include comparison vectors.
         # TODO: Optionally include pre-resolution column data.
         # TODO: Optionally include non-resolved column data.
 
-        # fused = []
-        #
-        # for job in self.resolution_queue:
-        #     fused.append(
-        #         self.resolve(job['fun'],
-        #                      self._prep_resolution_data(job['c1'],
-        #                                                 job['c2'],
-        #                                                 meta_a=job['m1'],
-        #                                                 meta_b=job['m2'],
-        #                                                 transform_vals=job['transform_vals'],
-        #                                                 transform_meta=job['transform_meta'],
-        #                                                 **job['kwargs']))
-        #     )
+        fused = []
 
-        # return pd.concat(fused)
+        for job in self.resolution_queue:
+            fused.append(
+                self.resolve(job['fun'],
+                             self._make_resolution_series(job['values_a'],
+                                                          job['values_b'],
+                                                          meta_a=job['meta_a'],
+                                                          meta_b=job['meta_b'],
+                                                          transform_vals=job['transform_vals'],
+                                                          transform_meta=job['transform_meta'],
+                                                          static_meta=job['static_meta']),
+                             job['params'])
+            )
+
+        return pd.concat(fused, axis=1)
 
 
 class FuseClusters(FuseCore):
@@ -133,11 +143,11 @@ class FuseClusters(FuseCore):
     def _find_clusters(self, method):
         pass
 
-    def prep_fuse(self):
+    def _fusion_setup(self):
         pass
 
-    def _prep_resolution_data(self, values_a, values_b, meta_a=None, meta_b=None, transform_vals=None,
-                              transform_meta=None, *args, **kwargs):
+    def _make_resolution_series(self, values_a, values_b, meta_a=None, meta_b=None, transform_vals=None,
+                                transform_meta=None, static_meta=False, **kwargs):
         pass
 
 
@@ -150,11 +160,11 @@ class FuseLinks(FuseCore):
     def _apply_refinement(self):
         pass
 
-    def prep_fuse(self):
+    def _fusion_setup(self):
         pass
 
-    def _prep_resolution_data(self, values_a, values_b, meta_a=None, meta_b=None, transform_vals=None,
-                              transform_meta=None, *args, **kwargs):
+    def _make_resolution_series(self, values_a, values_b, meta_a=None, meta_b=None, transform_vals=None,
+                                transform_meta=None, static_meta=False, **kwargs):
 
         if self.df_a is None:
             raise AssertionError('df_a is None')
@@ -178,13 +188,15 @@ class FuseLinks(FuseCore):
 
         if meta_a is None and meta_b is None:
             use_meta = False
-        else:
+        elif static_meta is False:
             use_meta = True
             meta_a = listify(meta_a)
             meta_b = listify(meta_b)
+        else:
+            use_meta = True
 
         # Check value / metadata column correspondence
-        if use_meta is True:
+        if use_meta is True and static_meta is False:
 
             if len(values_a) < len(meta_a):
                 generalize_values_a = True
@@ -261,7 +273,12 @@ class FuseLinks(FuseCore):
 
             metadata_a = []
 
-            if generalize_meta_a is True:
+            if static_meta is True:
+                for _ in range(len(values_a)):
+                    metadata_a.append(
+                        pd.Series([meta_a for _ in range(len(self.index))], index=self.index[0])
+                    )
+            elif generalize_meta_a is True:
                 for _ in range(len(values_a)):
                     metadata_a.append(
                         self.df_a[meta_a[0]]
@@ -274,7 +291,12 @@ class FuseLinks(FuseCore):
 
             metadata_b = []
 
-            if generalize_meta_b is True:
+            if static_meta is True:
+                for _ in range(len(values_b)):
+                    metadata_b.append(
+                        pd.Series([meta_b for _ in range(len(self.index))], index=self.index[1])
+                    )
+            elif generalize_meta_b is True:
                 for _ in range(len(values_b)):
                     metadata_b.append(
                         self.df_b[meta_b[0]]
@@ -295,12 +317,12 @@ class FuseLinks(FuseCore):
 
             # Zip metadata
             metadata = zip(*metadata)
+        else:
+            metadata = None
 
         if use_meta is True:
             output = pd.Series(list(zip(value_data, metadata)))
         else:
             output = pd.Series(list(zip(value_data)))
-
-        # TODO: Implement data / metadata transformations
 
         return output

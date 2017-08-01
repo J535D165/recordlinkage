@@ -82,7 +82,7 @@ def choose_random(x):
     length = len(vals)
     if length == 0:
         return np.nan
-    random.choice(vals)
+    return random.choice(vals)
 
 
 @conflict_resolution_function(metadata=False, param=False)
@@ -204,7 +204,7 @@ def annotated_concat(x):
 
 
 @conflict_resolution_function(metadata=True, param=False)
-def minimize_metadata_value(x):
+def choose_metadata_min(x):
     """
     Chooses the value with the smallest corresponding metadata value.
 
@@ -221,7 +221,7 @@ def minimize_metadata_value(x):
 
 
 @conflict_resolution_function(metadata=True, param=False)
-def maximize_metadata_value(x):
+def choose_metadata_max(x):
     """
     Chooses the value with the largest corresponding metadata value.
 
