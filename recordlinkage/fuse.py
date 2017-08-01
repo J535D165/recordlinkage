@@ -2,13 +2,13 @@ from __future__ import division
 from __future__ import unicode_literals
 
 import random
-import warnings
 import collections
 import statistics
 import multiprocessing as mp
 import pandas as pd
 import numpy as np
 
+from recordlinkage import logging
 from recordlinkage.utils import listify
 from recordlinkage.algorithms.conflict_resolution import (annotated_concat,
                                                           choose,
@@ -93,7 +93,6 @@ class FuseCore(object):
 
         # Save references to input data.
         self.vectors = vectors
-        # TODO: Verify syntax
         self.index = vectors.index.to_frame()
         self.predictions = predictions
         self.df_a = df_a
@@ -109,21 +108,21 @@ class FuseCore(object):
         # TODO: Optionally include pre-resolution column data.
         # TODO: Optionally include non-resolved column data.
 
-        fused = []
+        # fused = []
+        #
+        # for job in self.resolution_queue:
+        #     fused.append(
+        #         self.resolve(job['fun'],
+        #                      self._prep_resolution_data(job['c1'],
+        #                                                 job['c2'],
+        #                                                 meta_a=job['m1'],
+        #                                                 meta_b=job['m2'],
+        #                                                 transform_vals=job['transform_vals'],
+        #                                                 transform_meta=job['transform_meta'],
+        #                                                 **job['kwargs']))
+        #     )
 
-        for job in self.resolution_queue:
-            fused.append(
-                self.resolve(job['fun'],
-                             self._prep_resolution_data(job['c1'],
-                                                        job['c2'],
-                                                        meta_a=job['m1'],
-                                                        meta_b=job['m2'],
-                                                        transform_vals=job['transform_vals'],
-                                                        transform_meta=job['transform_meta'],
-                                                        **job['kwargs']))
-            )
-
-        return pd.concat(fused)
+        # return pd.concat(fused)
 
 
 class FuseClusters(FuseCore):
@@ -163,6 +162,12 @@ class FuseLinks(FuseCore):
         if self.df_b is None:
             raise AssertionError('df_b is None')
 
+        if transform_vals is not None and callable(transform_vals) is not True:
+            raise ValueError('transform_vals must be callable.')
+
+        if transform_meta is not None and callable(transform_meta) is not True:
+            raise ValueError('transform_meta must be callable.')
+
         # Listify value inputs
         values_a = listify(values_a)
         values_b = listify(values_b)
@@ -184,12 +189,12 @@ class FuseLinks(FuseCore):
             if len(values_a) < len(meta_a):
                 generalize_values_a = True
                 generalize_meta_a = False
-                warnings.warn('Generalizing values. There are fewer columns in values_a than in meta_a. '
+                logging.warn('Generalizing values. There are fewer columns in values_a than in meta_a. '
                               'Values in first column of values_a will be generalized to values in meta_a.')
             elif len(values_a) > len(meta_a):
                 generalize_values_a = False
                 generalize_meta_a = True
-                warnings.warn('Generalizing metadata. There are fewer columns in meta_a than in values_a. '
+                logging.warn('Generalizing metadata. There are fewer columns in meta_a than in values_a. '
                               'Values in first column of meta_a will be generalized to values in values_a.')
             else:
                 generalize_values_a = False
@@ -198,12 +203,12 @@ class FuseLinks(FuseCore):
             if len(values_b) < len(meta_b):
                 generalize_values_b = True
                 generalize_meta_b = False
-                warnings.warn('Generalizing values. There are fewer columns in values_b than in meta_b. '
+                logging.warn('Generalizing values. There are fewer columns in values_b than in meta_b. '
                               'Values in first column of values_b will be generalized to values in meta_b.')
             elif len(values_b) > len(meta_b):
                 generalize_values_b = False
                 generalize_meta_b = True
-                warnings.warn('Generalizing metadata. There are fewer columns in meta_b than in values_b. '
+                logging.warn('Generalizing metadata. There are fewer columns in meta_b than in values_b. '
                               'Values in first column of meta_b will be generalized to values in values_b.')
             else:
                 generalize_values_b = False
@@ -216,64 +221,86 @@ class FuseLinks(FuseCore):
 
         # Make list of data series
         data_a = []
-        for name in values_a:
-            if generalize_values_a is True:
+        if generalize_values_a is True:
+            for _ in range(len(meta_a)):
                 data_a.append(
                     self.df_a[values_a[0]]
                 )
-            else:
+        else:
+            for name in values_a:
                 data_a.append(
                     self.df_a[name].loc[list(self.index[0])]
                 )
 
         data_b = []
-        for name in values_b:
-            if generalize_values_b is True:
+
+        if generalize_values_b is True:
+            for _ in range(len(meta_b)):
                 data_b.append(
                     self.df_b[values_b[0]]
                 )
-            else:
+        else:
+            for name in values_b:
                 data_b.append(
-                    self.df_b[name].loc[list(self.index[0])]
+                    self.df_b[name].loc[list(self.index[1])]
                 )
 
         # Combine data
         value_data = data_a
         value_data.extend(data_b)
+
+        # Apply transformation if function is provided
+        if transform_vals is not None:
+            value_data = [s.apply(transform_vals) for s in value_data]
+
+        # Zip data
         value_data = zip(*value_data)
 
         # Make list of metadata series
         if use_meta is True:
+
             metadata_a = []
-            for name in values_a:
-                if generalize_meta_a is True:
+
+            if generalize_meta_a is True:
+                for _ in range(len(values_a)):
                     metadata_a.append(
-                        self.df_a[values_a[0]]
+                        self.df_a[meta_a[0]]
                     )
-                else:
+            else:
+                for name in meta_a:
                     metadata_a.append(
                         self.df_a[name].loc[list(self.index[0])]
                     )
 
             metadata_b = []
-            for name in values_b:
-                if generalize_meta_b is True:
+
+            if generalize_meta_b is True:
+                for _ in range(len(values_b)):
                     metadata_b.append(
-                        self.df_b[values_b[0]]
+                        self.df_b[meta_b[0]]
                     )
-                else:
+            else:
+                for name in meta_b:
                     metadata_b.append(
-                        self.df_b[name].loc[list(self.index[0])]
+                        self.df_b[name].loc[list(self.index[1])]
                     )
 
             # Combine metadata
             metadata = metadata_a
             metadata.extend(metadata_b)
+
+            # Apply transformation if function is provided
+            if transform_meta is not None:
+                metadata = [s.apply(transform_meta) for s in metadata]
+
+            # Zip metadata
             metadata = zip(*metadata)
 
         if use_meta is True:
             output = pd.Series(list(zip(value_data, metadata)))
         else:
             output = pd.Series(list(zip(value_data)))
+
+        # TODO: Implement data / metadata transformations
 
         return output
