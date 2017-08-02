@@ -26,6 +26,7 @@ class FuseCore(object):
         self.vectors = None
         self.index = None
         self.predictions = None
+        self.probabilities = None
         self.df_a = None
         self.df_b = None
         self.suffix_a = None
@@ -98,15 +99,16 @@ class FuseCore(object):
         # Override in subclass.
         return pd.Series()
 
-    def _fusion_init(self, vectors, df_a, df_b, predictions, sep):
+    def _fusion_init(self, vectors, df_a, df_b, predictions, probabilities, sep):
         self.vectors = vectors
         self.index = vectors.index.to_frame()
         self.predictions = predictions
+        self.probabilities = probabilities
         self.df_a = df_a
         self.df_b = df_b
         self.sep = sep
 
-    def _fusion_setup(self):
+    def _fusion_preprocess(self):
         # No implementation provided.
         # Override in subclass.
         pass
@@ -148,17 +150,17 @@ class FuseCore(object):
             data.rename(job['name'])
         return data
 
-    def fuse(self, vectors, df_a, df_b, predictions=None, n_cores=mp.cpu_count(), sep='_'):
+    def fuse(self, vectors, df_a, df_b, predictions=None, probabilities=None, n_cores=mp.cpu_count(), sep='_'):
 
         # Apply refinements to vectors / index
         # Make calls to `resolve` using accumulated metadata
         # Return the fused data frame
 
         # Save references to input data.
-        self._fusion_init(vectors, df_a, df_b, predictions, sep)
+        self._fusion_init(vectors, df_a, df_b, predictions, probabilities, sep)
 
         # Subclass-specific setup (e.g. applying refinements or detecting clusters).
-        self._fusion_setup()
+        self._fusion_preprocess()
 
         # Resolve naming conflicts, if any.
         self._resolve_job_names(self.sep)
@@ -178,7 +180,7 @@ class FuseClusters(FuseCore):
     def _find_clusters(self, method):
         pass
 
-    def _fusion_setup(self):
+    def _fusion_preprocess(self):
         pass
 
     def _make_resolution_series(self, values_a, values_b, meta_a=None, meta_b=None, transform_vals=None,
@@ -187,16 +189,139 @@ class FuseClusters(FuseCore):
 
 
 class FuseLinks(FuseCore):
-    def __init__(self, unique_a=False, unique_b=False):
+    def __init__(self, unique_a=False, unique_b=False, rank_method=None, rank_links_by=None, rank_ascending=False):
         super().__init__()
         self.unique_a = unique_a
         self.unique_b = unique_b
+        self.rank_method = rank_method
+        self.rank_links_by = listify(rank_links_by)
+        self.rank_ascending = rank_ascending
+
+    def _apply_predictions(self):
+        self.vectors = self.vectors.iloc[self.predictions]
+        self.probabilities = self.probabilities[self.predictions]
+        self.predictions = self.predictions.iloc[self.predictions]
 
     def _apply_refinement(self):
-        pass
 
-    def _fusion_setup(self):
-        pass
+        def new_identifier_name(base, names, sep='_'):
+            # Find an unused column name
+            col_name = base
+            if col_name in names:
+                i = 1
+                while True:
+                    if col_name + sep + str(i) in names:
+                        i += 1
+                        continue
+                    else:
+                        col_name += sep + str(i)
+                        break
+            return col_name
+
+        # Working comparison data
+        working_vectors = self.vectors
+
+        # Sorting by columns is simple!
+        if self.rank_method == 'cols':
+
+            working_vectors = working_vectors.sort_values(by=self.rank_links_by, ascending=self.rank_ascending)
+
+        # Sort by row sum for specified columns
+        elif self.rank_method == 'probs':
+
+            # Find an unused column name
+            temp_col = new_identifier_name('probs', working_vectors.columns)
+
+            if self.probabilities is None:
+                raise AssertionError('No probability values have been provided.')
+            else:
+                # Make a temporary column, which is the sum of columns of interest.
+                working_vectors[temp_col] = self.probabilities
+
+            if self.rank_links_by is not None:
+                working_vectors = working_vectors.sort_values(
+                    by=[temp_col] + self.rank_links_by, ascending=self.rank_ascending
+                )
+            else:
+                working_vectors = working_vectors.sort_values(
+                    by=temp_col, ascending=self.rank_ascending
+                )
+
+        # Sort by row sum for specified columns
+        elif self.rank_method == 'sum':
+
+            # Find an unused column name
+            temp_col = new_identifier_name('sum', working_vectors.columns)
+
+            # Make a temporary column, which is the sum of columns of interest.
+            working_vectors[temp_col] = sum([working_vectors[c] for c in self.rank_links_by])
+
+            working_vectors = working_vectors.sort_values(by=temp_col, ascending=self.rank_ascending)
+
+        # Sort by row mean for specified columns
+        elif self.rank_method == 'avg':
+
+            # Find an unused column name
+            temp_col = new_identifier_name('avg', working_vectors.columns)
+
+            # Make a temporary column, which is the sum of columns of interest.
+            working_vectors[temp_col] = sum([working_vectors[c] for c in self.rank_links_by]) / len(self.rank_links_by)
+
+            working_vectors = working_vectors.sort_values(by=temp_col, ascending=self.rank_ascending)
+
+        else:
+            raise ValueError('Unrecognized ranking method.')
+
+        # Copy comparison object indices.
+        working_indices = working_vectors.index.to_frame()
+
+        # Save indices as lists.
+        working_left_index = list(working_indices[0])
+        working_right_index = list(working_indices[1])
+
+        # Track observed indices.
+        seen_left = set()
+        seen_right = set()
+
+        # Identify records to be kept/discarded.
+
+        # 1 = Keep / 0 = Discard
+        keep_vector = []
+
+        # Iterate on indices
+        for i in range(0, len(working_indices)):
+
+            keep = True
+
+            # Check/add left index
+            if self.unique_a is True:
+                if working_left_index[i] in seen_left:
+                    keep = False
+                else:
+                    seen_left.add(working_left_index[i])
+
+            # Check/add right index
+            if self.unique_b is True:
+                if working_right_index[i] in seen_right:
+                    keep = False
+                else:
+                    seen_right.add(working_right_index[i])
+
+            keep_vector.append(keep)
+
+        # Make new multi-index using keep_vector
+        working_indices = working_indices.iloc[keep_vector]
+        self.index = working_indices.index
+
+        # Make new predictions and probabilities using keep_vector
+        self.probabilities = self.probabilities.iloc[keep_vector]
+        self.predictions = self.predictions.iloc[keep_vector]
+
+    def _fusion_preprocess(self):
+        if self.predictions is not None:
+            self._apply_predictions()
+        if self.rank_method is not None:
+            self._apply_refinement()
 
     def _get_df_a_col(self, name):
         return self.df_a[name].loc[list(self.index[0])]
@@ -378,10 +503,10 @@ class FuseLinks(FuseCore):
             if suffix_a is None:
                 self._queue_resolve(identity, col, [], name=col)
             else:
-                self._queue_resolve(identity, col, [], name=col+sep+str(suffix_a))
+                self._queue_resolve(identity, col, [], name=col + sep + str(suffix_a))
 
         for col in columns_b:
             if suffix_b is None:
                 self._queue_resolve(identity, [], col, name=col)
             else:
-                self._queue_resolve(identity, [], col, name=col+sep+str(suffix_b))
+                self._queue_resolve(identity, [], col, name=col + sep + str(suffix_b))
