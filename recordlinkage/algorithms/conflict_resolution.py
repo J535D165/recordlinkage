@@ -29,6 +29,19 @@ def conflict_resolution_function(metadata=None, param=None):
 # Conflict Resolution Functions
 
 @conflict_resolution_function(metadata=False, param=False)
+def identity(x):
+    """
+    Returns an unchanged value without strategy. (Technically, it is the "first",
+    though ordering isn't especially meaningful in this context.) It is intended
+    to be used to produce data columns as "resolved columns".
+
+    :param tuple x: A 1-tuple cotaining a value, inside another 1-tuple.
+    :return: The unchanged value.
+    """
+    return x[0][0]
+
+
+@conflict_resolution_function(metadata=False, param=False)
 def count(x):
     """
     Returns the number of unique values.
@@ -111,6 +124,7 @@ def group(x):
     """
     vals, = x
     return set(vals)
+    # TODO: Implement choice of collection returned.
 
 
 @conflict_resolution_function(metadata=False, param=False)
