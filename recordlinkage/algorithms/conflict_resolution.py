@@ -155,7 +155,7 @@ def compute_metric(x, method):
     """
     Returns a numerical aggregation of values.
 
-    :param tuple x: Values to resolve
+    :param tuple x: Values to _resolve
     :param str method: Aggregation method.
     :return: A numerical aggregation of vals.
     """
@@ -178,7 +178,7 @@ def choose(x, trusted):
     """
     Choose a value from a trusted source.
 
-    :param tuple x: Values to resolve, tuple of value sources
+    :param tuple x: Values to _resolve, tuple of value sources
     :param trusted: Trusted source identifier.
     :return: A trusted value.
     """

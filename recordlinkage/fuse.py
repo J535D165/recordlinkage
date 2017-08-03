@@ -39,40 +39,29 @@ class FuseCore(object):
     # Conflict Resolution Realizations
 
     def trust_your_friends(self, c1, c2, trusted, name=None):
-        self._queue_resolve(choose, c1, c2, meta_a='a', meta_b='b', static_meta=True, params=(trusted,), name=name)
+        self.resolve(choose, c1, c2, meta_a='a', meta_b='b', static_meta=True, params=(trusted,), name=name)
 
     def no_gossiping(self, c1, c2, name=None):
-        self._queue_resolve(no_gossip, c1, c2, name=name)
+        self.resolve(no_gossip, c1, c2, name=name)
 
     def roll_the_dice(self, c1, c2, name=None):
-        self._queue_resolve(choose_random, c1, c2, name=name)
+        self.resolve(choose_random, c1, c2, name=name)
 
     def cry_with_the_wolves(self, c1, c2, name=None):
-        self._queue_resolve(vote, c1, c2, name=name)
+        self.resolve(vote, c1, c2, name=name)
 
     def pass_it_on(self, c1, c2, name=None):
-        self._queue_resolve(group, c1, c2, name=name)
+        self.resolve(group, c1, c2, name=name)
 
     def meet_in_the_middle(self, c1, c2, metric, name=None):
         # Metrics Available 2017-08-01: sum, mean, stdev, variance
-        self._queue_resolve(compute_metric, c1, c2, params=(metric,), name=name)
+        self.resolve(compute_metric, c1, c2, params=(metric,), name=name)
 
     def keep_up_to_date(self, c1, c2, dates_a, dates_b, name=None):
-        self._queue_resolve(choose_metadata_max, c1, c2, meta_a=dates_a, meta_b=dates_b, name=name)
+        self.resolve(choose_metadata_max, c1, c2, meta_a=dates_a, meta_b=dates_b, name=name)
 
-    def resolve(self, fun, data, params):
-        """
-        Perform conflict resolution on reorganized data.
-
-        :param function fun: A conflict resolution function.
-        :param pd.Series data: A pandas Series of nested tuples.
-        :param tuple params: A list of extra parameters to be passed to the conflict resolution function.
-        :return: pd.Series of resolved values.
-        """
-        return data.apply(fun, args=params)
-
-    def _queue_resolve(self, fun, values_a, values_b, meta_a=None, meta_b=None, transform_vals=None,
-                       transform_meta=None, static_meta=False, params=None, name=None, **kwargs):
+    def resolve(self, fun, values_a, values_b, meta_a=None, meta_b=None, transform_vals=None,
+                transform_meta=None, static_meta=False, params=None, name=None, **kwargs):
         # Integrate values in vals (Series of tuples) using optional
         # meta (Series of tuples) by applying the conflict resolution function fun
         # to the series of tuples.
@@ -126,7 +115,7 @@ class FuseCore(object):
                         name = str(job['name']) + sep + str(i)
                         if name in self.names_taken:
                             if i > 1000:
-                                raise RuntimeError('Data fusion hung while attempting to resolve column names.'
+                                raise RuntimeError('Data fusion hung while attempting to _resolve column names.'
                                                    '1000 name suffixes were attempted.'
                                                    'Check for excessive name conflicts.')
                             else:
@@ -137,23 +126,22 @@ class FuseCore(object):
                             break
 
     def _do_resolve(self, job):
-        data = self.resolve(job['fun'],
-                            self._make_resolution_series(job['values_a'],
-                                                         job['values_b'],
-                                                         meta_a=job['meta_a'],
-                                                         meta_b=job['meta_b'],
-                                                         transform_vals=job['transform_vals'],
-                                                         transform_meta=job['transform_meta'],
-                                                         static_meta=job['static_meta']),
-                            job['params']).rename(job['name'])
+        data = self._make_resolution_series(job['values_a'],
+                                            job['values_b'],
+                                            meta_a=job['meta_a'],
+                                            meta_b=job['meta_b'],
+                                            transform_vals=job['transform_vals'],
+                                            transform_meta=job['transform_meta'],
+                                            static_meta=job['static_meta'])
+        data = data.apply(job['fun'], args=job['params'])
         if job['name'] is not None:
-            data.rename(job['name'])
+            data = data.rename(job['name'])
         return data
 
     def fuse(self, vectors, df_a, df_b, predictions=None, probabilities=None, n_cores=mp.cpu_count(), sep='_'):
 
         # Apply refinements to vectors / index
-        # Make calls to `resolve` using accumulated metadata
+        # Make calls to `_resolve` using accumulated metadata
         # Return the fused data frame
 
         # Save references to input data.
@@ -501,12 +489,12 @@ class FuseLinks(FuseCore):
 
         for col in columns_a:
             if suffix_a is None:
-                self._queue_resolve(identity, col, [], name=col)
+                self.resolve(identity, col, [], name=col)
             else:
-                self._queue_resolve(identity, col, [], name=col + sep + str(suffix_a))
+                self.resolve(identity, col, [], name=col + sep + str(suffix_a))
 
         for col in columns_b:
             if suffix_b is None:
-                self._queue_resolve(identity, [], col, name=col)
+                self.resolve(identity, [], col, name=col)
             else:
-                self._queue_resolve(identity, [], col, name=col + sep + str(suffix_b))
+                self.resolve(identity, [], col, name=col + sep + str(suffix_b))
