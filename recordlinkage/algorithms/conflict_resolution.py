@@ -151,7 +151,7 @@ def no_gossip(x):
 
 
 @conflict_resolution_function(metadata=False, param=True)
-def compute_metric(x, method):
+def aggregate(x, method):
     """
     Returns a numerical aggregation of values.
 

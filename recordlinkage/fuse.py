@@ -13,7 +13,7 @@ from recordlinkage.algorithms.conflict_resolution import (annotated_concat,
                                                           choose_metadata_max,
                                                           choose_metadata_min,
                                                           choose_random,
-                                                          compute_metric,
+                                                          aggregate,
                                                           count,
                                                           group,
                                                           identity,
@@ -32,40 +32,114 @@ class FuseCore(object):
         self.suffix_a = None
         self.suffix_b = None
         self.resolution_queue = []
-        self.bases_taken = []
-        self.names_taken = []
-        self.sep = ''
+        self._bases_taken = []
+        self._names_taken = []
+        self._sep = ''
 
     # Conflict Resolution Realizations
 
-    def trust_your_friends(self, c1, c2, trusted, name=None):
-        self.resolve(choose, c1, c2, meta_a='a', meta_b='b', static_meta=True, params=(trusted,), name=name)
+    def trust_your_friends(self, values_a, values_b, trusted, name=None):
+        """
 
-    def no_gossiping(self, c1, c2, name=None):
-        self.resolve(no_gossip, c1, c2, name=name)
+        :param str/list values_a: Column names from df_a to be resolved.
+        :param str/list values_b: Column names from df_b to be resolved.
+        :param str trusted: A preferred data source. 'a' for df_a or 'b' for df_b.
+        :param name: The name of the resolved column.
+        :return: None
+        """
+        self.resolve(choose, values_a, values_b, meta_a='a', meta_b='b', static_meta=True, params=(trusted,), name=name)
 
-    def roll_the_dice(self, c1, c2, name=None):
-        self.resolve(choose_random, c1, c2, name=name)
+    def no_gossiping(self, values_a, values_b, name=None):
+        """
 
-    def cry_with_the_wolves(self, c1, c2, name=None):
-        self.resolve(vote, c1, c2, name=name)
+        :param str/list values_a: Column names from df_a to be resolved.
+        :param str/list values_b: Column names from df_b to be resolved.
+        :param name: The name of the resolved column.
+        :return: None
+        """
+        self.resolve(no_gossip, values_a, values_b, name=name)
 
-    def pass_it_on(self, c1, c2, name=None):
-        self.resolve(group, c1, c2, name=name)
+    def roll_the_dice(self, values_a, values_b, name=None):
+        """
 
-    def meet_in_the_middle(self, c1, c2, metric, name=None):
+        :param str/list values_a: Column names from df_a to be resolved.
+        :param str/list values_b: Column names from df_b to be resolved.
+        :param name: The name of the resolved column.
+        :return: None
+        """
+        self.resolve(choose_random, values_a, values_b, name=name)
+
+    def cry_with_the_wolves(self, values_a, values_b, name=None):
+        """
+
+        :param str/list values_a: Column names from df_a to be resolved.
+        :param str/list values_b: Column names from df_b to be resolved.
+        :param name: The name of the resolved column.
+        :return: None
+        """
+        self.resolve(vote, values_a, values_b, name=name)
+
+    def pass_it_on(self, values_a, values_b, name=None):
+        """
+
+        :param str/list values_a: Column names from df_a to be resolved.
+        :param str/list values_b: Column names from df_b to be resolved.
+        :param name: The name of the resolved column.
+        :return: None
+        """
+        self.resolve(group, values_a, values_b, name=name)
+
+    def meet_in_the_middle(self, values_a, values_b, metric, name=None):
+        """
+
+        :param str/list values_a: Column names from df_a to be resolved.
+        :param str/list values_b: Column names from df_b to be resolved.
+        :param metric: The aggregation metric to be used. One of 'sum', 'mean', 'stdev', 'var'.
+        :param name: The name of the resolved column.
+        :return: None
+        """
         # Metrics Available 2017-08-01: sum, mean, stdev, variance
-        self.resolve(compute_metric, c1, c2, params=(metric,), name=name)
+        self.resolve(aggregate, values_a, values_b, params=(metric,), name=name)
 
-    def keep_up_to_date(self, c1, c2, dates_a, dates_b, name=None):
-        self.resolve(choose_metadata_max, c1, c2, meta_a=dates_a, meta_b=dates_b, name=name)
+    def keep_up_to_date(self, values_a, values_b, dates_a, dates_b, name=None):
+        """
+
+        :param str/list values_a: Column names from df_a to be resolved.
+        :param str/list values_b: Column names from df_b to be resolved.
+        :param str/list dates_a: Column names for dates in df_a.
+        :param str/list dates_b: Column names for dates in df_b.
+        :param name: The name of the resolved column.
+        :return: None
+        """
+        self.resolve(choose_metadata_max, values_a, values_b, meta_a=dates_a, meta_b=dates_b, name=name)
 
     def resolve(self, fun, values_a, values_b, meta_a=None, meta_b=None, transform_vals=None,
                 transform_meta=None, static_meta=False, params=None, name=None, **kwargs):
+        """
+        Queue a conflict resolution job for later computation. Conflict resolution job metadata
+        is automatically stored in self.resolution_queue.
+
+        :param function fun: A conflict resolution function.
+        :param str/list values_a: Column names from df_a containing values to be resolved.
+        :param str/list  values_b: Column names from df_b containing values to be resolved.
+        :param str/list  meta_a: Column names from df_a containing metadata values to be used in conflict resolution.
+        Optionally, if static_meta is True, meta_a will become the metadata value for all values from df_a.
+        :param str/list  meta_b: Column names from df_b containing metadata values to be used in conflict resolution.
+        Optionally, if static_meta is True, meta_b will become the metadata value for all values from df_b.
+        :param function transform_vals: An optional pre-processing function to be applied to values.
+        :param function transform_meta: An optional pre-processing function to be applied to metadata values.
+        :param bool static_meta: If True, meta_a and meta_b values will be used as metadata values.
+        :param params: Extra parameters used by the conflict resolution function.
+        :param name: The name of the resolved column.
+        :param kwargs: Optional keyword arguments.
+        :return: A dictionary of metadata values.
+        """
+        # TODO: Add transformation function for value -> metadata mapping.
+        # TODO: Optionally specify trusted columns.
+        # NOTE: Optionally, could provide value columns as metadata columns (i.e. twice) and use transform_meta.
         # Integrate values in vals (Series of tuples) using optional
         # meta (Series of tuples) by applying the conflict resolution function fun
         # to the series of tuples.
-        # TODO: Add column names for output
         job = {
             'fun': fun,
             'values_a': values_a,
@@ -84,36 +158,74 @@ class FuseCore(object):
 
     def _make_resolution_series(self, values_a, values_b, meta_a=None, meta_b=None,
                                 transform_vals=None, transform_meta=None, static_meta=False, **kwargs):
+        """
+        Formats data for conflict resolution. Output is a pandas.Series of nested tuples. _make_resolution_series
+        is overriden by FuseLinks and FuseClusters. No implementation is provided in FuseCore.
+
+        :param function fun: A conflict resolution function.
+        :param str/list values_a: Column names from df_a containing values to be resolved.
+        :param str/list  values_b: Column names from df_b containing values to be resolved.
+        :param str/list  meta_a: Column names from df_a containing metadata values to be used in conflict resolution.
+        Optionally, if static_meta is True, meta_a will become the metadata value for all values from df_a.
+        :param str/list  meta_b: Column names from df_b containing metadata values to be used in conflict resolution.
+        Optionally, if static_meta is True, meta_b will become the metadata value for all values from df_b.
+        :param function transform_vals: An optional pre-processing function to be applied to values.
+        :param function transform_meta: An optional pre-processing function to be applied to metadata values.
+        :param bool static_meta: If True, meta_a and meta_b values will be used as metadata values.
+        :param kwargs: Optional keyword arguments.
+        :return: A pandas.Series.
+        """
         # No implementation provided.
         # Override in subclass.
         return pd.Series()
 
     def _fusion_init(self, vectors, df_a, df_b, predictions, probabilities, sep):
+        """
+        A pre-fusion initialization routine to store the data inputs for access during
+        the conflict resolution / data fusion process.
+
+        :param pandas.DataFrame vectors: Multi-indexed comparison vectors i.e. produced by recordlinkage.Compare.
+        :param pandas.DataFrame df_a: The original first data frame.
+        :param pandas.DataFrame df_b: The original second data frame.
+        :param pandas.Series predictions: A pandas.Series of True/False classifications.
+        :param pandas.Series probabilities: A pandas.Series of candidate link probabilities (0 ≤ p ≤ 1).
+        :param str sep: A string separator to be used in resolving column naming conflicts.
+        :return: None
+        """
         self.vectors = vectors
         self.index = vectors.index.to_frame()
         self.predictions = predictions
         self.probabilities = probabilities
         self.df_a = df_a
         self.df_b = df_b
-        self.sep = sep
+        self._sep = sep
 
     def _fusion_preprocess(self):
-        # No implementation provided.
-        # Override in subclass.
+        """
+        Subclass specific pre-fusion computation. Not implemented in FuseCore.
+
+        :return: None
+        """
         pass
 
     def _resolve_job_names(self, sep):
+        """
+        Resolves conflicts among conflict resolution job column names in self.resolution_queue.
+
+        :param str sep: A separator string.
+        :return: None
+        """
         for job in self.resolution_queue:
             if job['name'] is not None:
-                if job['name'] not in self.bases_taken:
-                    if job['name'] not in self.names_taken:
-                        self.bases_taken.append(job['name'])
-                        self.names_taken.append(job['name'])
+                if job['name'] not in self._bases_taken:
+                    if job['name'] not in self._names_taken:
+                        self._bases_taken.append(job['name'])
+                        self._names_taken.append(job['name'])
                 else:
                     i = 1
                     while True:
                         name = str(job['name']) + sep + str(i)
-                        if name in self.names_taken:
+                        if name in self._names_taken:
                             if i > 1000:
                                 raise RuntimeError('Data fusion hung while attempting to _resolve column names.'
                                                    '1000 name suffixes were attempted.'
@@ -121,11 +233,18 @@ class FuseCore(object):
                             else:
                                 i += 1
                         else:
-                            self.names_taken.append(name)
+                            self._names_taken.append(name)
                             job['name'] = name
                             break
 
     def _do_resolve(self, job):
+        """
+        Perform conflict resolution for a queued job, by pre-processing data (_make_resolution_series) and performing
+        the resolution (i.e. by applying a conflict resolution function).
+
+        :param dict job: A dictionary of conflict resolution job metadata.
+        :return: pandas.Series containing resolved/canonical values.
+        """
         data = self._make_resolution_series(job['values_a'],
                                             job['values_b'],
                                             meta_a=job['meta_a'],
@@ -139,10 +258,24 @@ class FuseCore(object):
         return data
 
     def fuse(self, vectors, df_a, df_b, predictions=None, probabilities=None, n_cores=mp.cpu_count(), sep='_'):
+        """
+        Perform conflict resolution and data fusion for given data, using accumulated conflict resolution metadata.
 
-        # Apply refinements to vectors / index
-        # Make calls to `_resolve` using accumulated metadata
-        # Return the fused data frame
+        :param pandas.DataFrame vectors: Multi-indexed comparison vectors i.e. produced by recordlinkage.Compare.
+        :param pandas.DataFrame df_a: The original first data frame.
+        :param pandas.DataFrame df_b: The original second data frame.
+        :param pandas.Series predictions: A pandas.Series of True/False classifications.
+        :param pandas.Series probabilities: A pandas.Series of candidate link probabilities (0 ≤ p ≤ 1).
+        :param n_cores: The number of cores to be used for processing. Defaults to all cores (mp.cpu_count()).
+        :param str sep: A string separator to be used in resolving column naming conflicts.
+        :return: A pandas.DataFrame with resolved/fused data.
+        """
+
+        if not isinstance(predictions, (type(None), pd.Series)):
+            raise ValueError('Predictions must be a pandas Series.')
+
+        if not isinstance(probabilities, (type(None), pd.Series)):
+            raise ValueError('Predictions must be a pandas Series.')
 
         # Save references to input data.
         self._fusion_init(vectors, df_a, df_b, predictions, probabilities, sep)
@@ -151,13 +284,13 @@ class FuseCore(object):
         self._fusion_preprocess()
 
         # Resolve naming conflicts, if any.
-        self._resolve_job_names(self.sep)
+        self._resolve_job_names(self._sep)
 
         # Compute resolved values for output.
         with mp.Pool(n_cores) as p:
             fused = p.map(self._do_resolve, self.resolution_queue)
 
-        return pd.concat(fused, axis=1)
+        return pd.concat(fused, axis=1).set_index(self.index.index)
 
 
 class FuseClusters(FuseCore):
@@ -182,134 +315,44 @@ class FuseLinks(FuseCore):
         self.unique_a = unique_a
         self.unique_b = unique_b
         self.rank_method = rank_method
-        self.rank_links_by = listify(rank_links_by)
+        if rank_links_by is not None:
+            self.rank_links_by = listify(rank_links_by)
+        else:
+            self.rank_links_by = None
         self.rank_ascending = rank_ascending
 
     def _apply_predictions(self):
-        self.vectors = self.vectors.iloc[self.predictions]
-        self.probabilities = self.probabilities[self.predictions]
-        self.predictions = self.predictions.iloc[self.predictions]
 
-    def _apply_refinement(self):
+        # Turn predictions into desired formats
+        pred_index = self.predictions.index
+        pred_list = list(self.predictions)
 
-        def new_identifier_name(base, names, sep='_'):
-            # Find an unused column name
-            col_name = base
-            if col_name in names:
-                i = 1
-                while True:
-                    if col_name + sep + str(i) in names:
-                        i += 1
-                        continue
-                    else:
-                        col_name += sep + str(i)
-                        break
-            return col_name
+        # Update vectors and indices
+        self.vectors = self.vectors.iloc[pred_list]
+        self.index = self.vectors.index.to_frame()
 
-        # Working comparison data
-        working_vectors = self.vectors
+        # Refine data
+        self.df_a = self.df_a.loc[pred_index.to_frame()[0]].iloc[pred_list].set_index(self.index.index)
+        self.df_b = self.df_b.loc[pred_index.to_frame()[1]].iloc[pred_list].set_index(self.index.index)
 
-        # Sorting by columns is simple!
-        if self.rank_method == 'cols':
+        # Update predictions and probabilities
+        if self.probabilities is not None:
+            self.probabilities = self.probabilities.iloc[pred_list]
+        if self.predictions is not None:
+            self.predictions = self.predictions.iloc[pred_list]
 
-            working_vectors = working_vectors.sort_values(by=self.rank_links_by, ascending=self.rank_ascending)
-
-        # Sort by row sum for specified columns
-        elif self.rank_method == 'probs':
-
-            # Find an unused column name
-            temp_col = new_identifier_name('probs', working_vectors.columns)
-
-            if self.probabilities is None:
-                raise AssertionError('No probability values have been provided.')
-            else:
-                # Make a temporary column, which is the sum of columns of interest.
-                working_vectors[temp_col] = self.probabilities
-
-            if self.rank_links_by is not None:
-                working_vectors = working_vectors.sort_values(
-                    by=[temp_col] + self.rank_links_by, ascending=self.rank_ascending
-                )
-            else:
-                working_vectors = working_vectors.sort_values(
-                    by=temp_col, ascending=self.rank_ascending
-                )
-
-        # Sort by row sum for specified columns
-        elif self.rank_method == 'sum':
-
-            # Find an unused column name
-            temp_col = new_identifier_name('sum', working_vectors.columns)
-
-            # Make a temporary column, which is the sum of columns of interest.
-            working_vectors[temp_col] = sum([working_vectors[c] for c in self.rank_links_by])
-
-            working_vectors = working_vectors.sort_values(by=temp_col, ascending=self.rank_ascending)
-
-        # Sort by row mean for specified columns
-        elif self.rank_method == 'avg':
-
-            # Find an unused column name
-            temp_col = new_identifier_name('avg', working_vectors.columns)
-
-            # Make a temporary column, which is the sum of columns of interest.
-            working_vectors[temp_col] = sum([working_vectors[c] for c in self.rank_links_by]) / len(self.rank_links_by)
-
-            working_vectors = working_vectors.sort_values(by=temp_col, ascending=self.rank_ascending)
-
-        else:
-            raise ValueError('Unrecognized ranking method.')
-
-        # Copy comparison object indices.
-        working_indices = working_vectors.index.to_frame()
-
-        # Save indices as lists.
-        working_left_index = list(working_indices[0])
-        working_right_index = list(working_indices[1])
-
-        # Track observed indices.
-        seen_left = set()
-        seen_right = set()
-
-        # Identify records to be kept/discarded.
-
-        # 1 = Keep / 0 = Discard
-        keep_vector = []
-
-        # Iterate on indices
-        for i in range(0, len(working_indices)):
-
-            keep = True
-
-            # Check/add left index
-            if self.unique_a is True:
-                if working_left_index[i] in seen_left:
-                    keep = False
-                else:
-                    seen_left.add(working_left_index[i])
-
-            # Check/add right index
-            if self.unique_b is True:
-                if working_right_index[i] in seen_right:
-                    keep = False
-                else:
-                    seen_right.add(working_right_index[i])
-
-            keep_vector.append(keep)
-
-        # Make new multi-index using keep_vector
-        working_indices = working_indices.iloc[keep_vector]
-        self.index = working_indices.index
-
-        # Make new predictions and probabilities using keep_vector
-        self.probabilities = self.probabilities.iloc[keep_vector]
-        self.predictions = self.predictions.iloc[keep_vector]
+    def _refine_predictions(self):
+        pass
 
     def _fusion_preprocess(self):
+        # if self.rank_method is not None:
+        #     if self.predictions is None:
+        #         self.predictions = pd.Series([True for _ in range(len(self.vectors))])
+        #     print('start refine')
+        #     self._refine_predictions()
+        #     print('end refine')
         if self.predictions is not None:
             self._apply_predictions()
-        if self.rank_method is not None:
-            self._apply_refinement()
 
     def _get_df_a_col(self, name):
         return self.df_a[name].loc[list(self.index[0])]
