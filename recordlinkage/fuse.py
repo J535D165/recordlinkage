@@ -275,7 +275,7 @@ class FuseCore(object):
             raise ValueError('Predictions must be a pandas Series.')
 
         if not isinstance(probabilities, (type(None), pd.Series)):
-            raise ValueError('Predictions must be a pandas Series.')
+            raise ValueError('Probabilities must be a pandas Series.')
 
         # Save references to input data.
         self._fusion_init(vectors, df_a, df_b, predictions, probabilities, sep)
