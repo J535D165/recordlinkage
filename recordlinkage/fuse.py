@@ -8,8 +8,12 @@ from recordlinkage import logging
 from recordlinkage.utils import listify
 from recordlinkage.algorithms.conflict_resolution import (annotated_concat,
                                                           choose,
+                                                          choose_first,
+                                                          choose_last,
                                                           choose_max,
                                                           choose_min,
+                                                          choose_shortest,
+                                                          choose_longest,
                                                           choose_metadata_max,
                                                           choose_metadata_min,
                                                           choose_random,
@@ -18,7 +22,46 @@ from recordlinkage.algorithms.conflict_resolution import (annotated_concat,
                                                           group,
                                                           identity,
                                                           no_gossip,
-                                                          vote)
+                                                          vote,
+                                                          nullify)
+
+
+def process_tie_break(tie_break):
+    """
+    Handles string/function -> function happing for tie breaking.
+
+    :param str/function tie_break: A conflict resolution function to be used in the case of a tie. May be a
+    conflict resolution function or a string (one of random, trust_a, trust_b, min, max, shortest, longest, or null.
+    :return: A function
+    """
+    tie_break_fun = None
+    if tie_break is None:
+        pass
+    elif isinstance(tie_break, function):
+        tie_break_fun = tie_break
+    elif isinstance(tie_break, str):
+        if tie_break == 'random':
+            tie_break_fun = choose_random
+        elif tie_break == 'trust_a':
+            tie_break_fun = choose_first
+        elif tie_break == 'trust_b':
+            tie_break_fun = choose_last
+        elif tie_break == 'min':
+            tie_break_fun = choose_min
+        elif tie_break == 'max':
+            tie_break_fun = choose_max
+        elif tie_break == 'shortest':
+            tie_break_fun = choose_shortest
+        elif tie_break == 'longest':
+            tie_break_fun = choose_longest
+        elif tie_break == 'null':
+            tie_break_fun = nullify
+        else:
+            raise ValueError('Invalid tie_break strategy: {}. Must be one of'
+                             'random, trust_a, trust_b, min, max, shortest, longest, or null.'.format(tie_break))
+    else:
+        raise ValueError('tie_break must be a string or a function.')
+    return tie_break_fun
 
 
 class FuseCore(object):
@@ -135,8 +178,9 @@ class FuseCore(object):
         """
         self.resolve(choose_metadata_max, values_a, values_b, meta_a=dates_a, meta_b=dates_b, name=name)
 
-    def resolve(self, fun, values_a, values_b, meta_a=None, meta_b=None, transform_vals=None,
-                transform_meta=None, static_meta=False, params=None, name=None, **kwargs):
+    def resolve(self, fun, values_a, values_b, meta_a=None, meta_b=None,
+                transform_vals=None, transform_meta=None, static_meta=False, remove_na_vals=True,
+                remove_na_meta=True, params=None, name=None, **kwargs):
         """
         Queue a conflict resolution job for later computation. Conflict resolution job metadata
         is automatically stored in self.resolution_queue.
@@ -151,6 +195,8 @@ class FuseCore(object):
         :param function transform_vals: An optional pre-processing function to be applied to values.
         :param function transform_meta: An optional pre-processing function to be applied to metadata values.
         :param bool static_meta: If True, meta_a and meta_b values will be used as metadata values.
+        :param bool remove_na_vals: If True, value/metadata pairs will be removed if the value is missing (i.e. np.nan).
+        :param bool remove_na_meta: If True, value/metadata pairs will be removed if metadata is missing (i.e. np.nan).
         :param params: Extra parameters used by the conflict resolution function.
         :param name: The name of the resolved column.
         :param kwargs: Optional keyword arguments.
@@ -162,6 +208,8 @@ class FuseCore(object):
         # Integrate values in vals (Series of tuples) using optional
         # meta (Series of tuples) by applying the conflict resolution function fun
         # to the series of tuples.
+
+        # Store metadata
         job = {
             'fun': fun,
             'values_a': values_a,
@@ -171,7 +219,7 @@ class FuseCore(object):
             'transform_vals': transform_vals,
             'transform_meta': transform_meta,
             'static_meta': static_meta,
-            'params': params,
+            'params': listify(params).extend([remove_na_vals, remove_na_meta]),
             'name': name,
             'kwargs': kwargs
         }
