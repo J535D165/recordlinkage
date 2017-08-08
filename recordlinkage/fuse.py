@@ -23,6 +23,11 @@ from recordlinkage.algorithms.conflict_resolution import (annotated_concat,
 
 class FuseCore(object):
     def __init__(self):
+        """
+        ``FuseCore`` and its subclasses are initialized without data. The initialized
+        object is populated by metadata describing a series of data resolutions,
+        which are executed when ``.fuse()`` is called.
+        """
         self.vectors = None
         self.index = None
         self.predictions = None
@@ -40,6 +45,7 @@ class FuseCore(object):
 
     def trust_your_friends(self, values_a, values_b, trusted, name=None):
         """
+        Handles data conflicts by keeping data from a trusted source.
 
         :param str/list values_a: Column names from df_a to be resolved.
         :param str/list values_b: Column names from df_b to be resolved.
@@ -51,6 +57,8 @@ class FuseCore(object):
 
     def no_gossiping(self, values_a, values_b, name=None):
         """
+        Handles data conflicts by keeping values agree upon by both data sources,
+        and returning np.nan for conflicting values.
 
         :param str/list values_a: Column names from df_a to be resolved.
         :param str/list values_b: Column names from df_b to be resolved.
@@ -61,6 +69,7 @@ class FuseCore(object):
 
     def roll_the_dice(self, values_a, values_b, name=None):
         """
+        Handles data conflicts by choosing a random non-missing value.
 
         :param str/list values_a: Column names from df_a to be resolved.
         :param str/list values_b: Column names from df_b to be resolved.
@@ -71,6 +80,9 @@ class FuseCore(object):
 
     def cry_with_the_wolves(self, values_a, values_b, name=None):
         """
+        Handles data conflicts by choosing the most common value. Note that when only two
+        columns are being fused, matching values will be kept but non-matching value will
+        must be handled with a tie-breaking strategy.
 
         :param str/list values_a: Column names from df_a to be resolved.
         :param str/list values_b: Column names from df_b to be resolved.
@@ -81,6 +93,8 @@ class FuseCore(object):
 
     def pass_it_on(self, values_a, values_b, name=None):
         """
+        Data conflicts are passed on to the user. Instead of handling conflicts, all conflicting values
+        are kept as a collection of values (default is a Set of values).
 
         :param str/list values_a: Column names from df_a to be resolved.
         :param str/list values_b: Column names from df_b to be resolved.
@@ -91,6 +105,7 @@ class FuseCore(object):
 
     def meet_in_the_middle(self, values_a, values_b, metric, name=None):
         """
+        Conflicting values are aggregated. Requires input values to be numeric.
 
         :param str/list values_a: Column names from df_a to be resolved.
         :param str/list values_b: Column names from df_b to be resolved.
@@ -103,6 +118,13 @@ class FuseCore(object):
 
     def keep_up_to_date(self, values_a, values_b, dates_a, dates_b, name=None):
         """
+        Keeps the most recent value. Values in values_a and values_b will be matched
+        (in order) to dates in dates_a and dates_b. However, note that values and
+        dates may both be "generalized" if there isn't a one-to-one correspondance between
+        value columns and date columns. For example, if the user calls
+        ``keep_up_to_date(['v1', 'v2'], 'v3', 'd1', 'd2')``, dates from ``d1`` would be applied
+        to values from both ``c1`` and ``c2``; likewise, if ``keep_up_to_date('v1', 'v2', ['d1', 'd2'], 'd3')``
+        was called, values from ``v1`` would be considered twice, associated with a date from both ``d1`` and ``d2``.
 
         :param str/list values_a: Column names from df_a to be resolved.
         :param str/list values_b: Column names from df_b to be resolved.
@@ -295,6 +317,13 @@ class FuseCore(object):
 
 class FuseClusters(FuseCore):
     def __init__(self, method='???'):
+        """
+        ``FuseClusters`` is initialized without data. The initialized
+        object is populated by metadata describing a series of data resolutions,
+        which are executed when ``.fuse()`` is called.
+
+        :param method: A cluster-detection algorithm. None are currently implemented.
+        """
         super().__init__()
         self.method = method
 
@@ -311,6 +340,23 @@ class FuseClusters(FuseCore):
 
 class FuseLinks(FuseCore):
     def __init__(self, unique_a=False, unique_b=False, rank_method=None, rank_links_by=None, rank_ascending=False):
+        """
+        ``FuseLinks`` is initialized without data. The initialized
+        object is populated by metadata describing a series of data resolutions,
+        which are executed when ``.fuse()`` is called.
+
+        Candidate links and classified matches will generally be many-to-many (i.e. records from both sources
+        may be matched to any record if they are sufficiently similar). ``FuseLinks`` can optionally enforce
+        "one-to-many" or "one-to-one" matches, i.e. records from one or both sources
+         will only be matched with one other record.
+
+        :param bool unique_a: If True, records from df_a will may only match with a single record in df_b.
+        :param bool unique_b: If True, records from df_b will may only match with a single record in df_a.
+        :param str rank_method: How should the quality of candidate links be compared?
+        :param list/str rank_links_by: The name of one or more comparison columns (i.e. from recordlinkage.Compare)
+        which should be used to compare candidate links using ``rank_method``.
+        :param bool rank_ascending: If True, candidate links with lower comparisonscores will be preferred.
+        """
         super().__init__()
         self.unique_a = unique_a
         self.unique_b = unique_b
@@ -322,6 +368,12 @@ class FuseLinks(FuseCore):
         self.rank_ascending = rank_ascending
 
     def _apply_predictions(self):
+        """
+        If a Series of classification predictions is provided, and/or link refinements are specified,
+        this method applies those classifications to reduce the set of candidate links.
+
+        :return: None
+        """
 
         # Turn predictions into desired formats
         pred_index = self.predictions.index
@@ -331,7 +383,7 @@ class FuseLinks(FuseCore):
         self.vectors = self.vectors.iloc[pred_list]
         self.index = self.vectors.index.to_frame()
 
-        # Refine data
+        # Refine data (this should probably be removed.)
         self.df_a = self.df_a.loc[pred_index.to_frame()[0]].iloc[pred_list].set_index(self.index.index)
         self.df_b = self.df_b.loc[pred_index.to_frame()[1]].iloc[pred_list].set_index(self.index.index)
 
@@ -345,6 +397,11 @@ class FuseLinks(FuseCore):
         pass
 
     def _fusion_preprocess(self):
+        """
+        Automatically runs subclass-specific preprocessing before conflict resolution occurs.
+
+        :return: None
+        """
         # if self.rank_method is not None:
         #     if self.predictions is None:
         #         self.predictions = pd.Series([True for _ in range(len(self.vectors))])
@@ -355,13 +412,41 @@ class FuseLinks(FuseCore):
             self._apply_predictions()
 
     def _get_df_a_col(self, name):
+        """
+        Returns a data from a column in df_a, corresponding to the first level of the candidate link multi-index.
+
+        :param str name: Column name.
+        :return: A ``pandas.Series``.
+        """
         return self.df_a[name].loc[list(self.index[0])]
 
     def _get_df_b_col(self, name):
+        """
+        Returns a data from a column in df_b, corresponding to the second level of the candidate link multi-index.
+
+        :param str name: Column name.
+        :return: A ``pandas.Series``.
+        """
         return self.df_b[name].loc[list(self.index[1])]
 
     def _make_resolution_series(self, values_a, values_b, meta_a=None, meta_b=None, transform_vals=None,
                                 transform_meta=None, static_meta=False, **kwargs):
+        """
+        Formats data for conflict resolution. Output is a pandas.Series of nested tuples.
+
+        :param function fun: A conflict resolution function.
+        :param str/list values_a: Column names from df_a containing values to be resolved.
+        :param str/list  values_b: Column names from df_b containing values to be resolved.
+        :param str/list  meta_a: Column names from df_a containing metadata values to be used in conflict resolution.
+        Optionally, if static_meta is True, meta_a will become the metadata value for all values from df_a.
+        :param str/list  meta_b: Column names from df_b containing metadata values to be used in conflict resolution.
+        Optionally, if static_meta is True, meta_b will become the metadata value for all values from df_b.
+        :param function transform_vals: An optional pre-processing function to be applied to values.
+        :param function transform_meta: An optional pre-processing function to be applied to metadata values.
+        :param bool static_meta: If True, meta_a and meta_b values will be used as metadata values.
+        :param kwargs: Optional keyword arguments.
+        :return: A pandas.Series.
+        """
 
         if self.df_a is None:
             raise AssertionError('df_a is None')
@@ -525,6 +610,19 @@ class FuseLinks(FuseCore):
         return output
 
     def keep(self, columns_a, columns_b, suffix_a=None, suffix_b=None, sep='_'):
+        """
+        Specifies columns from df_a and df_b which should be included in the fused output, but
+        which do not require conflict resolution. This methods queues a job in self.resolution_queue
+        using the ``identity`` conflict resolution function.
+
+        :param str/list columns_a: A list of column names to be included from df_a.
+        :param str/list columns_b: A list of column names to be included from df_b.
+        :param str suffix_a: An optional suffix to be applied to the name of all columns kept from df_a.
+        :param str suffix_b: An optional suffix to be applied to the names of all columns kept from df_b.
+        :param str sep: The separator that should be used when resolving column name conflicts (e.g.
+        with ``sep='_'``, ``taken_name`` becomes ``taken_name_1``..
+        :return: None
+        """
         # Add "keeps" to a new queue of columns — analogous but distinct from the resolution queue
 
         columns_a = listify(columns_a)

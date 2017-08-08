@@ -7,28 +7,6 @@ import statistics
 import numpy as np
 
 
-# Conflict Resolution Decorator
-def conflict_resolution_function(metadata=None, param=None):
-    """
-    Used to assert high-level requirements in the
-    conflict resolution process.
-
-    :param bool metadata: True/False
-    :param bool param: True/False
-    :return: function
-    """
-
-    def decorate(func):
-        func.metadata = metadata
-        func.param = param
-        return func
-
-    return decorate
-
-
-# Conflict Resolution Functions
-
-@conflict_resolution_function(metadata=False, param=False)
 def identity(x):
     """
     Returns an unchanged value without strategy. (Technically, it is the "first",
@@ -41,7 +19,6 @@ def identity(x):
     return x[0][0]
 
 
-@conflict_resolution_function(metadata=False, param=False)
 def count(x):
     """
     Returns the number of unique values.
@@ -56,7 +33,6 @@ def count(x):
     return len(set(vals))
 
 
-@conflict_resolution_function(metadata=False, param=False)
 def choose_min(x):
     """
     Choose the smallest value.
@@ -70,7 +46,6 @@ def choose_min(x):
     return min(vals)
 
 
-@conflict_resolution_function(metadata=False, param=False)
 def choose_max(x):
     """
     Choose the largest value.
@@ -84,7 +59,6 @@ def choose_max(x):
     return max(vals)
 
 
-@conflict_resolution_function(metadata=False, param=False)
 def choose_random(x):
     """
     Choose a random value.
@@ -98,7 +72,6 @@ def choose_random(x):
     return random.choice(vals)
 
 
-@conflict_resolution_function(metadata=False, param=False)
 def vote(x):
     """
     Returns the most common element.
@@ -115,7 +88,6 @@ def vote(x):
     return counter.most_common()[0][0]
 
 
-@conflict_resolution_function(metadata=False, param=False)
 def group(x):
     """
     Returns a set of all conflicting values.
@@ -127,7 +99,6 @@ def group(x):
     # TODO: Implement choice of collection returned.
 
 
-@conflict_resolution_function(metadata=False, param=False)
 def no_gossip(x):
     """
     Returns values if all items in vals are equal, or np.nan
@@ -150,7 +121,6 @@ def no_gossip(x):
     return vals[0]
 
 
-@conflict_resolution_function(metadata=False, param=True)
 def aggregate(x, method):
     """
     Returns a numerical aggregation of values.
@@ -173,7 +143,6 @@ def aggregate(x, method):
         return statistics.variance(vals)
 
 
-@conflict_resolution_function(metadata=True, param=True)
 def choose(x, trusted):
     """
     Choose a value from a trusted source.
@@ -194,7 +163,6 @@ def choose(x, trusted):
     return np.nan
 
 
-@conflict_resolution_function(metadata=True, param=False)
 def annotated_concat(x):
     """
     Returns a collection of value/metadata pairs.
@@ -217,7 +185,6 @@ def annotated_concat(x):
     return concat
 
 
-@conflict_resolution_function(metadata=True, param=False)
 def choose_metadata_min(x):
     """
     Chooses the value with the smallest corresponding metadata value.
@@ -234,7 +201,6 @@ def choose_metadata_min(x):
     return vals[i]
 
 
-@conflict_resolution_function(metadata=True, param=False)
 def choose_metadata_max(x):
     """
     Chooses the value with the largest corresponding metadata value.
