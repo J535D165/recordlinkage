@@ -29,7 +29,7 @@
     // If missing or the empty string, the tool will be automatically
     // determined by looking for tools on the PATH environment
     // variable.
-    "environment_type": "virtualenv",
+    "environment_type": "",
 
     // timeout in seconds for installing any dependencies in environment
     // defaults to 10 min
@@ -52,9 +52,7 @@
     // pip (with all the conda available packages installed first,
     // followed by the pip installed packages).
     //
-    "matrix": {
-        "jellyfish": []
-    },
+    "matrix": {},
 
     // Combinations of libraries/python versions can be excluded/included
     // from the set to test. Each entry is a dictionary containing additional
