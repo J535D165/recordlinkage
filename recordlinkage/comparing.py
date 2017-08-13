@@ -1,9 +1,6 @@
 from __future__ import division
 from __future__ import unicode_literals
 
-import warnings
-import multiprocessing as mp
-
 import pandas
 import numpy as np
 
