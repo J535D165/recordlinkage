@@ -512,6 +512,10 @@ class BaseCompare(object):
 
         """
 
+        if isinstance(comp_func, pandas.MultiIndex):
+            raise ValueError("see new api documentation: "
+                             "use method 'compute' instead of 'compare'")
+
         if len(self.pairs) == 0:
             raise ValueError(
                 "need at least one record pair"
