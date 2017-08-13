@@ -125,7 +125,7 @@ class Compare(BaseCompare):
 
         """
 
-        return self.compare_vectorized(_compare_exact, s1, s2, *args, **kwargs)
+        return self._compare_vectorized(_compare_exact, s1, s2, *args, **kwargs)
 
     def string(self, s1, s2, method='levenshtein', threshold=None, *args, **kwargs):
         """
@@ -195,7 +195,7 @@ class Compare(BaseCompare):
             else:
                 return c
 
-        return self.compare_vectorized(
+        return self._compare_vectorized(
             _string_internal, s1, s2, method, threshold, *args, **kwargs
         )
 
@@ -270,7 +270,7 @@ class Compare(BaseCompare):
 
             return num_sim_alg(d, *args, **kwargs)
 
-        return self.compare_vectorized(_num_internal, s1, s2, method, *args, **kwargs)
+        return self._compare_vectorized(_num_internal, s1, s2, method, *args, **kwargs)
 
     def geo(self, lat1, lng1, lat2, lng2, method='linear', *args, **kwargs):
         """
@@ -340,7 +340,7 @@ class Compare(BaseCompare):
 
             return num_sim_alg(d, *args, **kwargs)
 
-        return self.compare_vectorized(
+        return self._compare_vectorized(
             _num_internal, (lat1, lng1), (lat2, lng2),
             method, *args, **kwargs
         )
@@ -378,7 +378,7 @@ class Compare(BaseCompare):
 
             return _compare_dates(s1, s2, *args, **kwargs)
 
-        return self.compare_vectorized(
+        return self._compare_vectorized(
             _dummy_compare_dates, s1, s2,
             swap_month_day=swap_month_day, swap_months=swap_months,
             *args, **kwargs

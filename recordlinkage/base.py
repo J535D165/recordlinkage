@@ -234,6 +234,8 @@ class BaseCompare(object):
     def __init__(self, pairs=None, df_a=None, df_b=None, low_memory=False,
                  block_size=1000000, njobs=1, **kwargs):
 
+        logging.info("initialize %s object" % self.__class__.__name__)
+
         if isinstance(pairs, (pandas.MultiIndex, pandas.Index)):
             self.deprecated = True
 
@@ -358,7 +360,20 @@ class BaseCompare(object):
             This argument is a keyword argument.
         """
 
-        if not self.deprecated:  # Use the new version
+        if 'label' in kwargs:
+            feature_label = kwargs['label']
+
+        log_str = "compare {l_left} with {l_right} - user defined function"
+        logging.info(log_str.format(l_left=labels_left, l_right=labels_right))
+
+        return self._compare_vectorized(
+            self, comp_func, labels_left, labels_right, *args, **kwargs)
+
+    def _compare_vectorized(self, comp_func, labels_left, labels_right,
+                            *args, **kwargs):
+
+        # Use recordlinkage >=0.10.0
+        if not self.deprecated:
 
             label = kwargs.pop('label', None)
 
@@ -375,7 +390,8 @@ class BaseCompare(object):
 
             return self
 
-        else:  # Use the deprecated verion
+        # Use recordlinkage < 0.10.0
+        else:
 
             return self.compare(
                 comp_func, labels_left, labels_right, *args, **kwargs)
