@@ -407,15 +407,15 @@ class TestCompareNumeric(TestData):
         result = comp.compute(ix, A, B)
 
         # Basics
-        expected = pandas.Series([1, 1, 1, 0, 0], index=ix, name=0)
+        expected = pandas.Series([1.0, 1.0, 1.0, 0.0, 0.0], index=ix, name=0)
         pdt.assert_series_equal(result[0], expected)
 
         # Basics
-        expected = pandas.Series([1, 1, 1, 0, 0], index=ix, name=1)
+        expected = pandas.Series([1.0, 1.0, 1.0, 0.0, 0.0], index=ix, name=1)
         pdt.assert_series_equal(result[1], expected)
 
         # Basics
-        expected = pandas.Series([1, 1, 1, 0, 0], index=ix, name=2)
+        expected = pandas.Series([1.0, 1.0, 1.0, 0.0, 0.0], index=ix, name=2)
         pdt.assert_series_equal(result[2], expected)
 
     def test_numeric_with_missings(self):
@@ -435,21 +435,21 @@ class TestCompareNumeric(TestData):
 
         # Missing values as default
         expected = pandas.Series(
-            [1, 1, 1, 0, 0], index=ix, dtype=np.float64, name=0)
+            [1.0, 1.0, 1.0, 0.0, 0.0], index=ix, name=0)
         pdt.assert_series_equal(result[0], expected)
 
         # Missing values as 0
         expected = pandas.Series(
-            [1, 1, 1, 0, 0], index=ix, dtype=np.float64, name=1)
+            [1.0, 1.0, 1.0, 0.0, 0.0], index=ix, dtype=np.float64, name=1)
         pdt.assert_series_equal(result[1], expected)
 
         # Missing values as 123.45
         expected = pandas.Series(
-            [1, 1, 1, 123.45, 123.45], index=ix, name=2)
+            [1.0, 1.0, 1.0, 123.45, 123.45], index=ix, name=2)
         pdt.assert_series_equal(result[2], expected)
 
         # Missing values as nan
-        expected = pandas.Series([1, 1, 1, nan, nan], index=ix, name=3)
+        expected = pandas.Series([1.0, 1.0, 1.0, nan, nan], index=ix, name=3)
         pdt.assert_series_equal(result[3], expected)
 
         # Missing values as string
@@ -480,8 +480,8 @@ class TestCompareNumeric(TestData):
             result = result_df[alg]
 
             # All values between 0 and 1.
-            self.assertTrue((result >= 0).all())
-            self.assertTrue((result <= 1).all())
+            self.assertTrue((result >= 0.0).all())
+            self.assertTrue((result <= 1.0).all())
 
             if alg is not 'step':
 
@@ -493,19 +493,19 @@ class TestCompareNumeric(TestData):
                 # sim(offset) = 1
                 expected_bool = pandas.Series(
                     [True, True, False, False, False], index=ix, name=alg)
-                pdt.assert_series_equal(result == 1, expected_bool)
+                pdt.assert_series_equal(result == 1.0, expected_bool)
 
                 # sim(scale) larger than 0.5
                 expected_bool = pandas.Series(
                     [False, False, True, False, False], index=ix, name=alg)
                 pdt.assert_series_equal(
-                    (result > 0.5) & (result < 1), expected_bool)
+                    (result > 0.5) & (result < 1.0), expected_bool)
 
                 # sim(scale) smaller than 0.5
                 expected_bool = pandas.Series(
                     [False, False, False, False, True], index=ix, name=alg)
                 pdt.assert_series_equal(
-                    (result < 0.5) & (result >= 0), expected_bool)
+                    (result < 0.5) & (result >= 0.0), expected_bool)
 
     def test_numeric_alg_errors(self):
 
@@ -753,7 +753,7 @@ class TestCompareGeo(TestData):
         result = comp.compute(ix, A, B)
 
         # Missing values as default [36.639460, 54.765854, 44.092472]
-        expected = pandas.Series([1, 0, 1], index=ix, name=0)
+        expected = pandas.Series([1.0, 0.0, 1.0], index=ix, name=0)
         pdt.assert_series_equal(result[0], expected)
 
     def test_geo_batch(self):
@@ -789,8 +789,8 @@ class TestCompareGeo(TestData):
             result = result_df[alg]
 
             # All values between 0 and 1.
-            self.assertTrue((result >= 0).all())
-            self.assertTrue((result <= 1).all())
+            self.assertTrue((result >= 0.0).all())
+            self.assertTrue((result <= 1.0).all())
 
     def test_geo_does_not_exist(self):
 
