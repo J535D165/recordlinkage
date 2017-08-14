@@ -65,7 +65,7 @@ uncommitted changes.
 The version identifier is used for multiple purposes:
 
 * to allow the module to self-identify its version: `myproject.__version__`
-* to choose a name and prefix for a 'setup.py sdist' tarball
+* to choose_trusted a name and prefix for a 'setup.py sdist' tarball
 
 ## Theory of Operation
 
