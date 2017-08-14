@@ -354,7 +354,7 @@ class BaseCompare(object):
         *args :
             Additional arguments.
         **kwargs :
-            Keyword arguments.
+            Keyword arguments. (keyword 'label' is not allowed)
         label : (list of) label(s)
             The name of the feature and the name of the column. IMPORTANT:
             This argument is a keyword argument.
