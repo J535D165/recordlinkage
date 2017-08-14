@@ -367,7 +367,7 @@ class BaseCompare(object):
         logging.info(log_str.format(l_left=labels_left, l_right=labels_right))
 
         return self._compare_vectorized(
-            self, comp_func, labels_left, labels_right, *args, **kwargs)
+            comp_func, labels_left, labels_right, *args, **kwargs)
 
     def _compare_vectorized(self, comp_func, labels_left, labels_right,
                             *args, **kwargs):
