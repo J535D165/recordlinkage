@@ -608,7 +608,7 @@ class BaseCompare(object):
         return self.vectors[name_or_id].rename(name)
 
     def clear_memory(self):
-        """Clear memory.
+        """[DEPRECATED] Clear memory.
 
         Clear some memory when low_memory was set to True.
         """
