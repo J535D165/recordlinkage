@@ -194,11 +194,99 @@ class TestCompareApi(TestData):
     #     with self.assertRaises(KeyError):
     #         getattr(comp, method_to_call)(s1, s2, *args, **kwargs)
 
+    def test_compare_custom_vectorized_linking(self):
 
-def ones_compare(s1, s2):
+        A = DataFrame({'col': ['abc', 'abc', 'abc', 'abc', 'abc']})
+        B = DataFrame({'col': ['abc', 'abd', 'abc', 'abc', '123']})
+        ix = pandas.MultiIndex.from_arrays([A.index.values, B.index.values])
 
-    return np.ones(len(s1))
+        def always_one(s1, s2):
+            return np.ones(len(s1), dtype=np.int)
 
+        # test without label
+        comp = recordlinkage.Compare()
+        comp.compare_vectorized(always_one, 'col', 'col')
+        result = comp.compute(ix, A, B)
+        expected = pandas.DataFrame([1, 1, 1, 1, 1], index=ix)
+        pdt.assert_frame_equal(result, expected)
+
+        # test with label
+        comp = recordlinkage.Compare()
+        comp.compare_vectorized(always_one, 'col', 'col', label='test')
+        result = comp.compute(ix, A, B)
+        expected = pandas.DataFrame([1, 1, 1, 1, 1], index=ix, columns=['test'])
+        pdt.assert_frame_equal(result, expected)
+
+    def test_compare_custom_vectorized_arguments_linking(self):
+
+        A = DataFrame({'col': ['abc', 'abc', 'abc', 'abc', 'abc']})
+        B = DataFrame({'col': ['abc', 'abd', 'abc', 'abc', '123']})
+        ix = pandas.MultiIndex.from_arrays([A.index.values, B.index.values])
+
+        def always_x(s1, s2, x):
+            return np.ones(len(s1), dtype=np.int) * x
+
+        # test without label
+        comp = recordlinkage.Compare()
+        comp.compare_vectorized(always_x, 'col', 'col', 5)
+        result = comp.compute(ix, A, B)
+        expected = pandas.DataFrame([5, 5, 5, 5, 5], index=ix)
+        pdt.assert_frame_equal(result, expected)
+
+        # test with label
+        comp = recordlinkage.Compare()
+        comp.compare_vectorized(always_x, 'col', 'col', 5, label='test')
+        result = comp.compute(ix, A, B)
+        expected = pandas.DataFrame([5, 5, 5, 5, 5], index=ix, columns=['test'])
+        pdt.assert_frame_equal(result, expected)
+
+    def test_compare_custom_vectorized_dedup(self):
+
+        A = DataFrame({'col': ['abc', 'abc', 'abc', 'abc', 'abc']})
+        ix = pandas.MultiIndex.from_arrays([
+            [1, 2, 3, 4, 5], [2, 3, 4, 5, 1]
+        ])
+
+        def always_one(s1, s2):
+            return np.ones(len(s1), dtype=np.int)
+
+        # test without label
+        comp = recordlinkage.Compare()
+        comp.compare_vectorized(always_one, 'col', 'col')
+        result = comp.compute(ix, A)
+        expected = pandas.DataFrame([1, 1, 1, 1, 1], index=ix)
+        pdt.assert_frame_equal(result, expected)
+
+        # test with label
+        comp = recordlinkage.Compare()
+        comp.compare_vectorized(always_one, 'col', 'col', label='test')
+        result = comp.compute(ix, A)
+        expected = pandas.DataFrame([1, 1, 1, 1, 1], index=ix, columns=['test'])
+        pdt.assert_frame_equal(result, expected)
+
+    def test_compare_custom_vectorized_arguments_dedup(self):
+
+        A = DataFrame({'col': ['abc', 'abc', 'abc', 'abc', 'abc']})
+        ix = pandas.MultiIndex.from_arrays([
+            [1, 2, 3, 4, 5], [2, 3, 4, 5, 1]
+        ])
+
+        def always_x(s1, s2, x):
+            return np.ones(len(s1), dtype=np.int) * x
+
+        # test without label
+        comp = recordlinkage.Compare()
+        comp.compare_vectorized(always_x, 'col', 'col', 5)
+        result = comp.compute(ix, A)
+        expected = pandas.DataFrame([5, 5, 5, 5, 5], index=ix)
+        pdt.assert_frame_equal(result, expected)
+
+        # test with label
+        comp = recordlinkage.Compare()
+        comp.compare_vectorized(always_x, 'col', 'col', 5, label='test')
+        result = comp.compute(ix, A)
+        expected = pandas.DataFrame([5, 5, 5, 5, 5], index=ix, columns=['test'])
+        pdt.assert_frame_equal(result, expected)
 
 # tests/test_compare.py:TestCompareExact
 class TestCompareExact(TestData):
