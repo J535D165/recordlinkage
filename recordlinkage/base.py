@@ -468,7 +468,7 @@ class BaseCompare(object):
 
                 label_val = label[i] if label is not None else label_num
                 label_num += 1
-                # print('column label %s' % label_val)
+
                 labels.append(label_val)
 
             results[label_val] = c
