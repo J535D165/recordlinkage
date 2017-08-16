@@ -518,6 +518,8 @@ def longest_common_substring_similarity(s1, s2, norm='dice', min_len=2):
             Float
                 The normalized lcs length.
             """
+            if len(x[0]) == 0 or len(x[1]) == 0:
+                return 0
             if norm == 'overlap':
                 return lcs_value / min(len(x[0]), len(x[1]))
             elif norm == 'jaccard':
