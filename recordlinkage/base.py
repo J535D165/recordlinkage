@@ -329,7 +329,7 @@ class BaseCompare(object):
 
     def compare_vectorized(self, comp_func, labels_left, labels_right,
                            *args, **kwargs):
-        """Compare two dataframes with a custom algorithm.
+        """Compute the similarity between values with a callable.
 
         Core method to compare record pairs. This method takes a function and
         data from both records in the record pair. The data is compared with
@@ -339,7 +339,7 @@ class BaseCompare(object):
         -------
 
         >>> comp = recordlinkage.Compare(PAIRS, DATAFRAME1, DATAFRAME2)
-        >>> comp.compare_vectorized(custon_callable, 'first_name', 'name')
+        >>> comp.compare_vectorized(custom_callable, 'first_name', 'name')
         >>> comp.compare()
 
         Parameters
@@ -415,7 +415,7 @@ class BaseCompare(object):
 
         # check requested labels (for better error messages)
         if not is_label_dataframe(labels, validate):
-            error_msg = "labels is not found in the dataframe"
+            error_msg = "label is not found in the dataframe"
             raise KeyError(error_msg)
 
         return unique(labels)
@@ -431,8 +431,27 @@ class BaseCompare(object):
         return self._get_labels(2, validate=validate)
 
     def compute(self, pairs, x, x_link=None):
-        """Compare the records.
+        """Compare the records of each record pair.
 
+        Calling this method starts the comparing of records.
+
+        Parameters
+        ----------
+        pairs : pandas.MultiIndex
+            A pandas MultiIndex with the record pairs to compare. The indices
+            in the MultiIndex are indices of the DataFrame(s) to link.
+        x : pandas.DataFrame
+            The DataFrame to link. If `x_link` is given, the comparing is a
+            linking problem. If `x_link` is not given, the problem is one of
+            deduplication.
+        x_link : pandas.DataFrame, optional
+            The second DataFrame.
+
+        Returns
+        -------
+        pandas.DataFrame
+            A pandas DataFrame object with the result of each comparison of
+            values.
         """
 
         sublabels_left = self._get_labels_left(validate=x)

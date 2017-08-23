@@ -62,39 +62,42 @@ def _check_labels(labels, df):
 
 
 class Compare(BaseCompare):
-    """Compare record pairs with the tools in this class.
+    """Compare(block_size=1000000)
+
+    Class to compare record pairs with efficiently.
 
     Class to compare the attributes of candidate record pairs. The ``Compare``
-    class has several methods to compare data such as string similarity
-    measures, numeric metrics and exact comparison methods.
+    class has methods like ``string``, ``exact`` and ``numeric`` to initialise
+    the comparing of the records. The ``compute`` method is used to start the
+    actual comparing.
 
     Parameters
     ----------
     block_size : int
         The maximum size of data blocks. Default 1,000,000.
 
-    Examples
-    --------
-    In the following example, the record pairs of two historical datasets with
-    census data are compared. The datasets are named ``census_data_1980`` and
-    ``census_data_1990``. The ``candidate_pairs`` are the record pairs to
-    compare. The record pairs are compared on the first name, last name, sex,
-    date of birth, address, place, and income.
+    Example
+    -------
+    Consider two historical datasets with census data to link. The datasets
+    are named ``census_data_1980`` and ``census_data_1990``. The MultiIndex
+    ``candidate_pairs`` contains the record pairs to compare. The record pairs
+    are compared on the first name, last name, sex, date of birth, address,
+    place, and income::
 
-    >>> comp = recordlinkage.Compare()
-    >>> comp.string('first_name', 'name', method='jarowinkler')
-    >>> comp.string('lastname', 'lastname', method='jarowinkler')
-    >>> comp.exact('dateofbirth', 'dob')
-    >>> comp.exact('sex', 'sex')
-    >>> comp.string('address', 'address', method='levenshtein')
-    >>> comp.exact('place', 'place')
-    >>> comp.numeric('income', 'income')
+        # initialise class
+        comp = recordlinkage.Compare()
 
-    >>> comp.compute(candidate_pairs, census_data_1980, census_data_1990)
+        # initialise similarity measurement algorithms
+        comp.string('first_name', 'name', method='jarowinkler')
+        comp.string('lastname', 'lastname', method='jarowinkler')
+        comp.exact('dateofbirth', 'dob')
+        comp.exact('sex', 'sex')
+        comp.string('address', 'address', method='levenshtein')
+        comp.exact('place', 'place')
+        comp.numeric('income', 'income')
 
-    The attribute ``vectors`` is the DataFrame with the comparison data. It
-    can be called whenever you want.
-
+        # the method .compute() returns the DataFrame with the comparison data.
+        comp.compute(candidate_pairs, census_data_1980, census_data_1990)
     """
 
     def exact(self, s1, s2, *args, **kwargs):
@@ -103,13 +106,16 @@ class Compare(BaseCompare):
 
         Compare the record pairs exactly.
 
+        This method initialises the exact similarity measurement between
+        values. The similarity is 1 in case of agreement and 0 otherwise.
+
         Parameters
         ----------
 
-        s1 : label, pandas.Series
-            Series or DataFrame to compare all fields.
-        s2 : label, pandas.Series
-            Series or DataFrame to compare all fields.
+        s1 : str or int
+            Field name to compare in left DataFrame.
+        s2 : str or int
+            Field name to compare in right DataFrame.
         agree_value : float, str, numpy.dtype
             The value when two records are identical. Default 1. If 'values'
             is passed, then the value of the record pair is passed.
@@ -118,7 +124,7 @@ class Compare(BaseCompare):
         missing_value : float, str, numpy.dtype
             The value for a comparison with a missing value. Default 0.
         label : label
-            The name of the feature and the name of the column.
+            The label of the column in the resulting dataframe.
 
         """
 
@@ -128,16 +134,24 @@ class Compare(BaseCompare):
         """
         string(s1, s2, method='levenshtein', threshold=None, missing_value=0, label=None)
 
-        Compare strings.
+        Compute the (partial) similarity between strings values.
+
+        This method initialises the similarity measurement between string
+        values. The implemented algorithms are: 'jaro','jarowinkler',
+        'levenshtein', 'damerau_levenshtein', 'qgram' or 'cosine'. In case of
+        agreement, the similarity is 1 and in case of complete disagreement it
+        is 0. The Python Record Linkage Toolkit uses the `jellyfish` package
+        for the Jaro, Jaro-Winkler, Levenshtein and Damerau-Levenshtein
+        algorithms.
 
         Parameters
         ----------
-        s1 : label, pandas.Series
-            Series or DataFrame to compare all fields.
-        s2 : label, pandas.Series
-            Series or DataFrame to compare all fields.
-        method : str
-            A approximate string comparison method. Options are ['jaro',
+        s1 : str or int
+            The name or position of the column in the left DataFrame.
+        s2 : str or int
+            The name or position of the column in the right DataFrame.
+        method : str, default 'levenshtein'
+            An approximate string comparison method. Options are ['jaro',
             'jarowinkler', 'levenshtein', 'damerau_levenshtein', 'qgram',
             'cosine', 'smith_waterman', 'lcs']. Default: 'levenshtein'
         threshold : float, tuple of floats
@@ -146,7 +160,7 @@ class Compare(BaseCompare):
         missing_value : numpy.dtype
             The value for a comparison with a missing value. Default 0.
         label : label
-            The name of the feature and the name of the column.
+            The label of the column in the resulting dataframe.
 
         """
 
@@ -200,13 +214,13 @@ class Compare(BaseCompare):
         """
         numeric(s1, s2, method='linear', offset, scale, origin=0, missing_value=0, label=None)
 
-        Compute the similarity of numeric values.
+        Compute the (partial) similarity between numeric values.
 
-        This method returns the similarity of two numeric values. The
-        implemented algorithms are: 'step', 'linear', 'exp', 'gauss' or
-        'squared'. In case of agreement, the similarity is 1 and in case of
-        complete disagreement it is 0. The implementation is similar with
-        numeric comparing in ElasticSearch, a full-text search tool. The
+        This method initialises the similarity measurement between numeric
+        values. The implemented algorithms are: 'step', 'linear', 'exp',
+        'gauss' or 'squared'. In case of agreement, the similarity is 1 and in
+        case of complete disagreement it is 0. The implementation is similar
+        with numeric comparing in ElasticSearch, a full-text search tool. The
         parameters are explained in the image below (source ElasticSearch, The
         Definitive Guide)
 
@@ -217,10 +231,10 @@ class Compare(BaseCompare):
 
         Parameters
         ----------
-        s1 : label, pandas.Series
-            Series or DataFrame to compare all fields.
-        s2 : label, pandas.Series
-            Series or DataFrame to compare all fields.
+        s1 : str or int
+            The name or position of the column in the left DataFrame.
+        s2 : str or int
+            The name or position of the column in the right DataFrame.
         method : float
             The metric used. Options 'step', 'linear', 'exp', 'gauss' or
             'squared'. Default 'linear'.
@@ -235,7 +249,7 @@ class Compare(BaseCompare):
             The value if one or both records have a missing value on the
             compared field. Default 0.
         label : label
-            The name of the feature and the name of the column.
+            The label of the column in the resulting dataframe.
 
         Note
         ----
@@ -273,7 +287,7 @@ class Compare(BaseCompare):
         """
         geo(lat1, lng1, lat2, lng2, method='linear', offset, scale, origin=0, missing_value=0, label=None)
 
-        Compute the similarity of two WGS84 coordinates.
+        Compute the (partial) similarity between WGS84 coordinate values.
 
         Compare the geometric (haversine) distance between two WGS-
         coordinates. The similarity algorithms are 'step', 'linear', 'exp',
@@ -282,14 +296,14 @@ class Compare(BaseCompare):
 
         Parameters
         ----------
-        lat1 : pandas.Series, numpy.array, label/string
-            Series with Lat-coordinates
-        lng1 : pandas.Series, numpy.array, label/string
-            Series with Lng-coordinates
-        lat2 : pandas.Series, numpy.array, label/string
-            Series with Lat-coordinates
-        lng2 : pandas.Series, numpy.array, label/string
-            Series with Lng-coordinates
+        lat1 : str or int
+            The name or position of the column in the left DataFrame.
+        lng1 : str or int
+            The name or position of the column in the left DataFrame.
+        lat2 : str or int
+            The name or position of the column in the right DataFrame.
+        lng2 : str or int
+            The name or position of the column in the right DataFrame.
         method : str
             The metric used. Options 'step', 'linear', 'exp', 'gauss' or
             'squared'. Default 'linear'.
@@ -303,7 +317,7 @@ class Compare(BaseCompare):
         missing_value : numpy.dtype
             The value for a comparison with a missing value. Default 0.
         label : label
-            The name of the feature and the name of the column.
+            The label of the column in the resulting dataframe.
 
         """
 
@@ -346,16 +360,14 @@ class Compare(BaseCompare):
         """
         date(self, s1, s2, swap_month_day=0.5, swap_months='default', missing_value=0, label=None)
 
-        Compare two dates.
+        Compute the (partial) similarity between date values.
 
         Parameters
         ----------
-        s1 : pandas.Series, numpy.array, label/string
-            Dates. This can be a Series, DatetimeIndex or DataFrame (with
-            columns 'year', 'month' and 'day').
-        s2 : pandas.Series, numpy.array, label/string
-            This can be a Series, DatetimeIndex or DataFrame (with columns
-            'year', 'month' and 'day').
+        s1 : str or int
+            The name or position of the column in the left DataFrame.
+        s2 : str or int
+            The name or position of the column in the right DataFrame.
         swap_month_day : float
             The value if the month and day are swapped.
         swap_months : list of tuples
@@ -366,7 +378,7 @@ class Compare(BaseCompare):
         missing_value : numpy.dtype
             The value for a comparison with a missing value. Default 0.
         label : label
-            The name of the feature and the name of the column.
+            The label of the column in the resulting dataframe.
 
         """
 
