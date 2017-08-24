@@ -331,38 +331,39 @@ class BaseCompare(object):
                            *args, **kwargs):
         """Compute the similarity between values with a callable.
 
-        Core method to compare record pairs. This method takes a function and
-        data from both records in the record pair. The data is compared with
-        the compare function. The built-in methods also use this function.
+        This method initialises the comparing of values with a custom
+        function/callable. The function/callable should accept
+        numpy.ndarray's.
 
         Example
         -------
 
-        >>> comp = recordlinkage.Compare(PAIRS, DATAFRAME1, DATAFRAME2)
+        >>> comp = recordlinkage.Compare()
         >>> comp.compare_vectorized(custom_callable, 'first_name', 'name')
-        >>> comp.compare()
+        >>> comp.compare(PAIRS, DATAFRAME1, DATAFRAME2)
 
         Parameters
         ----------
         comp_func : function
-            A vectorized comparison function. This function can be a
-            built-in function or a user defined comparison function.
+            A comparison function. This function can be a built-in function
+            or a user defined comparison function. The function should accept
+            numpy.ndarray's as first two arguments. 
         labels_left : label, pandas.Series, pandas.DataFrame
             The labels, Series or DataFrame to compare.
         labels_right : label, pandas.Series, pandas.DataFrame
             The labels, Series or DataFrame to compare.
         *args :
-            Additional arguments.
+            Additional arguments to pass to callable comp_func.
         **kwargs :
-            Keyword arguments. (keyword 'label' is not allowed)
+            Additional keyword arguments to pass to callable comp_func. 
+            (keyword 'label' is reserved.)
         label : (list of) label(s)
             The name of the feature and the name of the column. IMPORTANT:
             This argument is a keyword argument.
         """
 
-        if 'label' in kwargs:
-            feature_label = kwargs['label']
-
+        # logging
+        feature_label = kwargs['label'] if 'label' in kwargs else None
         log_str = "compare {l_left} with {l_right} - user defined function"
         logging.info(log_str.format(l_left=labels_left, l_right=labels_right))
 
