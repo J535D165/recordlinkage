@@ -21,6 +21,8 @@ from recordlinkage.algorithms.string import levenshtein_similarity
 from recordlinkage.algorithms.string import damerau_levenshtein_similarity
 from recordlinkage.algorithms.string import qgram_similarity
 from recordlinkage.algorithms.string import cosine_similarity
+from recordlinkage.algorithms.string import smith_waterman_similarity
+from recordlinkage.algorithms.string import longest_common_substring_similarity
 
 from recordlinkage import rl_logging as logging
 
