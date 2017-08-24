@@ -194,6 +194,29 @@ class TestCompareApi(TestData):
         expected = DataFrame([1, 1, 1, 1, 1], index=ix, columns=['test'])
         pdt.assert_frame_equal(result, expected)
 
+    def test_compare_custom_instance_type(self):
+
+        A = DataFrame({'col': ['abc', 'abc', 'abc', 'abc', 'abc']})
+        B = DataFrame({'col': ['abc', 'abd', 'abc', 'abc', '123']})
+        ix = MultiIndex.from_arrays([A.index.values, B.index.values])
+
+        def call(s1, s2):
+
+            # this should raise on incorrect types
+            assert isinstance(s1, numpy.ndarray)
+            assert isinstance(s2, numpy.ndarray)
+
+            return np.ones(len(s1), dtype=np.int)
+
+        comp = recordlinkage.Compare()
+        comp.compare_vectorized(
+            lambda s1, s2: np.ones(len(s1), dtype=np.int),
+            'col', 'col'
+        )
+        result = comp.compute(ix, A, B)
+        expected = DataFrame([1, 1, 1, 1, 1], index=ix)
+        pdt.assert_frame_equal(result, expected)
+
     def test_compare_custom_vectorized_arguments_linking(self):
 
         A = DataFrame({'col': ['abc', 'abc', 'abc', 'abc', 'abc']})
