@@ -685,6 +685,9 @@ class TestCompareAlgorithms(unittest.TestCase):
             [u'prap'],
             [u'résumé'],
             [u'aba'],
+            [u''],
+            [u'peter'],
+            [u'']
         ],
             columns=['str_1'])
 
@@ -695,7 +698,10 @@ class TestCompareAlgorithms(unittest.TestCase):
             [u'christen peter'],
             [u'papr'],
             [u'resume'],
-            [u'abbaba']
+            [u'abbaba'],
+            [u'peter'],
+            [u''],
+            [u'']
         ],
             columns=['str_2'])
 
@@ -714,18 +720,18 @@ class TestCompareAlgorithms(unittest.TestCase):
         comp.string('str_1', 'str_2', method='lcs', norm='jaccard', min_len=3, name='jaccard_3')
         comp.string('str_1', 'str_2', method='lcs', norm='overlap', min_len=3, name='overlap_3')
 
-        expected_dice_2 = pandas.Series([.5517, .9285, .75, .5, .6666])
-        expected_jaccard_2 = pandas.Series([.3809, .8666, .6666, .3333, .5])
-        expected_overlap_2 = pandas.Series([.5717, .9285, .75, .5, 1])
+        expected_dice_2 = pandas.Series([.5517, .9285, .75, .5, .6666, 0, 0, 0])
+        expected_jaccard_2 = pandas.Series([.3809, .8666, .6666, .3333, .5,  0, 0, 0])
+        expected_overlap_2 = pandas.Series([.5717, .9285, .75, .5, 1,  0, 0, 0])
 
-        expected_dice_3 = pandas.Series([.4137, .9285, 0, .5, .6666])
-        expected_jaccard_3 = pandas.Series([.2608, .8666, 0, .3333, .5])
-        expected_overlap_3 = pandas.Series([.4285, .9285, 0, .5, 1])
+        expected_dice_3 = pandas.Series([.4137, .9285, 0, .5, .6666,  0, 0, 0])
+        expected_jaccard_3 = pandas.Series([.2608, .8666, 0, .3333, .5,  0, 0, 0])
+        expected_overlap_3 = pandas.Series([.4285, .9285, 0, .5, 1,  0, 0, 0])
 
         LCS_TEST_CASES = [
             (comp.vectors['dice_2'], expected_dice_2, 'dice_2'),
             (comp.vectors['jaccard_2'], expected_jaccard_2, 'jaccard_2'),
-            (comp.vectors['overlap_2'], expected_overlap_2,'overlap_2'),
+            (comp.vectors['overlap_2'], expected_overlap_2, 'overlap_2'),
             (comp.vectors['dice_3'], expected_dice_3, 'dice_3'),
             (comp.vectors['jaccard_3'], expected_jaccard_3, 'jaccard_3'),
             (comp.vectors['overlap_3'], expected_overlap_3, 'overlap_3'),
