@@ -107,7 +107,7 @@ and similarity measures.
 
 .. code:: python
 
-    compare = recordlinkage.Compare(candidate_links, df_a, df_b)
+    compare = recordlinkage.Compare()
 
     compare.string('name', 'name', method='jarowinkler', threshold=0.85)
     compare.exact('sex', 'gender')
@@ -117,7 +117,7 @@ and similarity measures.
     compare.exact('haircolor', 'haircolor', missing_value=9)
 
     # The comparison vectors
-    compare.vectors
+    compare_vectors = compare.compute(candidate_links, df_a, df_b)
 
 This record linkage package contains several classification algorithms.
 Plenty of the algorithms need trainings data (supervised learning) while
@@ -128,15 +128,15 @@ some others are unsupervised. An example of supervised learning:
     true_linkage = pandas.Series(YOUR_GOLDEN_DATA, index=pandas.MultiIndex(YOUR_MULTI_INDEX))
 
     logrg = recordlinkage.LogisticRegressionClassifier()
-    logrg.learn(compare.vectors[true_linkage.index], true_linkage)
+    logrg.learn(compare_vectors[true_linkage.index], true_linkage)
 
-    logrg.predict(compare.vectors)
+    logrg.predict(compare_vectors)
 
 and an example of unsupervised learning (the well known ECM-algorithm):
 
 .. code:: python
 
     ecm = recordlinkage.BernoulliEMClassifier()
-    ecm.learn(compare.vectors)
+    ecm.learn(compare_vectors)
 
 

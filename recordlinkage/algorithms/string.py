@@ -99,11 +99,15 @@ def qgram_similarity(s1, s2, include_wb=True, ngram=(2, 2)):
     # include word boundaries or not
     analyzer = 'char_wb' if include_wb is True else 'char'
 
+    # prepare data
+    data = s1.append(s2).fillna('')
+
     # The vectorizer
     vectorizer = CountVectorizer(
-        analyzer=analyzer, strip_accents='unicode', ngram_range=ngram)
-
-    data = s1.append(s2).fillna('')
+        analyzer=analyzer, 
+        strip_accents='unicode', 
+        ngram_range=ngram
+    )
 
     vec_fit = vectorizer.fit_transform(data)
 

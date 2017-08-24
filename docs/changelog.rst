@@ -2,6 +2,11 @@
 Release notes
 *************
 
+Version 0.10.0
+==============
+
+- A new compare API. 
+
 Version 0.9.0
 =============
 

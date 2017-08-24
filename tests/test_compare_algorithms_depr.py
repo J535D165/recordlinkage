@@ -292,17 +292,17 @@ class TestCompareAlgorithms(unittest.TestCase):
 
         # Basics
         result = comp.numeric('age', 'age', 'step', offset=2)
-        expected = pandas.Series([1, 1, 1, 0, 0], index=self.index_AB)
+        expected = pandas.Series([1, 1, 1, 0, 0], index=self.index_AB, dtype=np.float64)
         pdt.assert_series_equal(result, expected)
 
         # Basics
         result = comp.numeric('age', 'age', method='step', offset=2)
-        expected = pandas.Series([1, 1, 1, 0, 0], index=self.index_AB)
+        expected = pandas.Series([1, 1, 1, 0, 0], index=self.index_AB, dtype=np.float64)
         pdt.assert_series_equal(result, expected)
 
         # Basics
         result = comp.numeric('age', 'age', 'step', 2)
-        expected = pandas.Series([1, 1, 1, 0, 0], index=self.index_AB)
+        expected = pandas.Series([1, 1, 1, 0, 0], index=self.index_AB, dtype=np.float64)
         pdt.assert_series_equal(result, expected)
 
     def test_numeric_with_missings(self):
