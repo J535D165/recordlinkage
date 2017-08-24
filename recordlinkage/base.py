@@ -74,7 +74,7 @@ class BaseIndexator(object):
 
         self.verify_integrity = verify_integrity
 
-        logging.info("initialize %s object" % self.__class__.__name__)
+        logging.info("Indexing - initialize %s class" % self.__class__.__name__)
 
     @classmethod
     def _deduplication(cls, x):
@@ -160,13 +160,13 @@ class BaseIndexator(object):
         # linking
         if not self._deduplication(x):
 
-            logging.info("linking records between two DataFrames")
+            logging.info("Indexing - start indexing two DataFrames")
 
             pairs = self._link_index(*x)
 
         # deduplication
         else:
-            logging.info("linking records in DataFrame")
+            logging.info("Indexing - start indexing single DataFrame")
 
             pairs = self._dedup_index(*x)
 
@@ -180,7 +180,7 @@ class BaseIndexator(object):
         rr_avg = 1 - np.sum(self._n) / np.sum(self._n_max)
 
         # log
-        log_format = "candidate links: n={:d}, rr={:0.5f}, rr_avg={:0.5f}"
+        log_format = "Indexing - summary n={:d}, reduction_ratio={:0.5f}, reduction_ratio_mean={:0.5f}"
         logging.info(log_format.format(n, rr, rr_avg))
 
         return pairs
@@ -234,7 +234,7 @@ class BaseCompare(object):
     def __init__(self, pairs=None, df_a=None, df_b=None, low_memory=False,
                  block_size=1000000, njobs=1, **kwargs):
 
-        logging.info("initialize %s object" % self.__class__.__name__)
+        # logging.info("Comparing - initialize %s class" % self.__class__.__name__)
 
         if isinstance(pairs, (pandas.MultiIndex, pandas.Index)):
             self.deprecated = True
@@ -364,9 +364,8 @@ class BaseCompare(object):
         """
 
         # logging
-        feature_label = kwargs['label'] if 'label' in kwargs else None
-        log_str = "compare {l_left} with {l_right} - user defined function"
-        logging.info(log_str.format(l_left=labels_left, l_right=labels_right))
+        # log_str = "Comparing - initialize user defined function - compare {l_left} with {l_right}"
+        # logging.info(log_str.format(l_left=labels_left, l_right=labels_right))
 
         return self._compare_vectorized(
             comp_func, labels_left, labels_right, *args, **kwargs)

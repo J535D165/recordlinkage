@@ -22,6 +22,8 @@ from recordlinkage.algorithms.string import damerau_levenshtein_similarity
 from recordlinkage.algorithms.string import qgram_similarity
 from recordlinkage.algorithms.string import cosine_similarity
 
+from recordlinkage import rl_logging as logging
+
 
 def fillna_decorator(missing_value=np.nan):
 
@@ -127,6 +129,10 @@ class Compare(BaseCompare):
             The label of the column in the resulting dataframe.
 
         """
+
+        # logging
+        # log_str = "Comparing - initialise compare {l_left} with {l_right} - user defined function"
+        # logging.info(log_str.format(l_left=labels_left, l_right=labels_right))
 
         return self._compare_vectorized(_compare_exact, s1, s2, *args, **kwargs)
 
@@ -331,8 +337,6 @@ class Compare(BaseCompare):
 
             # compute the 1D distance between the values
             d = _haversine_distance(lat1, lng1, lat2, lng2)
-
-            print(d)
 
             if method == 'step':
                 num_sim_alg = _step_sim
