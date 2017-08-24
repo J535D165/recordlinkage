@@ -248,6 +248,19 @@ class TestCompareApi(TestData):
         expected = DataFrame([5, 5, 5, 5, 5], index=ix, columns=['test'])
         pdt.assert_frame_equal(result, expected)
 
+        # test with kwarg
+        comp = recordlinkage.Compare()
+        comp.compare_vectorized(
+            lambda s1, s2, x : np.ones(len(s1), dtype=np.int) * x, 
+            'col', 
+            'col', 
+            x=5, 
+            label='test'
+        )
+        result = comp.compute(ix, A, B)
+        expected = DataFrame([5, 5, 5, 5, 5], index=ix, columns=['test'])
+        pdt.assert_frame_equal(result, expected)
+
     def test_compare_custom_vectorized_dedup(self):
 
         A = DataFrame({'col': ['abc', 'abc', 'abc', 'abc', 'abc']})
