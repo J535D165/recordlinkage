@@ -241,7 +241,8 @@ class BaseCompare(object):
 
             warnings.warn(
                 "It seems you are using the older version of the Compare API, "
-                "see the documentation abou thow to update to the new API.",
+                "see the documentation about how to update to the new API. "
+                "http://recordlinkage.readthedocs.io/en/latest/ref-compare.html",
                 DeprecationWarning
             )
         else:
@@ -451,8 +452,8 @@ class BaseCompare(object):
         Returns
         -------
         pandas.DataFrame
-            A pandas DataFrame object with the result of each comparison of
-            values.
+            A pandas DataFrame with feature vectors, i.e. the result of 
+            comparing each record pair.
         """
 
         sublabels_left = self._get_labels_left(validate=x)

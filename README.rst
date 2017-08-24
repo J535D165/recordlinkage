@@ -50,9 +50,6 @@ are returned.
     block_class = recordlinkage.BlockIndex('surname')
     candidate_links = block_class.index(df_a, df_b)
 
-**Older versions of Python Record Linkage Toolkit use a different syntax for
-indexing.** `More info about migrating can be found here. <http://recordlinkage.readthedocs.io/en/latest/ref-index.html#migrating>`_
-
 For each candidate link, compare the records with one of the
 comparison or similarity algorithms in the Compare class.
 
@@ -68,7 +65,7 @@ comparison or similarity algorithms in the Compare class.
     c.numeric('income', 'income', method='gauss', offset=3, scale=3, missing_value=0.5)
 
     # The comparison vectors
-    c.compute(candidate_links, df_a, df_b)
+    feature_vectors = c.compute(candidate_links, df_a, df_b)
 
 This Python Record Linkage Toolkit contains multiple classification algorithms.
 Plenty of the algorithms do need training data (supervised learning) while
@@ -79,14 +76,14 @@ others are unsupervised. An example of supervised learning:
     logrg = recordlinkage.LogisticRegressionClassifier()
     logrg.learn(TRAINING_COMPARISON_VECTORS, TRAINING_CLASSES)
 
-    logrg.predict(c.vectors)
+    logrg.predict(feature_vectors)
 
 and an example of unsupervised learning (the well known ECM-algorithm):
 
 .. code:: python
 
     ecm = recordlinkage.ECMClassifier()
-    ecm.learn(c.vectors)
+    ecm.learn(feature_vectors)
 
 Main Features
 -------------

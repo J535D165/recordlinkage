@@ -96,7 +96,7 @@ class Compare(BaseCompare):
         comp.exact('place', 'place')
         comp.numeric('income', 'income')
 
-        # the method .compute() returns the DataFrame with the comparison data.
+        # the method .compute() returns the DataFrame with the feature vectors.
         comp.compute(candidate_pairs, census_data_1980, census_data_1990)
     """
 
