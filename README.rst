@@ -67,6 +67,13 @@ comparison or similarity algorithms in the Compare class.
     # The comparison vectors
     feature_vectors = c.compute(candidate_links, df_a, df_b)
 
+**The API has changed in version 0.9.0 and version 0.10.0.** See the migration
+docs: `migrate indexing`_ and `migrate comparing`_. 
+
+.. _`migrate indexing`: http://recordlinkage.readthedocs.io/en/latest/ref-index.html#migrating
+.. _`migrate comparing`: http://recordlinkage.readthedocs.io/en/latest/ref-compare.html#migrating
+
+
 This Python Record Linkage Toolkit contains multiple classification algorithms.
 Plenty of the algorithms do need training data (supervised learning) while
 others are unsupervised. An example of supervised learning:
