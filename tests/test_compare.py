@@ -871,8 +871,8 @@ class TestCompareStrings(TestData):
     @parameterized.expand(STRING_SIM_ALGORITHMS)
     def test_string_algorithms_nan(self, alg):
 
-        A = DataFrame({'col': ["nan", nan, nan, nan, nan]})
-        B = DataFrame({'col': ["nan", nan, nan, nan, nan]})
+        A = DataFrame({'col': [u"nan", nan, nan, nan, nan]})
+        B = DataFrame({'col': [u"nan", nan, nan, nan, nan]})
         ix = MultiIndex.from_arrays([A.index.values, B.index.values])
 
         comp = recordlinkage.Compare()
