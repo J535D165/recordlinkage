@@ -826,9 +826,8 @@ class TestCompareGeo(TestData):
         ix = MultiIndex.from_arrays([A.index.values, B.index.values])
 
         comp = recordlinkage.Compare()
-        comp.geo('lat', 'lng', 'lat', 'lng', method='unknown')
 
-        self.assertRaises(ValueError, comp.compute, ix, A, B)
+        self.assertRaises(ValueError, comp.geo, 'lat', 'lng', 'lat', 'lng', method='unknown')
 
 
 # tests/test_compare.py:TestCompareStrings
@@ -924,6 +923,5 @@ class TestCompareStrings(TestData):
         ix = MultiIndex.from_arrays([A.index.values, B.index.values])
 
         comp = recordlinkage.Compare()
-        comp.string('col', 'col', method='unknown_algorithm')
 
-        self.assertRaises(ValueError, comp.compute, ix, A, B)
+        self.assertRaises(ValueError, comp.string, 'col', 'col', method='unknown_algorithm')

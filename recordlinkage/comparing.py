@@ -172,42 +172,39 @@ class Compare(BaseCompare):
 
         """
 
+        if method == 'jaro':
+            str_sim_alg = jaro_similarity
+
+        elif method in ['jarowinkler', 'jaro_winkler']:
+            str_sim_alg = jarowinkler_similarity
+
+        elif method == 'levenshtein':
+            str_sim_alg = levenshtein_similarity
+
+        elif method in ['dameraulevenshtein', 'damerau_levenshtein']:
+            str_sim_alg = damerau_levenshtein_similarity
+
+        elif method == 'q_gram' or method == 'qgram':
+            str_sim_alg = qgram_similarity
+
+        elif method == 'cosine':
+            str_sim_alg = cosine_similarity
+
+        elif method == 'smith_waterman' or method == "smithwaterman":
+            str_sim_alg = smith_waterman_similarity
+
+        elif method == 'lcs':
+            str_sim_alg = longest_common_substring_similarity
+
+        else:
+            raise ValueError(
+                "The algorithm '{}' is not known.".format(method))
+
         @fillna_decorator(0)
-        def _string_internal(s1, s2, method, threshold=None, *args, **kwargs):
-            """
+        def _string_internal(s1, s2, call_method, threshold=None, *args, **kwargs):
+            """ Internal function to compute the numeric similarity algorithms."""
 
-            Internal function to compute the numeric similarity algorithms.
-
-            """
-            if method == 'jaro':
-                str_sim_alg = jaro_similarity
-
-            elif method in ['jarowinkler', 'jaro_winkler']:
-                str_sim_alg = jarowinkler_similarity
-
-            elif method == 'levenshtein':
-                str_sim_alg = levenshtein_similarity
-
-            elif method in ['dameraulevenshtein', 'damerau_levenshtein']:
-                str_sim_alg = damerau_levenshtein_similarity
-
-            elif method == 'q_gram' or method == 'qgram':
-                str_sim_alg = qgram_similarity
-
-            elif method == 'cosine':
-                str_sim_alg = cosine_similarity
-
-            elif method == 'smith_waterman' or method == "smithwaterman":
-                str_sim_alg = smith_waterman_similarity
-
-            elif method == 'lcs':
-                str_sim_alg = longest_common_substring_similarity
-
-            else:
-                raise ValueError(
-                    "The algorithm '{}' is not known.".format(method))
-
-            c = str_sim_alg(s1, s2, *args, **kwargs)
+            c = call_method(s1, s2, *args, **kwargs)
 
             if threshold:
                 return (c >= threshold).astype(np.float64)
@@ -215,7 +212,7 @@ class Compare(BaseCompare):
                 return c
 
         return self._compare_vectorized(
-            _string_internal, s1, s2, method, threshold, *args, **kwargs
+            _string_internal, s1, s2, str_sim_alg, threshold, *args, **kwargs
         )
 
     def numeric(self, s1, s2, method='linear', *args, **kwargs):
@@ -266,30 +263,35 @@ class Compare(BaseCompare):
 
         """
 
+        if method == 'step':
+            num_sim_alg = _step_sim
+
+        elif method in ['linear', 'lin']:
+            num_sim_alg = _linear_sim
+
+        elif method == 'squared':
+            num_sim_alg = _squared_sim
+
+        elif method in ['exp', 'exponential']:
+            num_sim_alg = _exp_sim
+
+        elif method in ['gauss', 'gaussian']:
+            num_sim_alg = _gauss_sim
+            
+        else:
+            raise ValueError(
+                "The algorithm '{}' is not known.".format(method))
+
         @fillna_decorator(0)
-        def _num_internal(s1, s2, method, *args, **kwargs):
+        def _num_internal(s1, s2, call_method, *args, **kwargs):
             """Internal function to compute the numeric similarity."""
 
             # compute the 1D distance between the values
             d = _1d_distance(s1, s2)
 
-            if method == 'step':
-                num_sim_alg = _step_sim
-            elif method in ['linear', 'lin']:
-                num_sim_alg = _linear_sim
-            elif method == 'squared':
-                num_sim_alg = _squared_sim
-            elif method in ['exp', 'exponential']:
-                num_sim_alg = _exp_sim
-            elif method in ['gauss', 'gaussian']:
-                num_sim_alg = _gauss_sim
-            else:
-                raise ValueError(
-                    "The algorithm '{}' is not known.".format(method))
+            return call_method(d, *args, **kwargs)
 
-            return num_sim_alg(d, *args, **kwargs)
-
-        return self._compare_vectorized(_num_internal, s1, s2, method, *args, **kwargs)
+        return self._compare_vectorized(_num_internal, s1, s2, num_sim_alg, *args, **kwargs)
 
     def geo(self, lat1, lng1, lat2, lng2, method='linear', *args, **kwargs):
         """
@@ -329,38 +331,37 @@ class Compare(BaseCompare):
 
         """
 
+        if method == 'step':
+            num_sim_alg = _step_sim
+
+        elif method in ['linear', 'lin']:
+            num_sim_alg = _linear_sim
+
+        elif method == 'squared':
+            num_sim_alg = _squared_sim
+
+        elif method in ['exp', 'exponential']:
+            num_sim_alg = _exp_sim
+
+        elif method in ['gauss', 'gaussian']:
+            num_sim_alg = _gauss_sim
+            
+        else:
+            raise ValueError(
+                "The algorithm '{}' is not known.".format(method))
+
         @fillna_decorator(0)
-        def _num_internal(lat1, lng1, lat2, lng2, method, *args, **kwargs):
-            """
-
-            Internal function to compute the numeric similarity algorithms.
-
-            """
+        def _num_internal(lat1, lng1, lat2, lng2, call_method, *args, **kwargs):
+            """Internal function to compute the numeric similarity algorithms."""
 
             # compute the 1D distance between the values
             d = _haversine_distance(lat1, lng1, lat2, lng2)
 
-
-            if method == 'step':
-                num_sim_alg = _step_sim
-            elif method in ['linear', 'lin']:
-                num_sim_alg = _linear_sim
-            elif method == 'squared':
-                num_sim_alg = _squared_sim
-            elif method in ['exp', 'exponential']:
-                num_sim_alg = _exp_sim
-            elif method in ['gauss', 'gaussian']:
-                num_sim_alg = _gauss_sim
-            else:
-                raise ValueError(
-                    "The algorithm '{}' is not known.".format(method)
-                )
-
-            return num_sim_alg(d, *args, **kwargs)
+            return call_method(d, *args, **kwargs)
 
         return self._compare_vectorized(
             _num_internal, (lat1, lng1), (lat2, lng2),
-            method, *args, **kwargs
+            num_sim_alg, *args, **kwargs
         )
 
     def date(self, s1, s2, swap_month_day=0.5, swap_months='default', *args, **kwargs):
