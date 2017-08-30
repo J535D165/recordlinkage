@@ -340,7 +340,6 @@ class Compare(BaseCompare):
             # compute the 1D distance between the values
             d = _haversine_distance(lat1, lng1, lat2, lng2)
 
-            print(d)
 
             if method == 'step':
                 num_sim_alg = _step_sim
