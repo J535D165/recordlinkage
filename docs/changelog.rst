@@ -2,6 +2,14 @@
 Release notes
 *************
 
+Version 0.10.1
+==============
+
+- print statement in the geo compare algorithm removed. 
+- String, numeric and geo compare functions now raise directly when an
+  incorrect algorithm name is passed. 
+- Fix unit test that failed on Python 2.7. 
+
 Version 0.10.0
 ==============
 
