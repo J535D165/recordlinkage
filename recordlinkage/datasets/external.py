@@ -91,7 +91,7 @@ def load_krebsregister(block=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], missing_values=Non
 
 def _download_krebsregister():
 
-    zip_file_url = "https://archive.ics.uci.edu/ml/machine-learning-databases/00210/donation.zip"
+    zip_file_url = "http://archive.ics.uci.edu/ml/machine-learning-databases/00210/donation.zip"
 
     try:
         print("Start downloading the data.")
