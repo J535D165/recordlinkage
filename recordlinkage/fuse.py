@@ -189,7 +189,7 @@ class FuseCore(object):
 
     def resolve(self, fun, values_a, values_b, meta_a=None, meta_b=None, name=None,
                 transform_vals=None, transform_meta=None, static_meta=False, remove_na_vals=True,
-                remove_na_meta=None, params=None, description=None, **kwargs):
+                remove_na_meta=None, params=None, description=None, handler_override=None, **kwargs):
         """
         Queue a conflict resolution job for later computation. Conflict resolution job metadata
         is automatically stored in self.resolution_queue.
@@ -209,6 +209,8 @@ class FuseCore(object):
         :param bool remove_na_meta: If True, value/metadata pairs will be removed if metadata is missing (i.e. np.nan).
         :param tuple params: Extra parameters used by the conflict resolution function.
         :param str description: A description string for use in logging, e.g. 'cry_with_the_wolves'.
+        :param function handler_override: If specified, this function will be used to handle this job. If None,
+        defaults to self._do_resolve.
         :param kwargs: Optional keyword arguments.
         :return: A dictionary of metadata values.
         """
@@ -231,6 +233,11 @@ class FuseCore(object):
         else:
             all_params = tuple(listify(params) + na_params)
 
+        if handler_override is not None:
+            handler = handler_override
+        else:
+            handler = self._do_resolve
+
         # Store metadata
         job = {
             'fun': fun,
@@ -244,6 +251,7 @@ class FuseCore(object):
             'params': all_params,
             'name': name,
             'description': description,
+            'handler': handler,
             'kwargs': kwargs
         }
         self.resolution_queue.append(job)
@@ -293,6 +301,15 @@ class FuseCore(object):
         self.df_b = df_b
         self._sep = sep
 
+        if self.predictions is not None:
+            # Turn predictions into desired formats
+            pred_index = self.predictions.index
+            pred_list = list(self.predictions)
+
+            # Update vectors and indices
+            self.vectors = self.vectors.iloc[pred_list]
+            self.index = self.vectors.index.to_frame()
+
     def _fusion_preprocess(self):
         """
         Subclass specific pre-fusion computation. Not implemented in FuseCore.
@@ -330,10 +347,10 @@ class FuseCore(object):
                             job['name'] = name
                             break
 
-    def _do_resolve(self, job):
+    def _handle_job(self, job):
         """
-        Perform conflict resolution for a queued job, by pre-processing data (_make_resolution_series) and performing
-        the resolution (i.e. by applying a conflict resolution function).
+        Passes on a conflict resolution job to the appropriate handling function,
+        as specified by job['handler']. Also logs activity for user.
 
         :param dict job: A dictionary of conflict resolution job metadata.
         :return: pandas.Series containing resolved/canonical values.
@@ -346,6 +363,29 @@ class FuseCore(object):
             + str(job['name'])
             + ' (' + str(job['description']) + ')'
         )
+
+        data = job['handler'](job)
+
+        rl_logging.info(
+            bcolors.OKGREEN
+            + str(datetime.datetime.now())[:-7] + ':'
+            + ' finished '
+            + str(job['name'])
+            + ' (time elapsed: '
+            + str(datetime.datetime.now() - t1) + ')'
+            + bcolors.ENDC
+        )
+
+        return data
+
+    def _do_resolve(self, job):
+        """
+        Perform conflict resolution for a queued job, by pre-processing data (_make_resolution_series) and performing
+        the resolution (i.e. by applying a conflict resolution function).
+
+        :param dict job: A dictionary of conflict resolution job metadata.
+        :return: pandas.Series containing resolved/canonical values.
+        """
 
         data = self._make_resolution_series(
             job['values_a'],
@@ -361,16 +401,6 @@ class FuseCore(object):
 
         if job['name'] is not None:
             data = data.rename(job['name'])
-
-        rl_logging.info(
-            bcolors.OKGREEN
-            + str(datetime.datetime.now())[:-7] + ':'
-            + ' finished '
-            + str(job['name'])
-            + ' (time elapsed: '
-            + str(datetime.datetime.now() - t1) + ')'
-            + bcolors.ENDC
-        )
 
         return data
 
@@ -434,68 +464,13 @@ class FuseDuplicates(FuseCore):
 
 
 class FuseLinks(FuseCore):
-    def __init__(self, unique_a=False, unique_b=False, rank_method=None, rank_links_by=None, rank_ascending=False):
+    def __init__(self):
         """
         ``FuseLinks`` is initialized without data. The initialized
         object is populated by metadata describing a series of data resolutions,
         which are executed when ``.fuse()`` is called.
-
-        Candidate links and classified matches will generally be many-to-many (i.e. records from both sources
-        may be matched to any record if they are sufficiently similar). ``FuseLinks`` can optionally enforce
-        "one-to-many" or "one-to-one" matches, i.e. records from one or both sources
-         will only be matched with one other record.
-
-        :param bool unique_a: If True, records from df_a will may only match with a single record in df_b.
-        :param bool unique_b: If True, records from df_b will may only match with a single record in df_a.
-        :param str rank_method: How should the quality of candidate links be compared?
-        :param list/str rank_links_by: The name of one or more comparison columns (i.e. from recordlinkage.Compare)
-        which should be used to compare candidate links using ``rank_method``.
-        :param bool rank_ascending: If True, candidate links with lower comparisonscores will be preferred.
         """
         super().__init__()
-        self.unique_a = unique_a
-        self.unique_b = unique_b
-        self.rank_method = rank_method
-        if rank_links_by is not None:
-            self.rank_links_by = listify(rank_links_by)
-        else:
-            self.rank_links_by = None
-        self.rank_ascending = rank_ascending
-
-    def _apply_predictions(self):
-        """
-        If a Series of classification predictions is provided, and/or link refinements are specified,
-        this method applies those classifications to reduce the set of candidate links.
-
-        :return: None
-        """
-
-        # Turn predictions into desired formats
-        pred_index = self.predictions.index
-        pred_list = list(self.predictions)
-
-        # Update vectors and indices
-        self.vectors = self.vectors.iloc[pred_list]
-        self.index = self.vectors.index.to_frame()
-
-        # Refine data (this should probably be removed.)
-        self.df_a = self.df_a.loc[pred_index.to_frame()[0]].iloc[pred_list].set_index(self.index.index)
-        self.df_b = self.df_b.loc[pred_index.to_frame()[1]].iloc[pred_list].set_index(self.index.index)
-
-        # Update predictions and probabilities
-        if self.probabilities is not None:
-            self.probabilities = self.probabilities.iloc[pred_list]
-        if self.predictions is not None:
-            self.predictions = self.predictions.iloc[pred_list]
-
-    def _fusion_preprocess(self):
-        """
-        Automatically runs subclass-specific preprocessing before conflict resolution occurs.
-
-        :return: None
-        """
-        if self.predictions is not None:
-            self._apply_predictions()
 
     def _get_df_a_col(self, name):
         """
@@ -695,6 +670,36 @@ class FuseLinks(FuseCore):
 
         return output
 
+    def _do_keep_job(self, job):
+        """
+        Handles a conflict resolution job created by FuseLinks.keep, where data is included
+        unaltered from one data source. Using this handling method bypasses the overhead
+        of _get_resolution_series and conflict handling functions, which are unnecessary
+        in this case.
+
+        :param dict job: A dictionary of conflict resolution job metadata.
+        :return: pandas.Series containing resolved/canonical values.
+        """
+
+        source_a = job['values_a'] == 1
+        source_b = job['values_b'] == 1
+        # enforce xor condition: There is one value in values_a or values_b but not both
+        if source_a == source_b:
+            raise AssertionError('_do_keep_job only operates on a single column from a single source.')
+
+        if source_a:
+            data = self._get_df_a_col(job['values_a'][0])
+        else:
+            data = self._get_df_b_col(job['values_b'][0])
+
+        if callable(job['transform_vals']):
+            data = data.apply(job['transform_vals'])
+
+        if job['name'] is not None:
+            data = data.rename(job['name'])
+
+        return data
+
     def keep(self, columns_a, columns_b, suffix_a=None, suffix_b=None, sep='_'):
         """
         Specifies columns from df_a and df_b which should be included in the fused output, but
@@ -709,22 +714,21 @@ class FuseLinks(FuseCore):
         with ``sep='_'``, ``taken_name`` becomes ``taken_name_1``..
         :return: None
         """
-        # Add "keeps" to a new queue of columns — analogous but distinct from the resolution queue
 
         columns_a = listify(columns_a)
         columns_b = listify(columns_b)
 
         for col in columns_a:
             if suffix_a is None:
-                self.resolve(identity, col, [], name=col)
+                self.resolve(identity, col, [], name=col, handler_override=self._do_keep_job)
             else:
-                self.resolve(identity, col, [], name=col + sep + str(suffix_a))
+                self.resolve(identity, col, [], name=col + sep + str(suffix_a), handler_override=self._do_keep_job)
 
         for col in columns_b:
             if suffix_b is None:
-                self.resolve(identity, [], col, name=col)
+                self.resolve(identity, [], col, name=col, handler_override=self._do_keep_job)
             else:
-                self.resolve(identity, [], col, name=col + sep + str(suffix_b))
+                self.resolve(identity, [], col, name=col + sep + str(suffix_b), handler_override=self._do_keep_job)
 
     # FuseLinks Conflict Resolution Realizations
 
