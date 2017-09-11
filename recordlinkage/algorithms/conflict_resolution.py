@@ -355,11 +355,13 @@ def aggregate(x, method, remove_na_vals):
     if method == 'sum':
         return sum(vals)
     elif method == 'mean':
-        return statistics.mean(vals)
+        return np.mean(vals)
     elif method == 'stdev':
-        return statistics.stdev(vals)
+        return np.std(vals)
     elif method == 'variance':
-        return statistics.variance(vals)
+        return np.var(vals)
+    else:
+        raise ValueError('Unrecognized aggregation method.')
 
 
 def choose_trusted(x, trusted, tie_break_trusted, tie_break_untrusted, remove_na_vals, remove_na_meta):

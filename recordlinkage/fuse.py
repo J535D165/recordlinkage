@@ -7,6 +7,8 @@ import datetime
 import multiprocessing as mp
 import pandas as pd
 
+from labutils import bcolors
+
 from recordlinkage import rl_logging
 from recordlinkage.utils import listify
 from recordlinkage.algorithms.conflict_resolution import (annotated_concat,
@@ -338,18 +340,22 @@ class FuseCore(object):
         """
         t1 = datetime.datetime.now()
 
-        rl_logging.info(str(datetime.datetime.now())
-                        + ':' + 'start'
-                        + ':' + str(job['name'])
-                        + ':' + str(job['description']))
+        rl_logging.info(
+            str(datetime.datetime.now())[:-7]
+            + ':' + ' started resolving to '
+            + str(job['name'])
+            + ' (' + str(job['description']) + ')'
+        )
 
-        data = self._make_resolution_series(job['values_a'],
-                                            job['values_b'],
-                                            meta_a=job['meta_a'],
-                                            meta_b=job['meta_b'],
-                                            transform_vals=job['transform_vals'],
-                                            transform_meta=job['transform_meta'],
-                                            static_meta=job['static_meta'])
+        data = self._make_resolution_series(
+            job['values_a'],
+            job['values_b'],
+            meta_a=job['meta_a'],
+            meta_b=job['meta_b'],
+            transform_vals=job['transform_vals'],
+            transform_meta=job['transform_meta'],
+            static_meta=job['static_meta']
+        )
 
         data = data.apply(job['fun'], args=job['params'])
 
@@ -357,11 +363,13 @@ class FuseCore(object):
             data = data.rename(job['name'])
 
         rl_logging.info(
-            str(datetime.datetime.now())
-            + ':' + 'finished'
-            + ':' + str(job['name'])
-            + ':' + str(job['description'])
-            + ':' + str(datetime.datetime.now() - t1)
+            bcolors.OKGREEN
+            + str(datetime.datetime.now())[:-7] + ':'
+            + ' finished '
+            + str(job['name'])
+            + ' (time elapsed: '
+            + str(datetime.datetime.now() - t1) + ')'
+            + bcolors.ENDC
         )
 
         return data
