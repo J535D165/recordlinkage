@@ -2,9 +2,11 @@ from __future__ import division
 from __future__ import unicode_literals
 
 import types
+import typing
 import datetime
-
 import multiprocessing as mp
+from typing import Callable
+
 import pandas as pd
 
 from labutils import bcolors
@@ -19,6 +21,8 @@ from recordlinkage.algorithms.conflict_resolution import (annotated_concat,
                                                           choose_min,
                                                           choose_shortest,
                                                           choose_longest,
+                                                          choose_shortest_tie_break,
+                                                          choose_longest_tie_break,
                                                           choose_metadata_max,
                                                           choose_metadata_min,
                                                           choose_random,
@@ -31,7 +35,7 @@ from recordlinkage.algorithms.conflict_resolution import (annotated_concat,
                                                           nullify)
 
 
-def process_tie_break(tie_break):
+def process_tie_break(tie_break) -> Callable[[tuple, bool], any]:
     """
     Handles string/function -> function happing for tie breaking.
 
@@ -56,9 +60,9 @@ def process_tie_break(tie_break):
         elif tie_break == 'max':
             tie_break_fun = choose_max
         elif tie_break == 'shortest':
-            tie_break_fun = choose_shortest
+            tie_break_fun = choose_shortest_tie_break
         elif tie_break == 'longest':
-            tie_break_fun = choose_longest
+            tie_break_fun = choose_longest_tie_break
         elif tie_break == 'null':
             tie_break_fun = nullify
         else:
@@ -79,7 +83,6 @@ class FuseCore(object):
         self.vectors = None
         self.index = None
         self.predictions = None
-        self.probabilities = None
         self.df_a = None
         self.df_b = None
         self.suffix_a = None
@@ -88,6 +91,8 @@ class FuseCore(object):
         self._bases_taken = []
         self._names_taken = []
         self._sep = ''
+        self._index_level_0 = None
+        self._index_level_1 = None
 
     # Conflict Resolution Realizations
 
@@ -160,11 +165,12 @@ class FuseCore(object):
         :param bool remove_na_vals: If True, value/metadata pairs will be removed if the value is missing (i.e. np.nan).
         :return: None
         """
-        # Metrics Available 2017-08-01: sum, mean, stdev, variance
+        # Metrics Available 2017-08-01: sum, mean, stdev, var
         self.resolve(aggregate, values_a, values_b, params=(metric,), name=name, remove_na_vals=remove_na_vals,
                      description='meet_in_the_middle')
 
-    def keep_up_to_date(self, values_a, values_b, dates_a, dates_b, tie_break='random', name=None, remove_na_vals=True):
+    def keep_up_to_date(self, values_a, values_b, dates_a, dates_b, tie_break='random',
+                        name=None, remove_na_vals=True, remove_na_meta=True):
         """
         Keeps the most recent value. Values in values_a and values_b will be matched
         (in order) to dates in dates_a and dates_b. However, note that values and
@@ -178,14 +184,16 @@ class FuseCore(object):
         :param str/list values_b: Column names from df_b to be resolved.
         :param str/list dates_a: Column names for dates in df_a.
         :param str/list dates_b: Column names for dates in df_b.
-        :param str/function tie_break: A conflict resolution function to be used to break ties. choose_random be default.
+        :param str/function tie_break: A conflict resolution function to be used to break ties.
+        Default is choose_random.
         :param str name: The name of the resolved column.
         :param bool remove_na_vals: If True, value/metadata pairs will be removed if the value is missing (i.e. np.nan).
+        :param bool remove_na_meta: If True, value/metadata pairs will be removed if the date is missing (i.e. np.nan).
         :return: None
         """
         self.resolve(choose_metadata_max, values_a, values_b, meta_a=dates_a, meta_b=dates_b,
-                     name=name, remove_na_vals=remove_na_vals, params=(process_tie_break(tie_break),),
-                     description='keep_up_to_date')
+                     name=name, remove_na_vals=remove_na_vals, remove_na_meta=remove_na_meta,
+                     params=(process_tie_break(tie_break),), description='keep_up_to_date')
 
     def resolve(self, fun, values_a, values_b, meta_a=None, meta_b=None, name=None,
                 transform_vals=None, transform_meta=None, static_meta=False, remove_na_vals=True,
@@ -280,7 +288,7 @@ class FuseCore(object):
         # Override in subclass.
         return pd.Series()
 
-    def _fusion_init(self, vectors, df_a, df_b, predictions, probabilities, sep):
+    def _fusion_init(self, vectors, df_a, df_b, predictions, sep):
         """
         A pre-fusion initialization routine to store the data inputs for access during
         the conflict resolution / data fusion process.
@@ -289,17 +297,28 @@ class FuseCore(object):
         :param pandas.DataFrame df_a: The original first data frame.
         :param pandas.DataFrame df_b: The original second data frame.
         :param pandas.Series predictions: A pandas.Series of True/False classifications.
-        :param pandas.Series probabilities: A pandas.Series of candidate link probabilities (0 ≤ p ≤ 1).
         :param str sep: A string separator to be used in resolving column naming conflicts.
         :return: None
         """
+        # Comparison vectors
         self.vectors = vectors
+
+        # Comparison / candidate link index
         self.index = vectors.index.to_frame()
+
+        # Prediction vector
         self.predictions = predictions
-        self.probabilities = probabilities
+
+        # Original data
         self.df_a = df_a
         self.df_b = df_b
+
+        # String separator to be used when resolving duplicate names
         self._sep = sep
+
+        # If custom names are used for index levels
+        self._index_level_0 = self.index.columns[0]
+        self._index_level_1 = self.index.columns[1]
 
         if self.predictions is not None:
             # Turn predictions into desired formats
@@ -363,7 +382,6 @@ class FuseCore(object):
             + str(job['name'])
             + ' (' + str(job['description']) + ')'
         )
-
         data = job['handler'](job)
 
         rl_logging.info(
@@ -404,7 +422,7 @@ class FuseCore(object):
 
         return data
 
-    def fuse(self, vectors, df_a, df_b, predictions=None, probabilities=None, n_cores=mp.cpu_count(), sep='_'):
+    def fuse(self, vectors, df_a, df_b, predictions=None, n_cores=mp.cpu_count(), sep='_'):
         """
         Perform conflict resolution and data fusion for given data, using accumulated conflict resolution metadata.
 
@@ -412,7 +430,6 @@ class FuseCore(object):
         :param pandas.DataFrame df_a: The original first data frame.
         :param pandas.DataFrame df_b: The original second data frame.
         :param pandas.Series predictions: A pandas.Series of True/False classifications.
-        :param pandas.Series probabilities: A pandas.Series of candidate link probabilities (0 ≤ p ≤ 1).
         :param n_cores: The number of cores to be used for processing. Defaults to all cores (mp.cpu_count()).
         :param str sep: A string separator to be used in resolving column naming conflicts.
         :return: A pandas.DataFrame with resolved/fused data.
@@ -421,11 +438,8 @@ class FuseCore(object):
         if not isinstance(predictions, (type(None), pd.Series)):
             raise ValueError('Predictions must be a pandas Series.')
 
-        if not isinstance(probabilities, (type(None), pd.Series)):
-            raise ValueError('Probabilities must be a pandas Series.')
-
         # Save references to input data.
-        self._fusion_init(vectors, df_a, df_b, predictions, probabilities, sep)
+        self._fusion_init(vectors, df_a, df_b, predictions, sep)
 
         # Subclass-specific setup (e.g. applying refinements or detecting clusters).
         self._fusion_preprocess()
@@ -435,13 +449,13 @@ class FuseCore(object):
 
         # Compute resolved values for output.
         with mp.Pool(n_cores) as p:
-            fused = p.map(self._do_resolve, self.resolution_queue)
+            fused = p.map(self._handle_job, self.resolution_queue)
 
         return pd.concat(fused, axis=1).set_index(self.index.index)
 
 
 class FuseDuplicates(FuseCore):
-    def __init__(self, method='???'):
+    def __init__(self, method=''):
         """
         ``FuseDuplicates`` is initialized without data. The initialized
         object is populated by metadata describing a series of data resolutions,
@@ -479,7 +493,7 @@ class FuseLinks(FuseCore):
         :param str name: Column name.
         :return: A ``pandas.Series``.
         """
-        return self.df_a[name].loc[list(self.index[0])]
+        return self.df_a[name].loc[list(self.index[self._index_level_0])]
 
     def _get_df_b_col(self, name):
         """
@@ -488,7 +502,7 @@ class FuseLinks(FuseCore):
         :param str name: Column name.
         :return: A ``pandas.Series``.
         """
-        return self.df_b[name].loc[list(self.index[1])]
+        return self.df_b[name].loc[list(self.index[self._index_level_1])]
 
     def _make_resolution_series(self, values_a, values_b, meta_a=None, meta_b=None, transform_vals=None,
                                 transform_meta=None, static_meta=False, **kwargs):
@@ -619,7 +633,7 @@ class FuseLinks(FuseCore):
             if static_meta is True:
                 for _ in range(len(values_a)):
                     metadata_a.append(
-                        pd.Series([meta_a for _ in range(len(self.index))], index=self.index[0])
+                        pd.Series([meta_a for _ in range(len(self.index))], index=self.index[self._index_level_0])
                     )
             elif generalize_meta_a is True:
                 for _ in range(len(values_a)):
@@ -637,7 +651,7 @@ class FuseLinks(FuseCore):
             if static_meta is True:
                 for _ in range(len(values_b)):
                     metadata_b.append(
-                        pd.Series([meta_b for _ in range(len(self.index))], index=self.index[1])
+                        pd.Series([meta_b for _ in range(len(self.index))], index=self.index[self._index_level_1])
                     )
             elif generalize_meta_b is True:
                 for _ in range(len(values_b)):
@@ -670,9 +684,9 @@ class FuseLinks(FuseCore):
 
         return output
 
-    def _do_keep_job(self, job):
+    def _do_keep(self, job):
         """
-        Handles a conflict resolution job created by FuseLinks.keep, where data is included
+        Handles a conflict resolution job created by FuseLinks.keep_original, where data is included
         unaltered from one data source. Using this handling method bypasses the overhead
         of _get_resolution_series and conflict handling functions, which are unnecessary
         in this case.
@@ -681,16 +695,24 @@ class FuseLinks(FuseCore):
         :return: pandas.Series containing resolved/canonical values.
         """
 
-        source_a = job['values_a'] == 1
-        source_b = job['values_b'] == 1
+        vals_a = listify(job['values_a'])
+        vals_b = listify(job['values_b'])
+
+        source_a = len(vals_a) == 1
+        source_b = len(vals_b) == 1
         # enforce xor condition: There is one value in values_a or values_b but not both
         if source_a == source_b:
-            raise AssertionError('_do_keep_job only operates on a single column from a single source.')
+            raise AssertionError(
+                '_do_keep only operates on a single column from a single source.'
+                'Was given job["values_a"] = {}, and job["values_b"] = {}'.format(
+                    vals_a,
+                    vals_b,
+                ))
 
         if source_a:
-            data = self._get_df_a_col(job['values_a'][0])
+            data = self._get_df_a_col(vals_a[0])
         else:
-            data = self._get_df_b_col(job['values_b'][0])
+            data = self._get_df_b_col(vals_b[0])
 
         if callable(job['transform_vals']):
             data = data.apply(job['transform_vals'])
@@ -698,9 +720,11 @@ class FuseLinks(FuseCore):
         if job['name'] is not None:
             data = data.rename(job['name'])
 
+        data = data.reset_index(drop=True)
+
         return data
 
-    def keep(self, columns_a, columns_b, suffix_a=None, suffix_b=None, sep='_'):
+    def keep_original(self, columns_a, columns_b, suffix_a=None, suffix_b=None, sep='_'):
         """
         Specifies columns from df_a and df_b which should be included in the fused output, but
         which do not require conflict resolution. This methods queues a job in self.resolution_queue
@@ -720,15 +744,15 @@ class FuseLinks(FuseCore):
 
         for col in columns_a:
             if suffix_a is None:
-                self.resolve(identity, col, [], name=col, handler_override=self._do_keep_job)
+                self.resolve(identity, [col], [], name=col, handler_override=self._do_keep)
             else:
-                self.resolve(identity, col, [], name=col + sep + str(suffix_a), handler_override=self._do_keep_job)
+                self.resolve(identity, [col], [], name=col + sep + str(suffix_a), handler_override=self._do_keep)
 
         for col in columns_b:
             if suffix_b is None:
-                self.resolve(identity, [], col, name=col, handler_override=self._do_keep_job)
+                self.resolve(identity, [], [col], name=col, handler_override=self._do_keep)
             else:
-                self.resolve(identity, [], col, name=col + sep + str(suffix_b), handler_override=self._do_keep_job)
+                self.resolve(identity, [], [col], name=col + sep + str(suffix_b), handler_override=self._do_keep)
 
     # FuseLinks Conflict Resolution Realizations
 

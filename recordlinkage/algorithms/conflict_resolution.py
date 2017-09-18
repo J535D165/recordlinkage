@@ -3,9 +3,12 @@ from __future__ import unicode_literals
 
 import random
 import collections
-import statistics
-
+from typing import Callable, TypeVar
 import numpy as np
+
+import recordlinkage.rl_logging as rl_log
+
+TieBreaker = Callable[[tuple, bool], any]
 
 
 def safe_isnan(x):
@@ -165,7 +168,6 @@ def choose_min(x, remove_na_vals):
     Choose the smallest value.
 
     :param tuple x: Contains a tuple of values to be resolved.
-    :param function tie_break: A conflict resolution function to be used in the case of a tie.
     :param bool remove_na_vals: If True, value/metadata pairs will be removed if the value is missing (i.e. np.nan).
     :return: The smallest value.
     """
@@ -173,7 +175,13 @@ def choose_min(x, remove_na_vals):
     length = len(vals)
     if length == 0:
         return np.nan
-    return min(vals)
+    try:
+        return min(vals)
+    except TypeError:
+        rl_log.warn('Conflict resolution warning: '
+                    'attempted to choose max between '
+                    'type-incompatible values {}. Returning nan.'.format(x))
+        return np.nan
 
 
 def choose_max(x, remove_na_vals):
@@ -181,7 +189,6 @@ def choose_max(x, remove_na_vals):
     Choose the largest value.
 
     :param tuple x: Contains a tuple of values to be resolved.
-    :param function tie_break: A conflict resolution function to be used in the case of a tie.
     :param bool remove_na_vals: If True, value/metadata pairs will be removed if the value is missing (i.e. np.nan).
     :return: The largest value.
     """
@@ -189,7 +196,13 @@ def choose_max(x, remove_na_vals):
     length = len(vals)
     if length == 0:
         return np.nan
-    return max(vals)
+    try:
+        return max(vals)
+    except TypeError:
+        rl_log.warn('Conflict resolution warning: '
+                    'attempted to choose max between '
+                    'type-incompatible values {}. Returning nan.'.format(x))
+        return np.nan
 
 
 def choose_shortest(x, tie_break, remove_na_vals):
@@ -246,6 +259,28 @@ def choose_longest(x, tie_break, remove_na_vals):
             return v
     else:
         return v
+
+
+def choose_shortest_tie_break(x, remove_na_vals):
+    """
+    Choose the shortest value. Used for tie breaking, adn written in terms of choose_longest.
+
+    :param tuple x: Contains a tuple of values to be resolved.
+    :param bool remove_na_vals: If True, value/metadata pairs will be removed if the value is missing (i.e. np.nan).
+    :return: The shortest value.
+    """
+    return choose_shortest(x, None, remove_na_vals)
+
+
+def choose_longest_tie_break(x, remove_na_vals):
+    """
+    Choose the longest value. Used for tie breaking, and written in terms of choose_longest.
+
+    :param tuple x: Contains a tuple of values to be resolved.
+    :param bool remove_na_vals: If True, value/metadata pairs will be removed if the value is missing (i.e. np.nan).
+    :return: The longest value.
+    """
+    return choose_longest(x, None, remove_na_vals)
 
 
 def choose_random(x, remove_na_vals):
@@ -358,10 +393,10 @@ def aggregate(x, method, remove_na_vals):
         return np.mean(vals)
     elif method == 'stdev':
         return np.std(vals)
-    elif method == 'variance':
+    elif method == 'var':
         return np.var(vals)
     else:
-        raise ValueError('Unrecognized aggregation method.')
+        raise ValueError('Unrecognized aggregation method: {}.'.format(method))
 
 
 def choose_trusted(x, trusted, tie_break_trusted, tie_break_untrusted, remove_na_vals, remove_na_meta):
