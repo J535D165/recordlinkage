@@ -382,7 +382,7 @@ class TestConflictResolutionFunctions(unittest.TestCase):
                          msg='Mean correctness.')
 
         self.assertEqual(cr.aggregate(((1, 2, 3),), 'stdev', True),
-                         1,
+                         np.std([1, 2, 3]),
                          msg='Stdev correctness.')
 
         self.assertEqual(cr.aggregate(((1, 2, 3),), 'variance', True),

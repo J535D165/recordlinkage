@@ -16,9 +16,10 @@ import pandas
 import numpy as np
 from numpy import nan, arange
 
-rl_logging.set_verbosity(rl_logging.INFO)
+# rl_logging.set_verbosity(rl_logging.INFO)
 
 # TODO: What's the deal with code coverage?
+
 
 def validate_job(job: dict):
     def if_not_none(key: str, f: Callable[..., bool], *args, **kwargs):
@@ -153,9 +154,6 @@ RESOLUTION_CASES = it.chain(
 
 
 class TestFuseLinks(unittest.TestCase):
-    """
-    Test for creating the "metadata queue" in the fuse class.
-    """
 
     @classmethod
     def setUpClass(cls):
@@ -188,22 +186,13 @@ class TestFuseLinks(unittest.TestCase):
             names=[cls.A.index.name, cls.B.index.name])
 
     @parameterized.expand(RESOLUTION_CASES)
-    def test_resolution_metadata(self, method_to_call, *args, **kwargs):
-        """conflcit resolution job metadata created correctly"""
-
-        fuse = recordlinkage.FuseLinks()
-        getattr(fuse, method_to_call)(*args, **kwargs)
-
-        # Validate the job metadata
-        self.assertTrue(validate_job(fuse.resolution_queue[0]))
-
-    @parameterized.expand(RESOLUTION_CASES)
     def test_resolution_result(self, method_to_call, *args, **kwargs):
         """conflict resolution result is a pandas series"""
         comp = recordlinkage.Compare(self.index_AB, self.A, self.B)
         fuse = recordlinkage.FuseLinks()
         getattr(fuse, method_to_call)(*args, **kwargs)
-        result = fuse.fuse(comp.vectors, self.A, self.B)
-
         # Validate the job metadata
+        self.assertTrue(validate_job(fuse.resolution_queue[0]))
+        # Check job runs and produces dataframe.
+        result = fuse.fuse(comp.vectors, self.A, self.B)
         self.assertIsInstance(result, pandas.DataFrame, 'result not a dataframe')

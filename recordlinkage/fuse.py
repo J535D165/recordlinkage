@@ -9,8 +9,6 @@ from typing import Callable
 
 import pandas as pd
 
-from labutils import bcolors
-
 from recordlinkage import rl_logging
 from recordlinkage.utils import listify
 from recordlinkage.algorithms.conflict_resolution import (annotated_concat,
@@ -376,22 +374,24 @@ class FuseCore(object):
         """
         t1 = datetime.datetime.now()
 
+        name = 'unnamed column' if job['name'] is None else str(job['name'])
+
         rl_logging.info(
             str(datetime.datetime.now())[:-7]
             + ':' + ' started resolving to '
-            + str(job['name'])
+            + name
             + ' (' + str(job['description']) + ')'
         )
         data = job['handler'](job)
 
         rl_logging.info(
-            bcolors.OKGREEN
+            '\033[92m'
             + str(datetime.datetime.now())[:-7] + ':'
             + ' finished '
-            + str(job['name'])
+            + name
             + ' (time elapsed: '
             + str(datetime.datetime.now() - t1) + ')'
-            + bcolors.ENDC
+            + '\033[0m'
         )
 
         return data

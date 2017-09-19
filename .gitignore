@@ -75,4 +75,6 @@ ENV/
 
 # PyCharm IDE
 /sandbox
+/cover
+/coverage-report
 .idea/
