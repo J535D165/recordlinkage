@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 import types
 import typing
 import datetime
+import warnings
 import multiprocessing as mp
 from typing import Callable
 
@@ -431,6 +432,7 @@ class FuseCore(object):
         :param pandas.DataFrame df_b: The original second data frame.
         :param pandas.Series predictions: A pandas.Series of True/False classifications.
         :param n_cores: The number of cores to be used for processing. Defaults to all cores (mp.cpu_count()).
+        If n_cores=1, multiprocessing will not be used.
         :param str sep: A string separator to be used in resolving column naming conflicts.
         :return: A pandas.DataFrame with resolved/fused data.
         """
@@ -447,9 +449,20 @@ class FuseCore(object):
         # Resolve naming conflicts, if any.
         self._resolve_job_names(self._sep)
 
-        # Compute resolved values for output.
-        with mp.Pool(n_cores) as p:
-            fused = p.map(self._handle_job, self.resolution_queue)
+        # Perform conflict resolution from resolution queue metadata,
+        # using the appropriate number of cores (and multiprocessing if applicable.)
+        if n_cores <= 1:
+            fused = [self._handle_job(job_data) for job_data in self.resolution_queue]
+        else:
+            if n_cores > mp.cpu_count():
+                warnings.warn('n_cores exceeds maximum available cores ({}). '
+                              'Defaulting to maximum available.'.format(mp.cpu_count()))
+                use_n_cores = mp.cpu_count()
+            else:
+                use_n_cores = n_cores
+            # Compute resolved values for output.
+            with mp.Pool(use_n_cores) as p:
+                fused = p.map(self._handle_job, self.resolution_queue)
 
         return pd.concat(fused, axis=1).set_index(self.index.index)
 

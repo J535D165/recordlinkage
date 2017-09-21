@@ -3,6 +3,7 @@ import datetime
 import warnings
 import functools
 import itertools as it
+import multiprocessing as mp
 from pprint import pformat
 from typing import Callable
 from random import randrange
@@ -16,10 +17,15 @@ import pandas
 import numpy as np
 from numpy import nan, arange
 
+
 # rl_logging.set_verbosity(rl_logging.INFO)
 
-# TODO: What's the deal with code coverage?
+# TODO: Code coverage does not trace inside multiprocessing pool.
+# Maybe add a boolean option to turn on and off, and then test both ways (for coverage, and
+# to make sure it runs correctly!
 
+# Run tests with coverage:
+# nosetests --with-coverage --cover-package=recordlinkage --cover-html  tests/test_fusion.py
 
 def validate_job(job: dict):
     def if_not_none(key: str, f: Callable[..., bool], *args, **kwargs):
@@ -105,6 +111,9 @@ DATES = [random_date(datetime.datetime(2016, 1, 1), datetime.datetime(2017, 1, 1
 # Combinations of columns to resolve on
 STR_COLNAMES = ['given_name', ['given_name', 'last_name']]
 
+# Use multiprocessing?
+MP_OPTION = [1, mp.cpu_count()]
+
 # Cases for strategies without type requirements
 GENERAL_STATEGIES = [
     {'method': 'no_gossiping', 'params': [], 'kws': {}},
@@ -125,7 +134,7 @@ TIE_BREAK_OPTIONS = [
 ]
 
 # Cases that require tie breaks
-TIE_BREAK_SRATEGIES = [
+TIE_BREAK_STRATEGIES = [
     {'method': 'cry_with_the_wolves', 'params': [], 'kws': {}},
     {'method': 'keep_up_to_date', 'params': ['date', 'date'], 'kws': {}}
 ]
@@ -144,17 +153,16 @@ NUMERIC_STRATEGIES = [
 ]
 
 RESOLUTION_CASES = it.chain(
-    [param(case[0]['method'], case[1], case[2], *case[0]['params'], **case[0]['kws'])
-     for case in it.product(GENERAL_STATEGIES, STR_COLNAMES, STR_COLNAMES)],
-    [param(case[0]['method'], case[1], case[2], *case[0]['params'], tie_break=case[3], **case[0]['kws'])
-     for case in it.product(TIE_BREAK_SRATEGIES, STR_COLNAMES, STR_COLNAMES, TIE_BREAK_OPTIONS)],
-    [param(case[0]['method'], case[1], case[2], case[3], *case[0]['params'], **case[0]['kws'])
-     for case in it.product(NUMERIC_STRATEGIES, NUM_COLNAMES, NUM_COLNAMES, NUMERIC_OPTIONS)],
+    [param(case[0]['method'], case[3], case[1], case[2], *case[0]['params'], **case[0]['kws'])
+     for case in it.product(GENERAL_STATEGIES, STR_COLNAMES, STR_COLNAMES, MP_OPTION)],
+    [param(case[0]['method'], case[4], case[1], case[2], *case[0]['params'], tie_break=case[3], **case[0]['kws'])
+     for case in it.product(TIE_BREAK_STRATEGIES, STR_COLNAMES, STR_COLNAMES, TIE_BREAK_OPTIONS, MP_OPTION)],
+    [param(case[0]['method'], case[4], case[1], case[2], case[3], *case[0]['params'], **case[0]['kws'])
+     for case in it.product(NUMERIC_STRATEGIES, NUM_COLNAMES, NUM_COLNAMES, NUMERIC_OPTIONS, MP_OPTION)],
 )
 
 
 class TestFuseLinks(unittest.TestCase):
-
     @classmethod
     def setUpClass(cls):
         N_A = 100
@@ -186,13 +194,24 @@ class TestFuseLinks(unittest.TestCase):
             names=[cls.A.index.name, cls.B.index.name])
 
     @parameterized.expand(RESOLUTION_CASES)
-    def test_resolution_result(self, method_to_call, *args, **kwargs):
+    def test_resolution_result(self, method_to_call, mp_option, *args, **kwargs):
         """conflict resolution result is a pandas series"""
+        print('MP_OPTION: ', mp_option)
         comp = recordlinkage.Compare(self.index_AB, self.A, self.B)
         fuse = recordlinkage.FuseLinks()
         getattr(fuse, method_to_call)(*args, **kwargs)
         # Validate the job metadata
-        self.assertTrue(validate_job(fuse.resolution_queue[0]))
+        self.assertTrue(validate_job(fuse.resolution_queue[0]), 'resolution queue job failed validation')
         # Check job runs and produces dataframe.
-        result = fuse.fuse(comp.vectors, self.A, self.B)
+        result = fuse.fuse(comp.vectors, self.A, self.B, n_cores=mp_option)
+        self.assertIsInstance(result, pandas.DataFrame, 'result not a dataframe')
+
+    def test_keep_original_rename(self):
+        comp = recordlinkage.Compare(self.index_AB, self.A, self.B)
+        fuse = recordlinkage.FuseLinks()
+        getattr(fuse, 'keep_original')()
+        # Validate the job metadata
+        self.assertTrue(validate_job(fuse.resolution_queue[0]), 'resolution queue job failed validation')
+        # Check job runs and produces dataframe.
+        result = fuse.fuse(comp.vectors, self.A, self.B, n_cores=1)
         self.assertIsInstance(result, pandas.DataFrame, 'result not a dataframe')
