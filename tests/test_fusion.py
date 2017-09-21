@@ -206,10 +206,10 @@ class TestFuseLinks(unittest.TestCase):
         result = fuse.fuse(comp.vectors, self.A, self.B, n_cores=mp_option)
         self.assertIsInstance(result, pandas.DataFrame, 'result not a dataframe')
 
-    def test_keep_original_rename(self):
+    def test_keep_original_suffix(self):
         comp = recordlinkage.Compare(self.index_AB, self.A, self.B)
         fuse = recordlinkage.FuseLinks()
-        getattr(fuse, 'keep_original')()
+        fuse.keep_original(['age'], ['given_name'], 'from_a', 'from_b')
         # Validate the job metadata
         self.assertTrue(validate_job(fuse.resolution_queue[0]), 'resolution queue job failed validation')
         # Check job runs and produces dataframe.
