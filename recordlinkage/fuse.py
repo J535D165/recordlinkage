@@ -456,7 +456,8 @@ class FuseCore(object):
         else:
             if n_cores > mp.cpu_count():
                 warnings.warn('n_cores exceeds maximum available cores ({}). '
-                              'Defaulting to maximum available.'.format(mp.cpu_count()))
+                              'Defaulting to maximum available.'.format(mp.cpu_count()),
+                              RuntimeWarning)
                 use_n_cores = mp.cpu_count()
             else:
                 use_n_cores = n_cores
@@ -478,15 +479,19 @@ class FuseDuplicates(FuseCore):
         """
         super().__init__()
         self.method = method
+        warnings.warn('FuseDuplicates has not been implemented.')
 
     def _find_clusters(self, method):
+        warnings.warn('FuseDuplicates has not been implemented.')
         pass
 
     def _fusion_preprocess(self):
+        warnings.warn('FuseDuplicates has not been implemented.')
         pass
 
     def _make_resolution_series(self, values_a, values_b, meta_a=None, meta_b=None, transform_vals=None,
                                 transform_meta=None, static_meta=False, **kwargs):
+        warnings.warn('FuseDuplicates has not been implemented.')
         pass
 
 
@@ -571,13 +576,13 @@ class FuseLinks(FuseCore):
             if len(values_a) < len(meta_a):
                 generalize_values_a = True
                 generalize_meta_a = False
-                rl_logging.warn('Generalizing values. There are fewer columns in values_a than in meta_a. '
+                rl_logging.warning('Generalizing values. There are fewer columns in values_a than in meta_a. '
                                 'Values in first column of values_a will be generalized to values in meta_a.')
             elif len(values_a) > len(meta_a):
                 generalize_values_a = False
                 generalize_meta_a = True
-                rl_logging.warn('Generalizing metadata. There are fewer columns in meta_a than in values_a. '
-                                'Values in first column of meta_a will be generalized to values in values_a.')
+                rl_logging.warning('Generalizing metadata. There are fewer columns in meta_a than in values_a. '
+                                   'Values in first column of meta_a will be generalized to values in values_a.')
             else:
                 generalize_values_a = False
                 generalize_meta_a = False
@@ -704,6 +709,9 @@ class FuseLinks(FuseCore):
         of _get_resolution_series and conflict handling functions, which are unnecessary
         in this case.
 
+        Note that not all options supported for _do_resolve are supported for _do_keep
+        (e.g. transform_vals).
+
         :param dict job: A dictionary of conflict resolution job metadata.
         :return: pandas.Series containing resolved/canonical values.
         """
@@ -716,7 +724,7 @@ class FuseLinks(FuseCore):
         # enforce xor condition: There is one value in values_a or values_b but not both
         if source_a == source_b:
             raise AssertionError(
-                '_do_keep only operates on a single column from a single source.'
+                '_do_keep only operates on a single column from a single source. '
                 'Was given job["values_a"] = {}, and job["values_b"] = {}'.format(
                     vals_a,
                     vals_b,
@@ -726,9 +734,6 @@ class FuseLinks(FuseCore):
             data = self._get_df_a_col(vals_a[0])
         else:
             data = self._get_df_b_col(vals_b[0])
-
-        if callable(job['transform_vals']):
-            data = data.apply(job['transform_vals'])
 
         if job['name'] is not None:
             data = data.rename(job['name'])
