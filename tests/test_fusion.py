@@ -290,11 +290,15 @@ class TestFuseLinks(unittest.TestCase):
     def test_job_naming_correctness(self):
         for _ in range(5):
             self.fuse.roll_the_dice('age', 'age', name='conflicting_name')
+            self.fuse.roll_the_dice('age', 'age', name='another_name')
         fused = self.fuse.fuse(self.comp.vectors, self.comp.df_a, self.comp.df_b)
         self.assertListEqual(
             list(fused.columns),
-            ['conflicting_name', 'conflicting_name_1', 'conflicting_name_2',
-             'conflicting_name_3', 'conflicting_name_4']
+            ['conflicting_name', 'another_name',
+             'conflicting_name_1', 'another_name_1',
+             'conflicting_name_2', 'another_name_2',
+             'conflicting_name_3', 'another_name_3',
+             'conflicting_name_4', 'another_name_4']
         )
 
     def test_exceeds_core_limit(self):
