@@ -20,10 +20,6 @@ from numpy import nan, arange
 
 # rl_logging.set_verbosity(rl_logging.INFO)
 
-# TODO: Code coverage does not trace inside multiprocessing pool.
-# Maybe add a boolean option to turn on and off, and then test both ways (for coverage, and
-# to make sure it runs correctly!
-
 # Run tests with coverage:
 # nosetests --with-coverage --cover-package=recordlinkage --cover-html  tests/test_fusion.py
 
@@ -193,10 +189,12 @@ class TestFuseLinks(unittest.TestCase):
             [arange(len(cls.A)), arange(len(cls.B))],
             names=[cls.A.index.name, cls.B.index.name])
 
+        cls.comp = recordlinkage.Compare(cls.index_AB, cls.A, cls.B)
+        cls.fuse = recordlinkage.FuseLinks()
+
     @parameterized.expand(RESOLUTION_CASES)
     def test_resolution_result(self, method_to_call, mp_option, *args, **kwargs):
-        """conflict resolution result is a pandas series"""
-        print('MP_OPTION: ', mp_option)
+        """Validate job metadata and check conflict resolution result is a pandas series."""
         comp = recordlinkage.Compare(self.index_AB, self.A, self.B)
         fuse = recordlinkage.FuseLinks()
         getattr(fuse, method_to_call)(*args, **kwargs)
@@ -207,11 +205,118 @@ class TestFuseLinks(unittest.TestCase):
         self.assertIsInstance(result, pandas.DataFrame, 'result not a dataframe')
 
     def test_keep_original_suffix(self):
+        """Test suffix overrid in FuseLinks.keep_original."""
         comp = recordlinkage.Compare(self.index_AB, self.A, self.B)
         fuse = recordlinkage.FuseLinks()
         fuse.keep_original(['age'], ['given_name'], 'from_a', 'from_b')
         # Validate the job metadata
         self.assertTrue(validate_job(fuse.resolution_queue[0]), 'resolution queue job failed validation')
+
         # Check job runs and produces dataframe.
         result = fuse.fuse(comp.vectors, self.A, self.B, n_cores=1)
         self.assertIsInstance(result, pandas.DataFrame, 'result not a dataframe')
+
+    def test_keep_original_errors(self):
+        comp = recordlinkage.Compare(self.index_AB, self.A, self.B)
+        fuse = recordlinkage.FuseLinks()
+        fuse.keep_original(['age'], ['given_name'])
+        # Invalidate metadata
+        fuse.resolution_queue[0]['values_a'] = ['age', 'age']
+        fuse.resolution_queue[0]['values_b'] = ['age', 'age']
+        # Check job runs and produces dataframe.
+        with self.assertRaises(AssertionError):
+            fuse.fuse(comp.vectors, self.A, self.B, n_cores=1)
+
+    def test_data_generalization(self):
+        """Test that FuseLinks._make_resolution_series generalizes values and metadata when appropriate"""
+        comp = recordlinkage.Compare(self.index_AB, self.A, self.B)
+        fuse = recordlinkage.FuseLinks()
+        fuse._fusion_init(comp.vectors, comp.df_a, comp.df_b, None, None)
+        result_1 = fuse._make_resolution_series(
+            ['age'], ['age'], ['given_name', 'given_name'], ['given_name', 'given_name']
+        )
+        result_2 = fuse._make_resolution_series(
+            ['given_name', 'given_name'], ['given_name', 'given_name'], ['age'], ['age']
+        )
+        for t in result_1:
+            self.assertTrue(len(t[0]) == len(t[1]), 'FuseLinks failed to generalize values to metadata.')
+        for t in result_2:
+            self.assertTrue(len(t[0]) == len(t[1]), 'FuseLinks failed to generalized metadata to values.')
+
+    def test_resolution_series_assertions(self):
+        """Test that FuseLinks._make_resolution_series generalizes values and metadata when appropriate"""
+        comp = recordlinkage.Compare(self.index_AB, self.A, self.B)
+        fuse = recordlinkage.FuseLinks()
+
+        with self.assertRaises(AssertionError):
+            # No data a
+            fuse._make_resolution_series(
+                ['age'], ['age'], ['given_name', 'given_name'], ['given_name', 'given_name']
+            )
+
+        with self.assertRaises(AssertionError):
+            # No data b
+            fuse.df_a = pandas.DataFrame()
+            fuse._make_resolution_series(
+                ['age'], ['age'], ['given_name', 'given_name'], ['given_name', 'given_name']
+            )
+
+        # Check post-initialization assertions.
+        fuse._fusion_init(comp.vectors, comp.df_a, comp.df_b, None, None)
+        with self.assertRaises(ValueError):
+            # Bad transformation function
+            fuse._make_resolution_series(
+                ['age'], ['age'], ['given_name', 'given_name'], ['given_name', 'given_name'], transform_vals=1
+            )
+        with self.assertRaises(ValueError):
+            # Bad transformation function
+            fuse._make_resolution_series(
+                ['age'], ['age'], ['given_name', 'given_name'], ['given_name', 'given_name'], transform_meta=1
+            )
+
+    def test_bad_tie_break_string(self):
+        fuse = recordlinkage.FuseLinks()
+        with self.assertRaises(ValueError):
+            fuse.keep_up_to_date('age', 'age', 'date', 'date', tie_break='invalid strategy')
+
+    def test_resolve_typing(self):
+        comp = recordlinkage.Compare(self.index_AB, self.A, self.B)
+        fuse = recordlinkage.FuseLinks()
+        fuse.resolve(lambda x: x, 'age', 'age', params=['list', 'of', 'params'])
+
+    def test_use_predictions(self):
+        comp = recordlinkage.Compare(self.index_AB, self.A, self.B)
+        fuse = recordlinkage.FuseLinks()
+        fuse.keep_original('age', [])
+        # Make arbitrary classification series
+        preds = pandas.Series([(i % 5) == 0 for i in range(len(comp.vectors))])
+        fused = fuse.fuse(comp.vectors, comp.df_a, comp.df_b, predictions=preds)
+        count = sum(1 if b else 0 for b in preds)
+        self.assertEqual(len(fused), count, msg='Length of fused output incorrect after prediction application.')
+
+    # def test_job_naming_error(self):
+    #     comp = recordlinkage.Compare(self.index_AB, self.A, self.B)
+    #     fuse = recordlinkage.FuseLinks()
+    #     for _ in range(2000):
+    #         fuse.roll_the_dice('age', 'age', name='conflicting_name')
+    #     with self.assertRaises(RuntimeError):
+    #         fuse._resolve_job_names('_')
+
+    def test_job_naming_correctness(self):
+        comp = recordlinkage.Compare(self.index_AB, self.A, self.B)
+        fuse = recordlinkage.FuseLinks()
+        for _ in range(5):
+            fuse.roll_the_dice('age', 'age', name='conflicting_name')
+        fused = fuse.fuse(comp.vectors, comp.df_a, comp.df_b)
+        self.assertListEqual(
+            list(fused.columns),
+            ['conflicting_name', 'conflicting_name_1', 'conflicting_name_2',
+             'conflicting_name_3', 'conflicting_name_4']
+        )
+
+    def test_exceeds_core_limit(self):
+        comp = recordlinkage.Compare(self.index_AB, self.A, self.B)
+        fuse = recordlinkage.FuseLinks()
+        fuse.roll_the_dice('age', 'age')
+        with self.assertWarns(RuntimeWarning):
+            fuse.fuse(comp.vectors, comp.df_a, comp.df_b, n_cores=100)
