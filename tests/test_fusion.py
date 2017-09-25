@@ -11,6 +11,7 @@ from datetime import timedelta
 from parameterized import parameterized, param
 
 import recordlinkage
+from recordlinkage.fuse import FuseDuplicates, FuseCore
 from recordlinkage.algorithms.conflict_resolution import choose_random
 from recordlinkage import rl_logging
 
@@ -300,3 +301,22 @@ class TestFuseLinks(unittest.TestCase):
         self.fuse.roll_the_dice('age', 'age')
         with self.assertWarns(RuntimeWarning):
             self.fuse.fuse(self.comp.vectors, self.comp.df_a, self.comp.df_b, n_cores=100)
+
+    def test_fusedups_not_implemented(self):
+        with self.assertWarns(UserWarning):
+            fuse_d = FuseDuplicates()
+        with self.assertWarns(UserWarning):
+            self.assertIsInstance(
+                fuse_d._find_clusters('a'),
+                type(NotImplemented)
+            )
+        with self.assertWarns(UserWarning):
+            self.assertIsInstance(
+                fuse_d._fusion_preprocess(),
+                type(NotImplemented)
+            )
+        with self.assertWarns(UserWarning):
+            self.assertIsInstance(
+                fuse_d._make_resolution_series('a', 'b'),
+                type(NotImplemented)
+            )

@@ -507,6 +507,10 @@ class FuseLinks(FuseCore):
         """
         super().__init__()
 
+    def _fusion_preprocess(self):
+        warnings.warn('No preprocessing currently required for FuseLinks.')
+        return NotImplemented
+
     def _get_df_a_col(self, name):
         """
         Returns a data from a column in df_a, corresponding to the first level of the candidate link multi-index.
