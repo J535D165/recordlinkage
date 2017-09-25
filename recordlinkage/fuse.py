@@ -7,6 +7,7 @@ import datetime
 import warnings
 import multiprocessing as mp
 from typing import Callable
+from abc import ABC, abstractmethod
 
 import pandas as pd
 
@@ -72,7 +73,7 @@ def process_tie_break(tie_break) -> Callable[[tuple, bool], any]:
     return tie_break_fun
 
 
-class FuseCore(object):
+class FuseCore(ABC):
     def __init__(self):
         """
         ``FuseCore`` and its subclasses are initialized without data. The initialized
@@ -264,6 +265,7 @@ class FuseCore(object):
         self.resolution_queue.append(job)
         return job
 
+    @abstractmethod
     def _make_resolution_series(self, values_a, values_b, meta_a=None, meta_b=None,
                                 transform_vals=None, transform_meta=None, static_meta=False, **kwargs):
         """
@@ -285,7 +287,7 @@ class FuseCore(object):
         """
         # No implementation provided.
         # Override in subclass.
-        return pd.Series()
+        return NotImplemented
 
     def _fusion_init(self, vectors, df_a, df_b, predictions, sep):
         """
@@ -328,13 +330,14 @@ class FuseCore(object):
             self.vectors = self.vectors.iloc[pred_list]
             self.index = self.vectors.index.to_frame()
 
+    @abstractmethod
     def _fusion_preprocess(self):
         """
         Subclass specific pre-fusion computation. Not implemented in FuseCore.
 
         :return: None
         """
-        pass
+        return NotImplemented
 
     def _resolve_job_names(self, sep):
         """
@@ -483,16 +486,16 @@ class FuseDuplicates(FuseCore):
 
     def _find_clusters(self, method):
         warnings.warn('FuseDuplicates has not been implemented.')
-        pass
+        return NotImplemented
 
     def _fusion_preprocess(self):
         warnings.warn('FuseDuplicates has not been implemented.')
-        pass
+        return NotImplemented
 
     def _make_resolution_series(self, values_a, values_b, meta_a=None, meta_b=None, transform_vals=None,
                                 transform_meta=None, static_meta=False, **kwargs):
         warnings.warn('FuseDuplicates has not been implemented.')
-        pass
+        return NotImplemented
 
 
 class FuseLinks(FuseCore):
