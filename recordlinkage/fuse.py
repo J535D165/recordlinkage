@@ -330,15 +330,6 @@ class FuseCore(ABC):
             self.vectors = self.vectors.iloc[pred_list]
             self.index = self.vectors.index.to_frame()
 
-    @abstractmethod
-    def _fusion_preprocess(self):
-        """
-        Subclass specific pre-fusion computation. Not implemented in FuseCore.
-
-        :return: None
-        """
-        return NotImplemented
-
     def _resolve_job_names(self, sep):
         """
         Resolves conflicts among conflict resolution job column names in self.resolution_queue.
@@ -446,9 +437,6 @@ class FuseCore(ABC):
         # Save references to input data.
         self._fusion_init(vectors, df_a, df_b, predictions, sep)
 
-        # Subclass-specific setup (e.g. applying refinements or detecting clusters).
-        self._fusion_preprocess()
-
         # Resolve naming conflicts, if any.
         self._resolve_job_names(self._sep)
 
@@ -488,10 +476,6 @@ class FuseDuplicates(FuseCore):
         warnings.warn('FuseDuplicates has not been implemented.')
         return NotImplemented
 
-    def _fusion_preprocess(self):
-        warnings.warn('FuseDuplicates has not been implemented.')
-        return NotImplemented
-
     def _make_resolution_series(self, values_a, values_b, meta_a=None, meta_b=None, transform_vals=None,
                                 transform_meta=None, static_meta=False, **kwargs):
         warnings.warn('FuseDuplicates has not been implemented.')
@@ -506,10 +490,6 @@ class FuseLinks(FuseCore):
         which are executed when ``.fuse()`` is called.
         """
         super().__init__()
-
-    def _fusion_preprocess(self):
-        warnings.warn('No preprocessing currently required for FuseLinks.')
-        return NotImplemented
 
     def _get_df_a_col(self, name):
         """

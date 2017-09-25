@@ -195,15 +195,15 @@ class TestFuseLinks(unittest.TestCase):
         self.comp = recordlinkage.Compare(self.index_AB, self.A, self.B)
         self.fuse = recordlinkage.FuseLinks()
 
-    # @parameterized.expand(RESOLUTION_CASES)
-    # def test_resolution_result(self, method_to_call, mp_option, *args, **kwargs):
-    #     """Validate job metadata and check conflict resolution result is a pandas series."""
-    #     getattr(self.fuse, method_to_call)(*args, **kwargs)
-    #     # Validate the job metadata
-    #     self.assertTrue(validate_job(self.fuse.resolution_queue[0]), 'resolution queue job failed validation')
-    #     # Check job runs and produces dataframe.
-    #     result = self.fuse.fuse(self.comp.vectors, self.A, self.B, n_cores=mp_option)
-    #     self.assertIsInstance(result, pandas.DataFrame, 'result not a dataframe')
+    @parameterized.expand(RESOLUTION_CASES)
+    def test_resolution_result(self, method_to_call, mp_option, *args, **kwargs):
+        """Validate job metadata and check conflict resolution result is a pandas series."""
+        getattr(self.fuse, method_to_call)(*args, **kwargs)
+        # Validate the job metadata
+        self.assertTrue(validate_job(self.fuse.resolution_queue[0]), 'resolution queue job failed validation')
+        # Check job runs and produces dataframe.
+        result = self.fuse.fuse(self.comp.vectors, self.A, self.B, n_cores=mp_option)
+        self.assertIsInstance(result, pandas.DataFrame, 'result not a dataframe')
 
     def test_keep_original_suffix(self):
         """Test suffix overrid in FuseLinks.keep_original."""
@@ -281,11 +281,11 @@ class TestFuseLinks(unittest.TestCase):
         count = sum(1 if b else 0 for b in preds)
         self.assertEqual(len(fused), count, msg='Length of fused output incorrect after prediction application.')
 
-    # def test_job_naming_error(self):
-    #     for _ in range(2000):
-    #         self.fuse.roll_the_dice('age', 'age', name='conflicting_name')
-    #     with self.assertRaises(RuntimeError):
-    #         self.fuse._resolve_job_names('_')
+    def test_job_naming_error(self):
+        for _ in range(2000):
+            self.fuse.roll_the_dice('age', 'age', name='conflicting_name')
+        with self.assertRaises(RuntimeError):
+            self.fuse._resolve_job_names('_')
 
     def test_job_naming_correctness(self):
         for _ in range(5):
@@ -316,11 +316,21 @@ class TestFuseLinks(unittest.TestCase):
             )
         with self.assertWarns(UserWarning):
             self.assertIsInstance(
-                fuse_d._fusion_preprocess(),
-                type(NotImplemented)
-            )
-        with self.assertWarns(UserWarning):
-            self.assertIsInstance(
                 fuse_d._make_resolution_series('a', 'b'),
                 type(NotImplemented)
             )
+
+    def test_conflict_resolution_transform_vals(self):
+        def static_test_fun(x):
+            return True
+        self.fuse.keep_original('age', 'age')
+        self.fuse.fuse(self.comp.vectors, self.comp.df_a, self.comp.df_b)
+        data = self.fuse._make_resolution_series(
+            'age', 'age',
+            meta_a='age', meta_b='age',
+            transform_vals=static_test_fun,
+            transform_meta=static_test_fun
+        )
+        for i in data:
+            self.assertTupleEqual(i, ((True, True), (True, True)))
+
