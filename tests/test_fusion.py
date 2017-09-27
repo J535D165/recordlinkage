@@ -166,22 +166,25 @@ class TestFuseLinks(unittest.TestCase):
         N_A = 100
         N_B = 100
 
+        def str_nan(s):
+            return np.nan if s == 'nan' else s
+
         cls.A = pandas.DataFrame({
-            'age': np.random.choice(AGES, N_A),
-            'given_name': np.random.choice(FIRST_NAMES, N_A),
-            'last_name': np.random.choice(LAST_NAMES, N_A),
-            'street': np.random.choice(STREET, N_A),
-            'income': np.random.choice(INCOMES, N_A),
-            'date': np.random.choice(DATES, N_A)
+            'age': pandas.Series(np.random.choice(AGES, N_A)),
+            'given_name': pandas.Series(np.random.choice(FIRST_NAMES, N_A)).apply(str_nan),
+            'last_name': pandas.Series(np.random.choice(LAST_NAMES, N_A)).apply(str_nan),
+            'street': pandas.Series(np.random.choice(STREET, N_A)).apply(str_nan),
+            'income': pandas.Series(np.random.choice(INCOMES, N_A)),
+            'date': pandas.Series(np.random.choice(DATES, N_A))
         })
 
         cls.B = pandas.DataFrame({
-            'age': np.random.choice(AGES, N_B),
-            'given_name': np.random.choice(FIRST_NAMES, N_B),
-            'last_name': np.random.choice(LAST_NAMES, N_B),
-            'street': np.random.choice(STREET, N_B),
-            'income': np.random.choice(INCOMES, N_B),
-            'date': np.random.choice(DATES, N_B)
+            'age': pandas.Series(np.random.choice(AGES, N_B)),
+            'given_name': pandas.Series(np.random.choice(FIRST_NAMES, N_B)).apply(str_nan),
+            'last_name': pandas.Series(np.random.choice(LAST_NAMES, N_B)).apply(str_nan),
+            'street': pandas.Series(np.random.choice(STREET, N_B)).apply(str_nan),
+            'income': pandas.Series(np.random.choice(INCOMES, N_B)),
+            'date': pandas.Series(np.random.choice(DATES, N_B))
         })
 
         cls.A.index.name = 'index_df1'
@@ -297,11 +300,11 @@ class TestFuseLinks(unittest.TestCase):
         self.assertEqual(len(fused), count, msg='Length of fused output incorrect after prediction application.')
 
     def test_prediction_type(self):
-            self.fuse.keep_original('age', [])
-            # Make arbitrary classification series
-            preds = pandas.Series([(i % 5) == 0 for i in range(len(self.comp.vectors))])
-            with self.assertRaises(ValueError):
-                fused = self.fuse.fuse(self.comp.vectors, self.comp.df_a, self.comp.df_b, predictions=1)
+        self.fuse.keep_original('age', [])
+        # Make arbitrary classification series
+        preds = pandas.Series([(i % 5) == 0 for i in range(len(self.comp.vectors))])
+        with self.assertRaises(ValueError):
+            fused = self.fuse.fuse(self.comp.vectors, self.comp.df_a, self.comp.df_b, predictions=1)
 
     def test_job_naming_correctness(self):
         for _ in range(5):
@@ -339,6 +342,7 @@ class TestFuseLinks(unittest.TestCase):
     def test_conflict_resolution_transform_vals(self):
         def static_test_fun(x):
             return True
+
         self.fuse.keep_original('age', 'age')
         self.fuse.fuse(self.comp.vectors, self.comp.df_a, self.comp.df_b)
         data = self.fuse._make_resolution_series(
@@ -363,4 +367,3 @@ class TestFuseLinks(unittest.TestCase):
                 'age', 'age',
                 meta_a=None, meta_b='age',
             )
-
