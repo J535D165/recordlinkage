@@ -508,9 +508,21 @@ class TestConflictResolutionFunctions(unittest.TestCase):
         )
 
         self.assertEqual(
+            cr.choose_metadata_max(((np.nan, 'b', np.nan, np.nan), (2, 4, 3, 6)), cr.choose_random, True, True),
+            'b',
+            msg='Handles nan values one choice.'
+        )
+
+        self.assertEqual(
             cr.choose_metadata_max((('a', 'b', 'c', 'd'), (2, np.nan, 3, np.nan)), cr.choose_random, True, True),
             'c',
             msg='Handles nan metadata.'
+        )
+
+        self.assertEqual(
+            cr.choose_metadata_max((('a', 'b', 'c', 'd'), (np.nan, np.nan, 3, np.nan)), cr.choose_random, True, True),
+            'c',
+            msg='Handles nan metadata one choice.'
         )
 
         self.assertEqual(
@@ -569,3 +581,4 @@ class TestConflictResolutionFunctions(unittest.TestCase):
             'a',
             msg='Correctness with datetime metadata.'
         )
+
