@@ -45,7 +45,7 @@ def process_tie_break(tie_break) -> Callable[[tuple, bool], any]:
     """
     tie_break_fun = None
     if tie_break is None:
-        pass
+        raise ValueError('given None as tie_break strategy')
     elif isinstance(tie_break, types.FunctionType):
         tie_break_fun = tie_break
     elif isinstance(tie_break, str):
@@ -170,14 +170,14 @@ class FuseCore(ABC):
                      description='meet_in_the_middle')
 
     def keep_up_to_date(self, values_a, values_b, dates_a, dates_b, tie_break='random',
-                        name=None, remove_na_vals=True, remove_na_meta=True):
+                        name=None, remove_na_vals=True, remove_na_dates=True):
         """
         Keeps the most recent value. Values in values_a and values_b will be matched
         (in order) to dates in dates_a and dates_b. However, note that values and
         dates may both be "generalized" if there isn't a one-to-one correspondance between
         value columns and date columns. For example, if the user calls
         ``keep_up_to_date(['v1', 'v2'], 'v3', 'd1', 'd2')``, dates from ``d1`` would be applied
-        to values from both ``c1`` and ``c2``; likewise, if ``keep_up_to_date('v1', 'v2', ['d1', 'd2'], 'd3')``
+        to values from both ``v1`` and ``v2``; likewise, if ``keep_up_to_date('v1', 'v2', ['d1', 'd2'], 'd3')``
         was called, values from ``v1`` would be considered twice, associated with a date from both ``d1`` and ``d2``.
 
         :param str/list values_a: Column names from df_a to be resolved.
@@ -188,26 +188,70 @@ class FuseCore(ABC):
         Default is choose_random.
         :param str name: The name of the resolved column.
         :param bool remove_na_vals: If True, value/metadata pairs will be removed if the value is missing (i.e. np.nan).
-        :param bool remove_na_meta: If True, value/metadata pairs will be removed if the date is missing (i.e. np.nan).
+        :param bool remove_na_dates: If True, value/metadata pairs will be removed if the date is missing (i.e. np.nan).
         :return: None
         """
         self.resolve(choose_metadata_max, values_a, values_b, meta_a=dates_a, meta_b=dates_b,
-                     name=name, remove_na_vals=remove_na_vals, remove_na_meta=remove_na_meta,
+                     name=name, remove_na_vals=remove_na_vals, remove_na_meta=remove_na_dates,
                      params=(process_tie_break(tie_break),), description='keep_up_to_date')
+
+    def choose_by_value_score(self, values_a, values_b, func, tie_break='random', name=None, remove_na_vals=True):
+        """
+        Chooses the value which is given the highest score by a user-specified function. The scoring
+        function may recognize specific features, compute taxonomic depth, handle unusual datatypes, etc.
+
+        :param str/list values_a: Column names from df_a to be resolved.
+        :param str/list values_b: Column names from df_b to be resolved.
+        :param function func: A scoring function, which takes a single data value and returns a numeric score.
+        Note that if remove_na_vals is False, func must handle missing (np.nan) values.
+        :param str/function tie_break: A conflict resolution function to be used to break ties.
+        Default is choose_random.
+        :param str name: The name of the resolved column.
+        :param bool remove_na_vals: If True, value/metadata pairs will be removed if the value is missing (i.e. np.nan).
+        :return: None
+        """
+        self.resolve(choose_metadata_max, values_a, values_b, meta_a=values_a, meta_b=values_b,
+                     name=name, remove_na_vals=remove_na_vals, remove_na_meta=remove_na_vals,
+                     params=(process_tie_break(tie_break),), description='keep_up_to_date',
+                     transform_meta=func)
+
+    def choose_by_metadata_score(self, values_a, values_b, meta_a, meta_b, func, tie_break='random',
+                                 name=None, remove_na_vals=True, remove_na_meta=True):
+        """
+        Chooses the value which is given the highest score by a user-specified function. The scoring
+        function may recognize specific features, compute taxonomic depth, handle unusual datatypes, etc.
+
+        :param str/list values_a: Column names from df_a to be resolved.
+        :param str/list values_b: Column names from df_b to be resolved.
+        :param str/list meta_a: Column names from df_a containing metadata values to be used to choose values.
+        :param str/list meta_b: Column names from df_b containing metadata values to be used to choose values.
+        :param function func: A scoring function, which takes a single metadata data value and returns a numeric score.
+        Note that if remove_na_meta is False, func must handle missing (np.nan) values.
+        :param str/function tie_break: A conflict resolution function to be used to break ties.
+        Default is choose_random.
+        :param str name: The name of the resolved column.
+        :param bool remove_na_vals: If True, value/metadata pairs will be removed if the value is missing (i.e. np.nan).
+        :param bool remove_na_meta: If True, value/metadata pairs will be removed if metadata is missing (i.e. np.nan).
+        :return: None
+        """
+        self.resolve(choose_metadata_max, values_a, values_b, meta_a=meta_a, meta_b=meta_b,
+                     name=name, remove_na_vals=remove_na_vals, remove_na_meta=remove_na_meta,
+                     params=(process_tie_break(tie_break),), description='keep_up_to_date',
+                     transform_meta=func)
 
     def resolve(self, fun, values_a, values_b, meta_a=None, meta_b=None, name=None,
                 transform_vals=None, transform_meta=None, static_meta=False, remove_na_vals=True,
                 remove_na_meta=None, params=None, description=None, handler_override=None, **kwargs):
         """
-        Queue a conflict resolution job for later computation. Conflict resolution job metadata
-        is automatically stored in self.resolution_queue.
+        A general-purpose method to queue a conflict resolution job for later computation.
+        Conflict resolution job metadata is stored in self.resolution_queue.
 
         :param function fun: A conflict resolution function.
         :param str/list values_a: Column names from df_a containing values to be resolved.
         :param str/list  values_b: Column names from df_b containing values to be resolved.
-        :param str/list  meta_a: Column names from df_a containing metadata values to be used in conflict resolution.
+        :param str/list  meta_a: Column names from df_a containing metadata values to be used to choose values.
         Optionally, if static_meta is True, meta_a will become the metadata value for all values from df_a.
-        :param str/list  meta_b: Column names from df_b containing metadata values to be used in conflict resolution.
+        :param str/list  meta_b: Column names from df_b containing metadata values to be used to choose values.
         Optionally, if static_meta is True, meta_b will become the metadata value for all values from df_b.
         :param str name: The name of the resolved column.
         :param function transform_vals: An optional pre-processing function to be applied to values.
@@ -215,19 +259,14 @@ class FuseCore(ABC):
         :param bool static_meta: If True, meta_a and meta_b values will be used as metadata values.
         :param bool remove_na_vals: If True, value/metadata pairs will be removed if the value is missing (i.e. np.nan).
         :param bool remove_na_meta: If True, value/metadata pairs will be removed if metadata is missing (i.e. np.nan).
-        :param tuple params: Extra parameters used by the conflict resolution function.
+        :param tuple/list params: Extra parameters used by the conflict resolution function.
         :param str description: A description string for use in logging, e.g. 'cry_with_the_wolves'.
         :param function handler_override: If specified, this function will be used to handle this job. If None,
         defaults to self._do_resolve.
         :param kwargs: Optional keyword arguments.
         :return: A dictionary of metadata values.
         """
-        # TODO: Add transformation function for value -> metadata mapping.
-        # TODO: Optionally specify trusted columns.
-        # NOTE: Optionally, could provide value columns as metadata columns (i.e. twice) and use transform_meta.
-        # Integrate values in vals (Series of tuples) using optional
-        # meta (Series of tuples) by applying the conflict resolution function fun
-        # to the series of tuples.
+        # TODO: Eliminate (?) 'params' parameter. VERY user unfriendly.
 
         if isinstance(remove_na_meta, bool):
             na_params = [remove_na_vals, remove_na_meta]
@@ -564,7 +603,7 @@ class FuseLinks(FuseCore):
                 generalize_values_a = True
                 generalize_meta_a = False
                 rl_logging.warning('Generalizing values. There are fewer columns in values_a than in meta_a. '
-                                'Values in first column of values_a will be generalized to values in meta_a.')
+                                   'Values in first column of values_a will be generalized to values in meta_a.')
             elif len(values_a) > len(meta_a):
                 generalize_values_a = False
                 generalize_meta_a = True
