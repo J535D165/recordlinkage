@@ -63,11 +63,11 @@ def process_tie_break(tie_break) -> Callable[[tuple, bool], any]:
             tie_break_fun = choose_shortest_tie_break
         elif tie_break == 'longest':
             tie_break_fun = choose_longest_tie_break
-        elif tie_break == 'null':
+        elif tie_break == 'null' or tie_break == 'nullify':
             tie_break_fun = nullify
         else:
             raise ValueError('Invalid tie_break strategy: {}. Must be one of'
-                             'random, trust_a, trust_b, min, max, shortest, longest, or null.'.format(tie_break))
+                             'random, trust_a, trust_b, min, max, shortest, longest, or nullify.'.format(tie_break))
     else:
         raise ValueError('tie_break must be a string or a function.')
     return tie_break_fun
@@ -195,7 +195,7 @@ class FuseCore(ABC):
                      name=name, remove_na_vals=remove_na_vals, remove_na_meta=remove_na_dates,
                      params=(process_tie_break(tie_break),), description='keep_up_to_date')
 
-    def choose_by_value_score(self, values_a, values_b, func, tie_break='random', name=None, remove_na_vals=True):
+    def choose_by_value_score(self, values_a, values_b, func, tie_break='random', apply_to_null=False, name=None, remove_na_vals=True):
         """
         Chooses the value which is given the highest score by a user-specified function. The scoring
         function may recognize specific features, compute taxonomic depth, handle unusual datatypes, etc.
@@ -212,8 +212,8 @@ class FuseCore(ABC):
         """
         self.resolve(choose_metadata_max, values_a, values_b, meta_a=values_a, meta_b=values_b,
                      name=name, remove_na_vals=remove_na_vals, remove_na_meta=remove_na_vals,
-                     params=(process_tie_break(tie_break),), description='keep_up_to_date',
-                     transform_meta=func)
+                     params=(process_tie_break(tie_break),), description='choose_by_value_score',
+                     transform_meta=func, transform_null=apply_to_null)
 
     def choose_by_metadata_score(self, values_a, values_b, meta_a, meta_b, func, tie_break='random',
                                  name=None, remove_na_vals=True, remove_na_meta=True):
@@ -236,12 +236,13 @@ class FuseCore(ABC):
         """
         self.resolve(choose_metadata_max, values_a, values_b, meta_a=meta_a, meta_b=meta_b,
                      name=name, remove_na_vals=remove_na_vals, remove_na_meta=remove_na_meta,
-                     params=(process_tie_break(tie_break),), description='keep_up_to_date',
+                     params=(process_tie_break(tie_break),), description='choose_by_metadata_score',
                      transform_meta=func)
 
     def resolve(self, fun, values_a, values_b, meta_a=None, meta_b=None, name=None,
-                transform_vals=None, transform_meta=None, static_meta=False, remove_na_vals=True,
-                remove_na_meta=None, params=None, description=None, handler_override=None, **kwargs):
+                transform_vals=None, transform_meta=None, transform_null=False,
+                static_meta=False, remove_na_vals=True, remove_na_meta=None,
+                params=None, description=None, handler_override=None, **kwargs):
         """
         A general-purpose method to queue a conflict resolution job for later computation.
         Conflict resolution job metadata is stored in self.resolution_queue.
@@ -256,6 +257,8 @@ class FuseCore(ABC):
         :param str name: The name of the resolved column.
         :param function transform_vals: An optional pre-processing function to be applied to values.
         :param function transform_meta: An optional pre-processing function to be applied to metadata values.
+        :param bool transform_null: If True, transform_vals/transform_meta will be called on missing values.
+        If False (default) missing values are skipped automatically.
         :param bool static_meta: If True, meta_a and meta_b values will be used as metadata values.
         :param bool remove_na_vals: If True, value/metadata pairs will be removed if the value is missing (i.e. np.nan).
         :param bool remove_na_meta: If True, value/metadata pairs will be removed if metadata is missing (i.e. np.nan).
@@ -285,6 +288,17 @@ class FuseCore(ABC):
         else:
             handler = self._do_resolve
 
+        def skip_null(f):
+            if f is None:
+                return None
+            else:
+                def skip_null_fun(x):
+                    if pd.isnull(x):
+                        return x
+                    else:
+                        return f(x)
+                return skip_null_fun
+
         # Store metadata
         job = {
             'fun': fun,
@@ -292,8 +306,8 @@ class FuseCore(ABC):
             'values_b': values_b,
             'meta_a': meta_a,
             'meta_b': meta_b,
-            'transform_vals': transform_vals,
-            'transform_meta': transform_meta,
+            'transform_vals': transform_vals if transform_null else skip_null(transform_vals),
+            'transform_meta': transform_meta if transform_null else skip_null(transform_meta),
             'static_meta': static_meta,
             'params': all_params,
             'name': name,
@@ -362,7 +376,6 @@ class FuseCore(ABC):
 
         if self.predictions is not None:
             # Turn predictions into desired formats
-            pred_index = self.predictions.index
             pred_list = list(self.predictions)
 
             # Update vectors and indices
@@ -573,10 +586,10 @@ class FuseLinks(FuseCore):
         if self.df_b is None:
             raise AssertionError('df_b is None')
 
-        if transform_vals is not None and callable(transform_vals) is not True:
+        if transform_vals is not None and not callable(transform_vals):
             raise ValueError('transform_vals must be callable.')
 
-        if transform_meta is not None and callable(transform_meta) is not True:
+        if transform_meta is not None and not callable(transform_meta):
             raise ValueError('transform_meta must be callable.')
 
         # Listify value inputs
@@ -589,7 +602,7 @@ class FuseLinks(FuseCore):
 
         if meta_a is None and meta_b is None:
             use_meta = False
-        elif static_meta is False:
+        elif not static_meta:
             use_meta = True
             meta_a = listify(meta_a)
             meta_b = listify(meta_b)
@@ -597,7 +610,7 @@ class FuseLinks(FuseCore):
             use_meta = True
 
         # Check value / metadata column correspondence
-        if use_meta is True and static_meta is False:
+        if use_meta and not static_meta:
 
             if len(values_a) < len(meta_a):
                 generalize_values_a = True
@@ -634,7 +647,7 @@ class FuseLinks(FuseCore):
 
         # Make list of data series
         data_a = []
-        if generalize_values_a is True:
+        if generalize_values_a:
             for _ in range(len(meta_a)):
                 data_a.append(
                     self._get_df_a_col(values_a[0])
@@ -647,7 +660,7 @@ class FuseLinks(FuseCore):
 
         data_b = []
 
-        if generalize_values_b is True:
+        if generalize_values_b:
             for _ in range(len(meta_b)):
                 data_b.append(
                     self._get_df_b_col(values_b[0])
@@ -670,16 +683,16 @@ class FuseLinks(FuseCore):
         value_data = zip(*value_data)
 
         # Make list of metadata series
-        if use_meta is True:
+        if use_meta:
 
             metadata_a = []
 
-            if static_meta is True:
+            if static_meta:
                 for _ in range(len(values_a)):
                     metadata_a.append(
                         pd.Series([meta_a for _ in range(len(self.index))], index=self.index[self._index_level_0])
                     )
-            elif generalize_meta_a is True:
+            elif generalize_meta_a:
                 for _ in range(len(values_a)):
                     metadata_a.append(
                         self._get_df_a_col(meta_a[0])
@@ -692,12 +705,12 @@ class FuseLinks(FuseCore):
 
             metadata_b = []
 
-            if static_meta is True:
+            if static_meta:
                 for _ in range(len(values_b)):
                     metadata_b.append(
                         pd.Series([meta_b for _ in range(len(self.index))], index=self.index[self._index_level_1])
                     )
-            elif generalize_meta_b is True:
+            elif generalize_meta_b:
                 for _ in range(len(values_b)):
                     metadata_b.append(
                         self._get_df_b_col(meta_b[0])
@@ -721,7 +734,7 @@ class FuseLinks(FuseCore):
         else:
             metadata = None
 
-        if use_meta is True:
+        if use_meta:
             output = pd.Series(list(zip(value_data, metadata)))
         else:
             output = pd.Series(list(zip(value_data)))
