@@ -195,6 +195,7 @@ class TestFuseLinks(unittest.TestCase):
         self.comp = recordlinkage.Compare(self.index_AB, self.A, self.B)
         self.fuse = recordlinkage.FuseLinks()
 
+    # Test takes long time
     @parameterized.expand(RESOLUTION_CASES)
     def test_resolution_result(self, method_to_call, mp_option, *args, **kwargs):
         """Validate job metadata and check conflict resolution result is a pandas series."""
@@ -204,6 +205,13 @@ class TestFuseLinks(unittest.TestCase):
         # Check job runs and produces dataframe.
         result = self.fuse.fuse(self.comp.vectors, self.A, self.B, n_cores=mp_option)
         self.assertIsInstance(result, pandas.DataFrame, 'result not a dataframe')
+
+    # Test takes long time
+    def test_job_naming_error(self):
+        for _ in range(2000):
+            self.fuse.roll_the_dice('age', 'age', name='conflicting_name')
+        with self.assertRaises(RuntimeError):
+            self.fuse._resolve_job_names('_')
 
     def test_keep_original_suffix(self):
         """Test suffix overrid in FuseLinks.keep_original."""
@@ -266,9 +274,16 @@ class TestFuseLinks(unittest.TestCase):
                 ['age'], ['age'], ['given_name', 'given_name'], ['given_name', 'given_name'], transform_meta=1
             )
 
-    def test_bad_tie_break_string(self):
+    def test_bad_tie_break_value(self):
         with self.assertRaises(ValueError):
             self.fuse.keep_up_to_date('age', 'age', 'date', 'date', tie_break='invalid strategy')
+        with self.assertRaises(ValueError):
+            self.fuse.keep_up_to_date('age', 'age', 'date', 'date', tie_break=42)
+        with self.assertRaises(ValueError):
+            self.fuse.keep_up_to_date('age', 'age', 'date', 'date', tie_break=None)
+
+    def test_process_tie_break_function(self):
+        self.fuse.keep_up_to_date('age', 'age', 'date', 'date', tie_break=choose_random)
 
     def test_resolve_typing(self):
         self.fuse.resolve(choose_random, 'age', 'age', params=['list', 'of', 'params'])
@@ -281,11 +296,12 @@ class TestFuseLinks(unittest.TestCase):
         count = sum(1 if b else 0 for b in preds)
         self.assertEqual(len(fused), count, msg='Length of fused output incorrect after prediction application.')
 
-    def test_job_naming_error(self):
-        for _ in range(2000):
-            self.fuse.roll_the_dice('age', 'age', name='conflicting_name')
-        with self.assertRaises(RuntimeError):
-            self.fuse._resolve_job_names('_')
+    def test_prediction_type(self):
+            self.fuse.keep_original('age', [])
+            # Make arbitrary classification series
+            preds = pandas.Series([(i % 5) == 0 for i in range(len(self.comp.vectors))])
+            with self.assertRaises(ValueError):
+                fused = self.fuse.fuse(self.comp.vectors, self.comp.df_a, self.comp.df_b, predictions=1)
 
     def test_job_naming_correctness(self):
         for _ in range(5):
@@ -333,4 +349,18 @@ class TestFuseLinks(unittest.TestCase):
         )
         for i in data:
             self.assertTupleEqual(i, ((True, True), (True, True)))
+
+    def test_resolution_series_insufficient_metadata(self):
+        self.fuse.keep_original('age', 'age')
+        self.fuse.fuse(self.comp.vectors, self.comp.df_a, self.comp.df_b)
+        with self.assertRaises(AssertionError):
+            data = self.fuse._make_resolution_series(
+                'age', 'age',
+                meta_a='age', meta_b=None,
+            )
+        with self.assertRaises(AssertionError):
+            data = self.fuse._make_resolution_series(
+                'age', 'age',
+                meta_a=None, meta_b='age',
+            )
 

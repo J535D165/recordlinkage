@@ -238,6 +238,22 @@ class TestConflictResolutionFunctions(unittest.TestCase):
         self.assertTrue(np.isnan(cr.choose_shortest((('bbb', 'aaa', 'ccc'),), cr.nullify, True)),
                         msg='Tie break null.')
 
+    def test_choose_shortest_tie_break(self):
+        self.assertEqual(cr.choose_shortest_tie_break((('abc', 'a', 'ab'),), True),
+                         'a',
+                         msg='Basic correctness.')
+
+        self.assertTrue(np.isnan(cr.choose_shortest_tie_break(((),), True)),
+                        msg='No data.')
+
+        self.assertEqual(cr.choose_shortest_tie_break((('abc', np.nan, 'ab'),), True),
+                         'ab',
+                         msg='Handles nan.')
+
+        self.assertEqual(cr.choose_shortest_tie_break((([1, 2], 'abcdef', self.times),), True),
+                         [1, 2],
+                         msg='Non-string correctness.')
+
     def test_choose_longest(self):
         self.assertEqual(cr.choose_longest((('abc', 'a', 'ab'),), cr.choose_min, True),
                          'abc',
@@ -268,6 +284,22 @@ class TestConflictResolutionFunctions(unittest.TestCase):
 
         self.assertTrue(np.isnan(cr.choose_longest((('bbb', 'aaa', 'ccc'),), cr.nullify, True)),
                         msg='Tie break null.')
+
+    def test_choose_longest_tie_break(self):
+        self.assertEqual(cr.choose_longest_tie_break((('abc', 'a', 'ab'),), True),
+                         'abc',
+                         msg='Basic correctness.')
+
+        self.assertTrue(np.isnan(cr.choose_longest_tie_break(((),), True)),
+                        msg='No data.')
+
+        self.assertEqual(cr.choose_longest_tie_break((('abc', np.nan, 'ab'),), True),
+                         'abc',
+                         msg='Handles nan.')
+
+        self.assertEqual(cr.choose_longest_tie_break((([1, 2], 'abcdef', self.times),), True),
+                         self.times,
+                         msg='Non-string correctness.')
 
     def test_choose_random(self):
         self.assertTrue(isinstance(cr.choose_random(((1, 2, 3),), True), int),
@@ -385,8 +417,8 @@ class TestConflictResolutionFunctions(unittest.TestCase):
                          np.std([1, 2, 3]),
                          msg='Stdev correctness.')
 
-        self.assertEqual(cr.aggregate(((1, 2, 3),), 'variance', True),
-                         1,
+        self.assertEqual(cr.aggregate(((1, 2, 3),), 'var', True),
+                         np.var([1, 2, 3]),
                          msg='Variance correctness.')
 
         self.assertEqual(cr.aggregate(((1, np.nan, 2, np.nan, 3),), 'sum', True),
@@ -398,14 +430,14 @@ class TestConflictResolutionFunctions(unittest.TestCase):
                          msg='Mean correctness with nan values.')
 
         self.assertEqual(cr.aggregate(((1, np.nan, 2, np.nan, 3),), 'stdev', True),
-                         1,
+                         np.std([1, 2, 3]),
                          msg='Stdev correctness with nan values.')
 
-        self.assertEqual(cr.aggregate(((1, np.nan, 2, np.nan, 3),), 'variance', True),
-                         1,
+        self.assertEqual(cr.aggregate(((1, np.nan, 2, np.nan, 3),), 'var', True),
+                         np.var([1, 2, 3]),
                          msg='Variance correctness with nan values.')
 
-        self.assertTrue(np.isnan(cr.aggregate(((1, np.nan, 2, np.nan, 3),), 'variance', False)),
+        self.assertTrue(np.isnan(cr.aggregate(((1, np.nan, 2, np.nan, 3),), 'var', False)),
                         msg='Variance correctness with included nan values.')
 
     def test_choose_trusted(self):
