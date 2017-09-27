@@ -4,24 +4,12 @@ from __future__ import unicode_literals
 import random
 import collections
 from typing import Callable, TypeVar
+import pandas as pd
 import numpy as np
 
 import recordlinkage.rl_logging as rl_log
 
 TieBreaker = Callable[[tuple, bool], any]
-
-
-def safe_isnan(x):
-    """
-    Check if value is np.nan. Handles non-float values.
-
-    :param x: Some value.
-    :return: Bool.
-    """
-    if isinstance(x, float):
-        return np.isnan(x)
-    else:
-        return False
 
 
 def tupgetter(*items):
@@ -33,8 +21,9 @@ def tupgetter(*items):
     """
     if len(items) == 1:
         item = items[0]
+
         def g(obj):
-            return (obj[item], )
+            return (obj[item],)
     else:
         def g(obj):
             return tuple(obj[item] for item in items)
@@ -53,7 +42,7 @@ def remove_missing(x, remove_na_vals, remove_na_meta):
     """
     # Assert requirements
     if len(x) == 1 and remove_na_meta:
-            raise AssertionError('remove_na_meta is True but no metadata was passed.')
+        raise AssertionError('remove_na_meta is True but no metadata was passed.')
 
     # Process input
     length = len(x[0])
@@ -61,9 +50,15 @@ def remove_missing(x, remove_na_vals, remove_na_meta):
         return x
     keep_indices = list(range(length))
 
+    def check_null(x):
+        if isinstance(x, list):
+            return False
+        else:
+            return pd.isnull(x)
+
     # Remove nan-value indices from list
-    for i in range(length-1, -1, -1):
-        if remove_na_vals and safe_isnan(x[0][i]) or remove_na_meta and safe_isnan(x[1][i]):
+    for i in range(length - 1, -1, -1):
+        if remove_na_vals and check_null(x[0][i]) or remove_na_meta and check_null(x[1][i]):
             keep_indices.pop(i)
 
     # If no changes are needed, return x as-is.
@@ -72,7 +67,7 @@ def remove_missing(x, remove_na_vals, remove_na_meta):
     else:
         getter = tupgetter(*keep_indices)
         if len(x) == 1:
-            return (getter(x[0]), )
+            return (getter(x[0]),)
         else:
             return getter(x[0]), getter(x[1])
 
@@ -86,8 +81,8 @@ def bool_getter(x, fun):
     :return: A tupgetter function.
     """
     keep_indices = list(range(len(x)))
-    for i in range(len(x)-1, -1, -1):
-        if fun(x[i]) is False:
+    for i in range(len(x) - 1, -1, -1):
+        if not fun(x[i]):
             keep_indices.pop(i)
     getter = tupgetter(*keep_indices)
     return getter
@@ -226,7 +221,7 @@ def choose_shortest(x, tie_break, remove_na_vals):
             if len(vals[i]) == l:
                 index.append(i)
         if len(index) > 1:
-            return tie_break((tupgetter(*index)(vals), ), False)
+            return tie_break((tupgetter(*index)(vals),), False)
         else:
             return v
     else:
@@ -254,7 +249,7 @@ def choose_longest(x, tie_break, remove_na_vals):
             if len(vals[i]) == l:
                 index.append(i)
         if len(index) > 1:
-            return tie_break((tupgetter(*index)(vals), ), False)
+            return tie_break((tupgetter(*index)(vals),), False)
         else:
             return v
     else:
@@ -324,7 +319,7 @@ def vote(x, tie_break, remove_na_vals):
 
     if len(common) > 1:
         # Tie
-        return tie_break((tuple([x[0] for x in common]), ), False)
+        return tie_break((tuple([x[0] for x in common]),), False)
     else:
         # No tie
         return common[0][0]
@@ -340,13 +335,12 @@ def group(x, kind, remove_na_vals):
     :return: A set of values.
     """
     vals, = remove_missing(x, remove_na_vals, False)
-    s = set(vals)
     if kind == 'set':
-        return s
+        return set(vals)
     elif kind == 'list':
-        return list(s)
+        return list(vals)
     elif kind == 'tuple':
-        return tuple(s)
+        return tuple(vals)
     else:
         raise ValueError('Unrecognized collection kind.')
 
@@ -426,13 +420,13 @@ def choose_trusted(x, trusted, tie_break_trusted, tie_break_untrusted, remove_na
         if len(untrusted_vals) == 0:
             return np.nan
         else:
-            return tie_break_untrusted((untrusted_vals, ), False)
+            return tie_break_untrusted((untrusted_vals,), False)
     elif t_len == 1:
         # One trusted value
         return trust_vals[0]
     else:
         # Tie break
-        return tie_break_trusted((trust_vals, ), False)
+        return tie_break_trusted((trust_vals,), False)
 
 
 def annotated_concat(x, remove_na_vals, remove_na_meta):
@@ -481,7 +475,7 @@ def choose_metadata_min(x, tie_break, remove_na_vals, remove_na_meta):
         return take_vals[0]
     else:
         # Tie break
-        return tie_break((take_vals, ), False)
+        return tie_break((take_vals,), False)
 
 
 def choose_metadata_max(x, tie_break, remove_na_vals, remove_na_meta):
@@ -500,7 +494,7 @@ def choose_metadata_max(x, tie_break, remove_na_vals, remove_na_meta):
     if length == 0:
         return np.nan
 
-    # Find min metadata value
+    # Find max metadata value
     m = max(meta)
 
     # Find corresponding value(s)
@@ -511,4 +505,4 @@ def choose_metadata_max(x, tie_break, remove_na_vals, remove_na_meta):
         return take_vals[0]
     else:
         # Tie break
-        return tie_break((take_vals, ), False)
+        return tie_break((take_vals,), False)
