@@ -195,7 +195,9 @@ class FuseCore(ABC):
                      name=name, remove_na_vals=remove_na_vals, remove_na_meta=remove_na_dates,
                      params=(process_tie_break(tie_break),), description='keep_up_to_date')
 
-    def choose_by_value_score(self, values_a, values_b, func, tie_break='random', apply_to_null=False, name=None, remove_na_vals=True):
+    def choose_by_scored_value(self, values_a, values_b, func, tie_break='random',
+                               apply_to_null=False, name=None, remove_na_vals=True,
+                               choose_max_value=True):
         """
         Chooses the value which is given the highest score by a user-specified function. The scoring
         function may recognize specific features, compute taxonomic depth, handle unusual datatypes, etc.
@@ -207,19 +209,27 @@ class FuseCore(ABC):
         :param str/function tie_break: A conflict resolution function to be used to break ties.
         Default is choose_random.
         :param str name: The name of the resolved column.
-        :param bool remove_na_vals: If True, value/metadata pairs will be removed if the value is missing (i.e. np.nan).
+        :param bool remove_na_vals: If True, missing values will be ignored.
+        :param bool choose_max_value: If True, the largest value will be chosen. If False, the smallest value will be chosen.
         :return: None
         """
-        self.resolve(choose_metadata_max, values_a, values_b, meta_a=values_a, meta_b=values_b,
+        if choose_max_value:
+            resolution_function = choose_metadata_max
+        else:
+            resolution_function = choose_metadata_min
+
+        self.resolve(resolution_function, values_a, values_b, meta_a=values_a, meta_b=values_b,
                      name=name, remove_na_vals=remove_na_vals, remove_na_meta=remove_na_vals,
-                     params=(process_tie_break(tie_break),), description='choose_by_value_score',
+                     params=(process_tie_break(tie_break),), description='choose_by_scored_value',
                      transform_meta=func, transform_null=apply_to_null)
 
-    def choose_by_metadata_score(self, values_a, values_b, meta_a, meta_b, func, tie_break='random',
-                                 name=None, remove_na_vals=True, remove_na_meta=True):
+    def choose_by_scored_metadata(self, values_a, values_b, meta_a, meta_b, func, tie_break='random',
+                                  apply_to_null=False, name=None, remove_na_vals=True, remove_na_meta=True,
+                                  choose_max_value=True):
         """
-        Chooses the value which is given the highest score by a user-specified function. The scoring
-        function may recognize specific features, compute taxonomic depth, handle unusual datatypes, etc.
+        Chooses the value with a corresponding metadata value which is given the highest score by a user-specified
+        function. The scoring function may recognize specific features, compute taxonomic depth,
+        handle unusual datatypes, etc.
 
         :param str/list values_a: Column names from df_a to be resolved.
         :param str/list values_b: Column names from df_b to be resolved.
@@ -232,11 +242,18 @@ class FuseCore(ABC):
         :param str name: The name of the resolved column.
         :param bool remove_na_vals: If True, value/metadata pairs will be removed if the value is missing (i.e. np.nan).
         :param bool remove_na_meta: If True, value/metadata pairs will be removed if metadata is missing (i.e. np.nan).
+        :param bool choose_max_value: If True, the value with the largest metadata value will be chosen.
+        If False, the value with the smallest metadata value will be chosen.
         :return: None
         """
+        if choose_max_value:
+            resolution_function = choose_metadata_max
+        else:
+            resolution_function = choose_metadata_min
+
         self.resolve(choose_metadata_max, values_a, values_b, meta_a=meta_a, meta_b=meta_b,
                      name=name, remove_na_vals=remove_na_vals, remove_na_meta=remove_na_meta,
-                     params=(process_tie_break(tie_break),), description='choose_by_metadata_score',
+                     params=(process_tie_break(tie_break),), description='choose_by_scored_metadata',
                      transform_meta=func)
 
     def resolve(self, fun, values_a, values_b, meta_a=None, meta_b=None, name=None,
@@ -297,6 +314,7 @@ class FuseCore(ABC):
                         return x
                     else:
                         return f(x)
+
                 return skip_null_fun
 
         # Store metadata
