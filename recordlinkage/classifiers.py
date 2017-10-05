@@ -8,8 +8,6 @@ from sklearn.utils.validation import NotFittedError
 
 from recordlinkage.algorithms.em import ECMEstimate
 
-# ignore warnings
-warnings.simplefilter(action="ignore", category=FutureWarning)
 
 
 class LearningError(Exception):
