@@ -470,7 +470,7 @@ class NaiveBayesClassifier(Classifier):
     Parameters
     ----------
     log_prior : list, numpy.array
-        The log propabaility of each class. 
+        The log propabaility of each class.
 
     Attributes
     ----------
@@ -566,7 +566,8 @@ class FellegiSunter(Classifier):
         except Exception:
             pass
 
-    def _decision_rule(self, probabilities, threshold, random_decision_rule=False):
+    def _decision_rule(self, probabilities, threshold,
+                       random_decision_rule=False):
 
         if not self.random_decision_rule:
             return (probabilities >= threshold).astype(int)
@@ -642,7 +643,8 @@ class ECMClassifier(FellegiSunter):
 
         return result
 
-    def predict(self, comparison_vectors, return_type='index', *args, **kwargs):
+    def predict(self, comparison_vectors, return_type='index',
+                *args, **kwargs):
         """Predict the class of reord pairs.
 
         Classify a set of record pairs based on their comparison vectors into

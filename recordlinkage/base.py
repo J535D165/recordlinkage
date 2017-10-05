@@ -13,7 +13,6 @@ from recordlinkage.utils import listify
 from recordlinkage.utils import unique
 from recordlinkage.utils import is_label_dataframe
 
-from recordlinkage.types import is_list_like
 from recordlinkage.types import is_pandas_like
 from recordlinkage.types import is_numpy_like
 
@@ -255,7 +254,8 @@ class BaseCompare(object):
             warnings.warn(
                 "It seems you are using the older version of the Compare API, "
                 "see the documentation about how to update to the new API. "
-                "http://recordlinkage.readthedocs.io/en/latest/ref-compare.html",
+                "http://recordlinkage.readthedocs.io/"
+                "en/latest/ref-compare.html",
                 DeprecationWarning
             )
         else:
@@ -361,7 +361,7 @@ class BaseCompare(object):
         comp_func : function
             A comparison function. This function can be a built-in function
             or a user defined comparison function. The function should accept
-            numpy.ndarray's as first two arguments. 
+            numpy.ndarray's as first two arguments.
         labels_left : label, pandas.Series, pandas.DataFrame
             The labels, Series or DataFrame to compare.
         labels_right : label, pandas.Series, pandas.DataFrame
@@ -369,7 +369,7 @@ class BaseCompare(object):
         *args :
             Additional arguments to pass to callable comp_func.
         **kwargs :
-            Additional keyword arguments to pass to callable comp_func. 
+            Additional keyword arguments to pass to callable comp_func.
             (keyword 'label' is reserved.)
         label : (list of) label(s)
             The name of the feature and the name of the column. IMPORTANT:
@@ -464,7 +464,7 @@ class BaseCompare(object):
         Returns
         -------
         pandas.DataFrame
-            A pandas DataFrame with feature vectors, i.e. the result of 
+            A pandas DataFrame with feature vectors, i.e. the result of
             comparing each record pair.
         """
 
@@ -590,8 +590,8 @@ class BaseCompare(object):
 
             # check requested labels (for better error messages)
             elif label_a not in self.df_a.columns:
-                raise KeyError("label '%s' is not found in the first"
-                               "dataframe" % label_a)
+                raise KeyError("label '{}' is not found in the first"
+                               "dataframe".format(label_a))
 
             else:
 
@@ -622,8 +622,8 @@ class BaseCompare(object):
             # check requested labels (for better error messages)
             elif label_b not in self.df_b.columns:
 
-                raise KeyError("label '%s' is not found in the second"
-                               "dataframe" % label_b)
+                raise KeyError("label '{}' is not found in the second"
+                               "dataframe".format(label_b))
 
             else:
 

@@ -138,9 +138,12 @@ class Compare(BaseCompare):
             "{l_right}".format(l_left=s1, l_right=s2)
         )
 
-        return self._compare_vectorized(_compare_exact, s1, s2, *args, **kwargs)
+        return self._compare_vectorized(
+            _compare_exact, s1, s2, *args, **kwargs
+        )
 
-    def string(self, s1, s2, method='levenshtein', threshold=None, *args, **kwargs):
+    def string(self, s1, s2, method='levenshtein', threshold=None,
+               *args, **kwargs):
         """
         string(s1, s2, method='levenshtein', threshold=None, missing_value=0, label=None)
 
@@ -203,10 +206,9 @@ class Compare(BaseCompare):
                 "The algorithm '{}' is not known.".format(method))
 
         @fillna_decorator(0)
-        def _string_internal(s1, s2, call_method, threshold=None, *args, **kwargs):
-            """ Internal function to compute the numeric similarity algorithms."""
+        def _string_internal(s1, s2, call_method, threshold=None, *args, **kw):
 
-            c = call_method(s1, s2, *args, **kwargs)
+            c = call_method(s1, s2, *args, **kw)
 
             if threshold:
                 return (c >= threshold).astype(np.float64)
@@ -363,19 +365,18 @@ class Compare(BaseCompare):
 
         elif method in ['gauss', 'gaussian']:
             num_sim_alg = _gauss_sim
-            
+
         else:
             raise ValueError(
                 "The algorithm '{}' is not known.".format(method))
 
         @fillna_decorator(0)
-        def _num_internal(lat1, lng1, lat2, lng2, call_method, *args, **kwargs):
-            """Internal function to compute the numeric similarity algorithms."""
+        def _num_internal(lat1, lng1, lat2, lng2, call_method, *args, **kw):
 
             # compute the 1D distance between the values
             d = _haversine_distance(lat1, lng1, lat2, lng2)
 
-            return call_method(d, *args, **kwargs)
+            return call_method(d, *args, **kw)
 
         # logging
         logging.info(
@@ -389,7 +390,8 @@ class Compare(BaseCompare):
             num_sim_alg, *args, **kwargs
         )
 
-    def date(self, s1, s2, swap_month_day=0.5, swap_months='default', *args, **kwargs):
+    def date(self, s1, s2, swap_month_day=0.5, swap_months='default',
+             *args, **kwargs):
         """
         date(self, s1, s2, swap_month_day=0.5, swap_months='default', missing_value=0, label=None)
 

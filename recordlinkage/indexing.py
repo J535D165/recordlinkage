@@ -856,15 +856,15 @@ class SortedNeighbourhoodIndex(BaseIndexator):
         data_left = df_a[listify(left_on) + block_left_on].dropna(
             axis=0, how='any', inplace=False
         )
-        data_left.columns = ['sorting_key'] + ["blocking_key_%d" %
-                                               i for i, v in enumerate(block_left_on)]
+        data_left.columns = ['sorting_key'] + \
+            ["blocking_key_%d" % i for i, v in enumerate(block_left_on)]
         data_left['index_x'] = data_left.index
 
         data_right = df_b[listify(right_on) + block_right_on].dropna(
             axis=0, how='any', inplace=False
         )
-        data_right.columns = ['sorting_key'] + ["blocking_key_%d" %
-                                                i for i, v in enumerate(block_right_on)]
+        data_right.columns = ['sorting_key'] + \
+            ["blocking_key_%d" % i for i, v in enumerate(block_right_on)]
         data_right['index_y'] = data_right.index
 
         # sorting_key_values is the terminology in Data Matching [Christen,
