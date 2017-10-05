@@ -2,6 +2,7 @@
 
 from __future__ import division
 
+import time
 import warnings
 
 import pandas
@@ -74,7 +75,9 @@ class BaseIndexator(object):
 
         self.verify_integrity = verify_integrity
 
-        logging.info("Indexing - initialize %s class" % self.__class__.__name__)
+        logging.info("Indexing - initialize {} class".format(
+            self.__class__.__name__)
+        )
 
     @classmethod
     def _deduplication(cls, x):
@@ -157,6 +160,9 @@ class BaseIndexator(object):
             for df in x:
                 self._verify_integrety(df)
 
+        # start timing
+        start_time = time.time()
+
         # linking
         if not self._deduplication(x):
 
@@ -179,9 +185,14 @@ class BaseIndexator(object):
         rr = 1 - self._n[-1] / self._n_max[-1]
         rr_avg = 1 - np.sum(self._n) / np.sum(self._n_max)
 
-        # log
-        log_format = "Indexing - summary n={:d}, reduction_ratio={:0.5f}, reduction_ratio_mean={:0.5f}"
-        logging.info(log_format.format(n, rr, rr_avg))
+        # log timing
+        logf_time = "Indexing - computation time: ~{:.2f}s"
+        logging.info(logf_time.format(time.time() - start_time))
+
+        # log results
+        logf_result = "Indexing - summary n={:d}, " \
+            "reduction_ratio={:0.5f}, reduction_ratio_mean={:0.5f}"
+        logging.info(logf_result.format(n, rr, rr_avg))
 
         return pairs
 
@@ -234,7 +245,9 @@ class BaseCompare(object):
     def __init__(self, pairs=None, df_a=None, df_b=None, low_memory=False,
                  block_size=1000000, njobs=1, **kwargs):
 
-        # logging.info("Comparing - initialize %s class" % self.__class__.__name__)
+        logging.info("Comparing - initialize {} class".format(
+            self.__class__.__name__)
+        )
 
         if isinstance(pairs, (pandas.MultiIndex, pandas.Index)):
             self.deprecated = True
@@ -363,9 +376,9 @@ class BaseCompare(object):
             This argument is a keyword argument.
         """
 
-        # logging
-        # log_str = "Comparing - initialize user defined function - compare {l_left} with {l_right}"
-        # logging.info(log_str.format(l_left=labels_left, l_right=labels_right))
+        log_str = "Comparing - initialize user defined function - " \
+            "compare {l_left} with {l_right}"
+        logging.info(log_str.format(l_left=labels_left, l_right=labels_right))
 
         return self._compare_vectorized(
             comp_func, labels_left, labels_right, *args, **kwargs)
@@ -455,6 +468,11 @@ class BaseCompare(object):
             comparing each record pair.
         """
 
+        logging.info("Comparing - start comparing data")
+
+        # start the timer for the comparing step
+        start_time = time.time()
+
         sublabels_left = self._get_labels_left(validate=x)
         df_a_indexed = self._loc2(x[sublabels_left], pairs, 0)
 
@@ -464,6 +482,9 @@ class BaseCompare(object):
         else:
             sublabels_right = self._get_labels_right(validate=x_link)
             df_b_indexed = self._loc2(x_link[sublabels_right], pairs, 1)
+
+        # log timing
+        index_time = time.time() - start_time
 
         results = pandas.DataFrame(index=pairs)
         label_num = 0  # make a label is label is None
@@ -492,6 +513,17 @@ class BaseCompare(object):
                 labels.append(label_val)
 
             results[label_val] = c
+
+        # log timing
+        total_time = time.time() - start_time
+
+        # log timing
+        logging.info("Comparing - computation time: ~{:.2f}s (from which "
+                     "indexing: ~{:.2f}s)".format(total_time, index_time))
+
+        # log results
+        logf_result = "Comparing - summary shape={}"
+        logging.info(logf_result.format(results.shape))
 
         return results
 

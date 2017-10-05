@@ -133,8 +133,10 @@ class Compare(BaseCompare):
         """
 
         # logging
-        # log_str = "Comparing - initialise compare {l_left} with {l_right} - user defined function"
-        # logging.info(log_str.format(l_left=labels_left, l_right=labels_right))
+        logging.info(
+            "Comparing - initialize exact algorithm - compare {l_left} with "
+            "{l_right}".format(l_left=s1, l_right=s2)
+        )
 
         return self._compare_vectorized(_compare_exact, s1, s2, *args, **kwargs)
 
@@ -210,6 +212,13 @@ class Compare(BaseCompare):
                 return (c >= threshold).astype(np.float64)
             else:
                 return c
+
+        # logging
+        logging.info(
+            "Comparing - initialize string '{method}' algorithm - compare "
+            "{l_left} with {l_right}".format(
+                l_left=s1, l_right=s2, method=method)
+        )
 
         return self._compare_vectorized(
             _string_internal, s1, s2, str_sim_alg, threshold, *args, **kwargs
@@ -291,7 +300,16 @@ class Compare(BaseCompare):
 
             return call_method(d, *args, **kwargs)
 
-        return self._compare_vectorized(_num_internal, s1, s2, num_sim_alg, *args, **kwargs)
+        # logging
+        logging.info(
+            "Comparing - initialize numeric '{method}' algorithm - compare "
+            "{l_left} with {l_right}".format(
+                l_left=s1, l_right=s2, method=method)
+        )
+
+        return self._compare_vectorized(
+            _num_internal, s1, s2, num_sim_alg, *args, **kwargs
+        )
 
     def geo(self, lat1, lng1, lat2, lng2, method='linear', *args, **kwargs):
         """
@@ -359,6 +377,13 @@ class Compare(BaseCompare):
 
             return call_method(d, *args, **kwargs)
 
+        # logging
+        logging.info(
+            "Comparing - initialize geographic '{method}' "
+            "algorithm - compare {l_left} with {l_right}".format(
+                l_left=(lat1, lng1), l_right=(lat2, lng2), method=method)
+        )
+
         return self._compare_vectorized(
             _num_internal, (lat1, lng1), (lat2, lng2),
             num_sim_alg, *args, **kwargs
@@ -394,6 +419,12 @@ class Compare(BaseCompare):
         def _dummy_compare_dates(s1, s2, *args, **kwargs):
 
             return _compare_dates(s1, s2, *args, **kwargs)
+
+        # logging
+        logging.info(
+            "Comparing - initialize date algorithm - compare {l_left} with "
+            "{l_right}".format(l_left=s1, l_right=s2)
+        )
 
         return self._compare_vectorized(
             _dummy_compare_dates, s1, s2,
