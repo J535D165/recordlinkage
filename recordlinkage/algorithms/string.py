@@ -20,7 +20,7 @@ warnings.filterwarnings("ignore")
 
 def jaro_similarity(s1, s2):
 
-    conc = pandas.concat([s1, s2], axis=1, ignore_index=True)
+    conc = pandas.Series(list(zip(s1, s2)))
 
     def jaro_apply(x):
 
@@ -32,15 +32,14 @@ def jaro_similarity(s1, s2):
             else:
                 raise err
 
-    return conc.apply(jaro_apply, axis=1)
+    return conc.apply(jaro_apply)
 
 
 def jarowinkler_similarity(s1, s2):
 
-    conc = pandas.concat([s1, s2], axis=1, ignore_index=True)
+    conc = pandas.Series(list(zip(s1, s2)))
 
     def jaro_winkler_apply(x):
-
         try:
             return jellyfish.jaro_winkler(x[0], x[1])
         except Exception as err:
@@ -49,12 +48,12 @@ def jarowinkler_similarity(s1, s2):
             else:
                 raise err
 
-    return conc.apply(jaro_winkler_apply, axis=1)
+    return conc.apply(jaro_winkler_apply)
 
 
 def levenshtein_similarity(s1, s2):
 
-    conc = pandas.concat([s1, s2], axis=1, ignore_index=True)
+    conc = pandas.Series(list(zip(s1, s2)))
 
     def levenshtein_apply(x):
 
@@ -67,12 +66,12 @@ def levenshtein_similarity(s1, s2):
             else:
                 raise err
 
-    return conc.apply(levenshtein_apply, axis=1)
+    return conc.apply(levenshtein_apply)
 
 
 def damerau_levenshtein_similarity(s1, s2):
 
-    conc = pandas.concat([s1, s2], axis=1, ignore_index=True)
+    conc = pandas.Series(list(zip(s1, s2)))
 
     def damerau_levenshtein_apply(x):
 
@@ -85,7 +84,7 @@ def damerau_levenshtein_similarity(s1, s2):
             else:
                 raise err
 
-    return conc.apply(damerau_levenshtein_apply, axis=1)
+    return conc.apply(damerau_levenshtein_apply)
 
 
 def qgram_similarity(s1, s2, include_wb=True, ngram=(2, 2)):
@@ -202,7 +201,7 @@ def smith_waterman_similarity(s1, s2, match=5, mismatch=-5, gap_start=-5, gap_co
     if len(s1) == len(s2) == 0:
         return []
 
-    concat = pandas.concat([s1, s2], axis=1, ignore_index=True)
+    concat = pandas.Series(list(zip(s1, s2)))
 
     def sw_apply(t):
         """
@@ -222,8 +221,6 @@ def smith_waterman_similarity(s1, s2, match=5, mismatch=-5, gap_start=-5, gap_co
         Float
             A similarity score between 0 and 1.
         """
-        print(t)
-        print(type(t))
         str1 = t[0]
         str2 = t[1]
 
@@ -355,7 +352,7 @@ def smith_waterman_similarity(s1, s2, match=5, mismatch=-5, gap_start=-5, gap_co
             else:
                 raise err
 
-    return concat.apply(sw_apply, axis=1)
+    return concat.apply(sw_apply)
 
 
 def longest_common_substring_similarity(s1, s2, norm='dice', min_len=2):
@@ -388,7 +385,7 @@ def longest_common_substring_similarity(s1, s2, norm='dice', min_len=2):
     if len(s1) == len(s2) == 0:
         return []
 
-    conc = pandas.concat([s1, s2], axis=1, ignore_index=True)
+    conc = pandas.Series(list(zip(s1, s2)))
 
     def lcs_iteration(x):
         """
@@ -537,4 +534,4 @@ def longest_common_substring_similarity(s1, s2, norm='dice', min_len=2):
         # Average the two orderings, since lcs may be sensitive to comparison order.
         return (normalize_lcs(lcs_acc_1)+normalize_lcs(lcs_acc_2)) / 2
 
-    return conc.apply(lcs_apply, axis=1)
+    return conc.apply(lcs_apply)
