@@ -9,6 +9,17 @@ class IndexError(Exception):
 # Checks and conversions
 
 
+def is_label_dataframe(label, df):
+    """check column label existance"""
+
+    setdiff = set(label) - set(df.columns.tolist())
+
+    if len(setdiff) == 0:
+        return True
+    else:
+        return False
+
+
 def listify(x):
     """Make a list of the argument if it is not a list."""
 

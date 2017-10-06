@@ -98,11 +98,15 @@ def qgram_similarity(s1, s2, include_wb=True, ngram=(2, 2)):
     # include word boundaries or not
     analyzer = 'char_wb' if include_wb is True else 'char'
 
+    # prepare data
+    data = s1.append(s2).fillna('')
+
     # The vectorizer
     vectorizer = CountVectorizer(
-        analyzer=analyzer, strip_accents='unicode', ngram_range=ngram)
-
-    data = s1.append(s2).fillna('')
+        analyzer=analyzer, 
+        strip_accents='unicode', 
+        ngram_range=ngram
+    )
 
     vec_fit = vectorizer.fit_transform(data)
 
@@ -515,6 +519,8 @@ def longest_common_substring_similarity(s1, s2, norm='dice', min_len=2):
             Float
                 The normalized lcs length.
             """
+            if len(x[0]) == 0 or len(x[1]) == 0:
+                return 0
             if norm == 'overlap':
                 return lcs_value / min(len(x[0]), len(x[1]))
             elif norm == 'jaccard':

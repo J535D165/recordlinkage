@@ -2,6 +2,27 @@
 Release notes
 *************
 
+Version 0.10.1
+==============
+
+- print statement in the geo compare algorithm removed. 
+- String, numeric and geo compare functions now raise directly when an
+  incorrect algorithm name is passed. 
+- Fix unit test that failed on Python 2.7. 
+
+Version 0.10.0
+==============
+
+- A new compare API. The new Compare class no longer takes the datasets and 
+  pairs as arguments. The actual computation is now performed when calling
+  `.compute(PAIRS, DF1, DF2)`. The documentation is updated as well, but 
+  still needs improvement.
+- Two new string similarity measures are added: Smith Waterman 
+  (smith_waterman) and Longest Common Substring (lcs). Thanks to Joel Becker 
+  and Jillian Anderson from the Networks Lab of the University of Waterloo. 
+- Added and/or updated a large amount of unit tests.
+- Various small improvements.
+
 Version 0.9.0
 =============
 
