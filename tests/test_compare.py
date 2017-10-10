@@ -10,10 +10,9 @@ import numpy as np
 from numpy import nan, arange
 from pandas import Series, DataFrame, MultiIndex, to_datetime
 
-# dependencies testing specific 
+# dependencies testing specific
 import pandas.util.testing as pdt
-import numpy.testing as npt
-from parameterized import parameterized, param
+from parameterized import parameterized
 
 STRING_SIM_ALGORITHMS = [
     'jaro', 'q_gram', 'cosine', 'jaro_winkler', 'dameraulevenshtein',
@@ -216,8 +215,8 @@ class TestCompareApi(TestData):
         def call(s1, s2):
 
             # this should raise on incorrect types
-            assert isinstance(s1, numpy.ndarray)
-            assert isinstance(s2, numpy.ndarray)
+            assert isinstance(s1, np.ndarray)
+            assert isinstance(s2, np.ndarray)
 
             return np.ones(len(s1), dtype=np.int)
 
@@ -239,9 +238,9 @@ class TestCompareApi(TestData):
         # test without label
         comp = recordlinkage.Compare()
         comp.compare_vectorized(
-            lambda s1, s2, x : np.ones(len(s1), dtype=np.int) * x, 
-            'col', 
-            'col', 
+            lambda s1, s2, x: np.ones(len(s1), dtype=np.int) * x,
+            'col',
+            'col',
             5
         )
         result = comp.compute(ix, A, B)
@@ -251,10 +250,10 @@ class TestCompareApi(TestData):
         # test with label
         comp = recordlinkage.Compare()
         comp.compare_vectorized(
-            lambda s1, s2, x : np.ones(len(s1), dtype=np.int) * x, 
-            'col', 
-            'col', 
-            5, 
+            lambda s1, s2, x: np.ones(len(s1), dtype=np.int) * x,
+            'col',
+            'col',
+            5,
             label='test'
         )
         result = comp.compute(ix, A, B)
@@ -264,10 +263,10 @@ class TestCompareApi(TestData):
         # test with kwarg
         comp = recordlinkage.Compare()
         comp.compare_vectorized(
-            lambda s1, s2, x : np.ones(len(s1), dtype=np.int) * x, 
-            'col', 
-            'col', 
-            x=5, 
+            lambda s1, s2, x: np.ones(len(s1), dtype=np.int) * x,
+            'col',
+            'col',
+            x=5,
             label='test'
         )
         result = comp.compute(ix, A, B)
@@ -314,9 +313,9 @@ class TestCompareApi(TestData):
         # test without label
         comp = recordlinkage.Compare()
         comp.compare_vectorized(
-            lambda s1, s2, x : np.ones(len(s1), dtype=np.int) * x, 
-            'col', 
-            'col', 
+            lambda s1, s2, x: np.ones(len(s1), dtype=np.int) * x,
+            'col',
+            'col',
             5
         )
         result = comp.compute(ix, A)
@@ -326,12 +325,12 @@ class TestCompareApi(TestData):
         # test with label
         comp = recordlinkage.Compare()
         comp.compare_vectorized(
-            lambda s1, s2, x : np.ones(len(s1), dtype=np.int) * x, 
-            'col', 
-            'col', 
+            lambda s1, s2, x: np.ones(len(s1), dtype=np.int) * x,
+            'col',
+            'col',
             5,
             label='test'
-        )        
+        )
         result = comp.compute(ix, A)
         expected = DataFrame([5, 5, 5, 5, 5], index=ix, columns=['test'])
         pdt.assert_frame_equal(result, expected)
@@ -567,7 +566,6 @@ class TestCompareNumeric(TestData):
                 [False, False, False, False, True], index=ix, name=alg)
             pdt.assert_series_equal(
                 (result < 0.5) & (result >= 0.0), expected_bool)
-
 
     @parameterized.expand(NUMERIC_SIM_ALGORITHMS)
     def test_numeric_algorithms_errors(self, alg):
@@ -829,7 +827,7 @@ class TestCompareGeo(TestData):
                  offset=1, scale=2, label='gauss')
         result_df = comp.compute(ix, A, B)
 
-        print (result_df)
+        print(result_df)
 
         for alg in ['step', 'linear', 'squared', 'exp', 'gauss']:
 
@@ -841,20 +839,10 @@ class TestCompareGeo(TestData):
 
     def test_geo_does_not_exist(self):
 
-        # Utrecht, Amsterdam, Rotterdam (Cities in The Netherlands)
-        A = DataFrame({
-            'lat': [52.0842455, 52.3747388, 51.9280573],
-            'lng': [5.0124516, 4.7585305, 4.4203581]
-        })
-        B = DataFrame({
-            'lat': [52.3747388, 51.9280573, 52.0842455],
-            'lng': [4.7585305, 4.4203581, 5.0124516]
-        })
-        ix = MultiIndex.from_arrays([A.index.values, B.index.values])
-
         comp = recordlinkage.Compare()
 
-        self.assertRaises(ValueError, comp.geo, 'lat', 'lng', 'lat', 'lng', method='unknown')
+        self.assertRaises(ValueError, comp.geo, 'lat', 'lng',
+                          'lat', 'lng', method='unknown')
 
 
 # tests/test_compare.py:TestCompareStrings
@@ -877,7 +865,7 @@ class TestCompareStrings(TestData):
         comp.string('col', 'col', method='levenshtein', missing_value=0)
         result = comp.compute(ix, A, B)
 
-        print (result)
+        print(result)
 
         self.assertFalse(result.isnull().all(1).all(0))
         self.assertTrue((result[result.notnull()] >= 0).all(1).all(0))
@@ -945,10 +933,7 @@ class TestCompareStrings(TestData):
 
     def test_fuzzy_does_not_exist(self):
 
-        A = DataFrame({'col': [1, 1, 1, nan, 0]})
-        B = DataFrame({'col': [1, 1, 1, nan, nan]})
-        ix = MultiIndex.from_arrays([A.index.values, B.index.values])
-
         comp = recordlinkage.Compare()
 
-        self.assertRaises(ValueError, comp.string, 'col', 'col', method='unknown_algorithm')
+        self.assertRaises(ValueError, comp.string, 'col',
+                          'col', method='unknown_algorithm')
