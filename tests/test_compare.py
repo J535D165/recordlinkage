@@ -1,4 +1,8 @@
+import os
 import unittest
+import shutil
+import tempfile
+import pickle
 
 import recordlinkage
 
@@ -45,31 +49,40 @@ AGES = [23, 40, 70, 45, 23, 57, 38, nan, 45, 46]
 class TestData(unittest.TestCase):
 
     @classmethod
-    def setUpClass(self):
+    def setUpClass(cls):
 
         N_A = 100
         N_B = 100
 
-        self.A = DataFrame({
+        cls.A = DataFrame({
             'age': np.random.choice(AGES, N_A),
             'given_name': np.random.choice(FIRST_NAMES, N_A),
             'lastname': np.random.choice(LAST_NAMES, N_A),
             'street': np.random.choice(STREET, N_A)
         })
 
-        self.B = DataFrame({
+        cls.B = DataFrame({
             'age': np.random.choice(AGES, N_B),
             'given_name': np.random.choice(FIRST_NAMES, N_B),
             'lastname': np.random.choice(LAST_NAMES, N_B),
             'street': np.random.choice(STREET, N_B)
         })
 
-        self.A.index.name = 'index_df1'
-        self.B.index.name = 'index_df2'
+        cls.A.index.name = 'index_df1'
+        cls.B.index.name = 'index_df2'
 
-        self.index_AB = MultiIndex.from_arrays(
-            [arange(len(self.A)), arange(len(self.B))],
-            names=[self.A.index.name, self.B.index.name])
+        cls.index_AB = MultiIndex.from_arrays(
+            [arange(len(cls.A)), arange(len(cls.B))],
+            names=[cls.A.index.name, cls.B.index.name])
+
+        # Create a temporary directory
+        cls.test_dir = tempfile.mkdtemp()
+
+    @classmethod
+    def tearDownClass(cls):
+
+        # Remove the test directory
+        shutil.rmtree(cls.test_dir)
 
 
 # tests/test_compare.py:TestCompareApi
@@ -322,6 +335,20 @@ class TestCompareApi(TestData):
         result = comp.compute(ix, A)
         expected = DataFrame([5, 5, 5, 5, 5], index=ix, columns=['test'])
         pdt.assert_frame_equal(result, expected)
+
+    def test_pickle(self):
+        # test if it is possible to pickle the Compare class
+
+        comp = recordlinkage.Compare()
+        comp.string('given_name', 'given_name')
+        comp.numeric('number', 'number')
+        comp.geo('lat', 'lng', 'lat', 'lng')
+        comp.date('before', 'after')
+
+        # do the test
+        pickle_path = os.path.join(self.test_dir, 'pickle_compare_obj.pickle')
+        pickle.dump(comp, open(pickle_path, 'wb'))
+
 
 # tests/test_compare.py:TestCompareExact
 class TestCompareExact(TestData):

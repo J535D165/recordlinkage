@@ -1,6 +1,8 @@
 from __future__ import division
 from __future__ import unicode_literals
 
+from functools import wraps
+
 import pandas
 import numpy as np
 
@@ -31,6 +33,7 @@ def fillna_decorator(missing_value=np.nan):
 
     def real_decorator(func):
 
+        @wraps(func)
         def func_wrapper(*args, **kwargs):
 
             mv = kwargs.pop('missing_value', missing_value)
@@ -63,6 +66,42 @@ def _check_labels(labels, df):
             raise KeyError(
                 'label [%s] not in dataframe' % label
             )
+
+
+@fillna_decorator(0)
+def _string_internal(s1, s2, call_method, threshold=None, *args, **kw):
+
+    c = call_method(s1, s2, *args, **kw)
+
+    if threshold:
+        return (c >= threshold).astype(np.float64)
+    else:
+        return c
+
+
+@fillna_decorator(0)
+def _num_internal(s1, s2, call_method, *args, **kwargs):
+    """Internal function to compute the numeric similarity."""
+
+    # compute the 1D distance between the values
+    d = _1d_distance(s1, s2)
+
+    return call_method(d, *args, **kwargs)
+
+
+@fillna_decorator(0)
+def _geo_internal(lat1, lng1, lat2, lng2, call_method, *args, **kw):
+
+    # compute the 1D distance between the values
+    d = _haversine_distance(lat1, lng1, lat2, lng2)
+
+    return call_method(d, *args, **kw)
+
+
+@fillna_decorator(0)
+def _dates_internal(s1, s2, *args, **kwargs):
+
+    return _compare_dates(s1, s2, *args, **kwargs)
 
 
 class Compare(BaseCompare):
@@ -205,16 +244,6 @@ class Compare(BaseCompare):
             raise ValueError(
                 "The algorithm '{}' is not known.".format(method))
 
-        @fillna_decorator(0)
-        def _string_internal(s1, s2, call_method, threshold=None, *args, **kw):
-
-            c = call_method(s1, s2, *args, **kw)
-
-            if threshold:
-                return (c >= threshold).astype(np.float64)
-            else:
-                return c
-
         # logging
         logging.info(
             "Comparing - initialize string '{method}' algorithm - compare "
@@ -288,19 +317,10 @@ class Compare(BaseCompare):
 
         elif method in ['gauss', 'gaussian']:
             num_sim_alg = _gauss_sim
-            
+
         else:
             raise ValueError(
                 "The algorithm '{}' is not known.".format(method))
-
-        @fillna_decorator(0)
-        def _num_internal(s1, s2, call_method, *args, **kwargs):
-            """Internal function to compute the numeric similarity."""
-
-            # compute the 1D distance between the values
-            d = _1d_distance(s1, s2)
-
-            return call_method(d, *args, **kwargs)
 
         # logging
         logging.info(
@@ -370,14 +390,6 @@ class Compare(BaseCompare):
             raise ValueError(
                 "The algorithm '{}' is not known.".format(method))
 
-        @fillna_decorator(0)
-        def _num_internal(lat1, lng1, lat2, lng2, call_method, *args, **kw):
-
-            # compute the 1D distance between the values
-            d = _haversine_distance(lat1, lng1, lat2, lng2)
-
-            return call_method(d, *args, **kw)
-
         # logging
         logging.info(
             "Comparing - initialize geographic '{method}' "
@@ -386,7 +398,7 @@ class Compare(BaseCompare):
         )
 
         return self._compare_vectorized(
-            _num_internal, (lat1, lng1), (lat2, lng2),
+            _geo_internal, (lat1, lng1), (lat2, lng2),
             num_sim_alg, *args, **kwargs
         )
 
@@ -417,11 +429,6 @@ class Compare(BaseCompare):
 
         """
 
-        @fillna_decorator(0)
-        def _dummy_compare_dates(s1, s2, *args, **kwargs):
-
-            return _compare_dates(s1, s2, *args, **kwargs)
-
         # logging
         logging.info(
             "Comparing - initialize date algorithm - compare {l_left} with "
@@ -429,7 +436,7 @@ class Compare(BaseCompare):
         )
 
         return self._compare_vectorized(
-            _dummy_compare_dates, s1, s2,
+            _dates_internal, s1, s2,
             swap_month_day=swap_month_day, swap_months=swap_months,
             *args, **kwargs
         )
