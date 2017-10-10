@@ -73,6 +73,17 @@ def process_tie_break(tie_break) -> Callable[[tuple, bool], any]:
     return tie_break_fun
 
 
+class SkipNull(object):
+    def __init__(self, f):
+        self.f = f
+
+    def __call__(self, x):
+        if pd.isnull(x):
+            return x
+        else:
+            return self.f(x)
+
+
 class FuseCore(ABC):
     def __init__(self):
         """
@@ -251,10 +262,10 @@ class FuseCore(ABC):
         else:
             resolution_function = choose_metadata_min
 
-        self.resolve(choose_metadata_max, values_a, values_b, meta_a=meta_a, meta_b=meta_b,
+        self.resolve(resolution_function, values_a, values_b, meta_a=meta_a, meta_b=meta_b,
                      name=name, remove_na_vals=remove_na_vals, remove_na_meta=remove_na_meta,
                      params=(process_tie_break(tie_break),), description='choose_by_scored_metadata',
-                     transform_meta=func)
+                     transform_meta=func, transform_null=apply_to_null)
 
     def resolve(self, fun, values_a, values_b, meta_a=None, meta_b=None, name=None,
                 transform_vals=None, transform_meta=None, transform_null=False,
@@ -305,18 +316,6 @@ class FuseCore(ABC):
         else:
             handler = self._do_resolve
 
-        def skip_null(f):
-            if f is None:
-                return None
-            else:
-                def skip_null_fun(x):
-                    if pd.isnull(x):
-                        return x
-                    else:
-                        return f(x)
-
-                return skip_null_fun
-
         # Store metadata
         job = {
             'fun': fun,
@@ -324,8 +323,8 @@ class FuseCore(ABC):
             'values_b': values_b,
             'meta_a': meta_a,
             'meta_b': meta_b,
-            'transform_vals': transform_vals if transform_null else skip_null(transform_vals),
-            'transform_meta': transform_meta if transform_null else skip_null(transform_meta),
+            'transform_vals': transform_vals if transform_null or transform_vals is None else SkipNull(transform_vals),
+            'transform_meta': transform_meta if transform_null or transform_vals is None else SkipNull(transform_meta),
             'static_meta': static_meta,
             'params': all_params,
             'name': name,
@@ -566,7 +565,7 @@ class FuseLinks(FuseCore):
         Returns a data from a column in df_a, corresponding to the first level of the candidate link multi-index.
 
         :param str name: Column name.
-        :return: A ``pandas.Series``.
+        :return: A pandas.Series.
         """
         return self.df_a[name].loc[list(self.index[self._index_level_0])]
 
@@ -575,7 +574,7 @@ class FuseLinks(FuseCore):
         Returns a data from a column in df_b, corresponding to the second level of the candidate link multi-index.
 
         :param str name: Column name.
-        :return: A ``pandas.Series``.
+        :return: A pandas.Series.
         """
         return self.df_b[name].loc[list(self.index[self._index_level_1])]
 
@@ -647,13 +646,13 @@ class FuseLinks(FuseCore):
             if len(values_b) < len(meta_b):
                 generalize_values_b = True
                 generalize_meta_b = False
-                rl_logging.warn('Generalizing values. There are fewer columns in values_b than in meta_b. '
-                                'Values in first column of values_b will be generalized to values in meta_b.')
+                rl_logging.warning('Generalizing values. There are fewer columns in values_b than in meta_b. '
+                                   'Values in first column of values_b will be generalized to values in meta_b.')
             elif len(values_b) > len(meta_b):
                 generalize_values_b = False
                 generalize_meta_b = True
-                rl_logging.warn('Generalizing metadata. There are fewer columns in meta_b than in values_b. '
-                                'Values in first column of meta_b will be generalized to values in values_b.')
+                rl_logging.warning('Generalizing metadata. There are fewer columns in meta_b than in values_b. '
+                                   'Values in first column of meta_b will be generalized to values in values_b.')
             else:
                 generalize_values_b = False
                 generalize_meta_b = False

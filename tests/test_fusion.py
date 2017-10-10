@@ -134,7 +134,9 @@ TIE_BREAK_OPTIONS = [
 # Cases that require tie breaks
 TIE_BREAK_STRATEGIES = [
     {'method': 'cry_with_the_wolves', 'params': [], 'kws': {}},
-    {'method': 'keep_up_to_date', 'params': ['date', 'date'], 'kws': {}}
+    {'method': 'keep_up_to_date', 'params': ['date', 'date'], 'kws': {}},
+    {'method': 'choose_by_scored_value', 'params': [hash, ], 'kws': {}},
+    {'method': 'choose_by_scored_metadata', 'params': ['given_name', 'given_name', hash, ], 'kws': {}}
 ]
 
 # Combinations of columns to resolve on
@@ -148,6 +150,10 @@ NUMERIC_OPTIONS = [
 # Cases that use numeric aggregation
 NUMERIC_STRATEGIES = [
     {'method': 'meet_in_the_middle', 'params': [], 'kws': {}},
+]
+
+SCORED_STRATEGIES = [
+
 ]
 
 RESOLUTION_CASES = it.chain(
