@@ -22,6 +22,7 @@ def tupgetter(*items):
         A collection of indexes.
     Returns
     -------
+    Function
         A tupgetter function.
     
     """
@@ -51,6 +52,7 @@ def remove_missing(x, remove_na_vals, remove_na_meta):
         Should nan metadata values be excluded?
     Returns
     -------
+    Tuple
         A tuple of one or two n-tuples.
     
     """
@@ -99,6 +101,7 @@ def bool_getter(x, fun):
         A predicate function
     Returns
     -------
+    Function
         A tupgetter function.
     
     """
@@ -124,6 +127,7 @@ def identity(x, remove_na_vals):
         Included for consistency with tie-breaking conflict resolution functions.
     Returns
     -------
+    Any
         The unchanged value.
     
     """
@@ -145,7 +149,7 @@ def nullify(x, remove_na_vals):
         Included for consistency with tie-breaking conflict resolution functions.
     Returns
     -------
-        numpy.nan
+    numpy.nan
     
     """
     return np.nan
@@ -163,7 +167,8 @@ def choose_first(x, remove_na_vals):
         If True, value/metadata pairs will be removed if the value is missing (i.e. np.nan).
     Returns
     -------
-        The last value.
+    Any
+        The first value.
     
     """
     vals, = remove_missing(x, remove_na_vals, False)
@@ -186,6 +191,7 @@ def choose_last(x, remove_na_vals):
         If True, value/metadata pairs will be removed if the value is missing (i.e. np.nan).
     Returns
     -------
+    Any
         The last value.
     
     """
@@ -209,6 +215,7 @@ def count(x, remove_na_vals):
         If True, value/metadata pairs will be removed if the value is missing (i.e. np.nan).
     Returns
     -------
+    Int
         The number of unique values.
     
     """
@@ -228,6 +235,7 @@ def choose_min(x, remove_na_vals):
         If True, value/metadata pairs will be removed if the value is missing (i.e. np.nan).
     Returns
     -------
+    Any
         The smallest value.
     
     """
@@ -256,6 +264,7 @@ def choose_max(x, remove_na_vals):
         If True, value/metadata pairs will be removed if the value is missing (i.e. np.nan).
     Returns
     -------
+    Any
         The largest value.
     
     """
@@ -286,6 +295,7 @@ def choose_shortest(x, tie_break, remove_na_vals):
         If True, value/metadata pairs will be removed if the value is missing (i.e. np.nan).
     Returns
     -------
+    Any
         The shortest value.
     
     """
@@ -322,6 +332,7 @@ def choose_longest(x, tie_break, remove_na_vals):
         If True, value/metadata pairs will be removed if the value is missing (i.e. np.nan).
     Returns
     -------
+    Any
         The longest value.
     
     """
@@ -356,6 +367,7 @@ def choose_shortest_tie_break(x, remove_na_vals):
         If True, value/metadata pairs will be removed if the value is missing (i.e. np.nan).
     Returns
     -------
+    Any
         The shortest value.
     
     """
@@ -374,6 +386,7 @@ def choose_longest_tie_break(x, remove_na_vals):
         If True, value/metadata pairs will be removed if the value is missing (i.e. np.nan).
     Returns
     -------
+    Any
         The longest value.
     
     """
@@ -392,6 +405,7 @@ def choose_random(x, remove_na_vals):
         If True, value/metadata pairs will be removed if the value is missing (i.e. np.nan).
     Returns
     -------
+    Any
         A random value.
     
     """
@@ -416,7 +430,8 @@ def vote(x, tie_break, remove_na_vals):
         If True, value/metadata pairs will be removed if the value is missing (i.e. np.nan).
     Returns
     -------
-        A canonical value.
+    Any
+        The most common value.
     
     """
     # Process input
@@ -451,12 +466,13 @@ def group(x, kind, remove_na_vals):
     x : tuple
         Contains a tuple of values to be resolved.
     kind : str
-        The type of collection to be returned. One of set, list, tuple.
+        The type of collection to be returned. One of 'set', 'list', 'tuple'.
     remove_na_vals : bool
         If True, value/metadata pairs will be removed if the value is missing (i.e. np.nan).
     Returns
     -------
-        A set of values.
+    Set, List, or Tuple
+        A collection of values.
     
     """
     vals, = remove_missing(x, remove_na_vals, False)
@@ -483,6 +499,7 @@ def no_gossip(x, remove_na_vals):
         If True, value/metadata pairs will be removed if the value is missing (i.e. np.nan).
     Returns
     -------
+    Any
         A canonical value or np.nan.
     
     """
@@ -509,12 +526,13 @@ def aggregate(x, method, remove_na_vals):
     x : tuple
         Values to _resolve
     method : str
-        Aggregation method.
+        Aggregation method. One of 'sum', 'mean', 'stdev', 'var'.
     remove_na_vals : bool
         If True, value/metadata pairs will be removed if the value is missing (i.e. np.nan).
     Returns
     -------
-        A numerical aggregation of vals.
+    Float
+        A numerical aggregation of values.
     
     """
     vals, = remove_missing(x, remove_na_vals, False)
@@ -553,8 +571,9 @@ def choose_trusted(x, trusted, tie_break_trusted, tie_break_untrusted, remove_na
         If True, value/metadata pairs will be removed if metadata is missing (i.e. np.nan).
     Returns
     -------
+    Any
         A trusted value.
-    
+
     """
     # Process input
     vals, meta = remove_missing(x, remove_na_vals, remove_na_meta)
@@ -594,6 +613,7 @@ def annotated_concat(x, remove_na_vals, remove_na_meta):
         If True, value/metadata pairs will be removed if metadata is missing (i.e. np.nan).
     Returns
     -------
+    List
         A list of value/metadata tuples.
     
     """
@@ -623,7 +643,8 @@ def choose_metadata_min(x, tie_break, remove_na_vals, remove_na_meta):
         If True, value/metadata pairs will be removed if metadata is missing (i.e. np.nan).
     Returns
     -------
-        A canonical value.
+    Any
+        The chosen value.
     
     """
     # Process input
@@ -662,7 +683,8 @@ def choose_metadata_max(x, tie_break, remove_na_vals, remove_na_meta):
         If True, value/metadata pairswill be removed if metadata is missing (i.e. np.nan).
     Returns
     -------
-        A canonical value.
+    Any
+        The chosen value.
     
     """
     # Process input
