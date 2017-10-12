@@ -11,7 +11,7 @@ from datetime import timedelta
 from parameterized import parameterized, param
 
 import recordlinkage
-from recordlinkage.fuse import FuseDuplicates, FuseCore
+from recordlinkage.fusion import FuseDuplicates, FuseCore
 from recordlinkage.algorithms.conflict_resolution import choose_random
 from recordlinkage import rl_logging
 

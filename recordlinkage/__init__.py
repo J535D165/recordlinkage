@@ -5,7 +5,7 @@ from recordlinkage.indexing import *
 from recordlinkage.comparing import *
 from recordlinkage.classifiers import *
 from recordlinkage.measures import *
-from recordlinkage.fuse import FuseLinks
+from recordlinkage.fusion import FuseLinks
 
 from recordlinkage import rl_logging as logging
 
