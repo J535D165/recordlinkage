@@ -81,6 +81,12 @@ def process_tie_break(tie_break) -> Callable[[tuple, bool], any]:
 
 
 class SkipNull(object):
+    """
+    This object is used like a function decorator for ignoring missing
+    values when applying a transformation function. An object is
+    used in place of a function because local functions cannot
+    be pickled, causing errors during multiprocessing.
+    """
     def __init__(self, f):
         self.f = f
 
@@ -186,7 +192,7 @@ class FuseCore(ABC):
             when ``fuse`` method is called.
         
         """
-        self.resolve(vote, values_a, values_b, params=(process_tie_break(tie_break),), name=name,
+        self.resolve(vote, values_a, values_b, tie_break=process_tie_break(tie_break), name=name,
                      remove_na_vals=remove_na_vals, description='cry_with_the_wolves')
 
     def pass_it_on(self, values_a, values_b, kind='set', name=None, remove_na_vals=True):
@@ -214,7 +220,7 @@ class FuseCore(ABC):
             when ``fuse`` method is called.
         
         """
-        self.resolve(group, values_a, values_b, params=(kind,), name=name, remove_na_vals=remove_na_vals,
+        self.resolve(group, values_a, values_b, params=kind, name=name, remove_na_vals=remove_na_vals,
                      description='pass_it_on')
 
     def meet_in_the_middle(self, values_a, values_b, metric, name=None, remove_na_vals=True):
@@ -244,7 +250,7 @@ class FuseCore(ABC):
         
         """
         # Metrics Available 2017-08-01: sum, mean, stdev, var
-        self.resolve(aggregate, values_a, values_b, params=(metric,), name=name, remove_na_vals=remove_na_vals,
+        self.resolve(aggregate, values_a, values_b, params=metric, name=name, remove_na_vals=remove_na_vals,
                      description='meet_in_the_middle')
 
     def keep_up_to_date(self, values_a, values_b, dates_a, dates_b, tie_break='random',
@@ -286,7 +292,7 @@ class FuseCore(ABC):
         """
         self.resolve(choose_metadata_max, values_a, values_b, meta_a=dates_a, meta_b=dates_b,
                      name=name, remove_na_vals=remove_na_vals, remove_na_meta=remove_na_dates,
-                     params=(process_tie_break(tie_break),), description='keep_up_to_date')
+                     tie_break=process_tie_break(tie_break), description='keep_up_to_date')
 
     def choose_by_scored_value(self, values_a, values_b, func, tie_break='random',
                                apply_to_null=False, name=None, remove_na_vals=True,
@@ -326,7 +332,7 @@ class FuseCore(ABC):
 
         self.resolve(resolution_function, values_a, values_b, meta_a=values_a, meta_b=values_b,
                      name=name, remove_na_vals=remove_na_vals, remove_na_meta=remove_na_vals,
-                     params=(process_tie_break(tie_break),), description='choose_by_scored_value',
+                     tie_break=process_tie_break(tie_break), description='choose_by_scored_value',
                      transform_meta=func, transform_null=apply_to_null)
 
     def choose_by_scored_metadata(self, values_a, values_b, meta_a, meta_b, func, tie_break='random',
@@ -374,13 +380,13 @@ class FuseCore(ABC):
 
         self.resolve(resolution_function, values_a, values_b, meta_a=meta_a, meta_b=meta_b,
                      name=name, remove_na_vals=remove_na_vals, remove_na_meta=remove_na_meta,
-                     params=(process_tie_break(tie_break),), description='choose_by_scored_metadata',
+                     tie_break=process_tie_break(tie_break), description='choose_by_scored_metadata',
                      transform_meta=func, transform_null=apply_to_null)
 
     def resolve(self, fun, values_a, values_b, meta_a=None, meta_b=None, name=None,
-                transform_vals=None, transform_meta=None, transform_null=False,
-                static_meta=False, remove_na_vals=True, remove_na_meta=None,
-                params=None, description=None, handler_override=None, **kwargs):
+                tie_break=None, transform_vals=None, transform_meta=None,
+                transform_null=False, static_meta=False, remove_na_vals=True,
+                remove_na_meta=None, params=None, description=None, handler_override=None, **kwargs):
         """
         A general-purpose method to queue a conflict resolution job for later computation.
         Conflict resolution job metadata is stored in self.resolution_queue.
@@ -427,17 +433,29 @@ class FuseCore(ABC):
         """
         # TODO: Eliminate (?) 'params' parameter. VERY user unfriendly.
 
+        def listify_with_empty(x):
+            """
+            listify, but returns an empty list when None is given.
+
+            :param any x: Value(s)
+            :return: List
+            """
+            if x is None:
+                return []
+            else:
+                return listify(x)
+
         if isinstance(remove_na_meta, bool):
             na_params = [remove_na_vals, remove_na_meta]
         else:
             na_params = [remove_na_vals]
 
         if params is None:
-            all_params = tuple(na_params)
+            all_params = tuple(listify_with_empty(tie_break) + na_params)
         elif isinstance(params, list):
-            all_params = tuple(params + na_params)
+            all_params = tuple(params + listify_with_empty(tie_break) + na_params)
         else:
-            all_params = tuple(listify(params) + na_params)
+            all_params = tuple(listify_with_empty(params) + listify_with_empty(tie_break) + na_params)
 
         if handler_override is not None:
             handler = handler_override
@@ -1095,5 +1113,6 @@ class FuseLinks(FuseCore):
 
         """
         self.resolve(choose_trusted, values_a, values_b, meta_a='a', meta_b='b', name=name, static_meta=True,
-                     params=(trusted, process_tie_break(tie_break_trusted), process_tie_break(tie_break_untrusted)),
-                     remove_na_vals=remove_na_vals, remove_na_meta=False, description='trust_your_friends')
+                     params=trusted,  remove_na_vals=remove_na_vals, remove_na_meta=False,
+                     tie_break=[process_tie_break(tie_break_trusted), process_tie_break(tie_break_untrusted)],
+                     description='trust_your_friends')

@@ -9,8 +9,16 @@ import numpy as np
 
 import recordlinkage.rl_logging as rl_log
 
-TieBreaker = Callable[[tuple, bool], any]
+# TieBreaker = Callable[[tuple, bool], any]
 
+# Note that conflict resolution functions must have parameters in the following order:
+#   * First, function-specific or "special" parameters such as "kind" or "metrics"
+#   * Second, zero, one, or more tie_break parameters
+#   * Third, remove_na_vals
+#   * Finally, remove_na_meta if applicable.
+# The special-tie-na ordering is handled by FuseCore.resolve, but note that order must
+# be respected within these categories (i.e. make sure that you're providing parameters
+# in the correct order if there are multiple in a single category.
 
 def tupgetter(*items):
     """
@@ -20,6 +28,7 @@ def tupgetter(*items):
     ----------
     items : collection
         A collection of indexes.
+
     Returns
     -------
     Function
@@ -50,6 +59,7 @@ def remove_missing(x, remove_na_vals, remove_na_meta):
         Should nan values be excluded?
     remove_na_meta : bool
         Should nan metadata values be excluded?
+
     Returns
     -------
     Tuple
@@ -99,6 +109,7 @@ def bool_getter(x, fun):
         A tuple of values
     fun : function
         A predicate function
+
     Returns
     -------
     Function
@@ -125,6 +136,7 @@ def identity(x, remove_na_vals):
         A 1-tuple cotaining a value, inside another 1-tuple.
     remove_na_vals : bool
         Included for consistency with tie-breaking conflict resolution functions.
+
     Returns
     -------
     Any
@@ -147,6 +159,7 @@ def nullify(x, remove_na_vals):
         A tuple of values.
     remove_na_vals : bool
         Included for consistency with tie-breaking conflict resolution functions.
+
     Returns
     -------
     numpy.nan
@@ -165,6 +178,7 @@ def choose_first(x, remove_na_vals):
         Contains a tuple of values to be resolved.
     remove_na_vals : bool
         If True, value/metadata pairs will be removed if the value is missing (i.e. np.nan).
+
     Returns
     -------
     Any
@@ -189,6 +203,7 @@ def choose_last(x, remove_na_vals):
         Contains a tuple of values to be resolved.
     remove_na_vals : bool
         If True, value/metadata pairs will be removed if the value is missing (i.e. np.nan).
+
     Returns
     -------
     Any
@@ -213,6 +228,7 @@ def count(x, remove_na_vals):
         Contains a tuple of values to be resolved.
     remove_na_vals : bool
         If True, value/metadata pairs will be removed if the value is missing (i.e. np.nan).
+
     Returns
     -------
     Int
@@ -233,6 +249,7 @@ def choose_min(x, remove_na_vals):
         Contains a tuple of values to be resolved.
     remove_na_vals : bool
         If True, value/metadata pairs will be removed if the value is missing (i.e. np.nan).
+
     Returns
     -------
     Any
@@ -262,6 +279,7 @@ def choose_max(x, remove_na_vals):
         Contains a tuple of values to be resolved.
     remove_na_vals : bool
         If True, value/metadata pairs will be removed if the value is missing (i.e. np.nan).
+
     Returns
     -------
     Any
@@ -293,6 +311,7 @@ def choose_shortest(x, tie_break, remove_na_vals):
         A conflict resolution function to be used in the case of a tie.
     remove_na_vals : bool
         If True, value/metadata pairs will be removed if the value is missing (i.e. np.nan).
+
     Returns
     -------
     Any
@@ -330,6 +349,7 @@ def choose_longest(x, tie_break, remove_na_vals):
         A conflict resolution function to be used in the case of a tie.
     remove_na_vals : bool
         If True, value/metadata pairs will be removed if the value is missing (i.e. np.nan).
+
     Returns
     -------
     Any
@@ -365,6 +385,7 @@ def choose_shortest_tie_break(x, remove_na_vals):
         Contains a tuple of values to be resolved.
     remove_na_vals : bool
         If True, value/metadata pairs will be removed if the value is missing (i.e. np.nan).
+
     Returns
     -------
     Any
@@ -384,6 +405,7 @@ def choose_longest_tie_break(x, remove_na_vals):
         Contains a tuple of values to be resolved.
     remove_na_vals : bool
         If True, value/metadata pairs will be removed if the value is missing (i.e. np.nan).
+
     Returns
     -------
     Any
@@ -403,6 +425,7 @@ def choose_random(x, remove_na_vals):
         Contains a tuple of values to be resolved.
     remove_na_vals : bool
         If True, value/metadata pairs will be removed if the value is missing (i.e. np.nan).
+
     Returns
     -------
     Any
@@ -428,6 +451,7 @@ def vote(x, tie_break, remove_na_vals):
         A conflict resolution function to be used in the case of a tie.
     remove_na_vals : bool
         If True, value/metadata pairs will be removed if the value is missing (i.e. np.nan).
+
     Returns
     -------
     Any
@@ -469,6 +493,7 @@ def group(x, kind, remove_na_vals):
         The type of collection to be returned. One of 'set', 'list', 'tuple'.
     remove_na_vals : bool
         If True, value/metadata pairs will be removed if the value is missing (i.e. np.nan).
+
     Returns
     -------
     Set, List, or Tuple
@@ -497,6 +522,7 @@ def no_gossip(x, remove_na_vals):
         Contains a tuple of values to be resolved.
     remove_na_vals : bool
         If True, value/metadata pairs will be removed if the value is missing (i.e. np.nan).
+
     Returns
     -------
     Any
@@ -529,6 +555,7 @@ def aggregate(x, method, remove_na_vals):
         Aggregation method. One of 'sum', 'mean', 'stdev', 'var'.
     remove_na_vals : bool
         If True, value/metadata pairs will be removed if the value is missing (i.e. np.nan).
+
     Returns
     -------
     Float
@@ -569,6 +596,7 @@ def choose_trusted(x, trusted, tie_break_trusted, tie_break_untrusted, remove_na
         If True, value/metadata pairs will be removed if the value is missing (i.e. np.nan).
     remove_na_meta : bool
         If True, value/metadata pairs will be removed if metadata is missing (i.e. np.nan).
+
     Returns
     -------
     Any
@@ -611,6 +639,7 @@ def annotated_concat(x, remove_na_vals, remove_na_meta):
         If True, value/metadata pairs will be removed if the value is missing (i.e. np.nan).
     remove_na_meta : bool
         If True, value/metadata pairs will be removed if metadata is missing (i.e. np.nan).
+
     Returns
     -------
     List
@@ -641,6 +670,7 @@ def choose_metadata_min(x, tie_break, remove_na_vals, remove_na_meta):
         If True, value/metadata pairs will be removed if the value is missing (i.e. np.nan).
     remove_na_meta : bool
         If True, value/metadata pairs will be removed if metadata is missing (i.e. np.nan).
+
     Returns
     -------
     Any
@@ -681,6 +711,7 @@ def choose_metadata_max(x, tie_break, remove_na_vals, remove_na_meta):
         If True, value/metadata pairswill be removed if the value is missing (i.e. np.nan).
     remove_na_meta : bool
         If True, value/metadata pairswill be removed if metadata is missing (i.e. np.nan).
+
     Returns
     -------
     Any

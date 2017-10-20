@@ -70,7 +70,8 @@ target/
 venv/
 ENV/
 
-# ASV 
+/tests/sandbox
+# ASV
 .asv/
 
 # PyCharm IDE

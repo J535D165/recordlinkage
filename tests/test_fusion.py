@@ -18,12 +18,25 @@ from recordlinkage import rl_logging
 import pandas
 import numpy as np
 from numpy import nan, arange
+import labutils as lu
+import os
 
 
 # rl_logging.set_verbosity(rl_logging.INFO)
 
 # Run tests with coverage:
 # nosetests --with-coverage --cover-package=recordlinkage --cover-html  tests/test_fusion.py
+
+# class Counter(object):
+#     def __init__(self):
+#         self.count = 0
+#
+#     def __call__(self):
+#         val = self.count
+#         self.count += 1
+#         return val
+#
+# NextTestNum = Counter()
 
 def validate_job(job: dict):
     def if_not_none(key: str, f: Callable[..., bool], *args, **kwargs):
@@ -200,6 +213,8 @@ class TestFuseLinks(unittest.TestCase):
             [arange(len(cls.A)), arange(len(cls.B))],
             names=[cls.A.index.name, cls.B.index.name])
 
+        cls.counter = 0
+
     def setUp(self):
         self.comp = recordlinkage.Compare(self.index_AB, self.A, self.B)
         self.fuse = recordlinkage.FuseLinks()
@@ -208,12 +223,18 @@ class TestFuseLinks(unittest.TestCase):
     @parameterized.expand(RESOLUTION_CASES)
     def test_resolution_result(self, method_to_call, mp_option, *args, **kwargs):
         """Validate job metadata and check conflict resolution result is a pandas series."""
+        self.fuse.keep_original(args[0], args[1])
         getattr(self.fuse, method_to_call)(*args, **kwargs)
         # Validate the job metadata
         self.assertTrue(validate_job(self.fuse.resolution_queue[0]), 'resolution queue job failed validation')
         # Check job runs and produces dataframe.
         result = self.fuse.fuse(self.comp.vectors, self.A, self.B, n_cores=mp_option)
         self.assertIsInstance(result, pandas.DataFrame, 'result not a dataframe')
+        # test_count = NextTestNum()
+        # with open(f'sandbox/{test_count}.html', 'w') as f:
+        #     f.write(f'<h1>{test_count} : {method_to_call}</h1>')
+        #     f.write(f'<h2>{args}</h2>\n<h2>{kwargs}</h2>')
+        #     f.write(lu.clip_df(result, 'material'))
 
     # Test takes long time
     def test_job_naming_error(self):
