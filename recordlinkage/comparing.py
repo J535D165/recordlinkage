@@ -219,13 +219,13 @@ class Compare(BaseCompare):
         if method == 'jaro':
             str_sim_alg = jaro_similarity
 
-        elif method in ['jarowinkler', 'jaro_winkler']:
+        elif method in ['jarowinkler', 'jaro_winkler', 'jw']:
             str_sim_alg = jarowinkler_similarity
 
         elif method == 'levenshtein':
             str_sim_alg = levenshtein_similarity
 
-        elif method in ['dameraulevenshtein', 'damerau_levenshtein']:
+        elif method in ['dameraulevenshtein', 'damerau_levenshtein', 'dl']:
             str_sim_alg = damerau_levenshtein_similarity
 
         elif method == 'q_gram' or method == 'qgram':
@@ -234,10 +234,10 @@ class Compare(BaseCompare):
         elif method == 'cosine':
             str_sim_alg = cosine_similarity
 
-        elif method == 'smith_waterman' or method == "smithwaterman":
+        elif method in ['smith_waterman', "smithwaterman", "sw"]:
             str_sim_alg = smith_waterman_similarity
 
-        elif method == 'lcs':
+        elif method in ['longest_common_substring', 'lcs']:
             str_sim_alg = longest_common_substring_similarity
 
         else:
