@@ -468,6 +468,18 @@ class BaseCompare(object):
             comparing each record pair.
         """
 
+        if not isinstance(pairs, pandas.MultiIndex):
+            raise ValueError(
+                "expected pandas.MultiIndex with record pair indices "
+                "as first argument"
+            )
+
+        if not isinstance(x, pandas.DataFrame):
+            raise ValueError("expected pandas.DataFrame as second argument")
+
+        if x_link is not None and not isinstance(x_link, pandas.DataFrame):
+            raise ValueError("expected pandas.DataFrame as third argument")
+
         logging.info("Comparing - start comparing data")
 
         # start the timer for the comparing step
