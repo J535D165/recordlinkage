@@ -3,13 +3,11 @@ from __future__ import unicode_literals
 
 import random
 import collections
-from typing import Callable, TypeVar
 import pandas as pd
 import numpy as np
 
 import recordlinkage.rl_logging as rl_log
 
-# TieBreaker = Callable[[tuple, bool], any]
 
 # Note that conflict resolution functions must have parameters in the following order:
 #   * First, function-specific or "special" parameters such as "kind" or "metrics"
@@ -20,6 +18,12 @@ import recordlinkage.rl_logging as rl_log
 # be respected within these categories (i.e. make sure that you're providing parameters
 # in the correct order if there are multiple in a single category.
 
+# A "tie-breaking function" is a special case of conflict-resolution functions
+#   which must:
+#   * Have a signature like tie_break_fun(x, remove_na_vals)
+#   * Use values only – no metadata values
+#   * Not require tie-breaking
+
 def tupgetter(*items):
     """
     Identical to operator.itemgetter, but returns single items as 1-tuples instead of atomic values.
@@ -27,7 +31,7 @@ def tupgetter(*items):
     Parameters
     ----------
     items : collection
-        A collection of indexes.
+        A collection of indices.
 
     Returns
     -------
@@ -39,17 +43,17 @@ def tupgetter(*items):
         item = items[0]
 
         def g(obj):
-            return (obj[item],)
+            return (obj[item], )
     else:
         def g(obj):
-            return tuple(obj[item] for item in items)
+            return tuple(obj[i] for i in items)
     return g
 
 
 def remove_missing(x, remove_na_vals, remove_na_meta):
     """
     Removes missing (np.nan) values from a nested tuple of values and metadata values.
-    Value/metadata pairs are removed as pairs.
+    Corresponding value/metadata pairs are removed together.
     
     Parameters
     ----------
@@ -76,11 +80,11 @@ def remove_missing(x, remove_na_vals, remove_na_meta):
         return x
     keep_indices = list(range(length))
 
-    def check_null(x):
-        if isinstance(x, list):
+    def check_null(v):
+        if isinstance(v, list):
             return False
         else:
-            return pd.isnull(x)
+            return pd.isnull(v)
 
     # Remove nan-value indices from list
     for i in range(length - 1, -1, -1):
@@ -101,7 +105,7 @@ def remove_missing(x, remove_na_vals, remove_na_meta):
 def bool_getter(x, fun):
     """
     Takes a tuple and a function. It returns a function which returns items
-    as positions i such that fun(x[i]) is True.
+    in positions i which satisfy: fun(x[i]) == True.
     
     Parameters
     ----------
@@ -122,31 +126,6 @@ def bool_getter(x, fun):
             keep_indices.pop(i)
     getter = tupgetter(*keep_indices)
     return getter
-
-
-def identity(x, remove_na_vals):
-    """
-    Returns an unchanged value without strategy. (Technically, it is the "first",
-    though ordering isn't especially meaningful in this context.) It is intended
-    to be used to produce data columns as "resolved columns".
-    
-    Parameters
-    ----------
-    x : tuple
-        A 1-tuple cotaining a value, inside another 1-tuple.
-    remove_na_vals : bool
-        Included for consistency with tie-breaking conflict resolution functions.
-
-    Returns
-    -------
-    Any
-        The unchanged value.
-    
-    """
-    if len(x[0]) == 0:
-        return np.nan
-    else:
-        return x[0][0]
 
 
 def nullify(x, remove_na_vals):
@@ -170,7 +149,7 @@ def nullify(x, remove_na_vals):
 
 def choose_first(x, remove_na_vals):
     """
-    Choose the last value.
+    Choose the first value.
     
     Parameters
     ----------
@@ -264,7 +243,7 @@ def choose_min(x, remove_na_vals):
         return min(vals)
     except TypeError:
         rl_log.warn('Conflict resolution warning: '
-                    'attempted to choose max between '
+                    'attempted to choose min between '
                     'type-incompatible values {}. Returning nan.'.format(x))
         return np.nan
 
@@ -377,7 +356,7 @@ def choose_longest(x, tie_break, remove_na_vals):
 
 def choose_shortest_tie_break(x, remove_na_vals):
     """
-    Choose the shortest value. Used for tie breaking, adn written in terms of choose_longest.
+    Choose the shortest value. Used for tie breaking, written in terms of choose_shortest.
     
     Parameters
     ----------
@@ -397,7 +376,7 @@ def choose_shortest_tie_break(x, remove_na_vals):
 
 def choose_longest_tie_break(x, remove_na_vals):
     """
-    Choose the longest value. Used for tie breaking, and written in terms of choose_longest.
+    Choose the longest value. Used for tie breaking, written in terms of choose_longest.
     
     Parameters
     ----------
@@ -513,7 +492,7 @@ def group(x, kind, remove_na_vals):
 
 def no_gossip(x, remove_na_vals):
     """
-    Returns values if all items in vals are equal, or np.nan
+    Returns a value if all items in vals are equal, or np.nan
     otherwise.
     
     Parameters
@@ -587,11 +566,12 @@ def choose_trusted(x, trusted, tie_break_trusted, tie_break_untrusted, remove_na
     x : tuple
         Values to _resolve, tuple of value sources
     trusted : str
-        Trusted source identifier.
+        Trusted source identifier. Values with corresponding metadata equal to this value
+        are considered to be "trusted" values.
     tie_break_trusted : function
         A conflict resolution function to be to break ties between trusted values.
     tie_break_untrusted : function
-        A conflict resolution function to be to break ties between trusted values.
+        A conflict resolution function to be to break ties between untrusted values.
     remove_na_vals : bool
         If True, value/metadata pairs will be removed if the value is missing (i.e. np.nan).
     remove_na_meta : bool
@@ -633,7 +613,7 @@ def annotated_concat(x, remove_na_vals, remove_na_meta):
     
     Parameters
     ----------
-    x : tuple)
+    x : tuple
         Values to be resolved, and metadata values.
     remove_na_vals : bool
         If True, value/metadata pairs will be removed if the value is missing (i.e. np.nan).
@@ -662,7 +642,7 @@ def choose_metadata_min(x, tie_break, remove_na_vals, remove_na_meta):
     
     Parameters
     ----------
-    x : tuple)
+    x : tuple
         Values to be resolved, corresponding metadata.
     tie_break : function
         A conflict resolution function to be used in the case of a tie.

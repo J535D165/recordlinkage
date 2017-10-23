@@ -10,33 +10,14 @@ from random import randrange
 from datetime import timedelta
 from parameterized import parameterized, param
 
-import recordlinkage
-from recordlinkage.fusion import FuseDuplicates, FuseCore
-from recordlinkage.algorithms.conflict_resolution import choose_random
-from recordlinkage import rl_logging
-
 import pandas
 import numpy as np
 from numpy import nan, arange
-import labutils as lu
-import os
 
+import recordlinkage
+from recordlinkage.fusion import FuseDuplicates
+from recordlinkage.algorithms.conflict_resolution import choose_random
 
-# rl_logging.set_verbosity(rl_logging.INFO)
-
-# Run tests with coverage:
-# nosetests --with-coverage --cover-package=recordlinkage --cover-html  tests/test_fusion.py
-
-# class Counter(object):
-#     def __init__(self):
-#         self.count = 0
-#
-#     def __call__(self):
-#         val = self.count
-#         self.count += 1
-#         return val
-#
-# NextTestNum = Counter()
 
 def validate_job(job: dict):
     def if_not_none(key: str, f: Callable[..., bool], *args, **kwargs):
@@ -54,7 +35,7 @@ def validate_job(job: dict):
         warn_on_fail(isinstance(job, dict), 'job not dict'),
         # CR Function
         warn_on_fail('fun' in job.keys(), 'no resolution function'),
-        warn_on_fail(callable(job['fun']), ' resolution function not callable'),
+        warn_on_fail(callable(job['fun']) if handler is not '_do_keep' else True, ' resolution function not callable'),
         # Handling function
         warn_on_fail('handler' in job.keys(), 'no handling method'),
         warn_on_fail(callable(job['handler']), 'handling method not callable'),
@@ -165,10 +146,6 @@ NUMERIC_STRATEGIES = [
     {'method': 'meet_in_the_middle', 'params': [], 'kws': {}},
 ]
 
-SCORED_STRATEGIES = [
-
-]
-
 RESOLUTION_CASES = it.chain(
     [param(case[0]['method'], case[3], case[1], case[2], *case[0]['params'], **case[0]['kws'])
      for case in it.product(GENERAL_STATEGIES, STR_COLNAMES, STR_COLNAMES, MP_OPTION)],
@@ -228,13 +205,8 @@ class TestFuseLinks(unittest.TestCase):
         # Validate the job metadata
         self.assertTrue(validate_job(self.fuse.resolution_queue[0]), 'resolution queue job failed validation')
         # Check job runs and produces dataframe.
-        result = self.fuse.fuse(self.comp.vectors, self.A, self.B, n_cores=mp_option)
+        result = self.fuse.fuse(self.comp.vectors.index, self.A, self.B, n_cores=mp_option)
         self.assertIsInstance(result, pandas.DataFrame, 'result not a dataframe')
-        # test_count = NextTestNum()
-        # with open(f'sandbox/{test_count}.html', 'w') as f:
-        #     f.write(f'<h1>{test_count} : {method_to_call}</h1>')
-        #     f.write(f'<h2>{args}</h2>\n<h2>{kwargs}</h2>')
-        #     f.write(lu.clip_df(result, 'material'))
 
     # Test takes long time
     def test_job_naming_error(self):
@@ -250,7 +222,7 @@ class TestFuseLinks(unittest.TestCase):
         self.assertTrue(validate_job(self.fuse.resolution_queue[0]), 'resolution queue job failed validation')
 
         # Check job runs and produces dataframe.
-        result = self.fuse.fuse(self.comp.vectors, self.A, self.B, n_cores=1)
+        result = self.fuse.fuse(self.comp.vectors.index, self.A, self.B, n_cores=1)
         self.assertIsInstance(result, pandas.DataFrame, 'result not a dataframe')
 
     def test_keep_original_errors(self):
@@ -260,11 +232,11 @@ class TestFuseLinks(unittest.TestCase):
         self.fuse.resolution_queue[0]['values_b'] = ['age', 'age']
         # Check job runs and produces dataframe.
         with self.assertRaises(AssertionError):
-            self.fuse.fuse(self.comp.vectors, self.A, self.B, n_cores=1)
+            self.fuse.fuse(self.comp.vectors.index, self.A, self.B, n_cores=1)
 
     def test_data_generalization(self):
         """Test that FuseLinks._make_resolution_series generalizes values and metadata when appropriate"""
-        self.fuse._fusion_init(self.comp.vectors, self.comp.df_a, self.comp.df_b, None, None)
+        self.fuse._fusion_init(self.comp.vectors.index, self.comp.df_a, self.comp.df_b, None, None)
         result_1 = self.fuse._make_resolution_series(
             ['age'], ['age'], ['given_name', 'given_name'], ['given_name', 'given_name']
         )
@@ -292,7 +264,7 @@ class TestFuseLinks(unittest.TestCase):
             )
 
         # Check post-initialization assertions.
-        self.fuse._fusion_init(self.comp.vectors, self.comp.df_a, self.comp.df_b, None, None)
+        self.fuse._fusion_init(self.comp.vectors.index, self.comp.df_a, self.comp.df_b, None, None)
         with self.assertRaises(ValueError):
             # Bad transformation function
             self.fuse._make_resolution_series(
@@ -321,23 +293,23 @@ class TestFuseLinks(unittest.TestCase):
     def test_use_predictions(self):
         self.fuse.keep_original('age', [])
         # Make arbitrary classification series
-        preds = pandas.Series([(i % 5) == 0 for i in range(len(self.comp.vectors))])
-        fused = self.fuse.fuse(self.comp.vectors, self.comp.df_a, self.comp.df_b, predictions=preds)
+        preds = pandas.Series([(i % 5) == 0 for i in range(len(self.comp.vectors.index))])
+        fused = self.fuse.fuse(self.comp.vectors.index, self.comp.df_a, self.comp.df_b, predictions=preds)
         count = sum(1 if b else 0 for b in preds)
         self.assertEqual(len(fused), count, msg='Length of fused output incorrect after prediction application.')
 
     def test_prediction_type(self):
         self.fuse.keep_original('age', [])
         # Make arbitrary classification series
-        preds = pandas.Series([(i % 5) == 0 for i in range(len(self.comp.vectors))])
+        preds = pandas.Series([(i % 5) == 0 for i in range(len(self.comp.vectors.index))])
         with self.assertRaises(ValueError):
-            fused = self.fuse.fuse(self.comp.vectors, self.comp.df_a, self.comp.df_b, predictions=1)
+            fused = self.fuse.fuse(self.comp.vectors.index, self.comp.df_a, self.comp.df_b, predictions=1)
 
     def test_job_naming_correctness(self):
         for _ in range(5):
             self.fuse.roll_the_dice('age', 'age', name='conflicting_name')
             self.fuse.roll_the_dice('age', 'age', name='another_name')
-        fused = self.fuse.fuse(self.comp.vectors, self.comp.df_a, self.comp.df_b)
+        fused = self.fuse.fuse(self.comp.vectors.index, self.comp.df_a, self.comp.df_b)
         self.assertListEqual(
             list(fused.columns),
             ['conflicting_name', 'another_name',
@@ -350,7 +322,7 @@ class TestFuseLinks(unittest.TestCase):
     def test_exceeds_core_limit(self):
         self.fuse.roll_the_dice('age', 'age')
         with self.assertWarns(RuntimeWarning):
-            self.fuse.fuse(self.comp.vectors, self.comp.df_a, self.comp.df_b, n_cores=100)
+            self.fuse.fuse(self.comp.vectors.index, self.comp.df_a, self.comp.df_b, n_cores=100)
 
     def test_fusedups_not_implemented(self):
         with self.assertWarns(UserWarning):
@@ -371,7 +343,7 @@ class TestFuseLinks(unittest.TestCase):
             return True
 
         self.fuse.keep_original('age', 'age')
-        self.fuse.fuse(self.comp.vectors, self.comp.df_a, self.comp.df_b)
+        self.fuse.fuse(self.comp.vectors.index, self.comp.df_a, self.comp.df_b)
         data = self.fuse._make_resolution_series(
             'age', 'age',
             meta_a='age', meta_b='age',
@@ -383,7 +355,7 @@ class TestFuseLinks(unittest.TestCase):
 
     def test_resolution_series_insufficient_metadata(self):
         self.fuse.keep_original('age', 'age')
-        self.fuse.fuse(self.comp.vectors, self.comp.df_a, self.comp.df_b)
+        self.fuse.fuse(self.comp.vectors.index, self.comp.df_a, self.comp.df_b)
         with self.assertRaises(AssertionError):
             data = self.fuse._make_resolution_series(
                 'age', 'age',
