@@ -7,6 +7,7 @@ import warnings
 import multiprocessing as mp
 from abc import ABC, abstractmethod
 
+import numpy as np
 import pandas as pd
 
 from recordlinkage import rl_logging
@@ -77,7 +78,7 @@ def process_tie_break(tie_break):
         elif tie_break == 'null' or tie_break == 'nullify':
             tie_break_fun = nullify
         else:
-            raise ValueError('Invalid tie_break strategy: {}. Must be one of'
+            raise ValueError('Invalid tie_break strategy: {}. Must be one of '
                              'random, trust_a, trust_b, min, max, shortest, longest, or nullify.'.format(tie_break))
     else:
         raise ValueError('tie_break must be a string or a function.')
@@ -576,7 +577,7 @@ class FuseCore(ABC):
             pred_list = list(self.predictions)
 
             # Update multiindex
-            self.index = self.index.iloc[pred_list]
+            self.index = self.index.loc[pred_list]
 
     def _resolve_job_names(self, sep):
         """
@@ -683,8 +684,6 @@ class FuseCore(ABC):
 
         data = data.apply(job['fun'], args=job['params'])
 
-
-
         if job['name'] is not None:
             data = data.rename(job['name'])
 
@@ -718,11 +717,33 @@ class FuseCore(ABC):
 
         """
 
-        if not isinstance(predictions, (type(None), pd.Series)):
-            raise ValueError('Predictions must be a pandas Series.')
+        if len(predictions) != len(index):
+            raise AssertionError(
+                'Length of the predictions vector ({}) does not match the length of the index ({}).'.format(
+                    len(predictions), len(index)
+                )
+            )
+
+        if not isinstance(predictions, (type(None), pd.Series, type(list))):
+            raise ValueError('Predictions must be a pandas Series, list, or None.')
+
+        if isinstance(predictions, pd.Series):
+            use_predictions = predictions
+        else:
+            use_predictions = pd.Series(predictions)
+            use_predictions.index = self.index.index
+
+        if use_predictions.dtype == np.dtype(bool):
+            pass
+        elif use_predictions.dtype == np.dtype(int):
+            rl_logging.warning('Expected predictions to be a boolean vector, but got vector of integers. '
+                               'Coercing integer values to boolean values.')
+            use_predictions = use_predictions.apply(bool)
+        else:
+            raise ValueError('predictions must be a pandas.Series (or list) of boolean values.')
 
         # Save references to input data.
-        self._fusion_init(index, df_a, df_b, predictions, sep)
+        self._fusion_init(index, df_a, df_b, use_predictions, sep)
 
         # Resolve naming conflicts, if any.
         self._resolve_job_names(self._sep)
