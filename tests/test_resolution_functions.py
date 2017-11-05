@@ -81,26 +81,6 @@ class TestConflictResolutionFunctions(unittest.TestCase):
             ('0', ['1', {}], self.times[0]),
             msg='Non-numeric correctness.')
 
-    def test_identity(self):
-        self.assertEqual(cr.identity(((1,),), False),
-                         1,
-                         msg='Basic correctness.')
-
-        self.assertEqual(cr.identity(((1, 2), (3, 4)), False),
-                         1,
-                         msg='Ignore extra.')
-
-        self.assertTrue(np.isnan(cr.identity(((),), False)),
-                        msg='No data.')
-
-        self.assertEqual(cr.identity((('1',),), False),
-                         '1',
-                         msg='String correctness.')
-
-        self.assertEqual(cr.identity(((self.times[0],),), False),
-                         self.times[0],
-                         msg='Time correctness.')
-
     def test_nullify(self):
         self.assertTrue(np.isnan(cr.nullify(((1, 2, 3), (4, 5, 6)), False)),
                         msg='Basic correctness.')
@@ -581,4 +561,3 @@ class TestConflictResolutionFunctions(unittest.TestCase):
             'a',
             msg='Correctness with datetime metadata.'
         )
-
