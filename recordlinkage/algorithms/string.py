@@ -11,7 +11,7 @@ from sklearn.feature_extraction.text import CountVectorizer
 
 
 # Ingore zero devision errors in cosine and qgram algorithms
-warnings.filterwarnings("ignore")
+# warnings.filterwarnings("ignore")
 
 ################################
 #      STRING SIMILARITY       #
