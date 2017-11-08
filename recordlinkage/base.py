@@ -12,6 +12,7 @@ import numpy as np
 from recordlinkage.utils import listify
 from recordlinkage.utils import unique
 from recordlinkage.utils import is_label_dataframe
+from recordlinkage.utils import VisibleDeprecationWarning
 
 from recordlinkage.types import is_pandas_like
 from recordlinkage.types import is_numpy_like
@@ -256,7 +257,7 @@ class BaseCompare(object):
                 "see the documentation about how to update to the new API. "
                 "http://recordlinkage.readthedocs.io/"
                 "en/latest/ref-compare.html",
-                DeprecationWarning
+                VisibleDeprecationWarning
             )
         else:
             self.deprecated = False

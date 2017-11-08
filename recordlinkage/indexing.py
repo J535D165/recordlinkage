@@ -305,7 +305,7 @@ class PairsCore(object):
 
         warnings.warn(
             "indexing api changed, see the documentation for the new format",
-            DeprecationWarning
+            VisibleDeprecationWarning
         )
 
         self.df_a = df_a
