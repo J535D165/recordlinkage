@@ -348,6 +348,30 @@ class TestCompareApi(TestData):
         pickle_path = os.path.join(self.test_dir, 'pickle_compare_obj.pickle')
         pickle.dump(comp, open(pickle_path, 'wb'))
 
+    def test_indexing_types(self):
+        # test the two types of indexing
+
+        # this test needs improvement
+
+        A = DataFrame({'col': ['abc', 'abc', 'abc', 'abc', 'abc']})
+        B = DataFrame({'col': ['abc', 'abc', 'abc', 'abc', 'abc']})
+        B_reversed = B[::-1].copy()
+        ix = MultiIndex.from_arrays([np.arange(5), np.arange(5)])
+
+        # test with label indexing type
+        comp_label = recordlinkage.Compare(indexing_type='label')
+        comp_label.exact('col', 'col')
+        result_label = comp_label.compute(ix, A, B_reversed)
+
+        # test with position indexing type
+        comp_position = recordlinkage.Compare(indexing_type='position')
+        comp_position.exact('col', 'col')
+        result_position = comp_position.compute(ix, A, B_reversed)
+
+        self.assertTrue((result_position.values == 1).all(axis=0))
+
+        pdt.assert_frame_equal(result_label, result_position)
+
 
 # tests/test_compare.py:TestCompareExact
 class TestCompareExact(TestData):

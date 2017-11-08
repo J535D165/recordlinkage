@@ -243,11 +243,17 @@ class BaseCompare(object):
     """
 
     def __init__(self, pairs=None, df_a=None, df_b=None, low_memory=False,
-                 block_size=1000000, njobs=1, **kwargs):
+                 block_size=1000000, njobs=1, indexing_type='label', **kwargs):
 
         logging.info("Comparing - initialize {} class".format(
             self.__class__.__name__)
         )
+
+        # public
+        self.indexing_type = indexing_type  # label of position
+
+        # private
+        self._compare_functions = []
 
         if isinstance(pairs, (pandas.MultiIndex, pandas.Index)):
             self.deprecated = True
@@ -261,8 +267,6 @@ class BaseCompare(object):
             )
         else:
             self.deprecated = False
-
-        self._compare_functions = []
 
         # deprecated
         self.df_a = df_a
@@ -279,13 +283,8 @@ class BaseCompare(object):
 
         self.vectors = pandas.DataFrame(index=pairs)
 
-    def _loc2(self, frame, multi_index, level_i):
+    def _loc2(self, frame, multi_index, level_i, indexing_type='label'):
         """Indexing algorithm for MultiIndex on one level
-
-        This internal function is a modification ``.loc`` indexing method in
-        pandas. With this function, one level of a MultiIndex is used to index
-        a dataframe with. The multiindex is split into smaller pieces to
-        improve performance.
 
         Arguments
         ---------
@@ -296,49 +295,20 @@ class BaseCompare(object):
             dataframe with.
         level_i : int, str
             The level of the multiIndex to index on.
+        indexing_type : str
+            The type of indexing. The value can be 'label' or 'position'.
+            Default 'label'.
 
         """
 
-        if not isinstance(self.block_size, int):
-            raise TypeError("block_size must be of type int")
-
-        if self.block_size <= 0:
-            raise ValueError("block_size must be a positive integer")
-
-        # Number of blocks
-        len_mi = len(multi_index)
-
-        if len_mi > self.block_size:  # More than 1 block
-
-            # Collect parts to concat in the end.
-            parts = []
-            start_slice = 0
-
-            while start_slice <= len_mi:
-
-                # Set the end of the slice
-                end_slice = start_slice + self.block_size
-
-                # Slice the MultiIndex
-                m_ind = multi_index[start_slice:end_slice]
-                ind = m_ind.get_level_values(level_i)
-
-                # The actual indexing
-                index_result = frame.loc[ind]
-
-                # Append to list named parts
-                parts.append(index_result)
-
-                # Set new slice start
-                start_slice = end_slice
-
-            data = pandas.concat(parts, axis=0, copy=False)
-
-        else:  # Only one block
+        if indexing_type == "label":
             data = frame.loc[multi_index.get_level_values(level_i)]
-
-        # Add MultiIndex (Is this step important?)
-        data.index = multi_index
+            data.index = multi_index
+        elif indexing_type == "position":
+            data = frame.iloc[multi_index.get_level_values(level_i)]
+            data.index = multi_index
+        else:
+            raise ValueError("indexing_type needs to be 'label' or 'position'")
 
         return data
 
