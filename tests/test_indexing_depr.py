@@ -4,7 +4,7 @@ import unittest
 
 import numpy as np
 import pandas as pd
-from nose_parameterized import parameterized, param
+from parameterized import parameterized, param
 
 import recordlinkage
 from recordlinkage.utils import IndexError

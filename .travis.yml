@@ -12,7 +12,7 @@ env:
 
 before_script:
   - pip install nose
-  - pip install nose-parameterized
+  - pip install parameterized
   - pip install codecov
 
 # install matrix versions, deps and optional deps
