@@ -8,6 +8,7 @@ import numpy
 
 from recordlinkage.base import BaseIndexator
 from recordlinkage.utils import IndexError
+from recordlinkage.utils import VisibleDeprecationWarning
 from recordlinkage.utils import merge_dicts
 from recordlinkage.utils import max_number_of_pairs
 from recordlinkage.algorithms.string import qgram_similarity
@@ -22,7 +23,6 @@ from recordlinkage.algorithms.indexing import \
     random_pairs_without_replacement_large_frames
 
 from recordlinkage import rl_logging as logging
-
 
 
 def check_index_names(func):
