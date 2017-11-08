@@ -27,7 +27,7 @@ install:
   - pip install -q $PANDAS_VERSION
 
 # run tests with coverage
-script: nosetests --with-coverage --cover-package=recordlinkage
+script: nosetests --verbose --nologcapture --with-coverage --cover-package=recordlinkage
 
 # codecov
 after_success:
