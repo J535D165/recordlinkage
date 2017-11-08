@@ -7,7 +7,7 @@ This page contains the API reference of the Python Record Linkage Toolkit.
 .. toctree::
    :maxdepth: 2
 
-   ref-standardise
+   ref-preprocessing
    ref-index
    ref-compare
    ref-classifiers

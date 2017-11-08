@@ -6,6 +6,13 @@ class IndexError(Exception):
     """ Error class for errors related to indexing. """
     pass
 
+
+class VisibleDeprecationWarning(UserWarning):
+    """Visible deprecation warning.
+    Based on numpy's VisibleDeprecationWarning.
+    """
+    pass
+
 # Checks and conversions
 
 

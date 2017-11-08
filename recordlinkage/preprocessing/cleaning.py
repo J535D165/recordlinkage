@@ -44,7 +44,7 @@ def clean(s, lowercase=True, replace_by_none=r'[^ \-\_A-Za-z0-9]+',
     Example
     -------
     >>> import pandas
-    >>> from recordlinkage.standardise import clean
+    >>> from recordlinkage.preprocessing import clean
     >>>
     >>> name = ['Mary-ann', 'Bob :)', 'Angel', 'Bob (alias Billy)', None]
     >>> s = pandas.Series(names)
