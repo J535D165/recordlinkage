@@ -1,64 +1,85 @@
+from __future__ import division
+
 import unittest
-import recordlinkage
+import recordlinkage as rl
 
 import numpy
 import pandas
 
-pairs = [(i, j) for i in range(0, 10) for j in range(0, 10)]
-true_matches = [(1, 2), (2, 2), (2, 1), (3, 2), (5, 2),
-                (4, 9), (5, 6), (6, 7), (1, 6)]
-matches = [(1, 2), (2, 2), (2, 1), (5, 2), (4, 9),
-           (1, 6), (9, 9), (8, 8), (0, 8)]
-
-index = pandas.MultiIndex.from_tuples(pairs, names=['first', 'second'])
-gold_matches_index = pandas.MultiIndex.from_tuples(
-    true_matches, names=['first', 'second'])
-matches_index = pandas.MultiIndex.from_tuples(
-    matches, names=['first', 'second'])
-
-CONF_M1 = numpy.array([[100, 0], [0, 1000]])
-CONF_M2 = numpy.array([[100, 10], [20, 1000]])
-CONF_M3 = numpy.array([[100, 0], [20, 1000]])
-CONF_M4 = numpy.array([[100, 10], [0, 1000]])
-CONF_M5 = numpy.array([[0, 10], [10, 0]])
+FULL_INDEX = pandas.MultiIndex.from_product(
+    [[1, 2, 3], [1, 2, 3]], # 3x3 matrix
+    names=['first', 'second']
+)
+LINKS_TRUE = pandas.MultiIndex.from_tuples(
+    [(1, 1), (2, 2), (3, 3)], # the diagonal
+    names=['first', 'second']
+)
+LINKS_PRED = pandas.MultiIndex.from_tuples(
+    [(1, 1), (2, 1), (3, 1), (1, 2)], # L shape
+     names=['first', 'second']
+)
 
 
 class TestMeasures(unittest.TestCase):
 
     def test_confusion_matrix(self):
 
-        conf_m = recordlinkage.confusion_matrix(
-            gold_matches_index, matches_index, len(index))
-        conf_m_2 = recordlinkage.confusion_matrix(
-            gold_matches_index, matches_index, index)
+        result = rl.confusion_matrix(LINKS_TRUE, LINKS_PRED, len(FULL_INDEX))
+        expected = numpy.array([[1, 2], [3, 3]])
 
-        self.assertEqual(numpy.sum(conf_m), len(pairs))
-        self.assertEqual(numpy.sum(conf_m[0, :]), len(gold_matches_index))
-        self.assertEqual(numpy.sum(conf_m[:, 0]), len(matches_index))
+        numpy.testing.assert_array_equal(result, expected)
 
-        numpy.testing.assert_array_equal(conf_m, conf_m_2)
+    def test_tp_fp_tn_fn(self):
+
+        tp = rl.true_positives(LINKS_TRUE, LINKS_PRED)
+        self.assertEqual(tp, 1)
+        fp = rl.false_positives(LINKS_TRUE, LINKS_PRED)
+        self.assertEqual(fp, 3)
+        tn = rl.true_negatives(LINKS_TRUE, LINKS_PRED, len(FULL_INDEX))
+        self.assertEqual(tn, 3)
+        fn = rl.false_negatives(LINKS_TRUE, LINKS_PRED)
+        self.assertEqual(fn, 2)
 
     def test_recall(self):
 
-        self.assertEqual(recordlinkage.recall(CONF_M1), 1.0)
-        self.assertEqual(recordlinkage.recall(CONF_M5), 0.0)
+        # confusion matrix
+        cm = rl.confusion_matrix(LINKS_TRUE, LINKS_PRED)
+
+        self.assertEqual(rl.recall(LINKS_TRUE, LINKS_PRED), 1/3)
+        self.assertEqual(rl.recall(cm), 1/3)
 
     def test_precision(self):
 
-        self.assertEqual(recordlinkage.precision(CONF_M1), 1.0)
-        self.assertEqual(recordlinkage.precision(CONF_M5), 0.0)
+        # confusion matrix
+        cm = rl.confusion_matrix(LINKS_TRUE, LINKS_PRED, len(FULL_INDEX))
+
+        self.assertEqual(rl.precision(LINKS_TRUE, LINKS_PRED), 1/4)
+        self.assertEqual(rl.precision(cm), 1/4)
 
     def test_accuracy(self):
 
-        self.assertEqual(recordlinkage.accuracy(CONF_M1), 1.0)
-        self.assertEqual(recordlinkage.accuracy(CONF_M5), 0.0)
+        # confusion matrix
+        cm = rl.confusion_matrix(LINKS_TRUE, LINKS_PRED, len(FULL_INDEX))
+
+        self.assertEqual(rl.accuracy(LINKS_TRUE, LINKS_PRED, len(FULL_INDEX)), 4/9)
+        self.assertEqual(rl.accuracy(cm), 4/9)
 
     def test_specificity(self):
 
-        self.assertEqual(recordlinkage.specificity(CONF_M1), 1.0)
-        self.assertEqual(recordlinkage.specificity(CONF_M5), 0.0)
+        # confusion matrix
+        cm = rl.confusion_matrix(LINKS_TRUE, LINKS_PRED, len(FULL_INDEX))
+
+        self.assertEqual(rl.specificity(LINKS_TRUE, LINKS_PRED, len(FULL_INDEX)), 1/2)
+        self.assertEqual(rl.specificity(cm), 1/2)
 
     def test_fscore(self):
 
-        self.assertEqual(recordlinkage.fscore(CONF_M1), 1.0)
-        self.assertRaises(ZeroDivisionError, recordlinkage.fscore, CONF_M5)
+        # confusion matrix
+        cm = rl.confusion_matrix(LINKS_TRUE, LINKS_PRED, len(FULL_INDEX))
+        prec = rl.precision(LINKS_TRUE, LINKS_PRED)
+        rec = rl.recall(LINKS_TRUE, LINKS_PRED)
+        expected = float(2 * prec * rec / (prec + rec))
+
+        self.assertEqual(rl.fscore(LINKS_TRUE, LINKS_PRED), expected)
+        self.assertEqual(rl.fscore(cm), expected)
+
