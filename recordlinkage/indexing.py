@@ -10,11 +10,10 @@ from recordlinkage.base import BaseIndexator
 from recordlinkage.utils import IndexError
 from recordlinkage.utils import VisibleDeprecationWarning
 from recordlinkage.utils import merge_dicts
-from recordlinkage.utils import max_number_of_pairs
 from recordlinkage.algorithms.string import qgram_similarity
 from recordlinkage.utils import listify
 from recordlinkage.measures import reduction_ratio
-from recordlinkage.measures import max_pairs
+from recordlinkage.measures import full_index_size
 from recordlinkage.algorithms.indexing import \
     random_pairs_with_replacement
 from recordlinkage.algorithms.indexing import \
@@ -82,7 +81,7 @@ def _random_large_dedup(df_a, n, random_state=None):
 
     numpy.random.seed(random_state)
 
-    n_max = max_number_of_pairs(df_a)
+    n_max = full_index_size(df_a)
 
     if not isinstance(n, int) or n <= 0 or n > n_max:
         raise ValueError("n must be a integer satisfying 0<n<=%s" % n_max)
@@ -97,7 +96,7 @@ def _random_large_dedup(df_a, n, random_state=None):
 
 def _random_large_link(df_a, df_b, n):
 
-    n_max = max_number_of_pairs(df_a, df_b)
+    n_max = full_index_size(df_a, df_b)
 
     if not isinstance(n, int) or n <= 0 or n > n_max:
         raise ValueError("n must be a integer satisfying 0<n<=%s" % n_max)
@@ -112,7 +111,7 @@ def _random_large_link(df_a, df_b, n):
 
 def _random_small_link(df_a, df_b, n):
 
-    n_max = max_number_of_pairs(df_a, df_b)
+    n_max = full_index_size(df_a, df_b)
 
     if not isinstance(n, int) or n <= 0 or n > n_max:
         raise ValueError("n must be a integer satisfying 0<n<=%s" % n_max)
@@ -329,9 +328,9 @@ class PairsCore(object):
         """ the maximum number of record pairs """
 
         if self.deduplication:
-            return max_number_of_pairs(self.df_a)
+            return full_index_size(self.df_a)
         else:
-            return max_number_of_pairs(self.df_a, self.df_b)
+            return full_index_size(self.df_a, self.df_b)
 
     # -- Index methods ------------------------------------------------------
 
@@ -632,7 +631,7 @@ class FullIndex(BaseIndexator):
 
     def _link_index(self, df_a, df_b):
 
-        n_max = max_pairs((df_a, df_b))
+        n_max = full_index_size((df_a, df_b))
 
         if n_max > 1e7:
             logging.warn(
@@ -647,7 +646,7 @@ class FullIndex(BaseIndexator):
 
     def _dedup_index(self, df_a):
 
-        n_max = max_pairs((df_a))
+        n_max = full_index_size((df_a))
 
         if n_max > 1e7:
             logging.warn(
@@ -940,7 +939,7 @@ class RandomIndex(BaseIndexator):
     def _link_index(self, df_a, df_b):
 
         shape = (len(df_a), len(df_b))
-        n_max = max_pairs(shape)
+        n_max = full_index_size(shape)
 
         if not isinstance(self.n, int):
             raise ValueError('n must be an integer')
@@ -994,7 +993,7 @@ class RandomIndex(BaseIndexator):
         # without replacement
         else:
 
-            n_max = max_pairs(shape)
+            n_max = full_index_size(shape)
 
             if not isinstance(self.n, int) or self.n <= 0 or self.n > n_max:
                 raise ValueError(

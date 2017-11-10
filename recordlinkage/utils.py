@@ -27,6 +27,15 @@ def is_label_dataframe(label, df):
         return False
 
 
+def get_length(x):
+    """Return int or len(x)"""
+
+    try:
+        return int(x)
+    except Exception:
+        return len(x)
+
+
 def listify(x):
     """Make a list of the argument if it is not a list."""
 
@@ -53,15 +62,3 @@ def merge_dicts(*dict_args):
     for dictionary in dict_args:
         result.update(dictionary)
     return result
-
-
-def max_number_of_pairs(*args):
-    """Compute the maximum number of pairs."""
-
-    if not args:
-        raise ValueError('expected at least one dataframe')
-
-    if len(args) == 1:
-        return len(args[0]) * (len(args[0]) - 1) / 2
-    else:
-        return numpy.prod([len(arg) for arg in args])

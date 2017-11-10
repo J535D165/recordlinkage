@@ -5,22 +5,7 @@ from __future__ import division
 import numpy
 import pandas
 
-
-def _get_len(x):
-    """Return int or len(x)"""
-
-    return x if isinstance(x, int) else len(x)
-
-
-def _max_pairs_deduplication(x):
-    """Compute the maximum number of record pairs in case of deduplication."""
-
-    return int(x * (x - 1) / 2)
-
-
-def _max_pairs_linkage(x):
-    """Get the maximum number of record pairs in case of linking."""
-    return numpy.prod(x)
+from recordlinkage.utils import get_length
 
 
 def _get_multiindex(x):
@@ -44,7 +29,7 @@ def _isconfusionmatrix(x):
         return False
 
 
-def reduction_ratio(links_pred, total):
+def reduction_ratio(links_pred, *total):
     """Compute the reduction ratio.
 
     The reduction ratio is 1 minus the ratio candidate matches and the maximum
@@ -55,8 +40,9 @@ def reduction_ratio(links_pred, total):
     links_pred: int, pandas.MultiIndex
         The number of candidate record pairs or the pandas.MultiIndex with
         record pairs.
-    total: a list of pandas.DataFrame objects
-        The data used to make the candidate record pairs.
+    *total: pandas.DataFrame object(s)
+        The DataFrames are used to compute the full index size with the
+        full_index_size function.
 
     Returns
     -------
@@ -65,7 +51,7 @@ def reduction_ratio(links_pred, total):
 
     """
 
-    n_max = max_pairs(total)
+    n_max = full_index_size(*total)
 
     if isinstance(links_pred, pandas.MultiIndex):
         links_pred = len(links_pred)
@@ -77,18 +63,64 @@ def reduction_ratio(links_pred, total):
 
 
 def max_pairs(shape):
-    """Compute the maximum number of record pairs possible."""
+    """[DEPRECATED] Compute the maximum number of record pairs possible."""
 
     if not isinstance(shape, (tuple, list)):
-        n = _max_pairs_deduplication(_get_len(shape))
+        x = get_length(shape)
+        n = int(x * (x - 1) / 2)
 
     elif (isinstance(shape, (tuple, list)) and len(shape) == 1):
-        n = _max_pairs_deduplication(_get_len(shape[0]))
+        x = get_length(shape[0])
+        n = int(x * (x - 1) / 2)
 
     else:
-        n = _max_pairs_linkage([_get_len(xi) for xi in shape])
+        n = numpy.prod([get_length(xi) for xi in shape])
 
     return n
+
+
+def full_index_size(*args):
+    """Compute the number of records in a full index.
+
+    Compute the number of records in a full index without building the index
+    itself. The result is the maximum number of record pairs possible. This
+    function is especially useful in measures like the `reduction_ratio`.
+
+    Deduplication: Given a DataFrame A with length N, the full index size is
+    N*(N-1)/2. Linking: Given a DataFrame A with length N and a DataFrame B
+    with length M, the full index size is N*M.
+
+    Parameters
+    ----------
+    *args: int, pandas.MultiIndex, pandas.Series, pandas.DataFrame
+        A pandas object or a int representing the length of a dataset to link.
+        When there is one argument, it is assumed that the record linkage is
+        a deduplication process.
+
+    Examples
+    --------
+
+    Use integers:
+    >>> full_index_size(10)  # deduplication: 45 pairs
+    >>> full_index_size(10, 10)  # linking: 100 pairs
+
+    or pandas objects
+    >>> full_index_size(DF)  # deduplication: len(DF)*(len(DF)-1)/2 pairs
+    >>> full_index_size(DF, DF)  # linking: len(DF)*len(DF) pairs
+
+    """
+
+    # check if a list or tuple is passed as argument
+    if len(args) == 1 and isinstance(args[0], (list, tuple)):
+        args = tuple(args[0])
+
+    if len(args) == 1:
+        n = get_length(args[0])
+        size = int(n * (n - 1) / 2)
+    else:
+        size = numpy.prod([get_length(arg) for arg in args])
+
+    return size
 
 
 def true_positives(links_true, links_pred):
