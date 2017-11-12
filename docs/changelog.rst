@@ -2,6 +2,15 @@
 Release notes
 *************
 
+Version 0.11.0 (development)
+============================
+
+- The FEBRL dataset loaders can now return the true links as a 
+  pandas.MultIndex for each FEBRL dataset. This option is disabled by default.
+  See the [FEBRL datasets][febrl_datasets] for details. 
+
+[febrl_datasets]: http://recordlinkage.readthedocs.io/en/latest/ref-datasets.html#recordlinkage.datasets.load_febrl1
+
 Version 0.10.1
 ==============
 
