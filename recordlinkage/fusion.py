@@ -603,8 +603,8 @@ class FuseCore(ABC):
         None
 
         """
-        # Comparison / candidate link index
-        self.index = index.to_frame()
+        # Comparison / candidate link index. Remove names in case of name collision.
+        self.index = index.set_names(list(range(len(index.names)))).to_frame()
 
         # Prediction vector
         self.predictions = predictions
