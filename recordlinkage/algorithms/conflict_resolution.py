@@ -24,6 +24,28 @@ import recordlinkage.rl_logging as rl_log
 #   * Use values only – no metadata values
 #   * Not require tie-breaking
 
+def assert_tuple_correctness(x, meta=False):
+    """
+    Check whether the tuple has the correct number of sub-tuples.
+    If meta=False x should be in the form tuple(tuple(v1, ..., vn), ),
+    otherwise x should be in the form tuple(tuple(v1, ..., vn), tuple(m1, ..., mn))
+
+    :param tuple x: Values to check.
+    :param bool meta: Is metadata expected?
+    :return None: Raises error if incorrect.
+    """
+    if meta:
+        if len(x) == 1:
+            raise AssertionError(
+                'Conflict resolution function expected metadata, but did not receive any.'
+            )
+    else:
+        if len(x) > 1:
+            raise AssertionError(
+                'Conflict resolution function received unexpected metadata.'
+            )
+
+
 def tupgetter(*items):
     """
     Identical to operator.itemgetter, but returns single items as 1-tuples instead of atomic values.
@@ -43,7 +65,7 @@ def tupgetter(*items):
         item = items[0]
 
         def g(obj):
-            return (obj[item], )
+            return (obj[item],)
     else:
         def g(obj):
             return tuple(obj[i] for i in items)
@@ -97,7 +119,7 @@ def remove_missing(x, remove_na_vals, remove_na_meta):
     else:
         getter = tupgetter(*keep_indices)
         if len(x) == 1:
-            return (getter(x[0]),)
+            return (getter(x[0]), )
         else:
             return getter(x[0]), getter(x[1])
 
@@ -164,6 +186,7 @@ def choose_first(x, remove_na_vals):
         The first value.
     
     """
+    assert_tuple_correctness(x, False)
     vals, = remove_missing(x, remove_na_vals, False)
     length = len(vals)
     if length == 0:
@@ -189,6 +212,7 @@ def choose_last(x, remove_na_vals):
         The last value.
     
     """
+    assert_tuple_correctness(x, False)
     vals, = remove_missing(x, remove_na_vals, False)
     length = len(vals)
     if length == 0:
@@ -214,6 +238,7 @@ def count(x, remove_na_vals):
         The number of unique values.
     
     """
+    assert_tuple_correctness(x, False)
     vals, = remove_missing(x, remove_na_vals, False)
     return len(set(vals))
 
@@ -235,6 +260,7 @@ def choose_min(x, remove_na_vals):
         The smallest value.
     
     """
+    assert_tuple_correctness(x, False)
     vals, = remove_missing(x, remove_na_vals, False)
     length = len(vals)
     if length == 0:
@@ -265,6 +291,7 @@ def choose_max(x, remove_na_vals):
         The largest value.
     
     """
+    assert_tuple_correctness(x, False)
     vals, = remove_missing(x, remove_na_vals, False)
     length = len(vals)
     if length == 0:
@@ -297,6 +324,7 @@ def choose_shortest(x, tie_break, remove_na_vals):
         The shortest value.
     
     """
+    assert_tuple_correctness(x, False)
     vals, = remove_missing(x, remove_na_vals, False)
     length = len(vals)
     if length == 0:
@@ -335,6 +363,7 @@ def choose_longest(x, tie_break, remove_na_vals):
         The longest value.
     
     """
+    assert_tuple_correctness(x, False)
     vals, = remove_missing(x, remove_na_vals, False)
     length = len(vals)
     if length == 0:
@@ -371,6 +400,7 @@ def choose_shortest_tie_break(x, remove_na_vals):
         The shortest value.
     
     """
+    assert_tuple_correctness(x, False)
     return choose_shortest(x, None, remove_na_vals)
 
 
@@ -391,6 +421,7 @@ def choose_longest_tie_break(x, remove_na_vals):
         The longest value.
     
     """
+    assert_tuple_correctness(x, False)
     return choose_longest(x, None, remove_na_vals)
 
 
@@ -411,6 +442,7 @@ def choose_random(x, remove_na_vals):
         A random value.
     
     """
+    assert_tuple_correctness(x, False)
     vals, = remove_missing(x, remove_na_vals, False)
     length = len(vals)
     if length == 0:
@@ -437,6 +469,7 @@ def vote(x, tie_break, remove_na_vals):
         The most common value.
     
     """
+    assert_tuple_correctness(x, False)
     # Process input
     vals, = remove_missing(x, remove_na_vals, False)
     length = len(vals)
@@ -449,8 +482,18 @@ def vote(x, tie_break, remove_na_vals):
     counter = collections.Counter(vals)
 
     # Check for ties
-    count = counter.most_common()[0][1]
-    common = [t for t in counter.most_common() if t[1] == count]
+    max_count = counter.most_common()[0][1]
+    common = [t for t in counter.most_common() if t[1] == max_count]
+
+    # If nan values kept, count them and act accordingly;
+    # collections.Counter is picky with np.nans.
+    if not remove_na_vals:
+        nan_count = sum(1 for v in vals if np.isnan(v))
+        if nan_count > max_count:
+            return np.nan
+        elif nan_count == max_count:
+            common = [t for t in common if not np.isnan(t[0])]
+            common.insert(0, (np.nan, nan_count))
 
     if len(common) > 1:
         # Tie
@@ -479,6 +522,7 @@ def group(x, kind, remove_na_vals):
         A collection of values.
     
     """
+    assert_tuple_correctness(x, False)
     vals, = remove_missing(x, remove_na_vals, False)
     if kind == 'set':
         return set(vals)
@@ -508,6 +552,7 @@ def no_gossip(x, remove_na_vals):
         A canonical value or np.nan.
     
     """
+    assert_tuple_correctness(x, False)
     vals, = remove_missing(x, remove_na_vals, False)
     length = len(vals)
     if length == 0:
@@ -541,6 +586,7 @@ def aggregate(x, method, remove_na_vals):
         A numerical aggregation of values.
     
     """
+    assert_tuple_correctness(x, False)
     vals, = remove_missing(x, remove_na_vals, False)
     length = len(vals)
     if length == 0:
@@ -557,7 +603,7 @@ def aggregate(x, method, remove_na_vals):
         raise ValueError('Unrecognized aggregation method: {}.'.format(method))
 
 
-def choose_trusted(x, trusted, tie_break_trusted, tie_break_untrusted, remove_na_vals, remove_na_meta):
+def choose_trusted(x, trusted, tie_break, tie_break_untrusted, remove_na_vals, remove_na_meta):
     """
     Prefers values from a trusted source.
     
@@ -568,7 +614,7 @@ def choose_trusted(x, trusted, tie_break_trusted, tie_break_untrusted, remove_na
     trusted : str
         Trusted source identifier. Values with corresponding metadata equal to this value
         are considered to be "trusted" values.
-    tie_break_trusted : function
+    tie_break : function
         A conflict resolution function to be to break ties between trusted values.
     tie_break_untrusted : function
         A conflict resolution function to be to break ties between untrusted values.
@@ -583,6 +629,7 @@ def choose_trusted(x, trusted, tie_break_trusted, tie_break_untrusted, remove_na
         A trusted value.
 
     """
+    assert_tuple_correctness(x, True)
     # Process input
     vals, meta = remove_missing(x, remove_na_vals, remove_na_meta)
     v_len = len(vals)
@@ -604,7 +651,7 @@ def choose_trusted(x, trusted, tie_break_trusted, tie_break_untrusted, remove_na
         return trust_vals[0]
     else:
         # Tie break
-        return tie_break_trusted((trust_vals,), False)
+        return tie_break((trust_vals,), False)
 
 
 def annotated_concat(x, remove_na_vals, remove_na_meta):
@@ -626,6 +673,7 @@ def annotated_concat(x, remove_na_vals, remove_na_meta):
         A list of value/metadata tuples.
     
     """
+    assert_tuple_correctness(x, True)
     vals, meta = remove_missing(x, remove_na_vals, remove_na_meta)
     length = len(vals)
     if length == 0:
@@ -657,6 +705,7 @@ def choose_metadata_min(x, tie_break, remove_na_vals, remove_na_meta):
         The chosen value.
     
     """
+    assert_tuple_correctness(x, True)
     # Process input
     vals, meta = remove_missing(x, remove_na_vals, remove_na_meta)
     length = len(vals)
@@ -698,6 +747,7 @@ def choose_metadata_max(x, tie_break, remove_na_vals, remove_na_meta):
         The chosen value.
     
     """
+    assert_tuple_correctness(x, True)
     # Process input
     vals, meta = remove_missing(x, remove_na_vals, remove_na_meta)
     length = len(vals)

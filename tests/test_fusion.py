@@ -16,7 +16,7 @@ from numpy import nan, arange
 
 import recordlinkage
 from recordlinkage.fusion import FuseDuplicates
-from recordlinkage.algorithms.conflict_resolution import choose_random
+import recordlinkage.algorithms.conflict_resolution as cr
 
 
 def validate_job(job: dict):
@@ -195,6 +195,7 @@ class TestFuseLinks(unittest.TestCase):
     def setUp(self):
         self.comp = recordlinkage.Compare(self.index_AB, self.A, self.B)
         self.fuse = recordlinkage.FuseLinks()
+        pass
 
     # Test takes long time
     @parameterized.expand(RESOLUTION_CASES)
@@ -205,7 +206,7 @@ class TestFuseLinks(unittest.TestCase):
         # Validate the job metadata
         self.assertTrue(validate_job(self.fuse.resolution_queue[0]), 'resolution queue job failed validation')
         # Check job runs and produces dataframe.
-        result = self.fuse.fuse(self.comp.vectors.index, self.A, self.B, n_cores=mp_option)
+        result = self.fuse.fuse(self.comp.vectors.index, self.A, self.B, njobs=mp_option)
         self.assertIsInstance(result, pandas.DataFrame, 'result not a dataframe')
 
     # Test takes long time
@@ -222,7 +223,7 @@ class TestFuseLinks(unittest.TestCase):
         self.assertTrue(validate_job(self.fuse.resolution_queue[0]), 'resolution queue job failed validation')
 
         # Check job runs and produces dataframe.
-        result = self.fuse.fuse(self.comp.vectors.index, self.A, self.B, n_cores=1)
+        result = self.fuse.fuse(self.comp.vectors.index, self.A, self.B, njobs=1)
         self.assertIsInstance(result, pandas.DataFrame, 'result not a dataframe')
 
     def test_keep_original_errors(self):
@@ -232,7 +233,7 @@ class TestFuseLinks(unittest.TestCase):
         self.fuse.resolution_queue[0]['values_b'] = ['age', 'age']
         # Check job runs and produces dataframe.
         with self.assertRaises(AssertionError):
-            self.fuse.fuse(self.comp.vectors.index, self.A, self.B, n_cores=1)
+            self.fuse.fuse(self.comp.vectors.index, self.A, self.B, njobs=1)
 
     def test_data_generalization(self):
         """Test that FuseLinks._make_resolution_series generalizes values and metadata when appropriate"""
@@ -285,10 +286,10 @@ class TestFuseLinks(unittest.TestCase):
             self.fuse.keep_up_to_date('age', 'age', 'date', 'date', tie_break=None)
 
     def test_process_tie_break_function(self):
-        self.fuse.keep_up_to_date('age', 'age', 'date', 'date', tie_break=choose_random)
+        self.fuse.keep_up_to_date('age', 'age', 'date', 'date', tie_break=cr.choose_random)
 
     def test_resolve_typing(self):
-        self.fuse.resolve(choose_random, 'age', 'age', params=['list', 'of', 'params'])
+        self.fuse.resolve(cr.choose_random, 'age', 'age')
 
     def test_use_predictions(self):
         self.fuse.keep_original('age', [])
@@ -322,7 +323,7 @@ class TestFuseLinks(unittest.TestCase):
     def test_exceeds_core_limit(self):
         self.fuse.roll_the_dice('age', 'age')
         with self.assertWarns(RuntimeWarning):
-            self.fuse.fuse(self.comp.vectors.index, self.comp.df_a, self.comp.df_b, n_cores=100)
+            self.fuse.fuse(self.comp.vectors.index, self.comp.df_a, self.comp.df_b, njobs=100)
 
     def test_fusedups_not_implemented(self):
         with self.assertWarns(UserWarning):
@@ -365,4 +366,48 @@ class TestFuseLinks(unittest.TestCase):
             data = self.fuse._make_resolution_series(
                 'age', 'age',
                 meta_a=None, meta_b='age',
+            )
+
+    def test_resolution_signature_assertions(self):
+        with self.assertRaises(AssertionError):
+            self.fuse.resolve(
+                cr.choose_random,
+                'values',
+                'values',
+                remove_na_vals=None
+            )
+        with self.assertRaises(AssertionError):
+            self.fuse.resolve(
+                cr.choose_random,
+                'values',
+                'values',
+                remove_na_meta=True
+            )
+        with self.assertRaises(AssertionError):
+            self.fuse.resolve(
+                cr.choose_metadata_max,
+                'values',
+                'values',
+                remove_na_meta=None
+            )
+        with self.assertRaises(AssertionError):
+            self.fuse.resolve(
+                cr.choose_metadata_max,
+                'values',
+                'values',
+                tie_break=None
+            )
+        with self.assertRaises(AssertionError):
+            self.fuse.resolve(
+                cr.choose_random,
+                'values',
+                'values',
+                tie_break=cr.choose_random
+            )
+        with self.assertRaises(AssertionError):
+            self.fuse.resolve(
+                cr.aggregate,
+                'values',
+                'values',
+                remove_na_vals=True
             )

@@ -2,6 +2,7 @@ from __future__ import division
 from __future__ import unicode_literals
 
 import types
+import inspect
 import datetime
 import warnings
 import multiprocessing as mp
@@ -33,6 +34,8 @@ from recordlinkage.algorithms.conflict_resolution import (annotated_concat,
                                                           nullify)
 
 
+# TODO: Rename remove_na_values to skip_na
+
 def process_tie_break(tie_break):
     """
     Handles string/function -> function mapping for tie break options.
@@ -47,7 +50,8 @@ def process_tie_break(tie_break):
     ----------
     tie_break : str/function
         A conflict resolution function to be used in the case of a tie. May be a conflict resolution
-        function or a string (one of 'random', 'trust_a', 'trust_b', 'min', 'max', 'shortest', 'longest', or 'null').
+        function or a string (one of 'random', 'trust_a', 'trust_b', 'first', 'last',
+        'min', 'max', 'shortest', 'longest', or 'null').
 
     Returns
     -------
@@ -63,9 +67,9 @@ def process_tie_break(tie_break):
     elif isinstance(tie_break, str):
         if tie_break == 'random':
             tie_break_fun = choose_random
-        elif tie_break == 'trust_a':
+        elif tie_break == 'trust_a' or tie_break == 'first':
             tie_break_fun = choose_first
-        elif tie_break == 'trust_b':
+        elif tie_break == 'trust_b' or tie_break == 'last':
             tie_break_fun = choose_last
         elif tie_break == 'min':
             tie_break_fun = choose_min
@@ -79,7 +83,8 @@ def process_tie_break(tie_break):
             tie_break_fun = nullify
         else:
             raise ValueError('Invalid tie_break strategy: {}. Must be one of '
-                             'random, trust_a, trust_b, min, max, shortest, longest, or nullify.'.format(tie_break))
+                             'random, trust_a, trust_b, first, last, min, max, '
+                             'shortest, longest, or nullify.'.format(tie_break))
     else:
         raise ValueError('tie_break must be a string or a function.')
     return tie_break_fun
@@ -165,8 +170,10 @@ class FuseCore(ABC):
         None
             Queues a conflict resolution job, to be completed when ``fuse`` method is called.
         """
-        self.resolve(choose_random, values_a, values_b, name=name, remove_na_vals=remove_na_vals,
-                     description='roll_the_dice')
+        self.resolve(
+            choose_random, values_a, values_b, name=name, remove_na_vals=remove_na_vals,
+            description='roll_the_dice'
+        )
 
     def cry_with_the_wolves(self, values_a, values_b, tie_break='random', name=None, remove_na_vals=True):
         """
@@ -193,8 +200,10 @@ class FuseCore(ABC):
             Queues a conflict resolution job, to be completed when ``fuse`` method is called.
         
         """
-        self.resolve(vote, values_a, values_b, tie_break=process_tie_break(tie_break), name=name,
-                     remove_na_vals=remove_na_vals, description='cry_with_the_wolves')
+        self.resolve(
+            vote, values_a, values_b, tie_break=process_tie_break(tie_break), name=name,
+            remove_na_vals=remove_na_vals, description='cry_with_the_wolves'
+        )
 
     def pass_it_on(self, values_a, values_b, kind='list', name=None, remove_na_vals=True):
         """
@@ -220,8 +229,10 @@ class FuseCore(ABC):
             Queues a conflict resolution job, to be completed when ``fuse`` method is called.
         
         """
-        self.resolve(group, values_a, values_b, params=kind, name=name, remove_na_vals=remove_na_vals,
-                     description='pass_it_on')
+        self.resolve(
+            group, values_a, values_b, params=kind, name=name,
+            remove_na_vals=remove_na_vals, description='pass_it_on'
+        )
 
     def meet_in_the_middle(self, values_a, values_b, metric, name=None, remove_na_vals=True):
         """
@@ -247,8 +258,11 @@ class FuseCore(ABC):
         None
             Queues a conflict resolution job, to be completed when ``fuse`` method is called.
         """
-        self.resolve(aggregate, values_a, values_b, params=metric, name=name, remove_na_vals=remove_na_vals,
-                     description='meet_in_the_middle')
+        self.resolve(
+            aggregate, values_a, values_b, params=metric,
+            name=name, remove_na_vals=remove_na_vals,
+            description='meet_in_the_middle'
+        )
 
     def keep_up_to_date(self, values_a, values_b, dates_a, dates_b, tie_break='random',
                         name=None, remove_na_vals=True, remove_na_dates=True):
@@ -286,9 +300,11 @@ class FuseCore(ABC):
             Queues a conflict resolution job, to be completed when ``fuse`` method is called.
         
         """
-        self.resolve(choose_metadata_max, values_a, values_b, meta_a=dates_a, meta_b=dates_b,
-                     name=name, remove_na_vals=remove_na_vals, remove_na_meta=remove_na_dates,
-                     tie_break=process_tie_break(tie_break), description='keep_up_to_date')
+        self.resolve(
+            choose_metadata_max, values_a, values_b, meta_a=dates_a, meta_b=dates_b,
+            name=name, remove_na_vals=remove_na_vals, remove_na_meta=remove_na_dates,
+            tie_break=process_tie_break(tie_break), description='keep_up_to_date'
+        )
 
     def choose_by_scored_value(self, values_a, values_b, func, tie_break='random',
                                apply_to_null=False, name=None, remove_na_vals=True,
@@ -329,12 +345,13 @@ class FuseCore(ABC):
         else:
             resolution_function = choose_metadata_min
 
-        self.resolve(resolution_function, values_a, values_b, meta_a=values_a, meta_b=values_b,
-                     name=name, remove_na_vals=remove_na_vals, remove_na_meta=remove_na_vals,
-                     tie_break=process_tie_break(tie_break), description='choose_by_scored_value',
-                     transform_meta=func, transform_null=apply_to_null)
+        self.resolve(
+            resolution_function, values_a, values_b, meta_a=values_a, meta_b=values_b,
+            name=name, remove_na_vals=remove_na_vals, remove_na_meta=remove_na_vals,
+            tie_break=process_tie_break(tie_break), description='choose_by_scored_value',
+            transform_meta=func, transform_null=apply_to_null
+        )
 
-    # TODO: Continue code review
     def choose_by_scored_metadata(self, values_a, values_b, meta_a, meta_b, func, tie_break='random',
                                   apply_to_null=False, name=None, remove_na_vals=True, remove_na_meta=True,
                                   choose_max_value=True):
@@ -382,10 +399,12 @@ class FuseCore(ABC):
         else:
             resolution_function = choose_metadata_min
 
-        self.resolve(resolution_function, values_a, values_b, meta_a=meta_a, meta_b=meta_b,
-                     name=name, remove_na_vals=remove_na_vals, remove_na_meta=remove_na_meta,
-                     tie_break=process_tie_break(tie_break), description='choose_by_scored_metadata',
-                     transform_meta=func, transform_null=apply_to_null)
+        self.resolve(
+            resolution_function, values_a, values_b, meta_a=meta_a, meta_b=meta_b,
+            name=name, remove_na_vals=remove_na_vals, remove_na_meta=remove_na_meta,
+            tie_break=process_tie_break(tie_break), description='choose_by_scored_metadata',
+            transform_meta=func, transform_null=apply_to_null
+        )
 
     def resolve(self, fun, values_a, values_b, meta_a=None, meta_b=None, name=None,
                 tie_break=None, transform_vals=None, transform_meta=None,
@@ -465,6 +484,34 @@ class FuseCore(ABC):
         else:
             all_params = tuple(listify_with_empty(params) + listify_with_empty(tie_break) + na_params)
 
+        if fun is not None:
+            argspec = inspect.getfullargspec(fun)[0]
+
+            # Check that the given arguments are appropriate for the specified conflict resolution function.
+
+            param_pairs = [
+                (remove_na_vals, 'remove_na_vals'),
+                (remove_na_meta, 'remove_na_meta'),
+                (tie_break, 'tie_break')
+            ]
+            for given, param_name in param_pairs:
+                if given is None:
+                    if param_name in argspec:
+                        raise AssertionError(
+                            'Missing argument. {} requires {}'.format(fun.__name__, param_name)
+                        )
+                else:
+                    if param_name not in argspec:
+                        raise AssertionError(
+                            'Incorrect arguments. {} does not take {}'.format(fun.__name__, param_name)
+                        )
+            if len(argspec) != len(all_params) + 1:
+                raise AssertionError(
+                    'Incorrect arguments. The number of options specified do not ' +
+                    'match the conflict resolution funciton signature. Expected: ' +
+                    str(argspec) + ' got: ' + str(['x'] + list(all_params))
+                )
+
         if handler_override is not None:
             handler = handler_override
         else:
@@ -477,8 +524,10 @@ class FuseCore(ABC):
             'values_b': values_b,
             'meta_a': meta_a,
             'meta_b': meta_b,
-            'transform_vals': transform_vals if transform_null or transform_vals is None else SkipNull(transform_vals),
-            'transform_meta': transform_meta if transform_null or transform_vals is None else SkipNull(transform_meta),
+            'transform_vals': transform_vals if transform_null or transform_vals is None else SkipNull(
+                transform_vals),
+            'transform_meta': transform_meta if transform_null or transform_vals is None else SkipNull(
+                transform_meta),
             'static_meta': static_meta,
             'params': all_params,
             'name': name,
@@ -487,7 +536,6 @@ class FuseCore(ABC):
             'kwargs': kwargs
         }
         self.resolution_queue.append(job)
-        # return job
 
     @abstractmethod
     def _make_resolution_series(self, values_a, values_b, meta_a=None, meta_b=None,
@@ -495,17 +543,17 @@ class FuseCore(ABC):
         """
         Formats data for conflict resolution. Output is a pandas.Series of nested tuples. _make_resolution_series
         is overriden by FuseLinks and FuseDuplicates. No implementation is provided in FuseCore.
-        
+
         Parameters
         ----------
         values_a : str/list
             Column name(s) from df_a containing values to be resolved.
-        values_b : 
+        values_b :
             Column name(s) from df_b containing values to be resolved.
-        meta_a : 
+        meta_a :
             Column name(s) from df_a containing metadata values to be used in conflict resolution. Optionally,
             if static_meta is True, meta_a will become the metadata value for all values from df_a.
-        meta_b : 
+        meta_b :
             Column name(s) from df_b containing metadata values to be used in conflict resolution. Optionally,
             if static_meta is True, meta_b will become the metadata value for all values from df_b.
         transform_vals : function
@@ -525,7 +573,7 @@ class FuseCore(ABC):
             whereas value-metadata pairs are represented as
             :math:`((val_1, ..., val_n), (meta_1, ..., meta_n))` where val_i and meta_i
             are a value/metadata pair.
-        
+
         """
         # No implementation provided.
         # Override in subclass.
@@ -535,7 +583,7 @@ class FuseCore(ABC):
         """
         A pre-fusion initialization routine to store the data inputs for access during
         the conflict resolution / data fusion process.
-        
+
         Parameters
         ----------
         index : pandas.MultiIndex
@@ -553,7 +601,7 @@ class FuseCore(ABC):
         Returns
         -------
         None
-        
+
         """
         # Comparison / candidate link index
         self.index = index.to_frame()
@@ -582,7 +630,7 @@ class FuseCore(ABC):
     def _resolve_job_names(self, sep):
         """
         Resolves conflicts among conflict resolution job column names in self.resolution_queue.
-        
+
         Parameters
         ----------
         sep : str
@@ -591,7 +639,7 @@ class FuseCore(ABC):
         Returns
         -------
         None
-        
+
         """
         for job in self.resolution_queue:
             if job['name'] is not None:
@@ -619,7 +667,7 @@ class FuseCore(ABC):
         """
         Passes on a conflict resolution job to the appropriate handling function,
         as specified by job['handler']. Also logs activity for user.
-        
+
         Parameters
         ----------
         job : dict
@@ -636,8 +684,7 @@ class FuseCore(ABC):
         name = 'unnamed column' if job['name'] is None else str(job['name'])
 
         rl_logging.info(
-            str(datetime.datetime.now())[:-7]
-            + ':' + ' started resolving to '
+            'started resolving to '
             + name
             + ' (' + str(job['description']) + ')'
         )
@@ -645,8 +692,7 @@ class FuseCore(ABC):
 
         rl_logging.info(
             '\033[92m'
-            + str(datetime.datetime.now())[:-7] + ':'
-            + ' finished '
+            + 'finished '
             + name
             + ' (time elapsed: '
             + str(datetime.datetime.now() - t1) + ')'
@@ -659,7 +705,7 @@ class FuseCore(ABC):
         """
         Perform conflict resolution for a queued job, by pre-processing data (_make_resolution_series) and performing
         the resolution (i.e. by applying a conflict resolution function).
-        
+
         Parameters
         ----------
         job : dict
@@ -669,7 +715,7 @@ class FuseCore(ABC):
         -------
         pandas.Series
             Series of resolved/canonical values.
-        
+
         """
 
         data = self._make_resolution_series(
@@ -689,7 +735,7 @@ class FuseCore(ABC):
 
         return data
 
-    def fuse(self, index, df_a, df_b, predictions=None, n_cores=mp.cpu_count(), sep='_'):
+    def fuse(self, index, df_a, df_b, predictions=None, njobs=1, sep='_'):
         """
         Perform conflict resolution and data fusion for given data, using accumulated conflict resolution metadata.
 
@@ -704,9 +750,9 @@ class FuseCore(ABC):
             The original second data frame.
         predictions : pandas.Series
             A pandas.Series of True/False classifications.
-        n_cores : int
-            The number of cores to be used for processing. Defaults to all cores (mp.cpu_count()).
-            If n_cores=1, multiprocessing will not be used.
+        njobs : int
+            The number of cores to be used for processing. Defaults to one core..
+            If njobs=1, multiprocessing will not be used.
         sep : str
             A string separator to be used in resolving column naming conflicts.
 
@@ -717,30 +763,33 @@ class FuseCore(ABC):
 
         """
 
-        if len(predictions) != len(index):
-            raise AssertionError(
-                'Length of the predictions vector ({}) does not match the length of the index ({}).'.format(
-                    len(predictions), len(index)
-                )
-            )
-
         if not isinstance(predictions, (type(None), pd.Series, type(list))):
             raise ValueError('Predictions must be a pandas Series, list, or None.')
 
-        if isinstance(predictions, pd.Series):
-            use_predictions = predictions
-        else:
-            use_predictions = pd.Series(predictions)
-            use_predictions.index = self.index.index
+        if predictions is not None:
+            if len(predictions) != len(index):
+                raise AssertionError(
+                    'Length of the predictions vector ({}) does not match the length of the index ({}).'.format(
+                        len(predictions), len(index)
+                    )
+                )
 
-        if use_predictions.dtype == np.dtype(bool):
-            pass
-        elif use_predictions.dtype == np.dtype(int):
-            rl_logging.warning('Expected predictions to be a boolean vector, but got vector of integers. '
-                               'Coercing integer values to boolean values.')
-            use_predictions = use_predictions.apply(bool)
+            if isinstance(predictions, pd.Series):
+                use_predictions = predictions
+            else:
+                use_predictions = pd.Series(predictions)
+                use_predictions.index = self.index.index
+
+            if use_predictions.dtype == np.dtype(bool):
+                pass
+            elif use_predictions.dtype == np.dtype(int):
+                rl_logging.warning('Expected predictions to be a boolean vector, but got vector of integers. '
+                                   'Coercing integer values to boolean values.')
+                use_predictions = use_predictions.apply(bool)
+            else:
+                raise ValueError('predictions must be a pandas.Series (or list) of boolean values.')
         else:
-            raise ValueError('predictions must be a pandas.Series (or list) of boolean values.')
+            use_predictions = None
 
         # Save references to input data.
         self._fusion_init(index, df_a, df_b, use_predictions, sep)
@@ -748,20 +797,18 @@ class FuseCore(ABC):
         # Resolve naming conflicts, if any.
         self._resolve_job_names(self._sep)
 
-        # TODO: Improve multiprocessing. Currently no benefit for a single large job (like NetLab's usual use case).
-
         # Perform conflict resolution from resolution queue metadata,
         # using the appropriate number of cores (and multiprocessing if applicable.)
-        if n_cores <= 1:
+        if njobs <= 1:
             fused = [self._handle_job(job_data) for job_data in self.resolution_queue]
         else:
-            if n_cores > mp.cpu_count():
-                warnings.warn('n_cores exceeds maximum available cores ({}). '
+            if njobs > mp.cpu_count():
+                warnings.warn('njobs exceeds maximum available cores ({}). '
                               'Defaulting to maximum available.'.format(mp.cpu_count()),
                               RuntimeWarning)
                 use_n_cores = mp.cpu_count()
             else:
-                use_n_cores = n_cores
+                use_n_cores = njobs
             # Compute resolved values for output.
             with mp.Pool(use_n_cores) as p:
                 fused = p.map(self._handle_job, self.resolution_queue)
@@ -815,7 +862,7 @@ class FuseLinks(FuseCore):
     def _get_df_a_col(self, name):
         """
         Returns a data from a column in df_a, corresponding to the first level of the candidate link MultiIndex.
-        
+
         Parameters
         ----------
         name : str
@@ -824,14 +871,14 @@ class FuseLinks(FuseCore):
         Returns
         -------
         pandas.Series
-        
+
         """
         return self.df_a[name].loc[list(self.index[self._index_level_0])]
 
     def _get_df_b_col(self, name):
         """
         Returns a data from a column in df_b, corresponding to the second level of the candidate link MultiIndex.
-        
+
         Parameters
         ----------
         name : str
@@ -840,7 +887,7 @@ class FuseLinks(FuseCore):
         Returns
         -------
         pandas.Series
-        
+
         """
         return self.df_b[name].loc[list(self.index[self._index_level_1])]
 
@@ -848,17 +895,17 @@ class FuseLinks(FuseCore):
                                 transform_meta=None, static_meta=False, **kwargs):
         """
         Formats data for conflict resolution. Output is a pandas.Series of nested tuples.
-        
+
         Parameters
         ----------
         values_a : str/list
             Column name(s) from df_a containing values to be resolved.
-        values_b : 
+        values_b :
             Column name(s) from df_b containing values to be resolved.
-        meta_a : 
+        meta_a :
             Column name(s) from df_a containing metadata values to be used in conflict resolution.Optionally,
             if static_meta is True, meta_a will become the metadata value for all values from df_a.
-        meta_b : 
+        meta_b :
             Column name(s) from df_b containing metadata values to be used in conflict resolution.Optionally,
             if static_meta is True, meta_b will become the metadata value for all values from df_b.
         transform_vals : function
@@ -873,7 +920,7 @@ class FuseLinks(FuseCore):
         Returns
         -------
         A pandas.Series
-        
+
         """
 
         if self.df_a is None:
@@ -1125,8 +1172,6 @@ class FuseLinks(FuseCore):
             else:
                 self.resolve(None, [], [col], name=col + sep + str(suffix_b), handler_override=self._do_keep)
 
-    # FuseLinks Conflict Resolution Realizations
-
     def trust_your_friends(self, values_a, values_b, trusted, tie_break_trusted='random',
                            tie_break_untrusted='random', label_a='a', label_b='b',
                            name=None, remove_na_vals=True):
@@ -1163,9 +1208,10 @@ class FuseLinks(FuseCore):
         None
             Queues a conflict resolution job, to be completed when ``fuse`` method is called.
 
-
         """
-        self.resolve(choose_trusted, values_a, values_b, meta_a=label_a, meta_b=label_b, name=name, static_meta=True,
-                     params=trusted, remove_na_vals=remove_na_vals, remove_na_meta=False,
-                     tie_break=[process_tie_break(tie_break_trusted), process_tie_break(tie_break_untrusted)],
-                     description='trust_your_friends')
+        self.resolve(
+            choose_trusted, values_a, values_b, meta_a=label_a, meta_b=label_b,
+            name=name, static_meta=True, params=trusted, remove_na_vals=remove_na_vals, remove_na_meta=False,
+            tie_break=[process_tie_break(tie_break_trusted), process_tie_break(tie_break_untrusted)],
+            description='trust_your_friends'
+        )
