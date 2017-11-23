@@ -5,7 +5,8 @@ import inspect
 import datetime
 import warnings
 import multiprocessing as mp
-from abc import ABC, abstractmethod
+from abc import ABCMeta, abstractmethod
+from six import add_metaclass
 
 import numpy as np
 import pandas as pd
@@ -42,8 +43,8 @@ def process_tie_break(tie_break):
     A "tie-breaking function" is a special case of conflict-resolution functions
     which must:
         * Have a signature like tie_break_fun(x, remove_na_vals)
-        * Use values only – no metadata values
-        * Not require tie-breaking
+        * Use values only - no metadata values
+        * Not require tiebreaking
 
     Parameters
     ----------
@@ -107,7 +108,8 @@ class SkipNull(object):
             return self.f(x)
 
 
-class FuseCore(ABC):
+@add_metaclass(ABCMeta)
+class FuseCore():
     def __init__(self):
         """
         ``FuseCore`` and its subclasses are initialized without data. The initialized
@@ -603,7 +605,10 @@ class FuseCore(ABC):
 
         """
         # Comparison / candidate link index. Remove names in case of name collision.
-        self.index = index.set_names(list(range(len(index.names)))).to_frame()
+        if len(set(index.names)) != len(index.names):
+            self.index = index.set_names(list(range(len(index.names)))).to_frame()
+        else:
+            self.index = index.to_frame()
 
         # Prediction vector
         self.predictions = predictions
