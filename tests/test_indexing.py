@@ -1,6 +1,10 @@
 from __future__ import print_function
 
+import os
 import unittest
+import tempfile
+import shutil
+import pickle
 
 import numpy as np
 import pandas as pd
@@ -23,27 +27,36 @@ class TestData(unittest.TestCase):
     """Unittest object to setup test data."""
 
     @classmethod
-    def setUpClass(self):
+    def setUpClass(cls):
 
         n_a = 100
         n_b = 150
 
-        self.index_a = ['rec_a_%s' % i for i in range(0, n_a)]
-        self.index_b = ['rec_b_%s' % i for i in range(0, n_b)]
+        cls.index_a = ['rec_a_%s' % i for i in range(0, n_a)]
+        cls.index_b = ['rec_b_%s' % i for i in range(0, n_b)]
 
-        self.a = pd.DataFrame({
+        cls.a = pd.DataFrame({
             'var_single': np.repeat([1], n_a),
             'var_arange': np.arange(n_a),
             'var_arange_str': np.arange(n_a),
             'var_block10': np.repeat(np.arange(n_a / 10), 10)
-        }, index=self.index_a)
+        }, index=cls.index_a)
 
-        self.b = pd.DataFrame({
+        cls.b = pd.DataFrame({
             'var_single': np.repeat([1], n_b),
             'var_arange': np.arange(n_b),
             'var_arange_str': np.arange(n_b),
             'var_block10': np.repeat(np.arange(n_b / 10), 10)
-        }, index=self.index_b)
+        }, index=cls.index_b)
+
+        # Create a temporary directory
+        cls.test_dir = tempfile.mkdtemp()
+
+    @classmethod
+    def tearDownClass(cls):
+
+        # Remove the test directory
+        shutil.rmtree(cls.test_dir)
 
 
 # tests/test_indexing.py:TestIndexApi
@@ -162,6 +175,21 @@ class TestIndexApi(TestData):
             # check for inplace editing (not the intention)
             self.assertEqual(df_a.index.name, name_a)
             self.assertEqual(df_b.index.name, name_b)
+
+    @parameterized.expand(TEST_INDEXATION_OBJECTS)
+    def test_pickle(self, index_class):
+        """Test if it is possible to pickle the class."""
+
+        pickle_path = os.path.join(self.test_dir, 'pickle_compare_obj.pickle')
+
+        # pickle before indexing
+        pickle.dump(index_class, open(pickle_path, 'wb'))
+
+        # compute the record pairs
+        index_class.index(self.a, self.b)
+
+        # pickle after indexing
+        pickle.dump(index_class, open(pickle_path, 'wb'))
 
 
 # tests/test_indexing.py:TestFullIndexing

@@ -21,8 +21,8 @@ setup(
     description="A record linkage toolkit for linking and deduplication",
     long_description=read('README.rst'),
 
-    # Documentation
-    url="http://recordlinkage.readthedocs.io/",
+    # Github
+    url="https://github.com/J535D165/recordlinkage",
 
     install_requires=[
         "six>=1.10.0",

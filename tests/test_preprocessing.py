@@ -5,8 +5,10 @@ import unittest
 
 import pandas.util.testing as pdt
 
-from recordlinkage.standardise import clean, phonenumbers, \
-    value_occurence, phonetic
+from recordlinkage.preprocessing import clean
+from recordlinkage.preprocessing import phonenumbers
+from recordlinkage.preprocessing import value_occurence
+from recordlinkage.preprocessing import phonetic
 
 import numpy as np
 import pandas as pd

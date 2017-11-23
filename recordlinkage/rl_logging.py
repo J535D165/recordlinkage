@@ -20,11 +20,11 @@
 # pylint: disable=unused-import
 
 import logging as _logging
-from logging import DEBUG
-from logging import ERROR
-from logging import FATAL
-from logging import INFO
-from logging import WARN
+from logging import DEBUG  # noqa
+from logging import ERROR  # noqa
+from logging import FATAL  # noqa
+from logging import INFO  # noqa
+from logging import WARN  # noqa
 import sys as _sys
 
 # Determine whether we are in an interactive environment

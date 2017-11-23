@@ -9,12 +9,8 @@ from recordlinkage.fusion import FuseLinks
 
 from recordlinkage import rl_logging as logging
 
-# # import standardise
-# from recordlinkage.standardise.cleaning import *
-# from recordlinkage.standardise.encoding import *
-
 from recordlinkage._version import get_versions
 __version__ = get_versions()['version']
 del get_versions
 
-__all__ = ['datasets']
+__all__ = ['datasets', 'preprocessing']

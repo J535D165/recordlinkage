@@ -8,12 +8,12 @@ import numpy
 
 from recordlinkage.base import BaseIndexator
 from recordlinkage.utils import IndexError
+from recordlinkage.utils import VisibleDeprecationWarning
 from recordlinkage.utils import merge_dicts
-from recordlinkage.utils import max_number_of_pairs
 from recordlinkage.algorithms.string import qgram_similarity
 from recordlinkage.utils import listify
 from recordlinkage.measures import reduction_ratio
-from recordlinkage.measures import max_pairs
+from recordlinkage.measures import full_index_size
 from recordlinkage.algorithms.indexing import \
     random_pairs_with_replacement
 from recordlinkage.algorithms.indexing import \
@@ -22,7 +22,6 @@ from recordlinkage.algorithms.indexing import \
     random_pairs_without_replacement_large_frames
 
 from recordlinkage import rl_logging as logging
-
 
 
 def check_index_names(func):
@@ -82,7 +81,7 @@ def _random_large_dedup(df_a, n, random_state=None):
 
     numpy.random.seed(random_state)
 
-    n_max = max_number_of_pairs(df_a)
+    n_max = full_index_size(df_a)
 
     if not isinstance(n, int) or n <= 0 or n > n_max:
         raise ValueError("n must be a integer satisfying 0<n<=%s" % n_max)
@@ -97,7 +96,7 @@ def _random_large_dedup(df_a, n, random_state=None):
 
 def _random_large_link(df_a, df_b, n):
 
-    n_max = max_number_of_pairs(df_a, df_b)
+    n_max = full_index_size(df_a, df_b)
 
     if not isinstance(n, int) or n <= 0 or n > n_max:
         raise ValueError("n must be a integer satisfying 0<n<=%s" % n_max)
@@ -112,7 +111,7 @@ def _random_large_link(df_a, df_b, n):
 
 def _random_small_link(df_a, df_b, n):
 
-    n_max = max_number_of_pairs(df_a, df_b)
+    n_max = full_index_size(df_a, df_b)
 
     if not isinstance(n, int) or n <= 0 or n > n_max:
         raise ValueError("n must be a integer satisfying 0<n<=%s" % n_max)
@@ -305,7 +304,7 @@ class PairsCore(object):
 
         warnings.warn(
             "indexing api changed, see the documentation for the new format",
-            DeprecationWarning
+            VisibleDeprecationWarning
         )
 
         self.df_a = df_a
@@ -329,9 +328,9 @@ class PairsCore(object):
         """ the maximum number of record pairs """
 
         if self.deduplication:
-            return max_number_of_pairs(self.df_a)
+            return full_index_size(self.df_a)
         else:
-            return max_number_of_pairs(self.df_a, self.df_b)
+            return full_index_size(self.df_a, self.df_b)
 
     # -- Index methods ------------------------------------------------------
 
@@ -632,7 +631,7 @@ class FullIndex(BaseIndexator):
 
     def _link_index(self, df_a, df_b):
 
-        n_max = max_pairs((df_a, df_b))
+        n_max = full_index_size((df_a, df_b))
 
         if n_max > 1e7:
             logging.warn(
@@ -647,7 +646,7 @@ class FullIndex(BaseIndexator):
 
     def _dedup_index(self, df_a):
 
-        n_max = max_pairs((df_a))
+        n_max = full_index_size((df_a))
 
         if n_max > 1e7:
             logging.warn(
@@ -678,8 +677,9 @@ class BlockIndex(BaseIndexator):
     Parameters
     ----------
     on : label, optional
-        A column name or a list of column names. These columns are used to
-        block on.
+        A column name or a list of column names. These column(s) are used to
+        block on. When linking two dataframes, the 'on' argument needs to be
+        present in both dataframes.
     left_on : label, optional
         A column name or a list of column names of dataframe A. These
         columns are used to block on. This argument is ignored when argument
@@ -710,22 +710,25 @@ class BlockIndex(BaseIndexator):
         self.right_on = right_on
 
     def _link_index(self, df_a, df_b):
-        # Index name conflicts do not occur. They are handled in the
-        # decorator.
 
-        left_on = listify(self.left_on)
-        right_on = listify(self.right_on)
-
-        if self.on:
-            left_on, right_on = listify(self.on), listify(self.on)
-
-        if not left_on or not right_on:
-            raise ValueError("no column labels given")
-
-        if len(left_on) != len(right_on):
-            raise ValueError(
-                "length of left and right keys needs to be the same"
-            )
+        if self.on is not None:
+            if self.left_on is not None or self.right_on is not None:
+                raise IndexError('Can only pass argument "on" OR "left_on" '
+                                 'and "right_on", not a combination of both.')
+            left_on = right_on = listify(self.on)
+        else:
+            if self.left_on is None and self.right_on is None:
+                raise IndexError('pass argument "on" OR "left_on" and '
+                                 '"right_on" at class initalization.')
+            elif self.left_on is None:
+                raise IndexError('Argument "left_on" is missing '
+                                 'at class initalization.')
+            elif self.right_on is None:
+                raise IndexError('Argument "right_on" is missing '
+                                 'at class initalization.')
+            else:
+                left_on = listify(self.left_on)
+                right_on = listify(self.right_on)
 
         blocking_keys = ["blocking_key_%d" % i for i, v in enumerate(left_on)]
 
@@ -761,20 +764,27 @@ class SortedNeighbourhoodIndex(BaseIndexator):
 
     Parameters
     ----------
-    on: label
-        Specify the on to make a sorted index
+    on : label, optional
+        The column name of the sorting key. When linking two dataframes, the
+        'on' argument needs to be present in both dataframes.
+    left_on : label, optional
+        The column name of the sorting key of the first/left dataframe. This
+        argument is ignored when argument 'on' is not None.
+    right_on : label, optional
+        The column name of the sorting key of the second/right dataframe. This
+        argument is ignored when argument 'on' is not None.
     window: int, optional
         The width of the window, default is 3
     sorting_key_values: array, optional
         A list of sorting key values (optional).
     block_on: label
-        Additional columns to use standard blocking on
+        Additional columns to apply standard blocking on.
     block_left_on: label
-        Additional columns of the left dataframe to use standard blocking
+        Additional columns in the left dataframe to apply standard blocking
         on.
     block_right_on: label
-        Additional columns of the right dataframe to use standard
-        blocking on
+        Additional columns in the right dataframe to apply standard blocking
+        on.
 
 
     Examples
@@ -783,7 +793,14 @@ class SortedNeighbourhoodIndex(BaseIndexator):
     datasets with census data. The datasets are named ``census_data_1980``
     and ``census_data_1990``.
 
-    >>> indexer = recordlinkage.SortedNeighbourhoodIndex(on='first_name', w=9)
+    >>> indexer = recordlinkage.SortedNeighbourhoodIndex('first_name', window=9)
+    >>> indexer.index(census_data_1980, census_data_1990)
+
+    When the sorting key has different names in both dataframes:
+
+    >>> indexer = recordlinkage.SortedNeighbourhoodIndex(
+            left_on='first_name', right_on='given_name', window=9
+        )
     >>> indexer.index(census_data_1980, census_data_1990)
 
     """
@@ -813,23 +830,24 @@ class SortedNeighbourhoodIndex(BaseIndexator):
 
     def _link_index(self, df_a, df_b):
 
-        # Index name conflicts do not occur. They are handled in the
-        # decorator.
-
-        left_on = listify(self.left_on)
-        right_on = listify(self.right_on)
-
-        if self.on:
-            left_on = listify(self.on)
-            right_on = listify(self.on)
-
-        if not left_on or not right_on:
-            raise ValueError("no column labels given")
-
-        if len(left_on) != len(right_on):
-            raise ValueError(
-                "length of left and right keys needs to be the same"
-            )
+        if self.on is not None:
+            if self.left_on is not None or self.right_on is not None:
+                raise IndexError('Can only pass argument "on" OR "left_on" '
+                                 'and "right_on", not a combination of both.')
+            left_on = right_on = listify(self.on)
+        else:
+            if self.left_on is None and self.right_on is None:
+                raise IndexError('pass argument "on" OR "left_on" and '
+                                 '"right_on" at class initalization.')
+            elif self.left_on is None:
+                raise IndexError('Argument "left_on" is missing '
+                                 'at class initalization.')
+            elif self.right_on is None:
+                raise IndexError('Argument "right_on" is missing '
+                                 'at class initalization.')
+            else:
+                left_on = listify(self.left_on)
+                right_on = listify(self.right_on)
 
         window = self.window
 
@@ -856,15 +874,15 @@ class SortedNeighbourhoodIndex(BaseIndexator):
         data_left = df_a[listify(left_on) + block_left_on].dropna(
             axis=0, how='any', inplace=False
         )
-        data_left.columns = ['sorting_key'] + ["blocking_key_%d" %
-                                               i for i, v in enumerate(block_left_on)]
+        data_left.columns = ['sorting_key'] + \
+            ["blocking_key_%d" % i for i, v in enumerate(block_left_on)]
         data_left['index_x'] = data_left.index
 
         data_right = df_b[listify(right_on) + block_right_on].dropna(
             axis=0, how='any', inplace=False
         )
-        data_right.columns = ['sorting_key'] + ["blocking_key_%d" %
-                                                i for i, v in enumerate(block_right_on)]
+        data_right.columns = ['sorting_key'] + \
+            ["blocking_key_%d" % i for i, v in enumerate(block_right_on)]
         data_right['index_y'] = data_right.index
 
         # sorting_key_values is the terminology in Data Matching [Christen,
@@ -940,7 +958,7 @@ class RandomIndex(BaseIndexator):
     def _link_index(self, df_a, df_b):
 
         shape = (len(df_a), len(df_b))
-        n_max = max_pairs(shape)
+        n_max = full_index_size(shape)
 
         if not isinstance(self.n, int):
             raise ValueError('n must be an integer')
@@ -994,7 +1012,7 @@ class RandomIndex(BaseIndexator):
         # without replacement
         else:
 
-            n_max = max_pairs(shape)
+            n_max = full_index_size(shape)
 
             if not isinstance(self.n, int) or self.n <= 0 or self.n > n_max:
                 raise ValueError(
