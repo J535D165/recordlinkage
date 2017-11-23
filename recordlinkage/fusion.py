@@ -11,7 +11,7 @@ from six import add_metaclass
 import numpy as np
 import pandas as pd
 
-from recordlinkage import rl_logging
+from recordlinkage import logging as rl_logging
 from recordlinkage.utils import listify, multi_index_to_frame
 from recordlinkage.algorithms.conflict_resolution import (annotated_concat,
                                                           choose_trusted,
