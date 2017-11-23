@@ -47,3 +47,11 @@ def max_number_of_pairs(*args):
         return len(args[0]) * (len(args[0]) - 1) / 2
     else:
         return numpy.prod([len(arg) for arg in args])
+
+
+def multi_index_to_frame(index):
+    """
+    Replicates MultiIndex.to_frame, which was introduced in pandas 0.21,
+    for the sake of backwards compatibility.
+    """
+    pass
