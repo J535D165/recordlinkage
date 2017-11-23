@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 
 import recordlinkage.rl_logging as rl_logging
-from recordlinkage.utils import listify
+from recordlinkage.utils import listify, multi_index_to_frame
 from recordlinkage.algorithms.conflict_resolution import (annotated_concat,
                                                           choose_trusted,
                                                           choose_first,
@@ -606,9 +606,9 @@ class FuseCore():
         """
         # Comparison / candidate link index. Remove names in case of name collision.
         if len(set(index.names)) != len(index.names):
-            self.index = index.set_names(list(range(len(index.names)))).to_frame()
+            self.index = multi_index_to_frame(index.set_names(list(range(len(index.names)))))
         else:
-            self.index = index.to_frame()
+            self.index = multi_index_to_frame(index)
 
         # Prediction vector
         self.predictions = predictions

@@ -1,3 +1,4 @@
+import pandas
 import numpy
 
 
@@ -54,4 +55,4 @@ def multi_index_to_frame(index):
     Replicates MultiIndex.to_frame, which was introduced in pandas 0.21,
     for the sake of backwards compatibility.
     """
-    pass
+    return pandas.DataFrame(index.tolist(), index=index, columns=index.names)
