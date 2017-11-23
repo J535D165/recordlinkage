@@ -1,9 +1,9 @@
-import time
+from __future__ import division
+from __future__ import unicode_literals
+
 import datetime
 import unittest
 import numpy as np
-import pandas as pd
-import recordlinkage
 import recordlinkage.algorithms.conflict_resolution as cr
 
 

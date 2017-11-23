@@ -1,11 +1,12 @@
+from __future__ import division
+from __future__ import unicode_literals
+
 import unittest
 import datetime
 import warnings
 import functools
 import itertools as it
 import multiprocessing as mp
-from pprint import pformat
-from typing import Callable
 from random import randrange
 from datetime import timedelta
 from parameterized import parameterized, param
@@ -20,7 +21,7 @@ import recordlinkage.algorithms.conflict_resolution as cr
 
 
 def validate_job(job: dict):
-    def if_not_none(key: str, f: Callable[..., bool], *args, **kwargs):
+    def if_not_none(key, f, *args, **kwargs):
         return f(job[key], *args, **kwargs) if job[key] is not None else True
 
     def warn_on_fail(cond: bool, msg: str):
@@ -63,7 +64,7 @@ def validate_job(job: dict):
         warn_on_fail(if_not_none('description', isinstance, str), 'bad description type')
     ]
     result = functools.reduce(lambda a, b: a and b, checks)
-    warn_on_fail(result, 'job failed:\n' + pformat(job))
+    warn_on_fail(result, 'job failed:\n' + str(job))
     return result
 
 

@@ -1,7 +1,6 @@
 from __future__ import division
 from __future__ import unicode_literals
 
-import types
 import inspect
 import datetime
 import warnings
@@ -62,7 +61,7 @@ def process_tie_break(tie_break):
     tie_break_fun = None
     if tie_break is None:
         raise ValueError('given None as tie_break strategy')
-    elif isinstance(tie_break, types.FunctionType):
+    elif callable(tie_break):
         tie_break_fun = tie_break
     elif isinstance(tie_break, str):
         if tie_break == 'random':
