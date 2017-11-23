@@ -1,4 +1,5 @@
 import warnings
+import time
 
 import pandas
 import numpy
@@ -8,8 +9,7 @@ from sklearn.utils.validation import NotFittedError
 
 from recordlinkage.algorithms.em import ECMEstimate
 
-# ignore warnings
-warnings.simplefilter(action="ignore", category=FutureWarning)
+from recordlinkage import rl_logging as logging
 
 
 class LearningError(Exception):
@@ -25,6 +25,10 @@ class Classifier(object):
     """
 
     def __init__(self):
+
+        logging.info("Classification - initialize {} class".format(
+            self.__class__.__name__)
+        )
 
         # The actual classifier. Maybe this is slightly strange because of
         # inheritance.
@@ -54,6 +58,13 @@ class Classifier(object):
 
         """
 
+        logging.info("Classifying - start learning {}".format(
+            self.__class__.__name__)
+        )
+
+        # start timing
+        start_time = time.time()
+
         if isinstance(match_index, (pandas.MultiIndex, pandas.Index)):
 
             # The match_index variable is of type MultiIndex
@@ -78,7 +89,13 @@ class Classifier(object):
             numpy.array(train_series)
         )
 
-        return self.predict(comparison_vectors, return_type)
+        result = self._predict(comparison_vectors, return_type)
+
+        # log timing
+        logf_time = "Classifying - learning computation time: ~{:.2f}s"
+        logging.info(logf_time.format(time.time() - start_time))
+
+        return result
 
     def predict(self, comparison_vectors, return_type='index'):
         """Predict the class of the record pairs.
@@ -106,6 +123,13 @@ class Classifier(object):
             non-matches).
 
         """
+
+        logging.info("Classifying - predict matches and non-matches")
+
+        return self._predict(comparison_vectors, return_type)
+
+    def _predict(self, comparison_vectors, return_type):
+
         try:
             prediction = self.classifier.predict(
                 comparison_vectors.as_matrix())
@@ -137,6 +161,8 @@ class Classifier(object):
             The probability of being a match for each record pair.
 
         """
+
+        logging.info("Classifying - compute probabilities")
 
         probs = self.classifier.predict_proba(comparison_vectors.as_matrix())
 
@@ -444,7 +470,7 @@ class NaiveBayesClassifier(Classifier):
     Parameters
     ----------
     log_prior : list, numpy.array
-        The log propabaility of each class. 
+        The log propabaility of each class.
 
     Attributes
     ----------
@@ -540,7 +566,8 @@ class FellegiSunter(Classifier):
         except Exception:
             pass
 
-    def _decision_rule(self, probabilities, threshold, random_decision_rule=False):
+    def _decision_rule(self, probabilities, threshold,
+                       random_decision_rule=False):
 
         if not self.random_decision_rule:
             return (probabilities >= threshold).astype(int)
@@ -592,6 +619,13 @@ class ECMClassifier(FellegiSunter):
 
         """
 
+        logging.info("Classifying - start learning {}".format(
+            self.__class__.__name__)
+        )
+
+        # start timing
+        start_time = time.time()
+
         probs = self.algorithm.train(comparison_vectors.as_matrix())
 
         n_matches = int(self.algorithm.p * len(probs))
@@ -599,9 +633,18 @@ class ECMClassifier(FellegiSunter):
 
         prediction = self._decision_rule(probs, self.p_threshold)
 
-        return self._return_result(prediction, return_type, comparison_vectors)
+        result = self._return_result(
+            prediction, return_type, comparison_vectors
+        )
 
-    def predict(self, comparison_vectors, return_type='index', *args, **kwargs):
+        # log timing
+        logf_time = "Classifying - learning computation time: ~{:.2f}s"
+        logging.info(logf_time.format(time.time() - start_time))
+
+        return result
+
+    def predict(self, comparison_vectors, return_type='index',
+                *args, **kwargs):
         """Predict the class of reord pairs.
 
         Classify a set of record pairs based on their comparison vectors into
@@ -633,6 +676,8 @@ class ECMClassifier(FellegiSunter):
 
         """
 
+        logging.info("Classifying - predict matches and non-matches")
+
         enc_vectors = self.algorithm._transform_vectors(
             comparison_vectors.as_matrix())
 
@@ -660,6 +705,8 @@ class ECMClassifier(FellegiSunter):
             The probability of being a match for each record pair.
 
         """
+
+        logging.info("Classifying - compute probabilities")
 
         enc_vectors = self.algorithm._transform_vectors(
             comparison_vectors.as_matrix())

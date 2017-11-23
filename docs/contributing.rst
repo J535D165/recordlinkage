@@ -3,7 +3,10 @@ Contributing
 ************
 
 Thanks for your interest in contributing to the Python Record Linkage Toolkit.
-There is a lot of work to do. The workflow for contributing:
+There is a lot of work to do. See `Github <https://github.com/J535D165/recordlinkage/graphs/contributors>`_ 
+for the contributors to this package. 
+
+The workflow for contributing is as follows:
 
 - clone https://github.com/J535D165/recordlinkage.git
 - Make a branch with your modifications/contributions
@@ -18,7 +21,7 @@ Install Nose:
 
 .. code:: sh
 
-	pip install nose nose-parameterized
+	pip install nose parameterized
 
 Run the following command to test the package
 

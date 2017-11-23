@@ -8,11 +8,12 @@ python:
 env:
   - PANDAS_VERSION="pandas>=0.18,<0.19"
   - PANDAS_VERSION="pandas>=0.19,<0.20"
+  - PANDAS_VERSION="pandas>=0.20,<0.21"
   - PANDAS_VERSION="pandas"
 
 before_script:
   - pip install nose
-  - pip install nose-parameterized
+  - pip install parameterized
   - pip install codecov
 
 # install matrix versions, deps and optional deps
@@ -26,7 +27,7 @@ install:
   - pip install -q $PANDAS_VERSION
 
 # run tests with coverage
-script: nosetests --with-coverage --cover-package=recordlinkage
+script: nosetests --verbose --nologcapture --with-coverage --cover-package=recordlinkage
 
 # codecov
 after_success:

@@ -7,7 +7,34 @@ class IndexError(Exception):
     """ Error class for errors related to indexing. """
     pass
 
+
+class VisibleDeprecationWarning(UserWarning):
+    """Visible deprecation warning.
+    Based on numpy's VisibleDeprecationWarning.
+    """
+    pass
+
 # Checks and conversions
+
+
+def is_label_dataframe(label, df):
+    """check column label existance"""
+
+    setdiff = set(label) - set(df.columns.tolist())
+
+    if len(setdiff) == 0:
+        return True
+    else:
+        return False
+
+
+def get_length(x):
+    """Return int or len(x)"""
+
+    try:
+        return int(x)
+    except Exception:
+        return len(x)
 
 
 def listify(x):

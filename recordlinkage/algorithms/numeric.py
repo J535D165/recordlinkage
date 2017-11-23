@@ -12,7 +12,7 @@ def _step_sim(d, offset=0, origin=0):
 
     expr = 'abs(d - origin) <= offset'
 
-    return pandas.eval(expr).astype(np.int64)
+    return pandas.eval(expr).astype(np.float64)
 
 
 def _linear_sim(d, scale, offset=0, origin=0):

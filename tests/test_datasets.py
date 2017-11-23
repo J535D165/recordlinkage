@@ -9,16 +9,57 @@ from recordlinkage.datasets import (load_febrl1,
                                     load_krebsregister,
                                     binary_vectors)
 
+
 # nosetests tests/test_datasets.py:TestExternalDatasets
 class TestExternalDatasets(unittest.TestCase):
 
-    def test_datasets_existance(self):
+    def test_febrl1(self):
 
-        # Load all datasets
-        load_febrl1()
-        load_febrl2()
-        load_febrl3()
-        load_febrl4()
+        df = load_febrl1()
+        self.assertIsInstance(df, pandas.DataFrame)
+        self.assertEqual(len(df), 1000)
+
+        df, links = load_febrl1(return_links=True)
+        self.assertIsInstance(df, pandas.DataFrame)
+        self.assertEqual(len(df), 1000)
+        self.assertIsInstance(links, pandas.MultiIndex)
+
+    def test_febrl2(self):
+
+        df = load_febrl2()
+        self.assertIsInstance(df, pandas.DataFrame)
+        self.assertEqual(len(df), 5000)
+
+        df, links = load_febrl2(return_links=True)
+        self.assertIsInstance(df, pandas.DataFrame)
+        self.assertEqual(len(df), 5000)
+        self.assertIsInstance(links, pandas.MultiIndex)
+
+    def test_febrl3(self):
+
+        df = load_febrl3()
+        self.assertIsInstance(df, pandas.DataFrame)
+        self.assertEqual(len(df), 5000)
+
+        df, links = load_febrl3(return_links=True)
+        self.assertIsInstance(df, pandas.DataFrame)
+        self.assertEqual(len(df), 5000)
+        self.assertIsInstance(links, pandas.MultiIndex)
+
+    def test_febrl4(self):
+
+        dfa, dfb = load_febrl4()
+        self.assertIsInstance(dfa, pandas.DataFrame)
+        self.assertIsInstance(dfb, pandas.DataFrame)
+        self.assertEqual(len(dfa), 5000)
+        self.assertEqual(len(dfb), 5000)
+
+        dfa, dfb, links = load_febrl4(return_links=True)
+        self.assertIsInstance(dfa, pandas.DataFrame)
+        self.assertIsInstance(dfb, pandas.DataFrame)
+        self.assertEqual(len(dfa), 5000)
+        self.assertEqual(len(dfb), 5000)
+        self.assertIsInstance(links, pandas.MultiIndex)
 
     def test_krebs_dataset(self):
 
