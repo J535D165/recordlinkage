@@ -497,7 +497,8 @@ def vote(x, tie_break, remove_na_vals):
 
     if len(common) > 1:
         # Tie
-        return tie_break((tuple([x[0] for x in common]),), False)
+        tie_values = set([t[0] for t in common])
+        return tie_break((tuple([v for v in vals if v in tie_values]),), False)
     else:
         # No tie
         return common[0][0]
