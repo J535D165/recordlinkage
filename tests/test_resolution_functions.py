@@ -282,14 +282,16 @@ class TestConflictResolutionFunctions(unittest.TestCase):
                          msg='Non-string correctness.')
 
     def test_choose_random(self):
-        self.assertTrue(isinstance(cr.choose_random(((1, 2, 3),), True), int),
-                        msg='Basic correctness')
+        self.assertIn(cr.choose_random(((1, 2, 3),), True),
+                      (1, 2, 3),
+                      msg='Basic correctness')
+
+        self.assertIn(cr.choose_random((('a', 'b', 'c'),), True),
+                      ('a', 'b', 'c'),
+                      msg='String correctness.')
 
         self.assertTrue(np.isnan(cr.choose_random(((),), True)),
                         msg='No data.')
-
-        self.assertTrue(isinstance(cr.choose_random((('a', 'b', 'c'),), True), str),
-                        msg='String correctness.')
 
         self.assertTrue(np.isnan(cr.choose_random(((np.nan, np.nan, np.nan),), True)),
                         msg='Handles np.nan.')

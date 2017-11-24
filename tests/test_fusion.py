@@ -20,7 +20,7 @@ from recordlinkage.fusion import FuseDuplicates
 import recordlinkage.algorithms.conflict_resolution as cr
 
 
-def validate_job(job: dict):
+def validate_job(job):
     def if_not_none(key, f, *args, **kwargs):
         return f(job[key], *args, **kwargs) if job[key] is not None else True
 
