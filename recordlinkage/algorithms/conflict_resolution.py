@@ -20,7 +20,7 @@ from recordlinkage import logging as rl_log
 # A "tie-breaking function" is a special case of conflict-resolution functions
 #   which must:
 #   * Have a signature like tie_break_fun(x, remove_na_vals)
-#   * Use values only – no metadata values
+#   * Use values only - no metadata values
 #   * Not require tie-breaking
 
 def assert_tuple_correctness(x, meta=False):
