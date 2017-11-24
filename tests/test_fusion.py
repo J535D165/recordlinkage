@@ -24,7 +24,7 @@ def validate_job(job):
     def if_not_none(key, f, *args, **kwargs):
         return f(job[key], *args, **kwargs) if job[key] is not None else True
 
-    def warn_on_fail(cond: bool, msg: str):
+    def warn_on_fail(cond, msg):
         if cond is False:
             warnings.warn(msg)
         return cond
