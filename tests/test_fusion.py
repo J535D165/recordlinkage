@@ -26,7 +26,7 @@ def validate_job(job):
 
     def warn_on_fail(cond, msg):
         if cond is False:
-            warnings.warn(msg)
+            raise Warning(msg)
         return cond
 
     handler = job['handler'].__name__
