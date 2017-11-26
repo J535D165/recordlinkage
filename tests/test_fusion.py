@@ -26,7 +26,7 @@ def validate_job(job):
 
     def warn_on_fail(cond, msg):
         if cond is False:
-            warnings.warn(msg)
+            raise Warning(msg)
         return cond
 
     handler = job['handler'].__name__
@@ -36,7 +36,7 @@ def validate_job(job):
         warn_on_fail(isinstance(job, dict), 'job not dict'),
         # CR Function
         warn_on_fail('fun' in job.keys(), 'no resolution function'),
-        warn_on_fail(callable(job['fun']) if handler is not '_do_keep' else True, ' resolution function not callable'),
+        warn_on_fail(callable(job['fun']) if handler is not '_do_keep' else True, ' resolution function ({}) not callable'.format(job['fun'])),
         # Handling function
         warn_on_fail('handler' in job.keys(), 'no handling method'),
         warn_on_fail(callable(job['handler']), 'handling method not callable'),
@@ -204,7 +204,7 @@ class TestFuseLinks(unittest.TestCase):
         """Validate job metadata and check conflict resolution result is a pandas series."""
         self.fuse.keep_original(args[0], args[1])
         getattr(self.fuse, method_to_call)(*args, **kwargs)
-        # Validate the job metadata
+	# Validate the job metadata
         self.assertTrue(validate_job(self.fuse.resolution_queue[0]), 'resolution queue job failed validation')
         # Check job runs and produces dataframe.
         result = self.fuse.fuse(self.comp.vectors.index, self.A, self.B, njobs=mp_option)
