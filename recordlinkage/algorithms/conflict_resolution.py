@@ -8,6 +8,7 @@ import numpy as np
 
 from recordlinkage import logging as rl_log
 
+
 # Note that conflict resolution functions must have parameters in the following order:
 #   * First, function-specific or "special" parameters such as "kind" or "metrics"
 #   * Second, zero, one, or more tie_break parameters
@@ -118,7 +119,7 @@ def remove_missing(x, remove_na_vals, remove_na_meta):
     else:
         getter = tupgetter(*keep_indices)
         if len(x) == 1:
-            return (getter(x[0]), )
+            return (getter(x[0]),)
         else:
             return getter(x[0]), getter(x[1])
 

@@ -6,7 +6,7 @@ import datetime
 import warnings
 import multiprocessing as mp
 from abc import ABCMeta, abstractmethod
-from six import add_metaclass
+from six import add_metaclass, string_types, text_type
 
 import numpy as np
 import pandas as pd
@@ -64,7 +64,7 @@ def process_tie_break(tie_break):
         raise ValueError('given None as tie_break strategy')
     elif callable(tie_break):
         tie_break_fun = tie_break
-    elif isinstance(tie_break, str):
+    elif type(tie_break) in [text_type] + list(string_types):
         if tie_break == 'random':
             tie_break_fun = choose_random
         elif tie_break == 'trust_a' or tie_break == 'first':
@@ -86,7 +86,7 @@ def process_tie_break(tie_break):
                              'random, trust_a, trust_b, first, last, min, max, '
                              'shortest, longest, or nullify.'.format(tie_break))
     else:
-        raise ValueError('tie_break must be a string or a function.')
+        raise ValueError('tie_break must be a string or a function. Got {} ({}).'.format(tie_break, type(tie_break)))
     return tie_break_fun
 
 
@@ -486,7 +486,7 @@ class FuseCore():
             all_params = tuple(listify_with_empty(params) + listify_with_empty(tie_break) + na_params)
 
         if fun is not None:
-            argspec = inspect.getfullargspec(fun)[0]
+            argspec = inspect.getargspec(fun)[0]
 
             # Check that the given arguments are appropriate for the specified conflict resolution function.
 
@@ -829,7 +829,7 @@ class FuseDuplicates(FuseCore):
 
         :param method: A cluster-detection algorithm. None are currently implemented.
         """
-        super().__init__()
+        super(FuseDuplicates, self).__init__()
         self.method = method
         warnings.warn('FuseDuplicates has not been implemented.')
 
@@ -861,7 +861,7 @@ class FuseLinks(FuseCore):
         object is populated by metadata describing a series of data resolutions,
         which are executed when ``.fuse()`` is called.
         """
-        super().__init__()
+        super(FuseLinks, self).__init__()
 
     def _get_df_a_col(self, name):
         """
