@@ -25,7 +25,7 @@ def validate_job(job):
         return f(job[key], *args, **kwargs) if job[key] is not None else True
 
     def warn_on_fail(cond, msg):
-        if cond is False:
+        if not cond:
             raise Warning(msg)
         return cond
 
@@ -36,16 +36,16 @@ def validate_job(job):
         warn_on_fail(isinstance(job, dict), 'job not dict'),
         # CR Function
         warn_on_fail('fun' in job.keys(), 'no resolution function'),
-        warn_on_fail(callable(job['fun']) if handler is not '_do_keep' else True, ' resolution function ({}) not callable'.format(job['fun'])),
+        warn_on_fail(callable(job['fun']) if handler != '_do_keep' else True, ' resolution function ({}) not callable'.format(job['fun'])),
         # Handling function
         warn_on_fail('handler' in job.keys(), 'no handling method'),
         warn_on_fail(callable(job['handler']), 'handling method not callable'),
         # Data columns
-        warn_on_fail(job['values_a'] is not None if handler is not '_do_keep' else True,
+        warn_on_fail(job['values_a'] is not None if handler != '_do_keep' else True,
                      'values_a is None when not keeping original columns'),
-        warn_on_fail(job['values_b'] is not None if handler is not '_do_keep' else True,
+        warn_on_fail(job['values_b'] is not None if handler != '_do_keep' else True,
                      'values_b is None when not keeping original columns'),
-        warn_on_fail(job['values_a'] is not None or job['values_b'] is not None if handler is not '_do_keep' else True,
+        warn_on_fail(job['values_a'] is not None or job['values_b'] is not None if handler != '_do_keep' else True,
                      'both values_a and values_b are None'),
         warn_on_fail(if_not_none('values_a', isinstance, (str, list)), 'bad values_a type'),
         warn_on_fail(if_not_none('values_b', isinstance, (str, list)), 'bad vlaues_b type'),
