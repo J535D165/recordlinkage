@@ -7,6 +7,7 @@ import warnings
 import functools
 import itertools as it
 import multiprocessing as mp
+from six import string_types
 from random import randrange
 from datetime import timedelta
 from parameterized import parameterized, param
@@ -36,7 +37,8 @@ def validate_job(job):
         warn_on_fail(isinstance(job, dict), 'job not dict'),
         # CR Function
         warn_on_fail('fun' in job.keys(), 'no resolution function'),
-        warn_on_fail(callable(job['fun']) if handler != '_do_keep' else True, ' resolution function ({}) not callable'.format(job['fun'])),
+        warn_on_fail(callable(job['fun']) if handler != '_do_keep' else True,
+                     ' resolution function ({}) not callable'.format(job['fun'])),
         # Handling function
         warn_on_fail('handler' in job.keys(), 'no handling method'),
         warn_on_fail(callable(job['handler']), 'handling method not callable'),
@@ -47,11 +49,11 @@ def validate_job(job):
                      'values_b is None when not keeping original columns'),
         warn_on_fail(job['values_a'] is not None or job['values_b'] is not None if handler != '_do_keep' else True,
                      'both values_a and values_b are None'),
-        warn_on_fail(if_not_none('values_a', isinstance, (str, list)), 'bad values_a type'),
-        warn_on_fail(if_not_none('values_b', isinstance, (str, list)), 'bad vlaues_b type'),
+        warn_on_fail(if_not_none('values_a', isinstance, (list, ) + string_types), 'bad values_a type'),
+        warn_on_fail(if_not_none('values_b', isinstance, (list, ) + string_types), 'bad vlaues_b type'),
         # Metadata columns
-        warn_on_fail(if_not_none('meta_a', isinstance, (str, list)), 'bad meta_a type'),
-        warn_on_fail(if_not_none('meta_b', isinstance, (str, list)), 'bad meta_b type'),
+        warn_on_fail(if_not_none('meta_a', isinstance, (list, ) + string_types), 'bad meta_a type'),
+        warn_on_fail(if_not_none('meta_b', isinstance, (list, ) + string_types), 'bad meta_b type'),
         # Transformation functions
         warn_on_fail(if_not_none('transform_vals', callable), 'transform_vals not callable'),
         warn_on_fail(if_not_none('transform_meta', callable), 'transform_meta not callable'),
@@ -59,9 +61,9 @@ def validate_job(job):
         warn_on_fail(if_not_none('params', isinstance, tuple), 'bad params type'),
         warn_on_fail(if_not_none('kwargs', isinstance, dict), 'bad kwargs type'),
         # Name
-        warn_on_fail(if_not_none('name', isinstance, str), 'bad name type'),
+        warn_on_fail(if_not_none('name', isinstance, string_types), 'bad name type'),
         # Description
-        warn_on_fail(if_not_none('description', isinstance, str), 'bad description type')
+        warn_on_fail(if_not_none('description', isinstance, string_types), 'bad description type')
     ]
     result = functools.reduce(lambda a, b: a and b, checks)
     warn_on_fail(result, 'job failed:\n' + str(job))
@@ -205,7 +207,7 @@ class TestFuseLinks(unittest.TestCase):
         self.fuse.keep_original(args[0], args[1])
         getattr(self.fuse, method_to_call)(*args, **kwargs)
 
-	self.assertTrue(validate_job(self.fuse.resolution_queue[-1]), 'resolution queue job failed validation')
+        self.assertTrue(validate_job(self.fuse.resolution_queue[-1]), 'resolution queue job failed validation')
         # Check job runs and produces dataframe.
         result = self.fuse.fuse(self.comp.vectors.index, self.A, self.B, njobs=mp_option)
         self.assertIsInstance(result, pandas.DataFrame, 'result not a dataframe')
