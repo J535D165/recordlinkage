@@ -814,8 +814,9 @@ class FuseCore():
             else:
                 use_n_cores = njobs
             # Compute resolved values for output.
-            with mp.Pool(use_n_cores) as p:
-                fused = p.map(self._handle_job, self.resolution_queue)
+            p = mp.Pool(use_n_cores)
+            fused = p.map(self._handle_job, self.resolution_queue)
+            p.close()
 
         return pd.concat(fused, axis=1).set_index(self.index.index)
 

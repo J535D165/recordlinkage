@@ -119,7 +119,7 @@ def remove_missing(x, remove_na_vals, remove_na_meta):
     else:
         getter = tupgetter(*keep_indices)
         if len(x) == 1:
-            return (getter(x[0]),)
+            return (getter(x[0]), )
         else:
             return getter(x[0]), getter(x[1])
 
