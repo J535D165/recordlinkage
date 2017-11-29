@@ -205,8 +205,7 @@ class TestFuseLinks(unittest.TestCase):
         self.fuse.keep_original(args[0], args[1])
         getattr(self.fuse, method_to_call)(*args, **kwargs)
 
-        # Validate the job metadata
-        self.assertTrue(validate_job(self.fuse.resolution_queue[1]), 'resolution queue job failed validation')
+	self.assertTrue(validate_job(self.fuse.resolution_queue[-1]), 'resolution queue job failed validation')
         # Check job runs and produces dataframe.
         result = self.fuse.fuse(self.comp.vectors.index, self.A, self.B, njobs=mp_option)
         self.assertIsInstance(result, pandas.DataFrame, 'result not a dataframe')
