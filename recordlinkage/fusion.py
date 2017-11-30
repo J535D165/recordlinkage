@@ -34,7 +34,166 @@ from recordlinkage.algorithms.conflict_resolution import (annotated_concat,
                                                           nullify)
 
 
-# TODO: Rename remove_na_values to skip_na
+class SkipNull(object):
+    """
+    This object is used like a function decorator for ignoring missing
+    values when applying a transformation function. An object is
+    used in place of a function because local functions cannot
+    be pickled, causing errors during multiprocessing.
+    """
+
+    def __init__(self, f):
+        self.f = f
+
+    def __call__(self, x):
+        if pd.isnull(x):
+            return x
+        else:
+            return self.f(x)
+
+
+@add_metaclass(ABCMeta)
+class FusionHandler:
+
+    def __init__(self, fuse):
+        self.fuse = fuse
+
+    @abstractmethod
+    def __call__(self, *args, **kwargs):
+        pass
+
+
+class ResolveHandler(FusionHandler):
+
+    def __call__(self, job):
+        """
+        Perform conflict resolution for a queued job, by pre-processing data (_make_resolution_series) and performing
+        the resolution (i.e. by applying a conflict resolution function).
+
+        Parameters
+        ----------
+        fuse : FuseCore
+            The originating FuseCore object.
+        job : dict
+            A dictionary of conflict resolution job metadata.
+
+        Returns
+        -------
+        pandas.Series
+            Series of resolved/canonical values.
+
+        """
+
+        data = self.fuse._make_resolution_series(
+            job['values_a'],
+            job['values_b'],
+            meta_a=job['meta_a'],
+            meta_b=job['meta_b'],
+            transform_vals=job['transform_vals'],
+            transform_meta=job['transform_meta'],
+            static_meta=job['static_meta']
+        )
+
+        data = data.apply(job['fun'], args=job['params'])
+
+        if job['name'] is not None:
+            data = data.rename(job['name'])
+
+        return data
+
+
+class KeepHandler(FusionHandler):
+
+    def __call__(self, job):
+        """
+        Handles a conflict resolution job created by FuseLinks.keep_original, where data is included
+        unaltered from one data source. Using this handling method bypasses the overhead
+        of _get_resolution_series and conflict handling functions, which are unnecessary
+        in this case.
+        Note that not all options supported for _do_resolve are supported for _do_keep
+        (e.g. transform_vals).
+
+        Parameters
+        ----------
+        fuse : FuseCore
+            The originating FuseCore object.
+        job : dict
+            A dictionary of conflict resolution job metadata.
+
+        Returns
+        -------
+        pandas.Series
+            pandas.Series containing resolved/canonical values.
+
+        """
+
+        vals_a = listify(job['values_a'])
+        vals_b = listify(job['values_b'])
+
+        source_a = len(vals_a) == 1
+        source_b = len(vals_b) == 1
+        # enforce xor condition: There is one value in values_a or values_b but not both
+        if source_a == source_b:
+            raise AssertionError(
+                '_do_keep only operates on a single column from a single source. '
+                'Was given job["values_a"] = {}, and job["values_b"] = {}'.format(
+                    vals_a,
+                    vals_b,
+                ))
+
+        if source_a:
+            data = self.fuse._get_df_a_col(vals_a[0])
+        else:
+            data = self.fuse._get_df_b_col(vals_b[0])
+
+        if job['name'] is not None:
+            data = data.rename(job['name'])
+
+        data = data.reset_index(drop=True)
+
+        return data
+
+
+def handle_job(job):
+        """
+        Passes on a conflict resolution job to the appropriate handling function,
+        as specified by job['handler']. Also logs activity for user.
+
+        Parameters
+        ----------
+        fuse : FuseCore
+            The originating FuseCore object.
+        job : dict
+            A dictionary of conflict resolution job metadata.
+
+        Returns
+        -------
+        pandas.Series
+            Series of resolved/canonical values.
+
+        """
+        t1 = datetime.datetime.now()
+
+        name = 'unnamed column' if job['name'] is None else str(job['name'])
+
+        rl_logging.info(
+            'started resolving to '
+            + name
+            + ' (' + str(job['description']) + ')'
+        )
+        data = job['handler'](job)
+
+        rl_logging.info(
+            '\033[92m'
+            + 'finished '
+            + name
+            + ' (time elapsed: '
+            + str(datetime.datetime.now() - t1) + ')'
+            + '\033[0m'
+        )
+
+        return data
+
 
 def process_tie_break(tie_break):
     """
@@ -57,7 +216,7 @@ def process_tie_break(tie_break):
     -------
     Function
         A tie break function
-    
+
     """
     tie_break_fun = None
     if tie_break is None:
@@ -90,26 +249,8 @@ def process_tie_break(tie_break):
     return tie_break_fun
 
 
-class SkipNull(object):
-    """
-    This object is used like a function decorator for ignoring missing
-    values when applying a transformation function. An object is
-    used in place of a function because local functions cannot
-    be pickled, causing errors during multiprocessing.
-    """
-
-    def __init__(self, f):
-        self.f = f
-
-    def __call__(self, x):
-        if pd.isnull(x):
-            return x
-        else:
-            return self.f(x)
-
-
 @add_metaclass(ABCMeta)
-class FuseCore():
+class FuseCore:
     def __init__(self):
         """
         ``FuseCore`` and its subclasses are initialized without data. The initialized
@@ -452,7 +593,7 @@ class FuseCore():
         description : str
             A description string for use in logging, e.g. 'cry_with_the_wolves'.
         handler_override : function
-            If specified, this function will be used to handle this job. If None,defaults to self._do_resolve.
+            If specified, this function will be used to handle this job. If None,defaults to do_resolve.
 
         Returns
         -------
@@ -516,7 +657,7 @@ class FuseCore():
         if handler_override is not None:
             handler = handler_override
         else:
-            handler = self._do_resolve
+            handler = ResolveHandler(self)
 
         # Store metadata
         job = {
@@ -667,78 +808,6 @@ class FuseCore():
                             job['name'] = name
                             break
 
-    def _handle_job(self, job):
-        """
-        Passes on a conflict resolution job to the appropriate handling function,
-        as specified by job['handler']. Also logs activity for user.
-
-        Parameters
-        ----------
-        job : dict
-            A dictionary of conflict resolution job metadata.
-
-        Returns
-        -------
-        pandas.Series
-            Series of resolved/canonical values.
-
-        """
-        t1 = datetime.datetime.now()
-
-        name = 'unnamed column' if job['name'] is None else str(job['name'])
-
-        rl_logging.info(
-            'started resolving to '
-            + name
-            + ' (' + str(job['description']) + ')'
-        )
-        data = job['handler'](job)
-
-        rl_logging.info(
-            '\033[92m'
-            + 'finished '
-            + name
-            + ' (time elapsed: '
-            + str(datetime.datetime.now() - t1) + ')'
-            + '\033[0m'
-        )
-
-        return data
-
-    def _do_resolve(self, job):
-        """
-        Perform conflict resolution for a queued job, by pre-processing data (_make_resolution_series) and performing
-        the resolution (i.e. by applying a conflict resolution function).
-
-        Parameters
-        ----------
-        job : dict
-            A dictionary of conflict resolution job metadata.
-
-        Returns
-        -------
-        pandas.Series
-            Series of resolved/canonical values.
-
-        """
-
-        data = self._make_resolution_series(
-            job['values_a'],
-            job['values_b'],
-            meta_a=job['meta_a'],
-            meta_b=job['meta_b'],
-            transform_vals=job['transform_vals'],
-            transform_meta=job['transform_meta'],
-            static_meta=job['static_meta']
-        )
-
-        data = data.apply(job['fun'], args=job['params'])
-
-        if job['name'] is not None:
-            data = data.rename(job['name'])
-
-        return data
-
     def fuse(self, index, df_a, df_b, predictions=None, njobs=1, sep='_'):
         """
         Perform conflict resolution and data fusion for given data, using accumulated conflict resolution metadata.
@@ -804,7 +873,7 @@ class FuseCore():
         # Perform conflict resolution from resolution queue metadata,
         # using the appropriate number of cores (and multiprocessing if applicable.)
         if njobs <= 1:
-            fused = [self._handle_job(job_data) for job_data in self.resolution_queue]
+            fused = [handle_job(job_data) for job_data in self.resolution_queue]
         else:
             if njobs > mp.cpu_count():
                 warnings.warn('njobs exceeds maximum available cores ({}). '
@@ -815,7 +884,7 @@ class FuseCore():
                 use_n_cores = njobs
             # Compute resolved values for output.
             p = mp.Pool(use_n_cores)
-            fused = p.map(self._handle_job, self.resolution_queue)
+            fused = p.map(handle_job, self.resolution_queue)
             p.close()
 
         return pd.concat(fused, axis=1).set_index(self.index.index)
@@ -1089,53 +1158,6 @@ class FuseLinks(FuseCore):
 
         return output
 
-    def _do_keep(self, job):
-        """
-        Handles a conflict resolution job created by FuseLinks.keep_original, where data is included
-        unaltered from one data source. Using this handling method bypasses the overhead
-        of _get_resolution_series and conflict handling functions, which are unnecessary
-        in this case.
-        Note that not all options supported for _do_resolve are supported for _do_keep
-        (e.g. transform_vals).
-
-        Parameters
-        ----------
-        job : dict
-            A dictionary of conflict resolution job metadata.
-
-        Returns
-        -------
-        pandas.Series
-            pandas.Series containing resolved/canonical values.
-
-        """
-
-        vals_a = listify(job['values_a'])
-        vals_b = listify(job['values_b'])
-
-        source_a = len(vals_a) == 1
-        source_b = len(vals_b) == 1
-        # enforce xor condition: There is one value in values_a or values_b but not both
-        if source_a == source_b:
-            raise AssertionError(
-                '_do_keep only operates on a single column from a single source. '
-                'Was given job["values_a"] = {}, and job["values_b"] = {}'.format(
-                    vals_a,
-                    vals_b,
-                ))
-
-        if source_a:
-            data = self._get_df_a_col(vals_a[0])
-        else:
-            data = self._get_df_b_col(vals_b[0])
-
-        if job['name'] is not None:
-            data = data.rename(job['name'])
-
-        data = data.reset_index(drop=True)
-
-        return data
-
     def keep_original(self, columns_a, columns_b, suffix_a=None, suffix_b=None, sep='_'):
         """
         Specifies columns from df_a and df_b which should be included in the fused output, but
@@ -1167,15 +1189,15 @@ class FuseLinks(FuseCore):
 
         for col in columns_a:
             if suffix_a is None:
-                self.resolve(None, [col], [], name=col, handler_override=self._do_keep)
+                self.resolve(None, [col], [], name=col, handler_override=KeepHandler(self))
             else:
-                self.resolve(None, [col], [], name=col + sep + str(suffix_a), handler_override=self._do_keep)
+                self.resolve(None, [col], [], name=col + sep + str(suffix_a), handler_override=KeepHandler(self))
 
         for col in columns_b:
             if suffix_b is None:
-                self.resolve(None, [], [col], name=col, handler_override=self._do_keep)
+                self.resolve(None, [], [col], name=col, handler_override=KeepHandler(self))
             else:
-                self.resolve(None, [], [col], name=col + sep + str(suffix_b), handler_override=self._do_keep)
+                self.resolve(None, [], [col], name=col + sep + str(suffix_b), handler_override=KeepHandler(self))
 
     def trust_your_friends(self, values_a, values_b, trusted, tie_break_trusted='random',
                            tie_break_untrusted='random', label_a='a', label_b='b',
