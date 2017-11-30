@@ -10,7 +10,7 @@ import recordlinkage.algorithms.conflict_resolution as cr
 class TestConflictResolutionFunctions(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.times = [datetime.datetime.now() for _ in range(10)]
+        cls.times = [datetime.datetime(i, i, i) for i in range(1, 11)]
 
     def test_remove(self):
         self.assertEqual(cr.remove_missing(((),), True, False),

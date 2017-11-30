@@ -8,6 +8,7 @@ import numpy as np
 
 from recordlinkage import logging as rl_log
 
+
 # Note that conflict resolution functions must have parameters in the following order:
 #   * First, function-specific or "special" parameters such as "kind" or "metrics"
 #   * Second, zero, one, or more tie_break parameters
