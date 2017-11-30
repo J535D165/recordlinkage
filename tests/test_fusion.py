@@ -325,22 +325,7 @@ class TestFuseLinks(unittest.TestCase):
 
     def test_exceeds_core_limit(self):
         self.fuse.roll_the_dice('age', 'age')
-        with self.assertWarns(RuntimeWarning):
-            self.fuse.fuse(self.comp.vectors.index, self.comp.df_a, self.comp.df_b, njobs=100)
-
-    def test_fusedups_not_implemented(self):
-        with self.assertWarns(UserWarning):
-            fuse_d = FuseDuplicates()
-        with self.assertWarns(UserWarning):
-            self.assertIsInstance(
-                fuse_d._find_clusters('a'),
-                type(NotImplemented)
-            )
-        with self.assertWarns(UserWarning):
-            self.assertIsInstance(
-                fuse_d._make_resolution_series('a', 'b'),
-                type(NotImplemented)
-            )
+        self.fuse.fuse(self.comp.vectors.index, self.comp.df_a, self.comp.df_b, njobs=100)
 
     def test_conflict_resolution_transform_vals(self):
         def static_test_fun(x):
