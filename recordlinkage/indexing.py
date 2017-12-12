@@ -709,6 +709,18 @@ class BlockIndex(BaseIndexator):
         self.left_on = left_on
         self.right_on = right_on
 
+    def __repr__(self):
+
+        class_name = self.__class__.__name__
+
+        if self.on is not None:
+            left_on = right_on = self.on
+        else:
+            left_on, right_on = self.left_on, self.right_on
+
+        return "<{} left_on={!r}, right_on={!r}>".format(
+            class_name, left_on, right_on)
+
     def _link_index(self, df_a, df_b):
 
         if self.on is not None:
@@ -819,6 +831,18 @@ class SortedNeighbourhoodIndex(BaseIndexator):
         self.block_on = block_on
         self.block_left_on = block_left_on
         self.block_right_on = block_right_on
+
+    def __repr__(self):
+
+        class_name = self.__class__.__name__
+
+        if self.on is not None:
+            left_on = right_on = self.on
+        else:
+            left_on, right_on = self.left_on, self.right_on
+
+        return "<{} left_on={!r}, right_on={!r}>".format(
+            class_name, left_on, right_on)
 
     def _get_sorting_key_values(self, array1, array2):
         """return the sorting key values as a series"""
@@ -954,6 +978,13 @@ class RandomIndex(BaseIndexator):
         self.n = n
         self.replace = replace
         self.random_state = random_state
+
+    def __repr__(self):
+
+        class_name = self.__class__.__name__
+
+        return "<{} n={!r}, replace={!r}>".format(
+            class_name, self.n, self.replace)
 
     def _link_index(self, df_a, df_b):
 
