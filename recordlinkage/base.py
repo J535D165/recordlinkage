@@ -79,6 +79,13 @@ class BaseIndexator(object):
             self.__class__.__name__)
         )
 
+    def __repr__(self):
+        class_name = self.__class__.__name__
+        return "<{}>".format(class_name)
+
+    def __str__(self):
+        return repr(self)
+
     @classmethod
     def _deduplication(cls, x):
 
