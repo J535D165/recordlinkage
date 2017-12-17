@@ -88,6 +88,20 @@ class TestData(unittest.TestCase):
 class TestCompareApi(TestData):
     """General unittest for the compare API."""
 
+    def test_repr(self):
+
+        comp = recordlinkage.Compare()
+        comp.string('given_name', 'given_name', method='jaro')
+        comp.numeric('age', 'age', method='step', offset=3, origin=2)
+        comp.numeric('age', 'age', method='step', offset=0, origin=2)
+
+        c_str = str(comp)
+        c_repr = repr(comp)
+        self.assertEqual(c_str, c_repr)
+
+        start_str = '<{}'.format(comp.__class__.__name__)
+        self.assertTrue(c_str.startswith(start_str))
+
     def test_instance_linking(self):
 
         comp = recordlinkage.Compare()
@@ -205,6 +219,39 @@ class TestCompareApi(TestData):
         result = comp.compute(ix, A, B)
         expected = DataFrame([1, 1, 1, 1, 1], index=ix, columns=['test'])
         pdt.assert_frame_equal(result, expected)
+
+    # def test_compare_custom_nonvectorized_linking(self):
+
+    #     A = DataFrame({'col': [1, 2, 3, 4, 5]})
+    #     B = DataFrame({'col': [1, 2, 3, 4, 5]})
+    #     ix = MultiIndex.from_arrays([A.index.values, B.index.values])
+
+    #     def custom_func(a, b):
+    #         return np.int64(1)
+
+    #     # test without label
+    #     comp = recordlinkage.Compare()
+    #     comp.compare_single(
+    #         custom_func,
+    #         'col',
+    #         'col'
+    #     )
+    #     result = comp.compute(ix, A, B)
+    #     expected = DataFrame([1, 1, 1, 1, 1], index=ix)
+    #     pdt.assert_frame_equal(result, expected)
+
+    #     # test with label
+    #     comp = recordlinkage.Compare()
+    #     comp.compare_single(
+    #         custom_func,
+    #         'col',
+    #         'col',
+    #         label='test'
+    #     )
+
+    #     result = comp.compute(ix, A, B)
+    #     expected = DataFrame([1, 1, 1, 1, 1], index=ix, columns=['test'])
+    #     pdt.assert_frame_equal(result, expected)
 
     def test_compare_custom_instance_type(self):
 
@@ -335,6 +382,49 @@ class TestCompareApi(TestData):
         expected = DataFrame([5, 5, 5, 5, 5], index=ix, columns=['test'])
         pdt.assert_frame_equal(result, expected)
 
+    def test_parallel_comparing_api(self):
+
+        # use single job
+        comp = recordlinkage.Compare(n_jobs=1)
+        comp.exact('given_name', 'given_name', label='my_feature_label')
+        result_single = comp.compute(self.index_AB, self.A, self.B)
+        result_single.sort_index(inplace=True)
+
+        # use two jobs
+        comp = recordlinkage.Compare(n_jobs=2)
+        comp.exact('given_name', 'given_name', label='my_feature_label')
+        result_2processes = comp._compute_parallel(
+            self.index_AB, self.A, self.B
+        )
+        result_2processes.sort_index(inplace=True)
+
+        # compare results
+        pdt.assert_frame_equal(result_single, result_2processes)
+
+    def test_parallel_comparing(self):
+
+        # use single job
+        comp = recordlinkage.Compare(n_jobs=1)
+        comp.exact('given_name', 'given_name', label='my_feature_label')
+        result_single = comp.compute(self.index_AB, self.A, self.B)
+        result_single.sort_index(inplace=True)
+
+        # use two jobs
+        comp = recordlinkage.Compare(n_jobs=2)
+        comp.exact('given_name', 'given_name', label='my_feature_label')
+        result_2processes = comp.compute(self.index_AB, self.A, self.B)
+        result_2processes.sort_index(inplace=True)
+
+        # use two jobs
+        comp = recordlinkage.Compare(n_jobs=4)
+        comp.exact('given_name', 'given_name', label='my_feature_label')
+        result_4processes = comp.compute(self.index_AB, self.A, self.B)
+        result_4processes.sort_index(inplace=True)
+
+        # compare results
+        pdt.assert_frame_equal(result_single, result_2processes)
+        pdt.assert_frame_equal(result_single, result_4processes)
+
     def test_pickle(self):
         # test if it is possible to pickle the Compare class
 
@@ -347,6 +437,26 @@ class TestCompareApi(TestData):
         # do the test
         pickle_path = os.path.join(self.test_dir, 'pickle_compare_obj.pickle')
         pickle.dump(comp, open(pickle_path, 'wb'))
+
+    def test_manual_parallel_joblib(self):
+        # test if it is possible to pickle the Compare class
+
+        # import joblib dependencies
+        from sklearn.externals.joblib import Parallel, delayed
+
+        # split the data into smaller parts
+        len_index = int(len(self.index_AB) / 2)
+        df_chunks = [self.index_AB[0:len_index], self.index_AB[len_index:]]
+
+        comp = recordlinkage.Compare()
+        comp.string('given_name', 'given_name')
+        comp.string('lastname', 'lastname')
+        comp.exact('street', 'street')
+
+        # do in parallel
+        Parallel(n_jobs=2)(
+            delayed(comp.compute)(df_chunks[i], self.A, self.B) for i in [0, 1]
+        )
 
     def test_indexing_types(self):
         # test the two types of indexing
@@ -593,8 +703,6 @@ class TestCompareNumeric(TestData):
 
     @parameterized.expand(NUMERIC_SIM_ALGORITHMS)
     def test_numeric_algorithms_errors(self, alg):
-
-        comp = recordlinkage.Compare(self.index_AB, self.A, self.B)
 
         # scale negative
         if alg != "step":

@@ -26,8 +26,6 @@ from recordlinkage.algorithms.string import cosine_similarity
 from recordlinkage.algorithms.string import smith_waterman_similarity
 from recordlinkage.algorithms.string import longest_common_substring_similarity
 
-from recordlinkage import rl_logging as logging
-
 
 def fillna_decorator(missing_value=np.nan):
 
@@ -105,7 +103,7 @@ def _dates_internal(s1, s2, *args, **kwargs):
 
 
 class Compare(BaseCompare):
-    """Compare(block_size=1000000)
+    """Compare(n_jobs=1, indexing_type='label')
 
     Class to compare record pairs with efficiently.
 
@@ -116,8 +114,15 @@ class Compare(BaseCompare):
 
     Parameters
     ----------
-    block_size : int
-        The maximum size of data blocks. Default 1,000,000.
+    n_jobs : integer, optional (default=1)
+        The number of jobs to run in parallel for comparing of record pairs.
+        If -1, then the number of jobs is set to the number of cores.
+    indexing_type : string, optional (default=”label”)
+        The indexing type. The MultiIndex is used to index the DataFrame(s).
+        This can be done with pandas ``.loc`` or with ``.iloc``. Use the value
+        'label' to make use of ``.loc`` and 'position' to make use of
+        ``.iloc``. The value 'position' is only available when the MultiIndex
+        consists of integers. The value 'position' is much faster.
 
     Example
     -------
@@ -141,6 +146,7 @@ class Compare(BaseCompare):
 
         # the method .compute() returns the DataFrame with the feature vectors.
         comp.compute(candidate_pairs, census_data_1980, census_data_1990)
+
     """
 
     def exact(self, s1, s2, *args, **kwargs):
@@ -171,14 +177,13 @@ class Compare(BaseCompare):
 
         """
 
-        # logging
-        logging.info(
-            "Comparing - initialize exact algorithm - compare {l_left} with "
-            "{l_right}".format(l_left=s1, l_right=s2)
-        )
+        label = kwargs.pop('label', None)
 
         return self._compare_vectorized(
-            _compare_exact, s1, s2, *args, **kwargs
+            _compare_exact, s1, s2, args, kwargs,
+            label=label,
+            name="exact",
+            description="Compare record pairs exactly."
         )
 
     def string(self, s1, s2, method='levenshtein', threshold=None,
@@ -244,15 +249,15 @@ class Compare(BaseCompare):
             raise ValueError(
                 "The algorithm '{}' is not known.".format(method))
 
-        # logging
-        logging.info(
-            "Comparing - initialize string '{method}' algorithm - compare "
-            "{l_left} with {l_right}".format(
-                l_left=s1, l_right=s2, method=method)
-        )
+        label = kwargs.pop('label', None)
+        args = (str_sim_alg, threshold) + args
 
         return self._compare_vectorized(
-            _string_internal, s1, s2, str_sim_alg, threshold, *args, **kwargs
+            _string_internal, s1, s2, args, kwargs,
+            label=label,
+            name="string '{}'".format(method),
+            description="Compare record pairs on string with '{}'"
+                        "algorithm".format(method)
         )
 
     def numeric(self, s1, s2, method='linear', *args, **kwargs):
@@ -322,15 +327,15 @@ class Compare(BaseCompare):
             raise ValueError(
                 "The algorithm '{}' is not known.".format(method))
 
-        # logging
-        logging.info(
-            "Comparing - initialize numeric '{method}' algorithm - compare "
-            "{l_left} with {l_right}".format(
-                l_left=s1, l_right=s2, method=method)
-        )
+        label = kwargs.pop('label', None)
+        args = (num_sim_alg,) + args
 
         return self._compare_vectorized(
-            _num_internal, s1, s2, num_sim_alg, *args, **kwargs
+            _num_internal, s1, s2, args, kwargs,
+            label=label,
+            name="numeric '{}'".format(method),
+            description="Compare record pairs on numeric with '{}'"
+                        "algorithm".format(method)
         )
 
     def geo(self, lat1, lng1, lat2, lng2, method='linear', *args, **kwargs):
@@ -390,20 +395,18 @@ class Compare(BaseCompare):
             raise ValueError(
                 "The algorithm '{}' is not known.".format(method))
 
-        # logging
-        logging.info(
-            "Comparing - initialize geographic '{method}' "
-            "algorithm - compare {l_left} with {l_right}".format(
-                l_left=(lat1, lng1), l_right=(lat2, lng2), method=method)
-        )
+        label = kwargs.pop('label', None)
+        args = (num_sim_alg,) + args
 
         return self._compare_vectorized(
-            _geo_internal, (lat1, lng1), (lat2, lng2),
-            num_sim_alg, *args, **kwargs
+            _geo_internal, (lat1, lng1), (lat2, lng2), args, kwargs,
+            label=label,
+            name="geographic '{}'".format(method),
+            description="Compare record pairs on geographic with '{}'"
+                        "algorithm".format(method)
         )
 
-    def date(self, s1, s2, swap_month_day=0.5, swap_months='default',
-             *args, **kwargs):
+    def date(self, s1, s2, *args, **kwargs):
         """
         date(self, s1, s2, swap_month_day=0.5, swap_months='default', missing_value=0, label=None)
 
@@ -426,19 +429,15 @@ class Compare(BaseCompare):
             The value for a comparison with a missing value. Default 0.
         label : label
             The label of the column in the resulting dataframe.
-
         """
 
-        # logging
-        logging.info(
-            "Comparing - initialize date algorithm - compare {l_left} with "
-            "{l_right}".format(l_left=s1, l_right=s2)
-        )
+        label = kwargs.pop('label', None)
 
         return self._compare_vectorized(
-            _dates_internal, s1, s2,
-            swap_month_day=swap_month_day, swap_months=swap_months,
-            *args, **kwargs
+            _dates_internal, s1, s2, args, kwargs,
+            label=label,
+            name="date",
+            description="Compare record pairs on dates."
         )
 
 
