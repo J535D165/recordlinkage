@@ -2,14 +2,37 @@
 Release notes
 *************
 
-Version 0.11.0 (development)
-============================
+Version 0.11.0
+==============
 
+- The submodule 'standardise' is renamed. The new name is 'preprocessing'.
+  The submodule 'standardise' will get deprecated in a next version.
+- Deprecation errors were not visible for many users. In this version, the 
+  errors are better visible. 
+- Improved and new logs for indexing, comparing and classification.
+- Faster comparing of string variables. Thanks Joel Becker. 
+- Changes make it possible to pickle Compare and Index objects. This makes it
+  easier to run code in parallel. Tests were added to ensure that pickling
+  remains possible.
+- Important change. MultiIndex objects with many record pairs were split into 
+  pieces to lower memory usage. In this version, this automatic splitting is 
+  removed. Please split the data yourself.
+- Integer indexing. Blog post will follow on this.
+- The metrics submodule has changed heavily. This will break with the previous
+  version. 
+- repr() and str() will return informative information for index and compare 
+  objects. 
+- It is possible to use abbreviations for string similarity methods. For example
+  'jw' for the Jaro-Winkler method.
 - The FEBRL dataset loaders can now return the true links as a 
   pandas.MultIndex for each FEBRL dataset. This option is disabled by default.
   See the [FEBRL datasets][febrl_datasets] for details. 
+- Fix issue with automatic recognision of license on Github.
+- Various small improvements.
 
 [febrl_datasets]: http://recordlinkage.readthedocs.io/en/latest/ref-datasets.html#recordlinkage.datasets.load_febrl1
+
+Note: In the next release, the Pairs class will get removed. Migrate now.
 
 Version 0.10.1
 ==============
@@ -44,7 +67,9 @@ Version 0.9.0
   algorithm. Thanks to @perryvais (PR #32). 
 - The function ``binary_comparisons`` is renamed. The new name of the function
   is ``binary_vectors``. Documentation added to RTD. 
-- Add unit tests to test the generation of random comparison vectors. 
+- Added unit tests to test the generation of random comparison vectors. 
+- Logging module added to separate module logs from user logs. The 
+  implementation is based on Tensorflow.
 
 Version 0.8.1
 =============
