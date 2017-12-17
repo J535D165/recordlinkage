@@ -80,21 +80,21 @@ class TestExternalDatasets(unittest.TestCase):
         self.assertRaises(ValueError, load_krebsregister, 11)
 
         # missing values
-        krebs_data_block10, krebs_matches = load_krebsregister(10, missing_values=0)
-        self.assertEqual(krebs_data_block10.isnull().sum().sum(), 0)
+        krebs_block10, matches = load_krebsregister(10, missing_values=0)
+        self.assertEqual(krebs_block10.isnull().sum().sum(), 0)
 
 
     def test_krebs_missings(self):
 
         # missing values
-        krebs_data_block10, krebs_matches = load_krebsregister(10, missing_values=0)
-        self.assertEqual(krebs_data_block10.isnull().sum().sum(), 0)
+        krebs_block10, matches = load_krebsregister(10, missing_values=0)
+        self.assertEqual(krebs_block10.isnull().sum().sum(), 0)
 
 
     def test_krebs_shuffle(self):
 
         # missing values
-        krebs_data_block10, krebs_matches = load_krebsregister(10, shuffle=False)
+        krebs_block10, matches = load_krebsregister(10, shuffle=False)
 
 
 # nosetests tests/test_datasets.py:TestGeneratedDatasets
