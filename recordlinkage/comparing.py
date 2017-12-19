@@ -117,7 +117,7 @@ class Compare(BaseCompare):
     n_jobs : integer, optional (default=1)
         The number of jobs to run in parallel for comparing of record pairs.
         If -1, then the number of jobs is set to the number of cores.
-    indexing_type : string, optional (default=”label”)
+    indexing_type : string, optional (default='label')
         The indexing type. The MultiIndex is used to index the DataFrame(s).
         This can be done with pandas ``.loc`` or with ``.iloc``. Use the value
         'label' to make use of ``.loc`` and 'position' to make use of
