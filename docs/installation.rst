@@ -2,6 +2,15 @@
 Installation guide
 ******************
 
+Python version support
+======================
+
+The Python Record Linkage Toolkit supports the versions of Python that Pandas
+supports as well. You can find the supported Python versions in the Pandas
+documentation_.
+
+.. _documentation: http://pandas.pydata.org/pandas-docs/stable/install.html#python-version-support
+
 Installation
 ============
 
