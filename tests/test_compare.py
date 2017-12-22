@@ -1,4 +1,5 @@
 import os
+import sys
 import unittest
 import shutil
 import tempfile
@@ -440,23 +441,29 @@ class TestCompareApi(TestData):
 
     def test_manual_parallel_joblib(self):
         # test if it is possible to pickle the Compare class
+        # This is only available for python 3. For python 2, it is not
+        # possible to pickle instancemethods. A workaround can be found at
+        # https://stackoverflow.com/a/29873604/8727928
 
-        # import joblib dependencies
-        from sklearn.externals.joblib import Parallel, delayed
+        if sys.version.startswith("3"):
 
-        # split the data into smaller parts
-        len_index = int(len(self.index_AB) / 2)
-        df_chunks = [self.index_AB[0:len_index], self.index_AB[len_index:]]
+            # import joblib dependencies
+            from sklearn.externals.joblib import Parallel, delayed
 
-        comp = recordlinkage.Compare()
-        comp.string('given_name', 'given_name')
-        comp.string('lastname', 'lastname')
-        comp.exact('street', 'street')
+            # split the data into smaller parts
+            len_index = int(len(self.index_AB) / 2)
+            df_chunks = [self.index_AB[0:len_index], self.index_AB[len_index:]]
 
-        # do in parallel
-        Parallel(n_jobs=2)(
-            delayed(comp.compute)(df_chunks[i], self.A, self.B) for i in [0, 1]
-        )
+            comp = recordlinkage.Compare()
+            comp.string('given_name', 'given_name')
+            comp.string('lastname', 'lastname')
+            comp.exact('street', 'street')
+
+            # do in parallel
+            Parallel(n_jobs=2)(
+                delayed(comp.compute)(
+                    df_chunks[i], self.A, self.B) for i in [0, 1]
+            )
 
     def test_indexing_types(self):
         # test the two types of indexing
