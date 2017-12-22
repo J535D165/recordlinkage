@@ -14,8 +14,6 @@ from recordlinkage.utils import unique
 from recordlinkage.utils import is_label_dataframe
 from recordlinkage.utils import VisibleDeprecationWarning
 from recordlinkage.utils import split_index
-from recordlinkage.types import is_pandas_like
-from recordlinkage.types import is_numpy_like
 from recordlinkage.measures import max_pairs
 from recordlinkage import rl_logging as logging
 
@@ -559,142 +557,12 @@ class BaseCompare(object):
         return _compute(self, pairs, x, x_link)
 
     def compare(self, comp_func, labels_a, labels_b, *args, **kwargs):
-        """[DEPRECATED] Compare two records.
+        """[DEPRECATED] Compare two records."""
 
-        Core method to compare record pairs. This method takes a function and
-        data from both records in the record pair. The data is compared with
-        the compare function. The built-in methods also use this function.
+        raise AttributeError("this method was removed in version 0.12.0")
 
-        Example
-        -------
-
-        >>> comp = recordlinkage.Compare(PAIRS, DATAFRAME1, DATAFRAME2)
-        >>> comp.exact('first_name', 'name')
-
-        >>> # same as
-        >>> comp.compare(recordlinkage._compare_exact, 'first_name', 'name')
-
-        Parameters
-        ----------
-        comp_func : function
-            A comparison function. This function can be a built-in function or
-            a user defined comparison function.
-        labels_a : label, pandas.Series, pandas.DataFrame
-            The labels, Series or DataFrame to compare.
-        labels_b : label, pandas.Series, pandas.DataFrame
-            The labels, Series or DataFrame to compare.
-        name : label
-            The name of the feature and the name of the column.
-        store : bool, default True
-            Store the result in the dataframe.
-
-        Returns
-        -------
-        pandas.Series
-            A pandas series with the result of comparing each record pair.
-
-        """
-
-        if isinstance(comp_func, pandas.MultiIndex):
-            raise ValueError("see new api documentation: "
-                             "use method 'compute' instead of 'compare'")
-
-        if len(self.pairs) == 0:
-            raise ValueError(
-                "need at least one record pair"
-            )
-
-        # the name and store arguments
-        name = kwargs.pop('name', None)
-        store = kwargs.pop('store', True)
-
-        labels_a = listify(labels_a)
-        labels_b = listify(labels_b)
-
-        data_a = []
-
-        for label_a in labels_a:
-
-            # the label is a numpy or pandas object
-            if is_numpy_like(label_a) or is_pandas_like(label_a):
-                data_a.append(label_a)
-
-            # check requested labels (for better error messages)
-            elif label_a not in self.df_a.columns:
-                raise KeyError("label '{}' is not found in the first"
-                               "dataframe".format(label_a))
-
-            else:
-
-                if self.low_memory:
-
-                    df_a_label = self._loc2(self.df_a[label_a], self.pairs, 0)
-                    data_a.append(df_a_label)
-
-                # not low memory
-                else:
-                    if self._df_a_indexed is None:
-
-                        self._df_a_indexed = self._loc2(
-                            self.df_a, self.pairs, 0)
-
-                    data_a.append(self._df_a_indexed[label_a])
-
-        data_a = tuple(data_a)
-
-        data_b = []
-
-        for label_b in labels_b:
-
-            # the label is a numpy or pandas object
-            if is_numpy_like(label_b) or is_pandas_like(label_b):
-                data_b.append(label_b)
-
-            # check requested labels (for better error messages)
-            elif label_b not in self.df_b.columns:
-
-                raise KeyError("label '{}' is not found in the second"
-                               "dataframe".format(label_b))
-
-            else:
-
-                if self.low_memory:
-
-                    df_b_label = self._loc2(self.df_b[label_b], self.pairs, 1)
-                    data_b.append(df_b_label)
-
-                # not low memory
-                else:
-                    if self._df_b_indexed is None:
-
-                        self._df_b_indexed = self._loc2(
-                            self.df_b, self.pairs, 1)
-
-                    data_b.append(self._df_b_indexed[label_b])
-
-        data_b = tuple(data_b)
-
-        # Compute the comparison
-        c = comp_func(*tuple(data_a + data_b + args), **kwargs)
-
-        # if a pandas series is returned, overwrite the index. The
-        # returned index can be different than the MultiIndex passed to
-        # the compare function.
-        if isinstance(c, pandas.Series):
-            c.index = self.vectors.index
-
-        # append column to Compare.vectors
-        if store:
-            name_or_id = name if name else len(self.vectors.columns)
-            self.vectors[name_or_id] = c
-
-        return self.vectors[name_or_id].rename(name)
 
     def clear_memory(self):
-        """[DEPRECATED] Clear memory.
+        """[DEPRECATED] Clear memory."""
 
-        Clear some memory when low_memory was set to True.
-        """
-
-        self._df_a_indexed = None
-        self._df_b_indexed = None
+        raise AttributeError("this method was removed in version 0.12.0")
