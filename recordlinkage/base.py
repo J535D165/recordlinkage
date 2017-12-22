@@ -221,7 +221,7 @@ class CompareFeature(object):
 
         # logging
         logging.info(
-            "CompareCompareFeature - initialize exact algorithm - compare "
+            "CompareFeature - initialize exact algorithm - compare "
             "{l_left} with {l_right}".format(l_left=labels_left,
                                              l_right=labels_right)
         )
@@ -232,6 +232,83 @@ class CompareFeature(object):
 
     def __str__(self):
         return repr(self)
+
+def _compute_parallel(compare_obj, pairs, x, x_link=None, n_jobs=1):
+
+    df_chunks = split_index(pairs, n_jobs)
+    result_chunks = Parallel(n_jobs=n_jobs)(
+        delayed(_compute)(compare_obj, chunk, x, x_link) for chunk in df_chunks
+    )
+
+    result = pandas.concat(result_chunks)
+    return result
+
+
+def _compute(self, pairs, x, x_link=None):
+
+    logging.info("Comparing - start comparing data")
+
+    # start the timer for the comparing step
+    start_time = time.time()
+
+    sublabels_left = self._get_labels_left(validate=x)
+    df_a_indexed = self._loc2(x[sublabels_left], pairs, 0)
+
+    if x_link is None:
+        sublabels_right = self._get_labels_right(validate=x)
+        df_b_indexed = self._loc2(x[sublabels_right], pairs, 1)
+    else:
+        sublabels_right = self._get_labels_right(validate=x_link)
+        df_b_indexed = self._loc2(x_link[sublabels_right], pairs, 1)
+
+    # log timing
+    index_time = time.time() - start_time
+
+    results = pandas.DataFrame(index=pairs)
+    label_num = 0  # make a label is label is None
+
+    for feat in self._compare_functions:
+
+        lbl1 = feat.labels_left
+        lbl2 = feat.labels_right
+        f = feat.comp_func
+        label = feat.label
+
+        data1 = tuple([df_a_indexed[lbl] for lbl in listify(lbl1)])
+        data2 = tuple([df_b_indexed[lbl] for lbl in listify(lbl2)])
+
+        c = f(*tuple(data1 + data2 + feat.args), **feat.kwargs)
+
+        if isinstance(c, (pandas.Series, pandas.DataFrame)):
+            c = c.values  # convert pandas into numpy
+
+        if label is not None:
+            label = listify(label)
+
+        n_cols = 1 if len(c.shape) == 1 else c.shape[1]
+
+        labels = []
+        for i in range(0, n_cols):
+
+            label_val = label[i] if label is not None else label_num
+            label_num += 1
+
+            labels.append(label_val)
+
+        results[label_val] = c
+
+    # log timing
+    total_time = time.time() - start_time
+
+    # log timing
+    logging.info("Comparing - computation time: ~{:.2f}s (from which "
+                 "indexing: ~{:.2f}s)".format(total_time, index_time))
+
+    # log results
+    logf_result = "Comparing - summary shape={}"
+    logging.info(logf_result.format(results.shape))
+
+    return results
 
 
 class BaseCompare(object):
@@ -464,89 +541,22 @@ class BaseCompare(object):
             raise ValueError("expected pandas.DataFrame as third argument")
 
         if self.n_jobs == 1:
-            results = self._compute(pairs, x, x_link=x_link)
+            results = _compute(self, pairs, x, x_link)
         elif self.n_jobs > 1:
-            results = self._compute_parallel(pairs, x, x_link=x_link)
+            results = _compute_parallel(self, pairs, x, x_link,
+                                        n_jobs=self.n_jobs)
         else:
             raise ValueError("number of jobs should be positive integer")
 
         return results
 
-    def _compute(self, pairs, x, x_link=None):
+    def _compute_parallel(self, pairs, x, x_link):
 
-        logging.info("Comparing - start comparing data")
+        return _compute_parallel(self, pairs, x, x_link, self.n_jobs)
 
-        # start the timer for the comparing step
-        start_time = time.time()
+    def _compute(self, pairs, x, x_link):
 
-        sublabels_left = self._get_labels_left(validate=x)
-        df_a_indexed = self._loc2(x[sublabels_left], pairs, 0)
-
-        if x_link is None:
-            sublabels_right = self._get_labels_right(validate=x)
-            df_b_indexed = self._loc2(x[sublabels_right], pairs, 1)
-        else:
-            sublabels_right = self._get_labels_right(validate=x_link)
-            df_b_indexed = self._loc2(x_link[sublabels_right], pairs, 1)
-
-        # log timing
-        index_time = time.time() - start_time
-
-        results = pandas.DataFrame(index=pairs)
-        label_num = 0  # make a label is label is None
-
-        for feat in self._compare_functions:
-
-            lbl1 = feat.labels_left
-            lbl2 = feat.labels_right
-            f = feat.comp_func
-            label = feat.label
-
-            data1 = tuple([df_a_indexed[lbl] for lbl in listify(lbl1)])
-            data2 = tuple([df_b_indexed[lbl] for lbl in listify(lbl2)])
-
-            c = f(*tuple(data1 + data2 + feat.args), **feat.kwargs)
-
-            if isinstance(c, (pandas.Series, pandas.DataFrame)):
-                c = c.values  # convert pandas into numpy
-
-            if label is not None:
-                label = listify(label)
-
-            n_cols = 1 if len(c.shape) == 1 else c.shape[1]
-
-            labels = []
-            for i in range(0, n_cols):
-
-                label_val = label[i] if label is not None else label_num
-                label_num += 1
-
-                labels.append(label_val)
-
-            results[label_val] = c
-
-        # log timing
-        total_time = time.time() - start_time
-
-        # log timing
-        logging.info("Comparing - computation time: ~{:.2f}s (from which "
-                     "indexing: ~{:.2f}s)".format(total_time, index_time))
-
-        # log results
-        logf_result = "Comparing - summary shape={}"
-        logging.info(logf_result.format(results.shape))
-
-        return results
-
-    def _compute_parallel(self, pairs, x, x_link=None):
-
-        df_chunks = split_index(pairs, self.n_jobs)
-        result_chunks = Parallel(n_jobs=self.n_jobs)(
-            delayed(self._compute)(chunk, x, x_link) for chunk in df_chunks
-        )
-
-        result = pandas.concat(result_chunks)
-        return result
+        return _compute(self, pairs, x, x_link)
 
     def compare(self, comp_func, labels_a, labels_b, *args, **kwargs):
         """[DEPRECATED] Compare two records.
