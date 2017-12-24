@@ -3,7 +3,7 @@ import numpy as np
 
 
 def binary_vectors(n, n_match, m=[0.9] * 8, u=[0.1] * 8,
-                   random_state=None):
+                   random_state=None, return_links=False, dtype=np.int8):
     """Generate random binary comparison vectors
 
     This function is used to generate random comparison vectors. The result of
@@ -26,6 +26,10 @@ def binary_vectors(n, n_match, m=[0.9] * 8, u=[0.1] * 8,
     random_state : int or numpy.random.RandomState, optional
         Seed for the random number generator with an integer or numpy
         RandomState object.
+    return_links: bool
+        When True, the function returns also the true links.
+    dtype: numpy.dtype
+        The dtype of each column in the returned DataFrame.
 
     Returns
     -------
@@ -47,13 +51,15 @@ def binary_vectors(n, n_match, m=[0.9] * 8, u=[0.1] * 8,
     matches = []
     nonmatches = []
 
+    sample_set = np.array([0, 1], dtype=dtype)
+
     for i, _ in enumerate(m):
 
         p_mi = [1 - m[i], m[i]]
         p_ui = [1 - u[i], u[i]]
 
-        comp_mi = np.random.choice([0, 1], (n_match, 1), p=p_mi)
-        comp_ui = np.random.choice([0, 1], (n - n_match, 1), p=p_ui)
+        comp_mi = np.random.choice(sample_set, (n_match, 1), p=p_mi)
+        comp_ui = np.random.choice(sample_set, (n - n_match, 1), p=p_ui)
 
         nonmatches.append(comp_ui)
         matches.append(comp_mi)
@@ -68,4 +74,10 @@ def binary_vectors(n, n_match, m=[0.9] * 8, u=[0.1] * 8,
     data_mi = pd.MultiIndex.from_arrays([index_np[:, 0], index_np[:, 1]])
     data_df = pd.DataFrame(data_np, index=data_mi, columns=data_col_names)
 
-    return data_df.sample(frac=1, random_state=random_state)
+    features = data_df.sample(frac=1, random_state=random_state)
+
+    if return_links:
+        links = data_mi[:n_match]
+        return features, links
+    else:
+        return features
