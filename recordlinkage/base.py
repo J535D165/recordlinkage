@@ -7,18 +7,14 @@ import warnings
 
 import pandas
 import numpy as np
-
+from sklearn.externals.joblib import Parallel, delayed
 
 from recordlinkage.utils import listify
 from recordlinkage.utils import unique
 from recordlinkage.utils import is_label_dataframe
 from recordlinkage.utils import VisibleDeprecationWarning
-
-from recordlinkage.types import is_pandas_like
-from recordlinkage.types import is_numpy_like
-
+from recordlinkage.utils import split_index
 from recordlinkage.measures import max_pairs
-
 from recordlinkage import rl_logging as logging
 
 
@@ -78,6 +74,13 @@ class BaseIndexator(object):
         logging.info("Indexing - initialize {} class".format(
             self.__class__.__name__)
         )
+
+    def __repr__(self):
+        class_name = self.__class__.__name__
+        return "<{}>".format(class_name)
+
+    def __str__(self):
+        return repr(self)
 
     @classmethod
     def _deduplication(cls, x):
@@ -197,53 +200,122 @@ class BaseIndexator(object):
         return pairs
 
 
+class CompareFeature(object):
+    """CompareFeature construction class.
+    """
+
+    name = None
+
+    def __init__(self, comp_func, labels_left, labels_right, args=(),
+                 kwargs={}, label=None, name="", description=""):
+
+        self.comp_func = comp_func
+        self.labels_left = labels_left
+        self.labels_right = labels_right
+        self.args = args
+        self.kwargs = kwargs
+        self.label = label
+        self.description = description
+
+        # logging
+        logging.info(
+            "CompareFeature - initialize exact algorithm - compare "
+            "{l_left} with {l_right}".format(l_left=labels_left,
+                                             l_right=labels_right)
+        )
+
+    def __repr__(self):
+
+        return "<CompareFeature {!r}>".format(self.label)
+
+    def __str__(self):
+        return repr(self)
+
+def _compute_parallel(compare_obj, pairs, x, x_link=None, n_jobs=1):
+
+    df_chunks = split_index(pairs, n_jobs)
+    result_chunks = Parallel(n_jobs=n_jobs)(
+        delayed(_compute)(compare_obj, chunk, x, x_link) for chunk in df_chunks
+    )
+
+    result = pandas.concat(result_chunks)
+    return result
+
+
+def _compute(self, pairs, x, x_link=None):
+
+    logging.info("Comparing - start comparing data")
+
+    # start the timer for the comparing step
+    start_time = time.time()
+
+    sublabels_left = self._get_labels_left(validate=x)
+    df_a_indexed = self._loc2(x[sublabels_left], pairs, 0)
+
+    if x_link is None:
+        sublabels_right = self._get_labels_right(validate=x)
+        df_b_indexed = self._loc2(x[sublabels_right], pairs, 1)
+    else:
+        sublabels_right = self._get_labels_right(validate=x_link)
+        df_b_indexed = self._loc2(x_link[sublabels_right], pairs, 1)
+
+    # log timing
+    index_time = time.time() - start_time
+
+    results = pandas.DataFrame(index=pairs)
+    label_num = 0  # make a label is label is None
+
+    for feat in self._compare_functions:
+
+        lbl1 = feat.labels_left
+        lbl2 = feat.labels_right
+        f = feat.comp_func
+        label = feat.label
+
+        data1 = tuple([df_a_indexed[lbl] for lbl in listify(lbl1)])
+        data2 = tuple([df_b_indexed[lbl] for lbl in listify(lbl2)])
+
+        c = f(*tuple(data1 + data2 + feat.args), **feat.kwargs)
+
+        if isinstance(c, (pandas.Series, pandas.DataFrame)):
+            c = c.values  # convert pandas into numpy
+
+        if label is not None:
+            label = listify(label)
+
+        n_cols = 1 if len(c.shape) == 1 else c.shape[1]
+
+        labels = []
+        for i in range(0, n_cols):
+
+            label_val = label[i] if label is not None else label_num
+            label_num += 1
+
+            labels.append(label_val)
+
+        results[label_val] = c
+
+    # log timing
+    total_time = time.time() - start_time
+
+    # log timing
+    logging.info("Comparing - computation time: ~{:.2f}s (from which "
+                 "indexing: ~{:.2f}s)".format(total_time, index_time))
+
+    # log results
+    logf_result = "Comparing - summary shape={}"
+    logging.info(logf_result.format(results.shape))
+
+    return results
+
+
 class BaseCompare(object):
     """Base class for all comparing classes in Python Record Linkage Toolkit.
-
-    Class to compare the attributes of candidate record pairs. The ``Compare2``
-    class has several methods to compare data such as string similarity
-    measures, numeric metrics and exact comparison methods. The ``Compare2``
-    class has an improved API desing compares to ``Compare`` class. The
-    ``Compare`` class will get deprecated in the next version. After this,
-    the ``Compare2`` class will be renamed into ``Compare``.
-
-    Parameters
-    ----------
-    pairs : pandas.MultiIndex (DEPRECATED)
-        A MultiIndex of candidate record pairs.
-    df_a : pandas.DataFrame (DEPRECATED)
-        The first dataframe.
-    df_b : pandas.DataFrame (DEPRECATED)
-        The second dataframe.
-    low_memory : bool (DEPRECATED)
-        Reduce the amount of memory used by the Compare class. Default False.
-    block_size : int
-        The maximum size of data blocks. Default 1,000,000.
-
-    Examples
-    --------
-    In the following example, the record pairs of two historical datasets with
-    census data are compared. The datasets are named ``census_data_1980`` and
-    ``census_data_1990``. The ``candidate_pairs`` are the record pairs to
-    compare. The record pairs are compared on the first name, last name, sex,
-    date of birth, address, place, and income.
-
-    >>> comp = recordlinkage.Compare()
-    >>> comp.string('first_name', 'name', method='jarowinkler')
-    >>> comp.string('lastname', 'lastname', method='jarowinkler')
-    >>> comp.exact('dateofbirth', 'dob')
-    >>> comp.exact('sex', 'sex')
-    >>> comp.string('address', 'address', method='levenshtein')
-    >>> comp.exact('place', 'place')
-    >>> comp.numeric('income', 'income')
-    >>> comp.compute(candidate_pairs, census_data_1980, census_data_1990)
-
-    The attribute ``vectors`` is the DataFrame with the comparison data. It
-    can be called whenever you want.
     """
 
     def __init__(self, pairs=None, df_a=None, df_b=None, low_memory=False,
-                 block_size=1000000, njobs=1, indexing_type='label', **kwargs):
+                 block_size=1000000, n_jobs=1, indexing_type='label',
+                 **kwargs):
 
         logging.info("Comparing - initialize {} class".format(
             self.__class__.__name__)
@@ -268,7 +340,7 @@ class BaseCompare(object):
         else:
             self.deprecated = False
 
-        # deprecated
+        # start deprecated
         self.df_a = df_a
         self.df_b = df_b if df_b is not None else df_a
 
@@ -276,12 +348,20 @@ class BaseCompare(object):
 
         self.low_memory = low_memory
         self.block_size = block_size
-        self.njobs = njobs
+        self.n_jobs = n_jobs
 
         self._df_a_indexed = None
         self._df_b_indexed = None
 
         self.vectors = pandas.DataFrame(index=pairs)
+        # end deprecated
+
+    def __repr__(self):
+        class_name = self.__class__.__name__
+        return "<{}>".format(class_name)
+
+    def __str__(self):
+        return repr(self)
 
     def _loc2(self, frame, multi_index, level_i, indexing_type='label'):
         """Indexing algorithm for MultiIndex on one level
@@ -344,23 +424,31 @@ class BaseCompare(object):
             (keyword 'label' is reserved.)
         label : (list of) label(s)
             The name of the feature and the name of the column. IMPORTANT:
-            This argument is a keyword argument.
+            This argument is a keyword argument and can not be part of the
+            arguments of comp_func.
         """
 
-        log_str = "Comparing - initialize user defined function - " \
-            "compare {l_left} with {l_right}"
-        logging.info(log_str.format(l_left=labels_left, l_right=labels_right))
+        label = kwargs.pop('label', None)
 
         return self._compare_vectorized(
-            comp_func, labels_left, labels_right, *args, **kwargs)
+            comp_func, labels_left, labels_right, args, kwargs, label=label)
 
     def _compare_vectorized(self, comp_func, labels_left, labels_right,
-                            *args, **kwargs):
+                            args=(), kwargs={}, label=None, name="",
+                            description=""):
+        # This function is separated from the compare_vectorized method to
+        # solve conficts between the arguments of comp_func and
+        # _compare_vectorized. Only the keyword 'label' is preserved for
+        # compare_vectorized, but not 'name' and 'description'. The args and
+        # kwargs are normal (keyword) arguments of _compare_vectorized (so not
+        # *args and **kwargs). Therefore, the compare_vectorized is a slightly
+        # more limit version because only 'label' is an preserved keyword. For
+        # advanced usage, one can directly call _compare_vectorized instead of
+        # comapre_vectorized. This is done in the methods of the Compare
+        # class.
 
         # Use recordlinkage >=0.10.0
         if not self.deprecated:
-
-            label = kwargs.pop('label', None)
 
             if isinstance(labels_left, tuple):
                 labels_left = list(labels_left)
@@ -368,11 +456,13 @@ class BaseCompare(object):
             if isinstance(labels_right, tuple):
                 labels_right = list(labels_right)
 
-            # all args and kwargs are passed to comp_func
-            self._compare_functions.append(
-                (comp_func, labels_left, labels_right, label, args, kwargs,)
-            )
+            feat = CompareFeature(comp_func, labels_left, labels_right,
+                                  args, kwargs, label=label, name=name,
+                                  description=description)
 
+            self._compare_functions.append(feat)
+
+            # return self to make pipelining possible
             return self
 
         # Use recordlinkage < 0.10.0
@@ -381,22 +471,14 @@ class BaseCompare(object):
             return self.compare(
                 comp_func, labels_left, labels_right, *args, **kwargs)
 
-    def _get_labels(self, frame_i, validate=None):
-        """Get all labels.
-
-        Parameters
-        ----------
-        frame_i : str
-            A string, 'left' or 'right', incidating the dataframe to collect
-            labels from.
-
-        """
+    def _get_labels_left(self, validate=None):
+        """Get all labels of the left dataframe."""
 
         labels = []
 
         for compare_func in self._compare_functions:
 
-            labels = labels + listify(compare_func[frame_i])
+            labels = labels + listify(compare_func.labels_left)
 
         # check requested labels (for better error messages)
         if not is_label_dataframe(labels, validate):
@@ -405,15 +487,20 @@ class BaseCompare(object):
 
         return unique(labels)
 
-    def _get_labels_left(self, validate=None):
-        """Get all labels of the left dataframe."""
-
-        return self._get_labels(1, validate=validate)
-
     def _get_labels_right(self, validate=None):
         """Get all labels of the right dataframe."""
+        labels = []
 
-        return self._get_labels(2, validate=validate)
+        for compare_func in self._compare_functions:
+
+            labels = labels + listify(compare_func.labels_right)
+
+        # check requested labels (for better error messages)
+        if not is_label_dataframe(labels, validate):
+            error_msg = "label is not found in the dataframe"
+            raise KeyError(error_msg)
+
+        return unique(labels)
 
     def compute(self, pairs, x, x_link=None):
         """Compare the records of each record pair.
@@ -451,202 +538,31 @@ class BaseCompare(object):
         if x_link is not None and not isinstance(x_link, pandas.DataFrame):
             raise ValueError("expected pandas.DataFrame as third argument")
 
-        logging.info("Comparing - start comparing data")
-
-        # start the timer for the comparing step
-        start_time = time.time()
-
-        sublabels_left = self._get_labels_left(validate=x)
-        df_a_indexed = self._loc2(x[sublabels_left], pairs, 0)
-
-        if x_link is None:
-            sublabels_right = self._get_labels_right(validate=x)
-            df_b_indexed = self._loc2(x[sublabels_right], pairs, 1)
+        if self.n_jobs == 1:
+            results = _compute(self, pairs, x, x_link)
+        elif self.n_jobs > 1:
+            results = _compute_parallel(self, pairs, x, x_link,
+                                        n_jobs=self.n_jobs)
         else:
-            sublabels_right = self._get_labels_right(validate=x_link)
-            df_b_indexed = self._loc2(x_link[sublabels_right], pairs, 1)
-
-        # log timing
-        index_time = time.time() - start_time
-
-        results = pandas.DataFrame(index=pairs)
-        label_num = 0  # make a label is label is None
-
-        for f, lbl1, lbl2, label, args, kwargs in self._compare_functions:
-
-            data1 = tuple([df_a_indexed[lbl] for lbl in listify(lbl1)])
-            data2 = tuple([df_b_indexed[lbl] for lbl in listify(lbl2)])
-
-            c = f(*tuple(data1 + data2 + args), **kwargs)
-
-            if isinstance(c, (pandas.Series, pandas.DataFrame)):
-                c = c.values  # convert pandas into numpy
-
-            if label is not None:
-                label = listify(label)
-
-            n_cols = 1 if len(c.shape) == 1 else c.shape[1]
-
-            labels = []
-            for i in range(0, n_cols):
-
-                label_val = label[i] if label is not None else label_num
-                label_num += 1
-
-                labels.append(label_val)
-
-            results[label_val] = c
-
-        # log timing
-        total_time = time.time() - start_time
-
-        # log timing
-        logging.info("Comparing - computation time: ~{:.2f}s (from which "
-                     "indexing: ~{:.2f}s)".format(total_time, index_time))
-
-        # log results
-        logf_result = "Comparing - summary shape={}"
-        logging.info(logf_result.format(results.shape))
+            raise ValueError("number of jobs should be positive integer")
 
         return results
 
+    def _compute_parallel(self, pairs, x, x_link):
+
+        return _compute_parallel(self, pairs, x, x_link, self.n_jobs)
+
+    def _compute(self, pairs, x, x_link):
+
+        return _compute(self, pairs, x, x_link)
+
     def compare(self, comp_func, labels_a, labels_b, *args, **kwargs):
-        """[DEPRECATED] Compare two records.
+        """[DEPRECATED] Compare two records."""
 
-        Core method to compare record pairs. This method takes a function and
-        data from both records in the record pair. The data is compared with
-        the compare function. The built-in methods also use this function.
+        raise AttributeError("this method was removed in version 0.12.0")
 
-        Example
-        -------
-
-        >>> comp = recordlinkage.Compare(PAIRS, DATAFRAME1, DATAFRAME2)
-        >>> comp.exact('first_name', 'name')
-
-        >>> # same as
-        >>> comp.compare(recordlinkage._compare_exact, 'first_name', 'name')
-
-        Parameters
-        ----------
-        comp_func : function
-            A comparison function. This function can be a built-in function or
-            a user defined comparison function.
-        labels_a : label, pandas.Series, pandas.DataFrame
-            The labels, Series or DataFrame to compare.
-        labels_b : label, pandas.Series, pandas.DataFrame
-            The labels, Series or DataFrame to compare.
-        name : label
-            The name of the feature and the name of the column.
-        store : bool, default True
-            Store the result in the dataframe.
-
-        Returns
-        -------
-        pandas.Series
-            A pandas series with the result of comparing each record pair.
-
-        """
-
-        if isinstance(comp_func, pandas.MultiIndex):
-            raise ValueError("see new api documentation: "
-                             "use method 'compute' instead of 'compare'")
-
-        if len(self.pairs) == 0:
-            raise ValueError(
-                "need at least one record pair"
-            )
-
-        # the name and store arguments
-        name = kwargs.pop('name', None)
-        store = kwargs.pop('store', True)
-
-        labels_a = listify(labels_a)
-        labels_b = listify(labels_b)
-
-        data_a = []
-
-        for label_a in labels_a:
-
-            # the label is a numpy or pandas object
-            if is_numpy_like(label_a) or is_pandas_like(label_a):
-                data_a.append(label_a)
-
-            # check requested labels (for better error messages)
-            elif label_a not in self.df_a.columns:
-                raise KeyError("label '{}' is not found in the first"
-                               "dataframe".format(label_a))
-
-            else:
-
-                if self.low_memory:
-
-                    df_a_label = self._loc2(self.df_a[label_a], self.pairs, 0)
-                    data_a.append(df_a_label)
-
-                # not low memory
-                else:
-                    if self._df_a_indexed is None:
-
-                        self._df_a_indexed = self._loc2(
-                            self.df_a, self.pairs, 0)
-
-                    data_a.append(self._df_a_indexed[label_a])
-
-        data_a = tuple(data_a)
-
-        data_b = []
-
-        for label_b in labels_b:
-
-            # the label is a numpy or pandas object
-            if is_numpy_like(label_b) or is_pandas_like(label_b):
-                data_b.append(label_b)
-
-            # check requested labels (for better error messages)
-            elif label_b not in self.df_b.columns:
-
-                raise KeyError("label '{}' is not found in the second"
-                               "dataframe".format(label_b))
-
-            else:
-
-                if self.low_memory:
-
-                    df_b_label = self._loc2(self.df_b[label_b], self.pairs, 1)
-                    data_b.append(df_b_label)
-
-                # not low memory
-                else:
-                    if self._df_b_indexed is None:
-
-                        self._df_b_indexed = self._loc2(
-                            self.df_b, self.pairs, 1)
-
-                    data_b.append(self._df_b_indexed[label_b])
-
-        data_b = tuple(data_b)
-
-        # Compute the comparison
-        c = comp_func(*tuple(data_a + data_b + args), **kwargs)
-
-        # if a pandas series is returned, overwrite the index. The
-        # returned index can be different than the MultiIndex passed to
-        # the compare function.
-        if isinstance(c, pandas.Series):
-            c.index = self.vectors.index
-
-        # append column to Compare.vectors
-        if store:
-            name_or_id = name if name else len(self.vectors.columns)
-            self.vectors[name_or_id] = c
-
-        return self.vectors[name_or_id].rename(name)
 
     def clear_memory(self):
-        """[DEPRECATED] Clear memory.
+        """[DEPRECATED] Clear memory."""
 
-        Clear some memory when low_memory was set to True.
-        """
-
-        self._df_a_indexed = None
-        self._df_b_indexed = None
+        raise AttributeError("this method was removed in version 0.12.0")

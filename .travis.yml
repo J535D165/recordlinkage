@@ -1,7 +1,7 @@
+sudo: false
 language: python
 python:
   - "2.7"
-  - "3.4"
   - "3.5"
   - "3.6"
 
@@ -18,13 +18,8 @@ before_script:
 
 # install matrix versions, deps and optional deps
 install:
-  - pip install --upgrade pip setuptools wheel
-  - pip install numpy
-  - pip install scipy 
-  - pip install scikit-learn 
-  - pip install six 
-  - pip install jellyfish
   - pip install -q $PANDAS_VERSION
+  - pip install -e .
 
 # run tests with coverage
 script: nosetests --verbose --nologcapture --with-coverage --cover-package=recordlinkage

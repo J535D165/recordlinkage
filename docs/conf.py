@@ -35,6 +35,8 @@ MOCK_MODULES = [
     'sklearn.utils',
     'sklearn.utils.validation',
     'sklearn.preprocessing',
+    'sklearn.externals',
+    'sklearn.externals.joblib',
     'jellyfish',
     'six'
 ]
@@ -59,7 +61,8 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.doctest',
     'sphinx.ext.napoleon',
-    'nbsphinx'
+    'nbsphinx',
+    'IPython.sphinxext.ipython_console_highlighting'
 ]
 
 # Add any paths that contain templates here, relative to this directory.

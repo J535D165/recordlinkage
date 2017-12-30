@@ -65,21 +65,48 @@ def merge_dicts(*dict_args):
     return result
 
 
-def max_number_of_pairs(*args):
-    """Compute the maximum number of pairs."""
-
-    if not args:
-        raise ValueError('expected at least one dataframe')
-
-    if len(args) == 1:
-        return len(args[0]) * (len(args[0]) - 1) / 2
-    else:
-        return numpy.prod([len(arg) for arg in args])
-
-
 def multi_index_to_frame(index):
     """
     Replicates MultiIndex.to_frame, which was introduced in pandas 0.21,
     for the sake of backwards compatibility.
     """
     return pandas.DataFrame(index.tolist(), index=index, columns=index.names)
+
+  
+def split_index(index, chunks):
+    """Function to split pandas.Index and pandas.MultiIndex objects.
+
+    Split pandas.Index and pandas.MultiIndex objects into chunks.
+    numpy.array_split returns incorrect results for MultiIndex
+    objects. This function is based on numpy.split_array.
+
+    Parameters
+    ----------
+    index : pandas.Index, pandas.MultiIndex
+        A pandas.Index or pandas.MultiIndex to split into chunks.
+    chunks : int
+        The number of parts to split the index into.
+
+    Returns
+    -------
+    list
+        A list with chunked pandas.Index or pandas.MultiIndex objects.
+
+    """
+
+    Ntotal = index.shape[0]
+    Nsections = int(chunks)
+    if Nsections <= 0:
+        raise ValueError('number sections must be larger than 0.')
+    Neach_section, extras = divmod(Ntotal, Nsections)
+    section_sizes = ([0] + extras * [Neach_section + 1] +
+                     (Nsections - extras) * [Neach_section])
+    div_points = numpy.array(section_sizes).cumsum()
+
+    sub_ind = []
+    for i in range(Nsections):
+        st = div_points[i]
+        end = div_points[i + 1]
+        sub_ind.append(index[st:end])
+
+    return sub_ind

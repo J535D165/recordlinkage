@@ -64,6 +64,16 @@ class TestIndexApi(TestData):
     """General unittest for the indexing API."""
 
     @parameterized.expand(TEST_INDEXATION_OBJECTS)
+    def test_repr(self, index_class):
+
+        index_str = str(index_class)
+        index_repr = repr(index_class)
+        self.assertEqual(index_str, index_repr)
+
+        start_str = '<{}'.format(index_class.__class__.__name__)
+        self.assertTrue(index_str.startswith(start_str))
+
+    @parameterized.expand(TEST_INDEXATION_OBJECTS)
     def test_arguments(self, index_class):
         """Test the index method arguments"""
 

@@ -1,6 +1,9 @@
 Classification
 ==============
 
+Classifiers
+-----------
+
 Classification is the step in the record linkage process were record pairs are
 classified into matches, non-matches and possible matches [Christen2012_].
 Classification algorithms can be supervised or unsupervised (rougly speaking:
@@ -16,5 +19,19 @@ it is a match or not.
         detection. Springer Science & Business Media.
 
 .. automodule:: recordlinkage.classifiers
+    :members:
+    :inherited-members:
+
+
+Network
+-------
+
+The Python Record Linkage Toolkit provides network analysis tools for 
+classification of record pairs into matches and distinct pairs. The toolkit 
+provides the functionality for one-to-one linking and one-to-many linking. 
+It is also possible to detect all connected components which is useful in 
+data deduplication. 
+
+.. automodule:: recordlinkage.network
     :members:
     :inherited-members:
