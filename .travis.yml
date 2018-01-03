@@ -20,6 +20,7 @@ before_script:
 install:
   - pip install -q $PANDAS_VERSION
   - pip install -e .
+  - pip install networkx
 
 # run tests with coverage
 script: nosetests --verbose --nologcapture --with-coverage --cover-package=recordlinkage
