@@ -71,8 +71,12 @@ target/
 venv/
 ENV/
 
-# ASV 
+/tests/sandbox
+# ASV
 .asv/
 
 # PyCharm IDE
+/sandbox
+/cover
+/coverage-report
 .idea/
