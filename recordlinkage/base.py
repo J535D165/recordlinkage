@@ -294,9 +294,10 @@ def _compute(self, pairs, x, x_link=None):
 
                 results[label_val] = c[:, i]
         else:
-            label_val = label[0]
-            if label_val is None:
+            if label is None:
                 label_val = label_num
+            else:
+                label_val = label[0]
             label_num += 1
 
             results[label_val] = c
