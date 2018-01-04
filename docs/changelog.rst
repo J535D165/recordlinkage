@@ -2,6 +2,13 @@
 Release notes
 *************
 
+Version 0.11.1
+==============
+
+- Fix installation issue. Submodule 'preprocessing' was not added to the
+  source distribution.
+
+
 Version 0.11.0
 ==============
 
