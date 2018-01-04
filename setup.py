@@ -32,9 +32,8 @@ setup(
         "scipy>=0.17.1",
         "scikit-learn>=0.17.1",
     ],
-    packages=find_packages(exclude=["recordlinkage._lib"]),
+    packages=find_packages(exclude=["benchmarks", "tests", "docs"]),
     include_package_data=True,
-    package_dir={'recordlinkage': 'recordlinkage'},
     package_data={'recordlinkage': ['datasets/*/*.csv']},
     license='GPL-3.0'
 )
