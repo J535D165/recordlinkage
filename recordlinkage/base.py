@@ -294,12 +294,12 @@ def _compute(self, pairs, x, x_link=None):
 
                 results[label_val] = c[:, i]
         else:
-            label_val = labels[0]
+            label_val = label[0]
             if label_val is None:
                 label_val = label_num
             label_num += 1
 
-            results[labels[0]] = c
+            results[label_val] = c
 
     # log timing
     total_time = time.time() - start_time
