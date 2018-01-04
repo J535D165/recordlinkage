@@ -2,6 +2,11 @@
 Release notes
 *************
 
+Version 0.11.2
+==============
+
+- Minor installation improvement. Exclude unwanted files.
+
 Version 0.11.1
 ==============
 
