@@ -15,10 +15,11 @@ env:
 
 # install matrix versions, deps and optional deps
 install:
-  - pip install tox-travis
+  - travis_retry pip install tox-travis
 
 # run tests with coverage
-script: tox
+script: 
+  - travis_retry tox
 
 # codecov
 after_success:
