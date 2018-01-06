@@ -1,6 +1,11 @@
 sudo: false
 language: python
 
+python:
+  - "2.7"
+  - "3.5"
+  - "3.6"
+
 env:
   matrix:
     - TOX_ENV=py27-pandas018
@@ -18,7 +23,7 @@ install:
   - pip install tox
 
 # run tests with coverage
-script: tox
+script: tox -e $TOXENV
 
 # codecov
 after_success:
