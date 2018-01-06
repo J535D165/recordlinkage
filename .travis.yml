@@ -10,6 +10,8 @@ env:
   - PANDAS="0.18"
   - PANDAS="0.19"
   - PANDAS="0.20"
+  - PANDAS="0.21"
+  - PANDAS="latest"
 
 # install matrix versions, deps and optional deps
 install:
