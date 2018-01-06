@@ -7,16 +7,9 @@ python:
   - "3.6"
 
 env:
-  matrix:
-    - TOX_ENV=py27-pandas018
-    - TOX_ENV=py27-pandas019
-    - TOX_ENV=py27-pandas020
-    - TOX_ENV=py35-pandas018
-    - TOX_ENV=py35-pandas019
-    - TOX_ENV=py35-pandas020
-    - TOX_ENV=py36-pandas018
-    - TOX_ENV=py36-pandas019
-    - TOX_ENV=py36-pandas020
+  - PANDAS="0.18"
+  - PANDAS="0.19"
+  - PANDAS="0.20"
 
 # install matrix versions, deps and optional deps
 install:
