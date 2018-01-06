@@ -23,7 +23,7 @@ install:
   - pip install tox
 
 # run tests with coverage
-script: tox -e $TOXENV
+script: tox
 
 # codecov
 after_success:
