@@ -20,7 +20,7 @@ env:
 
 # install matrix versions, deps and optional deps
 install:
-  - pip install tox
+  - pip install tox-travis
 
 # run tests with coverage
 script: tox
