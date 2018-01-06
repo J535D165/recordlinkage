@@ -1,28 +1,24 @@
 sudo: false
 language: python
-python:
-  - "2.7"
-  - "3.5"
-  - "3.6"
 
 env:
-  - PANDAS_VERSION="pandas>=0.18,<0.19"
-  - PANDAS_VERSION="pandas>=0.19,<0.20"
-  - PANDAS_VERSION="pandas>=0.20,<0.21"
-  - PANDAS_VERSION="pandas"
-
-before_script:
-  - pip install nose
-  - pip install parameterized
-  - pip install codecov
+  matrix:
+    - TOX_ENV=py27-pandas018
+    - TOX_ENV=py27-pandas019
+    - TOX_ENV=py27-pandas020
+    - TOX_ENV=py35-pandas018
+    - TOX_ENV=py35-pandas019
+    - TOX_ENV=py35-pandas020
+    - TOX_ENV=py36-pandas018
+    - TOX_ENV=py36-pandas019
+    - TOX_ENV=py36-pandas020
 
 # install matrix versions, deps and optional deps
 install:
-  - pip install -q $PANDAS_VERSION
-  - pip install -e .
+  - pip install tox
 
 # run tests with coverage
-script: nosetests --verbose --nologcapture --with-coverage --cover-package=recordlinkage
+script: tox
 
 # codecov
 after_success:
