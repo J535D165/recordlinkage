@@ -13,14 +13,8 @@ env:
   - PANDAS="0.21"
   - PANDAS="latest"
 
-# install matrix versions, deps and optional deps
 install:
+  - travis_retry pip install codecov coverage
   - travis_retry pip install tox-travis
-
-# run tests with coverage
-script: 
-  - travis_retry tox
-
-# codecov
-after_success:
-  - bash <(curl -s https://codecov.io/bash)
+script: travis_retry tox
+after_success: coverage combine && codecov
