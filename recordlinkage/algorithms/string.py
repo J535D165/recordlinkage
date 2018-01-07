@@ -155,7 +155,7 @@ def cosine_similarity(s1, s2, include_wb=True, ngram=(2, 2)):
 
 def smith_waterman_similarity(s1, s2, match=5, mismatch=-5, gap_start=-5, gap_continue=-1, norm="mean"):
     """
-    smith_waterman_similarity(s1, s2, match=1, mismatch=-1, gap_start=-1, gap_continue=-0.2, norm="mean")
+    smith_waterman_similarity(s1, s2, match=5, mismatch=-5, gap_start=-5, gap_continue=-1, norm="mean")
 
     An implementation of the Smith-Waterman string comparison algorithm
     described in Christen, Peter (2012).
@@ -168,16 +168,16 @@ def smith_waterman_similarity(s1, s2, match=5, mismatch=-5, gap_start=-5, gap_co
         Series or DataFrame to compare all fields.
     match : float
         The value added to the match score if two characters match.
-        Greater than mismatch, gap_start, and gap_continue. Default: 1.
+        Greater than mismatch, gap_start, and gap_continue. Default: 5.
     mismatch : float
         The value added to the match score if two characters do not match.
-        Less than match. Default: -1.
+        Less than match. Default: -5.
     gap_start : float
         The value added to the match score upon encountering the start of
-        a gap. Default: -1.
+        a gap. Default: -5.
     gap_continue : float
         The value added to the match score for positions where a previously
-        started gap is continuing. Default: -0.2.
+        started gap is continuing. Default: -1.
     norm : str
         The name of the normalization metric to be used. Applied by dividing
         the match score by the normalization metric multiplied by match. One

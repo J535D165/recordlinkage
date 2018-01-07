@@ -1,3 +1,4 @@
+import pandas
 import numpy
 
 
@@ -64,6 +65,14 @@ def merge_dicts(*dict_args):
     return result
 
 
+def multi_index_to_frame(index):
+    """
+    Replicates MultiIndex.to_frame, which was introduced in pandas 0.21,
+    for the sake of backwards compatibility.
+    """
+    return pandas.DataFrame(index.tolist(), index=index, columns=index.names)
+
+  
 def split_index(index, chunks):
     """Function to split pandas.Index and pandas.MultiIndex objects.
 

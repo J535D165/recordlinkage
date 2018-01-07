@@ -1,6 +1,6 @@
 import os
 
-from setuptools import setup
+from setuptools import setup, find_packages
 import versioneer
 
 
@@ -32,14 +32,8 @@ setup(
         "scipy>=0.17.1",
         "scikit-learn>=0.17.1",
     ],
-    packages=[
-        'recordlinkage',
-        'recordlinkage.datasets',
-        'recordlinkage.standardise',
-        'recordlinkage.algorithms'
-    ],
+    packages=find_packages(exclude=["benchmarks", "tests", "docs"]),
     include_package_data=True,
-    package_dir={'recordlinkage': 'recordlinkage'},
     package_data={'recordlinkage': ['datasets/*/*.csv']},
     license='GPL-3.0'
 )

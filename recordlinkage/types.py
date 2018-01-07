@@ -108,6 +108,16 @@ def is_pandas_like(x):
     return isinstance(x, (pandas.Series, pandas.DataFrame))
 
 
+def is_pandas_multiindex(x):
+
+    return isinstance(x, (pandas.MultiIndex))
+
+
+def is_pandas_2d_multiindex(x):
+
+    return is_pandas_multiindex(x) and x.nlevels == 2
+
+
 def is_numpy_like(x):
 
     return isinstance(x, (numpy.ndarray))

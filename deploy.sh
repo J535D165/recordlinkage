@@ -21,13 +21,18 @@ echo ""
 git tag -a "v$version_tag" -m "Version $version_tag"
 
 # Make the package installable. 
-python setup.py bdist_wheel
+python setup.py sdist bdist_wheel
 
-# recordlinkage-0.6.0+0.g9c83c85.dirty-py2.py3-none-any.whl
+# wheel example: recordlinkage-0.6.0+0.g9c83c85.dirty-py2.py3-none-any.whl
+# sdist example: recordlinkage-0.11.0+1.gf2bd314.dirty.tar.gz
 base_path="dist/recordlinkage-"
-ext_path="-py2.py3-none-any.whl"
-full_path=$base_path$version_tag$ext_path
-echo $full_path
+whl_ext="-py2.py3-none-any.whl"
+sdist_ext=".tar.gz"
+whl_full_path=$base_path$version_tag$whl_ext
+sdist_full_path=$base_path$version_tag$sdist_ext
+
+echo $whl_full_path
+echo $sdist_full_path
 
 echo ""
 echo "Upload release to PiPy (y/n)? "
@@ -35,6 +40,6 @@ read upload_pip
 
 if echo "$upload_pip" | grep -iq "^y" ;then
 
-    twine upload $full_path
+    twine upload $sdist_full_path $whl_full_path
 
 fi
