@@ -37,13 +37,15 @@ def get_length(x):
         return len(x)
 
 
-def listify(x):
+def listify(x, none_value=[]):
     """Make a list of the argument if it is not a list."""
 
     if isinstance(x, list):
         return x
     elif isinstance(x, tuple):
         return list(x)
+    elif x is None:
+        return none_value
     else:
         return [x]
 
