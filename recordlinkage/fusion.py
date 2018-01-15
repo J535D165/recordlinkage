@@ -231,7 +231,7 @@ def process_tie_break(tie_break):
 
 @add_metaclass(ABCMeta)
 class FuseCore:
-    def __init__(self):
+    def __init__(self, njobs=1, sep='_'):
         """
 
         ``FuseCore`` and its subclasses are initialized without data.
@@ -239,7 +239,18 @@ class FuseCore:
         series of data resolutions, which are executed when
         ``.fuse()`` is called.
 
+        Parameters
+        ----------
+
+        njobs : int
+            The number of cores to be used for processing. Defaults to
+            one core. If njobs=1, multiprocessing will not be used.
+
         """
+
+        self.njobs = njobs
+        self.sep = sep
+
         self.index = None
         self.predictions = None
         self.df_a = None
@@ -247,11 +258,759 @@ class FuseCore:
         self.suffix_a = None
         self.suffix_b = None
         self.resolution_queue = []
+
         self._bases_taken = []
         self._names_taken = []
-        self._sep = ''
         self._index_level_0 = None
         self._index_level_1 = None
+
+    def _get_df_a_col(self, name):
+        """
+
+        Returns a data from a column in df_a, corresponding to the
+        first level of the candidate link MultiIndex.
+
+        Parameters
+        ----------
+        name : str
+            Column name.
+
+        Returns
+        -------
+        pandas.Series
+
+        """
+        return self.df_a[name].loc[list(self.index[self._index_level_0])]
+
+    def _get_df_b_col(self, name):
+        """
+
+        Returns a data from a column in df_b, corresponding to the
+        second level of the candidate link MultiIndex.
+
+        Parameters
+        ----------
+        name : str
+            Column name.
+
+        Returns
+        -------
+        pandas.Series
+
+        """
+        return self.df_b[name].loc[list(self.index[self._index_level_1])]
+
+    def _make_resolution_series(self,
+                                values_a,
+                                values_b,
+                                meta_a=None,
+                                meta_b=None,
+                                transform_vals=None,
+                                transform_meta=None,
+                                static_meta=False,
+                                **kwargs):
+        """
+
+        Formats data for conflict resolution. Output is a
+        pandas.Series of nested tuples.
+
+        Parameters
+        ----------
+        values_a : str/list
+            Column name(s) from df_a containing values to be resolved.
+        values_b :
+            Column name(s) from df_b containing values to be resolved.
+        meta_a :
+            Column name(s) from df_a containing metadata values to be
+            used in conflict resolution.Optionally, if static_meta is
+            True, meta_a will become the metadata value for all values
+            from df_a.
+        meta_b :
+            Column name(s) from df_b containing metadata values to be
+            used in conflict resolution.Optionally, if static_meta is
+            True, meta_b will become the metadata value for all values
+            from df_b.
+        transform_vals : function
+            An optional pre-processing function to be applied to
+            values.
+        transform_meta : function
+            An optional pre-processing function to be applied to
+            metadata values.
+        static_meta : bool
+            If True, the user-specified values of meta_a and meta_b
+            will be used as metadata for all values. Useful if the
+            user wishes to preserve information about the source that
+            a value came from, such as the original dataframe or
+            column.
+
+        Returns
+        -------
+        A pandas.Series
+
+        """
+
+        if self.df_a is None:
+            raise AssertionError('df_a is None')
+
+        if self.df_b is None:
+            raise AssertionError('df_b is None')
+
+        if transform_vals is not None and not callable(transform_vals):
+            raise ValueError('transform_vals must be callable.')
+
+        if transform_meta is not None and not callable(transform_meta):
+            raise ValueError('transform_meta must be callable.')
+
+        # Listify value inputs
+        values_a = listify(values_a)
+        values_b = listify(values_b)
+
+        # Listify and validate metadata inputs
+        if (meta_a is None and meta_b is not None) or \
+           (meta_b is None and meta_a is not None):
+            raise AssertionError(
+                'Metadata was given for one Data Frame but not the other.')
+
+        if meta_a is None and meta_b is None:
+            use_meta = False
+        elif not static_meta:
+            use_meta = True
+            meta_a = listify(meta_a)
+            meta_b = listify(meta_b)
+        else:
+            use_meta = True
+
+        # Check value / metadata column correspondence
+        if use_meta and not static_meta:
+
+            if len(values_a) < len(meta_a):
+                generalize_values_a = True
+                generalize_meta_a = False
+                rl_logging.warning(
+                    'Generalizing values. There are fewer columns in '
+                    'values_a than in meta_a. Values in first column of '
+                    'values_a will be generalized to values in meta_a.')
+            elif len(values_a) > len(meta_a):
+                generalize_values_a = False
+                generalize_meta_a = True
+                rl_logging.warning(
+                    'Generalizing metadata. There are fewer columns in '
+                    'meta_a than in values_a. Values in first column of '
+                    'meta_a will be generalized to values in values_a.')
+            else:
+                generalize_values_a = False
+                generalize_meta_a = False
+
+            if len(values_b) < len(meta_b):
+                generalize_values_b = True
+                generalize_meta_b = False
+                rl_logging.warning(
+                    'Generalizing values. There are fewer columns in '
+                    'values_b than in meta_b. Values in first column of '
+                    'values_b will be generalized to values in meta_b.')
+            elif len(values_b) > len(meta_b):
+                generalize_values_b = False
+                generalize_meta_b = True
+                rl_logging.warning(
+                    'Generalizing metadata. There are fewer columns in '
+                    'meta_b than in values_b. Values in first column of '
+                    'meta_b will be generalized to values in values_b.')
+            else:
+                generalize_values_b = False
+                generalize_meta_b = False
+        else:
+            generalize_values_a = None
+            generalize_meta_a = None
+            generalize_values_b = None
+            generalize_meta_b = None
+
+        # Make list of data series
+        data_a = []
+        if generalize_values_a:
+            for _ in range(len(meta_a)):
+                data_a.append(self._get_df_a_col(values_a[0]))
+        else:
+            for name in values_a:
+                data_a.append(self._get_df_a_col(name))
+
+        data_b = []
+
+        if generalize_values_b:
+            for _ in range(len(meta_b)):
+                data_b.append(self._get_df_b_col(values_b[0]))
+        else:
+            for name in values_b:
+                data_b.append(self._get_df_b_col(name))
+
+        # Combine data
+        value_data = data_a
+        value_data.extend(data_b)
+
+        # Apply transformation if function is provided
+        if transform_vals is not None:
+            value_data = [s.apply(transform_vals) for s in value_data]
+
+        # Zip data
+        value_data = zip(*value_data)
+
+        # Make list of metadata series
+        if use_meta:
+
+            metadata_a = []
+
+            if static_meta:
+                for _ in range(len(values_a)):
+                    metadata_a.append(
+                        pd.Series(
+                            [meta_a for _ in range(len(self.index))],
+                            index=self.index[self._index_level_0]))
+            elif generalize_meta_a:
+                for _ in range(len(values_a)):
+                    metadata_a.append(self._get_df_a_col(meta_a[0]))
+            else:
+                for name in meta_a:
+                    metadata_a.append(self._get_df_a_col(name))
+
+            metadata_b = []
+
+            if static_meta:
+                for _ in range(len(values_b)):
+                    metadata_b.append(
+                        pd.Series(
+                            [meta_b for _ in range(len(self.index))],
+                            index=self.index[self._index_level_1]))
+            elif generalize_meta_b:
+                for _ in range(len(values_b)):
+                    metadata_b.append(self._get_df_b_col(meta_b[0]))
+            else:
+                for name in meta_b:
+                    metadata_b.append(self._get_df_b_col(name))
+
+            # Combine metadata
+            metadata = metadata_a
+            metadata.extend(metadata_b)
+
+            # Apply transformation if function is provided
+            if transform_meta is not None:
+                metadata = [s.apply(transform_meta) for s in metadata]
+
+            # Zip metadata
+            metadata = zip(*metadata)
+        else:
+            metadata = None
+
+        if use_meta:
+            output = pd.Series(list(zip(value_data, metadata)))
+        else:
+            output = pd.Series(list(zip(value_data)))
+
+        return output
+
+    def resolve(self,
+                fun,
+                values_a,
+                values_b,
+                meta_a=None,
+                meta_b=None,
+                name=None,
+                tie_break=None,
+                transform_vals=None,
+                transform_meta=None,
+                transform_null=False,
+                static_meta=False,
+                remove_na_vals=True,
+                remove_na_meta=None,
+                params=None,
+                description=None,
+                handler_override=None,
+                **kwargs):
+        """General method to queue jobs.
+
+        A general-purpose method to queue a conflict resolution job
+        for later computation. Conflict resolution job metadata is
+        stored in self.resolution_queue.
+
+        Parameters
+        ----------
+        fun : function
+            A conflict resolution function.
+        values_a : str/list
+            Column name(s) from df_a containing values to be resolved.
+        values_b :
+            Column name(s) from df_b containing values to be resolved.
+        meta_a :
+            Column name(s) from df_a containing metadata values to be
+            used to choose values. Optionally, if static_meta is True,
+            meta_a will become the metadata value for all values from
+            df_a.
+        meta_b :
+            Column name(s) from df_b containing metadata values to be
+            used to choose values. Optionally, if static_meta is True,
+            meta_b will become the metadata value for all values from
+            df_b.
+        name : str
+            The name of the resulting resolved column.
+        transform_vals : function
+            An optional pre-processing function to be applied to values.
+        transform_meta : function
+            An optional pre-processing function to be applied to
+            metadata values.
+        transform_null : bool
+            If True, transform_vals/transform_meta will be called on
+            missing values. If False (default) missing values are
+            skipped automatically.
+        static_meta : bool
+            If True, the user-specified values of meta_a and meta_b
+            will be used as metadata for all values. Useful if the
+            user wishes to preserve information about the source that
+            a value came from, such as the original dataframe or
+            column.
+        remove_na_vals : bool
+            If True, value/metadata pairs will be removed if the value
+            is missing (i.e. np.nan).
+        remove_na_meta : bool
+            If True, value/metadata pairs will be removed if metadata
+            is missing (i.e. np.nan).
+        params : tuple/list
+            Extra arguments used by the conflict resolution function
+            (e.g. for the ``metric`` parameter of the ``aggregate``
+            function).
+        description : str
+            A description string for use in logging, e.g.
+            'cry_with_the_wolves'.
+        handler_override : function
+            If specified, this function will be used to handle this
+            job. If None,defaults to do_resolve.
+
+        Returns
+        -------
+        None
+            Queues a conflict resolution job, to be completed when
+            ``fuse`` method is called.
+
+        """
+
+        if isinstance(remove_na_meta, bool):
+            na_params = [remove_na_vals, remove_na_meta]
+        else:
+            na_params = [remove_na_vals]
+
+        if params is None:
+            all_params = tuple(listify(tie_break) + na_params)
+        elif isinstance(params, list):
+            all_params = tuple(params + listify(tie_break) + na_params)
+        else:
+            all_params = tuple(
+                listify(params) + listify(tie_break) + na_params)
+
+        if fun is not None:
+            argspec = inspect.getargspec(fun)[0]
+
+            # Check that the given arguments are appropriate for the specified
+            # conflict resolution function.
+
+            param_pairs = [(remove_na_vals, 'remove_na_vals'),
+                           (remove_na_meta, 'remove_na_meta'), (tie_break,
+                                                                'tie_break')]
+            for given, param_name in param_pairs:
+                if given is None:
+                    if param_name in argspec:
+                        raise AssertionError(
+                            'Missing argument. {} requires {}'.format(
+                                fun.__name__, param_name))
+                else:
+                    if param_name not in argspec:
+                        raise AssertionError(
+                            'Incorrect arguments. {} does not take {}'.format(
+                                fun.__name__, param_name))
+            if len(argspec) != len(all_params) + 1:
+                raise AssertionError(
+                    'Incorrect arguments. The number of options specified do'
+                    'not match the conflict resolution funciton signature.'
+                    'Expected: ' + str(argspec) + ' got: ' +
+                    str(['x'] + list(all_params)))
+
+        if handler_override is not None:
+            handler = handler_override
+        else:
+            handler = ResolveHandler(self)
+
+        # Store metadata
+        job = {
+            'fun':
+            fun,
+            'values_a':
+            values_a,
+            'values_b':
+            values_b,
+            'meta_a':
+            meta_a,
+            'meta_b':
+            meta_b,
+            'transform_vals':
+            transform_vals if transform_null or transform_vals is None else
+            SkipNull(transform_vals),
+            'transform_meta':
+            transform_meta if transform_null or transform_vals is None else
+            SkipNull(transform_meta),
+            'static_meta':
+            static_meta,
+            'params':
+            all_params,
+            'name':
+            name,
+            'description':
+            description,
+            'handler':
+            handler,
+            'kwargs':
+            kwargs
+        }
+        self.resolution_queue.append(job)
+
+    def _fusion_init(self, index, df_a, df_b, predictions, sep):
+        """
+
+        A pre-fusion initialization routine to store the data inputs
+        for access during the conflict resolution / data fusion
+        process.
+
+        Parameters
+        ----------
+        index : pandas.MultiIndex
+            MultiIndex describing a set of candidate links / record
+            pairs (e.g. produced by recordlinkage Indexing classes or
+             a recordlinkage.Compare.vectors.index).
+        df_a : pandas.DataFrame
+            The original first data frame.
+        df_b : pandas.DataFrame
+            The original second data frame.
+        predictions : pandas.Series
+            A pandas.Series of True/False classifications.
+        sep : str
+            A string separator to be used in resolving column naming
+            conflicts.
+
+        Returns
+        -------
+        None
+
+        """
+        # Comparison / candidate link index. Remove names in case of name
+        # collision.
+        if len(set(index.names)) != len(index.names):
+            self.index = multi_index_to_frame(
+                index.set_names(list(range(len(index.names)))))
+        else:
+            self.index = multi_index_to_frame(index)
+
+        # Prediction vector
+        self.predictions = predictions
+
+        # Original data
+        self.df_a = df_a
+        self.df_b = df_b
+
+        # String separator to be used when resolving duplicate names
+        self.sep = sep
+
+        # If custom names are used for index levels
+        self._index_level_0 = self.index.columns[0]
+        self._index_level_1 = self.index.columns[1]
+
+        if self.predictions is not None:
+            # Turn predictions into desired formats
+            pred_list = list(self.predictions)
+
+            # Update multiindex
+            self.index = self.index.loc[pred_list]
+
+    def _resolve_job_names(self, sep):
+        """
+        Resolves conflicts among conflict resolution job column names
+        in self.resolution_queue.
+
+        Parameters
+        ----------
+        sep : str
+            A separator string.
+
+        Returns
+        -------
+        None
+
+        """
+        for job in self.resolution_queue:
+            if job['name'] is not None:
+                if job['name'] not in self._bases_taken:
+                    if job['name'] not in self._names_taken:
+                        self._bases_taken.append(job['name'])
+                        self._names_taken.append(job['name'])
+                else:
+                    i = 1
+                    while True:
+                        name = str(job['name']) + sep + str(i)
+                        if name in self._names_taken:
+                            if i > 1000:
+                                raise RuntimeError(
+                                    'Data fusion hung while attempting to'
+                                    '_resolve column names.'
+                                    '1000 name suffixes were attempted.'
+                                    'Check for excessive name conflicts.')
+                            else:
+                                i += 1
+                        else:
+                            self._names_taken.append(name)
+                            job['name'] = name
+                            break
+
+    def fuse(self, index, df_a, df_b=None, predictions=None):
+        """Fuse the data with the given links.
+
+        Perform conflict resolution and data fusion for given data,
+        using accumulated conflict resolution metadata.
+
+        Parameters
+        ----------
+        index : pandas.MultiIndex
+            MultiIndex describing a set of candidate links / record
+            pairs (e.g. produced by recordlinkage Indexing classes or
+            a recordlinkage.Compare).
+        df_a : pandas.DataFrame
+            The original first data frame.
+        df_b : pandas.DataFrame
+            The original second data frame.
+        predictions : pandas.Series
+            A pandas.Series of True/False classifications.
+        sep : str
+            A string separator to be used in resolving column naming
+            conflicts.
+
+        Returns
+        -------
+        pandas.DataFrame
+            A pandas.DataFrame with resolved/fused data.
+
+        """
+
+        if df_b is None:
+            raise NotImplementedError(
+                'Fusion for deduplication has not been implemented.'
+            )
+
+        if not isinstance(predictions, (type(None), pd.Series, type(list))):
+            raise ValueError(
+                'Predictions must be a pandas Series, list, or None.')
+
+        if predictions is not None:
+            if len(predictions) != len(index):
+                raise AssertionError(
+                    'Length of the predictions vector ({}) does not match '
+                    'the length of the index ({}).'.format(
+                        len(predictions), len(index)))
+
+            if isinstance(predictions, pd.Series):
+                use_predictions = predictions
+            else:
+                use_predictions = pd.Series(predictions)
+                use_predictions.index = self.index.index
+
+            if use_predictions.dtype == np.dtype(bool):
+                pass
+            elif use_predictions.dtype == np.dtype(int):
+                rl_logging.warning(
+                    'Expected predictions to be a boolean vector, but got'
+                    'vector of integers. Coercing integer values to boolean '
+                    'values.')
+                use_predictions = use_predictions.apply(bool)
+            else:
+                raise ValueError(
+                    'predictions must be a pandas.Series (or list) of '
+                    'boolean values.')
+        else:
+            use_predictions = None
+
+        # Save references to input data.
+        self._fusion_init(index, df_a, df_b, use_predictions, self.sep)
+
+        # Resolve naming conflicts, if any.
+        self._resolve_job_names(self.sep)
+
+        # Perform conflict resolution from resolution queue metadata, using
+        # the appropriate number of cores (and multiprocessing if applicable.)
+        if self.njobs <= 1:
+            fused = [
+                handle_job(job_data) for job_data in self.resolution_queue
+            ]
+        else:
+            if self.njobs > mp.cpu_count():
+                warnings.warn('njobs exceeds maximum available cores ({}). '
+                              'Defaulting to maximum available.'.format(
+                                  mp.cpu_count()), RuntimeWarning)
+                use_n_cores = mp.cpu_count()
+            else:
+                use_n_cores = self.njobs
+            # Compute resolved values for output.
+            p = mp.Pool(use_n_cores)
+            fused = p.map(handle_job, self.resolution_queue)
+            p.close()
+
+        return pd.concat(fused, axis=1).set_index(self.index.index)
+
+
+class Fuse(FuseCore):
+    """
+
+    FuseLinks turns two linked data frames into a single "fused" data
+    frame, with options to handle data conflicts between columns in
+    the two data frames.
+
+    Note that FuseLinks handles conflicts between record pairs (i.e.
+    candidate links). It may not be suitable for data duplication
+    problems, where the user may need to fuse *clusters* of records.
+    (A ``FuseDuplicates`` class which detects and fuses clusters may
+    be implemented in the future.)
+
+    """
+
+    def __init__(self, *args, **kwargs):
+        """
+        ``FuseLinks`` is initialized without data. The initialized
+        object is populated by metadata describing a series of data
+        resolutions, which are executed when ``.fuse()`` is called.
+        """
+        super(Fuse, self).__init__(*args, **kwargs)
+
+    def keep_original(self,
+                      columns_a,
+                      columns_b,
+                      suffix_a=None,
+                      suffix_b=None):
+        """
+
+        Specifies columns from df_a and df_b which should be included
+        in the fused output, but which do not require conflict
+        resolution.
+
+        Parameters
+        ----------
+        columns_a : str/list
+            A list of column names to be included from df_a.
+        columns_b : str/list
+            A list of column names to be included from df_b.
+        suffix_a : str
+            An optional suffix to be applied to the name of all
+            columns kept from df_a.
+        suffix_b : str
+            An optional suffix to be applied to the names of all
+            columns kept from df_b.
+        sep : str
+            The separator that should be used when resolving column
+            name conflicts (e.g. with ``sep='_'``, ``taken_name``
+            becomes ``taken_name_1``).
+
+        Returns
+        -------
+        None
+            Queues a conflict resolution job, to be completed when
+            ``fuse`` method is called.
+
+        """
+
+        columns_a = listify(columns_a)
+        columns_b = listify(columns_b)
+
+        for col in columns_a:
+            if suffix_a is None:
+                self.resolve(
+                    None, [col], [],
+                    name=col,
+                    handler_override=KeepHandler(self))
+            else:
+                self.resolve(
+                    None, [col], [],
+                    name=col + self.sep + str(suffix_a),
+                    handler_override=KeepHandler(self))
+
+        for col in columns_b:
+            if suffix_b is None:
+                self.resolve(
+                    None, [], [col],
+                    name=col,
+                    handler_override=KeepHandler(self))
+            else:
+                self.resolve(
+                    None, [], [col],
+                    name=col + self.sep + str(suffix_b),
+                    handler_override=KeepHandler(self))
+
+    def trust_your_friends(self,
+                           values_a,
+                           values_b,
+                           trusted,
+                           tie_break_trusted='random',
+                           tie_break_untrusted='random',
+                           label_a='a',
+                           label_b='b',
+                           name=None,
+                           remove_na_vals=True):
+        """
+        Handles data conflicts by keeping data from a trusted source.
+
+        Parameters
+        ----------
+        values_a : str/list
+            Column name(s) from df_a to be resolved.
+        values_b : str/list
+            Column name(s) from df_b to be resolved.
+        trusted : str
+            The label of the preferred data source. By default, 'a'
+            for df_a or 'b' for df_b.
+        tie_break_trusted : str/function
+            A conflict resolution function to be to break ties
+            between trusted values.
+        tie_break_untrusted : str/function
+            A conflict resolution function to be to break ties
+            between untrusted values.
+        label_a : str/list
+            The value(s) used to identify data from df_a. By default,
+            all values are labelled 'a'. If multiple columns are
+            specified in values_a, these may be identified with a
+            list of column labels.
+        label_b : str/list
+            The value(s) used to identify data from df_b. By default,
+            all values are labelled 'b'. If multiple columns are
+            specified in values_b, these may be identified with a list
+            of column labels.
+        name : str
+            The name of the resulting resolved column.
+        remove_na_vals : bool
+            If True, value/metadata pairs will be removed if the value
+            is missing (i.e. np.nan).
+
+        Returns
+        -------
+        None
+            Queues a conflict resolution job, to be completed when
+            ``fuse`` method is called.
+
+        """
+        self.resolve(
+            choose_trusted,
+            values_a,
+            values_b,
+            meta_a=label_a,
+            meta_b=label_b,
+            name=name,
+            static_meta=True,
+            params=trusted,
+            remove_na_vals=remove_na_vals,
+            remove_na_meta=False,
+            tie_break=[
+                process_tie_break(tie_break_trusted),
+                process_tie_break(tie_break_untrusted)
+            ],
+            description='trust_your_friends')
 
     def no_gossiping(self, values_a, values_b, name=None):
         """No gossiping strategy to fuse data.
@@ -660,844 +1419,3 @@ class FuseCore:
             description='choose_by_scored_metadata',
             transform_meta=func,
             transform_null=apply_to_null)
-
-    def resolve(self,
-                fun,
-                values_a,
-                values_b,
-                meta_a=None,
-                meta_b=None,
-                name=None,
-                tie_break=None,
-                transform_vals=None,
-                transform_meta=None,
-                transform_null=False,
-                static_meta=False,
-                remove_na_vals=True,
-                remove_na_meta=None,
-                params=None,
-                description=None,
-                handler_override=None,
-                **kwargs):
-        """General method to queue jobs.
-
-        A general-purpose method to queue a conflict resolution job
-        for later computation. Conflict resolution job metadata is
-        stored in self.resolution_queue.
-
-        Parameters
-        ----------
-        fun : function
-            A conflict resolution function.
-        values_a : str/list
-            Column name(s) from df_a containing values to be resolved.
-        values_b :
-            Column name(s) from df_b containing values to be resolved.
-        meta_a :
-            Column name(s) from df_a containing metadata values to be
-            used to choose values. Optionally, if static_meta is True,
-            meta_a will become the metadata value for all values from
-            df_a.
-        meta_b :
-            Column name(s) from df_b containing metadata values to be
-            used to choose values. Optionally, if static_meta is True,
-            meta_b will become the metadata value for all values from
-            df_b.
-        name : str
-            The name of the resulting resolved column.
-        transform_vals : function
-            An optional pre-processing function to be applied to values.
-        transform_meta : function
-            An optional pre-processing function to be applied to
-            metadata values.
-        transform_null : bool
-            If True, transform_vals/transform_meta will be called on
-            missing values. If False (default) missing values are
-            skipped automatically.
-        static_meta : bool
-            If True, the user-specified values of meta_a and meta_b
-            will be used as metadata for all values. Useful if the
-            user wishes to preserve information about the source that
-            a value came from, such as the original dataframe or
-            column.
-        remove_na_vals : bool
-            If True, value/metadata pairs will be removed if the value
-            is missing (i.e. np.nan).
-        remove_na_meta : bool
-            If True, value/metadata pairs will be removed if metadata
-            is missing (i.e. np.nan).
-        params : tuple/list
-            Extra arguments used by the conflict resolution function
-            (e.g. for the ``metric`` parameter of the ``aggregate``
-            function).
-        description : str
-            A description string for use in logging, e.g.
-            'cry_with_the_wolves'.
-        handler_override : function
-            If specified, this function will be used to handle this
-            job. If None,defaults to do_resolve.
-
-        Returns
-        -------
-        None
-            Queues a conflict resolution job, to be completed when
-            ``fuse`` method is called.
-
-        """
-
-        if isinstance(remove_na_meta, bool):
-            na_params = [remove_na_vals, remove_na_meta]
-        else:
-            na_params = [remove_na_vals]
-
-        if params is None:
-            all_params = tuple(listify(tie_break) + na_params)
-        elif isinstance(params, list):
-            all_params = tuple(params + listify(tie_break) + na_params)
-        else:
-            all_params = tuple(
-                listify(params) + listify(tie_break) + na_params)
-
-        if fun is not None:
-            argspec = inspect.getargspec(fun)[0]
-
-            # Check that the given arguments are appropriate for the specified
-            # conflict resolution function.
-
-            param_pairs = [(remove_na_vals, 'remove_na_vals'),
-                           (remove_na_meta, 'remove_na_meta'), (tie_break,
-                                                                'tie_break')]
-            for given, param_name in param_pairs:
-                if given is None:
-                    if param_name in argspec:
-                        raise AssertionError(
-                            'Missing argument. {} requires {}'.format(
-                                fun.__name__, param_name))
-                else:
-                    if param_name not in argspec:
-                        raise AssertionError(
-                            'Incorrect arguments. {} does not take {}'.format(
-                                fun.__name__, param_name))
-            if len(argspec) != len(all_params) + 1:
-                raise AssertionError(
-                    'Incorrect arguments. The number of options specified do'
-                    'not match the conflict resolution funciton signature.'
-                    'Expected: ' + str(argspec) + ' got: ' +
-                    str(['x'] + list(all_params)))
-
-        if handler_override is not None:
-            handler = handler_override
-        else:
-            handler = ResolveHandler(self)
-
-        # Store metadata
-        job = {
-            'fun':
-            fun,
-            'values_a':
-            values_a,
-            'values_b':
-            values_b,
-            'meta_a':
-            meta_a,
-            'meta_b':
-            meta_b,
-            'transform_vals':
-            transform_vals if transform_null or transform_vals is None else
-            SkipNull(transform_vals),
-            'transform_meta':
-            transform_meta if transform_null or transform_vals is None else
-            SkipNull(transform_meta),
-            'static_meta':
-            static_meta,
-            'params':
-            all_params,
-            'name':
-            name,
-            'description':
-            description,
-            'handler':
-            handler,
-            'kwargs':
-            kwargs
-        }
-        self.resolution_queue.append(job)
-
-    @abstractmethod
-    def _make_resolution_series(self,
-                                values_a,
-                                values_b,
-                                meta_a=None,
-                                meta_b=None,
-                                transform_vals=None,
-                                transform_meta=None,
-                                static_meta=False,
-                                **kwargs):
-        """
-
-        Formats data for conflict resolution. Output is a
-        pandas.Series of nested tuples. _make_resolution_series is
-        overriden by FuseLinks and FuseDuplicates. No implementation
-        is provided in FuseCore.
-
-        Parameters
-        ----------
-        values_a : str/list
-            Column name(s) from df_a containing values to be resolved.
-        values_b :
-            Column name(s) from df_b containing values to be resolved.
-        meta_a :
-            Column name(s) from df_a containing metadata values to be
-            used in conflict resolution. Optionally, if static_meta is
-            True, meta_a will become the metadata value for all values
-            from df_a.
-        meta_b :
-            Column name(s) from df_b containing metadata values to be
-            used in conflict resolution. Optionally, if static_meta is
-            True, meta_b will become the metadata value for all values
-            from df_b.
-        transform_vals : function
-            An optional pre-processing function to be applied to
-            values.
-        transform_meta : function
-            An optional pre-processing function to be applied to
-            metadata values.
-        static_meta : bool
-            If True, the user-specified values of meta_a and meta_b
-            will be used as metadata for all values. Useful if the
-            user wishes to preserve information about the source that
-            a value came from, such as the original dataframe or
-            column.
-
-        Returns
-        -------
-        pandas.Series
-            A series of nested tuples containing values to be
-            resolved, and optional metadata values. Value-only tuples
-            are of form :math:`((val_1, ..., val_n), )` whereas
-            value-metadata pairs are represented as
-            :math:`((val_1, ..., val_n), (meta_1, ..., meta_n))` where
-            val_i and meta_i are a value/metadata pair.
-
-        """
-        # No implementation provided.
-        # Override in subclass.
-        return NotImplemented
-
-    def _fusion_init(self, index, df_a, df_b, predictions, sep):
-        """
-
-        A pre-fusion initialization routine to store the data inputs
-        for access during the conflict resolution / data fusion
-        process.
-
-        Parameters
-        ----------
-        index : pandas.MultiIndex
-            MultiIndex describing a set of candidate links / record
-            pairs (e.g. produced by recordlinkage Indexing classes or
-             a recordlinkage.Compare.vectors.index).
-        df_a : pandas.DataFrame
-            The original first data frame.
-        df_b : pandas.DataFrame
-            The original second data frame.
-        predictions : pandas.Series
-            A pandas.Series of True/False classifications.
-        sep : str
-            A string separator to be used in resolving column naming
-            conflicts.
-
-        Returns
-        -------
-        None
-
-        """
-        # Comparison / candidate link index. Remove names in case of name
-        # collision.
-        if len(set(index.names)) != len(index.names):
-            self.index = multi_index_to_frame(
-                index.set_names(list(range(len(index.names)))))
-        else:
-            self.index = multi_index_to_frame(index)
-
-        # Prediction vector
-        self.predictions = predictions
-
-        # Original data
-        self.df_a = df_a
-        self.df_b = df_b
-
-        # String separator to be used when resolving duplicate names
-        self._sep = sep
-
-        # If custom names are used for index levels
-        self._index_level_0 = self.index.columns[0]
-        self._index_level_1 = self.index.columns[1]
-
-        if self.predictions is not None:
-            # Turn predictions into desired formats
-            pred_list = list(self.predictions)
-
-            # Update multiindex
-            self.index = self.index.loc[pred_list]
-
-    def _resolve_job_names(self, sep):
-        """
-        Resolves conflicts among conflict resolution job column names
-        in self.resolution_queue.
-
-        Parameters
-        ----------
-        sep : str
-            A separator string.
-
-        Returns
-        -------
-        None
-
-        """
-        for job in self.resolution_queue:
-            if job['name'] is not None:
-                if job['name'] not in self._bases_taken:
-                    if job['name'] not in self._names_taken:
-                        self._bases_taken.append(job['name'])
-                        self._names_taken.append(job['name'])
-                else:
-                    i = 1
-                    while True:
-                        name = str(job['name']) + sep + str(i)
-                        if name in self._names_taken:
-                            if i > 1000:
-                                raise RuntimeError(
-                                    'Data fusion hung while attempting to'
-                                    '_resolve column names.'
-                                    '1000 name suffixes were attempted.'
-                                    'Check for excessive name conflicts.')
-                            else:
-                                i += 1
-                        else:
-                            self._names_taken.append(name)
-                            job['name'] = name
-                            break
-
-    def fuse(self, index, df_a, df_b, predictions=None, njobs=1, sep='_'):
-        """Fuse the data with the given links.
-
-        Perform conflict resolution and data fusion for given data,
-        using accumulated conflict resolution metadata.
-
-        Parameters
-        ----------
-        index : pandas.MultiIndex
-            MultiIndex describing a set of candidate links / record
-            pairs (e.g. produced by recordlinkage Indexing classes or
-            a recordlinkage.Compare.vectors.index).
-        df_a : pandas.DataFrame
-            The original first data frame.
-        df_b : pandas.DataFrame
-            The original second data frame.
-        predictions : pandas.Series
-            A pandas.Series of True/False classifications.
-        njobs : int
-            The number of cores to be used for processing. Defaults to
-            one core. If njobs=1, multiprocessing will not be used.
-        sep : str
-            A string separator to be used in resolving column naming
-            conflicts.
-
-        Returns
-        -------
-        pandas.DataFrame
-            A pandas.DataFrame with resolved/fused data.
-
-        """
-
-        if not isinstance(predictions, (type(None), pd.Series, type(list))):
-            raise ValueError(
-                'Predictions must be a pandas Series, list, or None.')
-
-        if predictions is not None:
-            if len(predictions) != len(index):
-                raise AssertionError(
-                    'Length of the predictions vector ({}) does not match '
-                    'the length of the index ({}).'.format(
-                        len(predictions), len(index)))
-
-            if isinstance(predictions, pd.Series):
-                use_predictions = predictions
-            else:
-                use_predictions = pd.Series(predictions)
-                use_predictions.index = self.index.index
-
-            if use_predictions.dtype == np.dtype(bool):
-                pass
-            elif use_predictions.dtype == np.dtype(int):
-                rl_logging.warning(
-                    'Expected predictions to be a boolean vector, but got'
-                    'vector of integers. Coercing integer values to boolean '
-                    'values.')
-                use_predictions = use_predictions.apply(bool)
-            else:
-                raise ValueError(
-                    'predictions must be a pandas.Series (or list) of '
-                    'boolean values.')
-        else:
-            use_predictions = None
-
-        # Save references to input data.
-        self._fusion_init(index, df_a, df_b, use_predictions, sep)
-
-        # Resolve naming conflicts, if any.
-        self._resolve_job_names(self._sep)
-
-        # Perform conflict resolution from resolution queue metadata, using
-        # the appropriate number of cores (and multiprocessing if applicable.)
-        if njobs <= 1:
-            fused = [
-                handle_job(job_data) for job_data in self.resolution_queue
-            ]
-        else:
-            if njobs > mp.cpu_count():
-                warnings.warn('njobs exceeds maximum available cores ({}). '
-                              'Defaulting to maximum available.'.format(
-                                  mp.cpu_count()), RuntimeWarning)
-                use_n_cores = mp.cpu_count()
-            else:
-                use_n_cores = njobs
-            # Compute resolved values for output.
-            p = mp.Pool(use_n_cores)
-            fused = p.map(handle_job, self.resolution_queue)
-            p.close()
-
-        return pd.concat(fused, axis=1).set_index(self.index.index)
-
-
-class FuseDuplicates(FuseCore):
-    def __init__(self, method=''):
-        """
-
-        ``FuseDuplicates`` is initialized without data. The
-        initialized object is populated by metadata describing a
-        series of data resolutions, which are executed when
-        ``.fuse()`` is called.
-
-        :param method: A cluster-detection algorithm. None are
-            currently implemented.
-        """
-        super(FuseDuplicates, self).__init__()
-        self.method = method
-        warnings.warn('FuseDuplicates has not been implemented.')
-
-    def _find_clusters(self, method):
-        warnings.warn('FuseDuplicates has not been implemented.')
-        return NotImplemented
-
-    def _make_resolution_series(self,
-                                values_a,
-                                values_b,
-                                meta_a=None,
-                                meta_b=None,
-                                transform_vals=None,
-                                transform_meta=None,
-                                static_meta=False,
-                                **kwargs):
-        warnings.warn('FuseDuplicates has not been implemented.')
-        return NotImplemented
-
-
-class FuseLinks(FuseCore):
-    """
-
-    FuseLinks turns two linked data frames into a single "fused" data
-    frame, with options to handle data conflicts between columns in
-    the two data frames.
-
-    Note that FuseLinks handles conflicts between record pairs (i.e.
-    candidate links). It may not be suitable for data duplication
-    problems, where the user may need to fuse *clusters* of records.
-    (A ``FuseDuplicates`` class which detects and fuses clusters may
-    be implemented in the future.)
-
-    """
-
-    def __init__(self):
-        """
-        ``FuseLinks`` is initialized without data. The initialized
-        object is populated by metadata describing a series of data
-        resolutions, which are executed when ``.fuse()`` is called.
-        """
-        super(FuseLinks, self).__init__()
-
-    def _get_df_a_col(self, name):
-        """
-
-        Returns a data from a column in df_a, corresponding to the
-        first level of the candidate link MultiIndex.
-
-        Parameters
-        ----------
-        name : str
-            Column name.
-
-        Returns
-        -------
-        pandas.Series
-
-        """
-        return self.df_a[name].loc[list(self.index[self._index_level_0])]
-
-    def _get_df_b_col(self, name):
-        """
-
-        Returns a data from a column in df_b, corresponding to the
-        second level of the candidate link MultiIndex.
-
-        Parameters
-        ----------
-        name : str
-            Column name.
-
-        Returns
-        -------
-        pandas.Series
-
-        """
-        return self.df_b[name].loc[list(self.index[self._index_level_1])]
-
-    def _make_resolution_series(self,
-                                values_a,
-                                values_b,
-                                meta_a=None,
-                                meta_b=None,
-                                transform_vals=None,
-                                transform_meta=None,
-                                static_meta=False,
-                                **kwargs):
-        """
-
-        Formats data for conflict resolution. Output is a
-        pandas.Series of nested tuples.
-
-        Parameters
-        ----------
-        values_a : str/list
-            Column name(s) from df_a containing values to be resolved.
-        values_b :
-            Column name(s) from df_b containing values to be resolved.
-        meta_a :
-            Column name(s) from df_a containing metadata values to be
-            used in conflict resolution.Optionally, if static_meta is
-            True, meta_a will become the metadata value for all values
-            from df_a.
-        meta_b :
-            Column name(s) from df_b containing metadata values to be
-            used in conflict resolution.Optionally, if static_meta is
-            True, meta_b will become the metadata value for all values
-            from df_b.
-        transform_vals : function
-            An optional pre-processing function to be applied to
-            values.
-        transform_meta : function
-            An optional pre-processing function to be applied to
-            metadata values.
-        static_meta : bool
-            If True, the user-specified values of meta_a and meta_b
-            will be used as metadata for all values. Useful if the
-            user wishes to preserve information about the source that
-            a value came from, such as the original dataframe or
-            column.
-
-        Returns
-        -------
-        A pandas.Series
-
-        """
-
-        if self.df_a is None:
-            raise AssertionError('df_a is None')
-
-        if self.df_b is None:
-            raise AssertionError('df_b is None')
-
-        if transform_vals is not None and not callable(transform_vals):
-            raise ValueError('transform_vals must be callable.')
-
-        if transform_meta is not None and not callable(transform_meta):
-            raise ValueError('transform_meta must be callable.')
-
-        # Listify value inputs
-        values_a = listify(values_a)
-        values_b = listify(values_b)
-
-        # Listify and validate metadata inputs
-        if (meta_a is None and meta_b is not None) or \
-           (meta_b is None and meta_a is not None):
-            raise AssertionError(
-                'Metadata was given for one Data Frame but not the other.')
-
-        if meta_a is None and meta_b is None:
-            use_meta = False
-        elif not static_meta:
-            use_meta = True
-            meta_a = listify(meta_a)
-            meta_b = listify(meta_b)
-        else:
-            use_meta = True
-
-        # Check value / metadata column correspondence
-        if use_meta and not static_meta:
-
-            if len(values_a) < len(meta_a):
-                generalize_values_a = True
-                generalize_meta_a = False
-                rl_logging.warning(
-                    'Generalizing values. There are fewer columns in '
-                    'values_a than in meta_a. Values in first column of '
-                    'values_a will be generalized to values in meta_a.')
-            elif len(values_a) > len(meta_a):
-                generalize_values_a = False
-                generalize_meta_a = True
-                rl_logging.warning(
-                    'Generalizing metadata. There are fewer columns in '
-                    'meta_a than in values_a. Values in first column of '
-                    'meta_a will be generalized to values in values_a.')
-            else:
-                generalize_values_a = False
-                generalize_meta_a = False
-
-            if len(values_b) < len(meta_b):
-                generalize_values_b = True
-                generalize_meta_b = False
-                rl_logging.warning(
-                    'Generalizing values. There are fewer columns in '
-                    'values_b than in meta_b. Values in first column of '
-                    'values_b will be generalized to values in meta_b.')
-            elif len(values_b) > len(meta_b):
-                generalize_values_b = False
-                generalize_meta_b = True
-                rl_logging.warning(
-                    'Generalizing metadata. There are fewer columns in '
-                    'meta_b than in values_b. Values in first column of '
-                    'meta_b will be generalized to values in values_b.')
-            else:
-                generalize_values_b = False
-                generalize_meta_b = False
-        else:
-            generalize_values_a = None
-            generalize_meta_a = None
-            generalize_values_b = None
-            generalize_meta_b = None
-
-        # Make list of data series
-        data_a = []
-        if generalize_values_a:
-            for _ in range(len(meta_a)):
-                data_a.append(self._get_df_a_col(values_a[0]))
-        else:
-            for name in values_a:
-                data_a.append(self._get_df_a_col(name))
-
-        data_b = []
-
-        if generalize_values_b:
-            for _ in range(len(meta_b)):
-                data_b.append(self._get_df_b_col(values_b[0]))
-        else:
-            for name in values_b:
-                data_b.append(self._get_df_b_col(name))
-
-        # Combine data
-        value_data = data_a
-        value_data.extend(data_b)
-
-        # Apply transformation if function is provided
-        if transform_vals is not None:
-            value_data = [s.apply(transform_vals) for s in value_data]
-
-        # Zip data
-        value_data = zip(*value_data)
-
-        # Make list of metadata series
-        if use_meta:
-
-            metadata_a = []
-
-            if static_meta:
-                for _ in range(len(values_a)):
-                    metadata_a.append(
-                        pd.Series(
-                            [meta_a for _ in range(len(self.index))],
-                            index=self.index[self._index_level_0]))
-            elif generalize_meta_a:
-                for _ in range(len(values_a)):
-                    metadata_a.append(self._get_df_a_col(meta_a[0]))
-            else:
-                for name in meta_a:
-                    metadata_a.append(self._get_df_a_col(name))
-
-            metadata_b = []
-
-            if static_meta:
-                for _ in range(len(values_b)):
-                    metadata_b.append(
-                        pd.Series(
-                            [meta_b for _ in range(len(self.index))],
-                            index=self.index[self._index_level_1]))
-            elif generalize_meta_b:
-                for _ in range(len(values_b)):
-                    metadata_b.append(self._get_df_b_col(meta_b[0]))
-            else:
-                for name in meta_b:
-                    metadata_b.append(self._get_df_b_col(name))
-
-            # Combine metadata
-            metadata = metadata_a
-            metadata.extend(metadata_b)
-
-            # Apply transformation if function is provided
-            if transform_meta is not None:
-                metadata = [s.apply(transform_meta) for s in metadata]
-
-            # Zip metadata
-            metadata = zip(*metadata)
-        else:
-            metadata = None
-
-        if use_meta:
-            output = pd.Series(list(zip(value_data, metadata)))
-        else:
-            output = pd.Series(list(zip(value_data)))
-
-        return output
-
-    def keep_original(self,
-                      columns_a,
-                      columns_b,
-                      suffix_a=None,
-                      suffix_b=None,
-                      sep='_'):
-        """
-
-        Specifies columns from df_a and df_b which should be included
-        in the fused output, but which do not require conflict
-        resolution.
-
-        Parameters
-        ----------
-        columns_a : str/list
-            A list of column names to be included from df_a.
-        columns_b : str/list
-            A list of column names to be included from df_b.
-        suffix_a : str
-            An optional suffix to be applied to the name of all
-            columns kept from df_a.
-        suffix_b : str
-            An optional suffix to be applied to the names of all
-            columns kept from df_b.
-        sep : str
-            The separator that should be used when resolving column
-            name conflicts (e.g. with ``sep='_'``, ``taken_name``
-            becomes ``taken_name_1``).
-
-        Returns
-        -------
-        None
-            Queues a conflict resolution job, to be completed when
-            ``fuse`` method is called.
-
-        """
-
-        columns_a = listify(columns_a)
-        columns_b = listify(columns_b)
-
-        for col in columns_a:
-            if suffix_a is None:
-                self.resolve(
-                    None, [col], [],
-                    name=col,
-                    handler_override=KeepHandler(self))
-            else:
-                self.resolve(
-                    None, [col], [],
-                    name=col + sep + str(suffix_a),
-                    handler_override=KeepHandler(self))
-
-        for col in columns_b:
-            if suffix_b is None:
-                self.resolve(
-                    None, [], [col],
-                    name=col,
-                    handler_override=KeepHandler(self))
-            else:
-                self.resolve(
-                    None, [], [col],
-                    name=col + sep + str(suffix_b),
-                    handler_override=KeepHandler(self))
-
-    def trust_your_friends(self,
-                           values_a,
-                           values_b,
-                           trusted,
-                           tie_break_trusted='random',
-                           tie_break_untrusted='random',
-                           label_a='a',
-                           label_b='b',
-                           name=None,
-                           remove_na_vals=True):
-        """
-        Handles data conflicts by keeping data from a trusted source.
-
-        Parameters
-        ----------
-        values_a : str/list
-            Column name(s) from df_a to be resolved.
-        values_b : str/list
-            Column name(s) from df_b to be resolved.
-        trusted : str
-            The label of the preferred data source. By default, 'a'
-            for df_a or 'b' for df_b.
-        tie_break_trusted : str/function
-            A conflict resolution function to be to break ties
-            between trusted values.
-        tie_break_untrusted : str/function
-            A conflict resolution function to be to break ties
-            between untrusted values.
-        label_a : str/list
-            The value(s) used to identify data from df_a. By default,
-            all values are labelled 'a'. If multiple columns are
-            specified in values_a, these may be identified with a
-            list of column labels.
-        label_b : str/list
-            The value(s) used to identify data from df_b. By default,
-            all values are labelled 'b'. If multiple columns are
-            specified in values_b, these may be identified with a list
-            of column labels.
-        name : str
-            The name of the resulting resolved column.
-        remove_na_vals : bool
-            If True, value/metadata pairs will be removed if the value
-            is missing (i.e. np.nan).
-
-        Returns
-        -------
-        None
-            Queues a conflict resolution job, to be completed when
-            ``fuse`` method is called.
-
-        """
-        self.resolve(
-            choose_trusted,
-            values_a,
-            values_b,
-            meta_a=label_a,
-            meta_b=label_b,
-            name=name,
-            static_meta=True,
-            params=trusted,
-            remove_na_vals=remove_na_vals,
-            remove_na_meta=False,
-            tie_break=[
-                process_tie_break(tie_break_trusted),
-                process_tie_break(tie_break_untrusted)
-            ],
-            description='trust_your_friends')
