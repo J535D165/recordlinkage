@@ -5,10 +5,7 @@ import unittest
 
 import pandas.util.testing as pdt
 
-from recordlinkage.preprocessing import clean
-from recordlinkage.preprocessing import phonenumbers
-from recordlinkage.preprocessing import value_occurence
-from recordlinkage.preprocessing import phonetic
+from recordlinkage.preprocessing import *
 
 import numpy as np
 import pandas as pd
@@ -251,3 +248,14 @@ class TestEncodingStandardise(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             phonetic(values, 'unknown_algorithm')
+
+    def test_list_of_algorithms(self):
+
+        algorithms = phonetic_algorithms
+
+        self.assertIsInstance(algorithms, list)
+
+        self.assertTrue('soundex' in algorithms)
+        self.assertTrue('nysiis' in algorithms)
+        self.assertTrue('metaphone' in algorithms)
+        self.assertTrue('match_rating' in algorithms)

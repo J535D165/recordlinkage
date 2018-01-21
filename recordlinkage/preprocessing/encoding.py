@@ -6,8 +6,35 @@ import pandas
 import jellyfish
 
 
+_phonetic_algorithms = [{
+    'name': 'Soundex',
+    'callback': jellyfish.soundex,
+    'argument_names': ['soundex']
+}, {
+    'name': 'NYSIIS',
+    'callback': jellyfish.nysiis,
+    'argument_names': ['nysiis', 'nyssis']
+}, {
+    'name': 'Metaphone',
+    'callback': jellyfish.metaphone,
+    'argument_names': ['metaphone']
+}, {
+    'name': 'Match Rating',
+    'callback': jellyfish.match_rating_codex,
+    'argument_names': ['match_rating', 'match rating', 'matchrating',
+                       'match_rating_codex', 'matchratingcodex']
+}
+]
+
+
+def _list_phonetic_algorithms():
+    """Return list of available phonetic algorithms."""
+
+    return [alg['argument_names'][0] for alg in _phonetic_algorithms]
+
+
 def phonetic(s, method, concat=True, encoding='utf-8', decode_error='strict'):
-    """Convert names or strings into phonetic codes. 
+    """Convert names or strings into phonetic codes.
 
     The implemented algorithms are `soundex
     <https://en.wikipedia.org/wiki/Soundex>`_, `nysiis
@@ -21,7 +48,7 @@ def phonetic(s, method, concat=True, encoding='utf-8', decode_error='strict'):
     method: string
         The algorithm that is used to phonetically encode the values. The
         possible options are "soundex", "nysiis", "metaphone" or
-        "match rating".
+        "match_rating".
     concat: bool, optional
         Remove whitespace before phonetic encoding.
     encoding: string, optional
@@ -48,19 +75,16 @@ def phonetic(s, method, concat=True, encoding='utf-8', decode_error='strict'):
     # encoding
     if sys.version_info[0] == 2:
         s = s.apply(
-            lambda x: x.decode(encoding, decode_error) if type(x) == bytes else x)
+            lambda x: x.decode(encoding, decode_error)
+            if type(x) == bytes else x)
 
     if concat:
         s = s.str.replace('[\-\_\s]', '')
 
-    if method == 'soundex':
-        phonetic_callback = jellyfish.soundex
-    elif method == 'nysiis':
-        phonetic_callback = jellyfish.nysiis
-    elif method == 'metaphone':
-        phonetic_callback = jellyfish.metaphone
-    elif method in ['match_rating', 'match rating', 'matchrating', 'match_rating_codex', 'matchratingcodex']:
-        phonetic_callback = jellyfish.match_rating_codex
+    for alg in _phonetic_algorithms:
+        if method in alg['argument_names']:
+            phonetic_callback = alg['callback']
+            break
     else:
         raise ValueError("The algorithm '{}' is not known.".format(method))
 

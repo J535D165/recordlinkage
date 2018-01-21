@@ -2,6 +2,14 @@
 Release notes
 *************
 
+Version 0.12.0 (dev)
+====================
+
+- Add attribute 'recordlinkage.preprocessing.phonetic_algorithms'. This is 
+  a list of the available phonetic algorithms in the toolkit. The algorithms
+  are exposed available in the 'recordlinkage.preprocessing.phonetic'
+  function.
+
 Version 0.11.2
 ==============
 
