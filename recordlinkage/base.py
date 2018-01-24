@@ -13,7 +13,7 @@ from recordlinkage.utils import listify
 from recordlinkage.utils import unique
 from recordlinkage.utils import is_label_dataframe
 from recordlinkage.utils import VisibleDeprecationWarning
-from recordlinkage.utils import split_index
+from recordlinkage.utils import index_split
 from recordlinkage.measures import max_pairs
 from recordlinkage import rl_logging as logging
 
@@ -233,7 +233,7 @@ class CompareFeature(object):
 
 def _compute_parallel(compare_obj, pairs, x, x_link=None, n_jobs=1):
 
-    df_chunks = split_index(pairs, n_jobs)
+    df_chunks = index_split(pairs, n_jobs)
     result_chunks = Parallel(n_jobs=n_jobs)(
         delayed(_compute)(compare_obj, chunk, x, x_link) for chunk in df_chunks
     )

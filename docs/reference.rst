@@ -13,6 +13,7 @@ This page contains the API reference of the Python Record Linkage Toolkit.
    ref-classifiers
    ref-evaluation
    ref-datasets
+   ref-misc
 
 
 

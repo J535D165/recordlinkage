@@ -3,7 +3,7 @@ from recordlinkage.comparing import *
 from recordlinkage.classifiers import *
 from recordlinkage.measures import *
 from recordlinkage.network import *
-from recordlinkage.utils import split_index
+from recordlinkage.utils import split_index, index_split
 
 from recordlinkage import rl_logging as logging
 

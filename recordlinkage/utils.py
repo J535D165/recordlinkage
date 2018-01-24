@@ -1,5 +1,6 @@
 import pandas
 import numpy
+import warnings
 
 
 # Errors and Exception handlers
@@ -74,13 +75,12 @@ def multi_index_to_frame(index):
     """
     return pandas.DataFrame(index.tolist(), index=index, columns=index.names)
 
-  
-def split_index(index, chunks):
+
+def index_split(index, chunks):
     """Function to split pandas.Index and pandas.MultiIndex objects.
 
-    Split pandas.Index and pandas.MultiIndex objects into chunks.
-    numpy.array_split returns incorrect results for MultiIndex
-    objects. This function is based on numpy.split_array.
+    Split :class:`pandas.Index` and :class:`pandas.MultiIndex` objects
+    into chunks. This function is based on :func:`numpy.array_split`.
 
     Parameters
     ----------
@@ -112,3 +112,11 @@ def split_index(index, chunks):
         sub_ind.append(index[st:end])
 
     return sub_ind
+
+
+def split_index(*args, **kwargs):
+
+    warnings.warn("Function will be removed in the future. Use index_split.",
+                  VisibleDeprecationWarning)
+
+    return index_split(*args, **kwargs)
