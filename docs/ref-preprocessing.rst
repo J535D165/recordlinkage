@@ -10,9 +10,3 @@ clean, phonenumbers``)
 
 .. automodule:: recordlinkage.preprocessing
 	:members:
-
-.. automodule:: recordlinkage.preprocessing.cleaning
-	:members:
-
-.. automodule:: recordlinkage.preprocessing.encoding
-	:members:
