@@ -61,6 +61,7 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.doctest',
     'sphinx.ext.napoleon',
+    'sphinx.ext.intersphinx',
     'nbsphinx',
     'IPython.sphinxext.ipython_console_highlighting'
 ]
@@ -321,6 +322,12 @@ texinfo_domain_indices = False
 # -- Additional options ---------------------------------------------------
 
 autodoc_member_order = 'bysource' 
+
+intersphinx_mapping = {
+  'python': ('http://docs.python.org/3/', None),
+  'pandas': ('http://pandas.pydata.org/pandas-docs/stable', None),
+  'numpy': ('https://docs.scipy.org/doc/numpy/', None)
+}
 
 nbsphinx_execute = 'never'
 
