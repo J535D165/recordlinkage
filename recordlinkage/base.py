@@ -285,15 +285,22 @@ def _compute(self, pairs, x, x_link=None):
 
         n_cols = 1 if len(c.shape) == 1 else c.shape[1]
 
-        labels = []
-        for i in range(0, n_cols):
+        if n_cols > 1:
+            labels = []
+            for i in range(0, n_cols):
+                label_val = label[i] if label is not None else label_num
+                label_num += 1
+                labels.append(label_val)
 
-            label_val = label[i] if label is not None else label_num
+                results[label_val] = c[:, i]
+        else:
+            if label is None:
+                label_val = label_num
+            else:
+                label_val = label[0]
             label_num += 1
 
-            labels.append(label_val)
-
-        results[label_val] = c
+            results[label_val] = c
 
     # log timing
     total_time = time.time() - start_time
