@@ -43,15 +43,16 @@ def _febrl_links(df):
 
 
 def load_febrl1(return_links=False):
-    """FEBRL dataset 1
+    """Load the FEBRL 1 dataset.
 
-    The Freely Extensible Biomedical Record Linkage (Febrl) package was
-    distributed with a dataset generator and four datasets generated with the
-    generator. This functions returns the first Febrl dataset as a pandas
-    DataFrame.
+    The Freely Extensible Biomedical Record Linkage (Febrl) package is
+    distributed with a dataset generator and four datasets generated
+    with the generator. This function returns the first Febrl dataset
+    as a :class:`pandas.DataFrame`.
 
-            *"This data set contains 1000 records (500 original and 500
-            duplicates, with exactly one duplicate per original record."*
+            *"This data set contains 1000 records (500 original and
+            500 duplicates, with exactly one duplicate per original
+            record."*
 
     Parameters
     ----------
@@ -61,8 +62,9 @@ def load_febrl1(return_links=False):
     Returns
     -------
     pandas.DataFrame
-        A pandas DataFrame with Febrl dataset1.csv. When return_links is True,
-        the function returns also the true links.
+        A :class:`pandas.DataFrame` with Febrl dataset1.csv. When
+        return_links is True, the function returns also the true
+        links.
 
     """
 
@@ -79,17 +81,17 @@ def load_febrl1(return_links=False):
 
 
 def load_febrl2(return_links=False):
-    """FEBRL dataset 2
+    """Load the FEBRL 2 dataset.
 
-    The Freely Extensible Biomedical Record Linkage (Febrl) package was
-    distributed with a dataset generator and four datasets generated with the
-    generator. This functions returns the second Febrl dataset as a pandas
-    DataFrame.
+    The Freely Extensible Biomedical Record Linkage (Febrl) package is
+    distributed with a dataset generator and four datasets generated
+    with the generator. This function returns the second Febrl dataset
+    as a :class:`pandas.DataFrame`.
 
-            *"This data set contains 5000 records (4000 originals and 1000
-            duplicates), with a maximum of 5 duplicates based on one original
-            record (and a poisson distribution of duplicate records).
-            Distribution of duplicates:
+            *"This data set contains 5000 records (4000 originals and
+            1000 duplicates), with a maximum of 5 duplicates based on
+            one original record (and a poisson distribution of
+            duplicate records). Distribution of duplicates:
             19 originals records have 5 duplicate records
             47 originals records have 4 duplicate records
             107 originals records have 3 duplicate records
@@ -105,8 +107,9 @@ def load_febrl2(return_links=False):
     Returns
     -------
     pandas.DataFrame
-        A pandas DataFrame with Febrl dataset2.csv. When return_links is True,
-        the function returns also the true links.
+        A :class:`pandas.DataFrame` with Febrl dataset2.csv. When
+        return_links is True, the function returns also the true
+        links.
 
     """
 
@@ -120,17 +123,17 @@ def load_febrl2(return_links=False):
 
 
 def load_febrl3(return_links=False):
-    """FEBRL dataset 3
+    """Load the FEBRL 3 dataset.
 
-    The Freely Extensible Biomedical Record Linkage (Febrl) package was
-    distributed with a dataset generator and four datasets generated with the
-    generator. This functions returns the third Febrl dataset as a pandas
-    DataFrame.
+    The Freely Extensible Biomedical Record Linkage (Febrl) package is
+    distributed with a dataset generator and four datasets generated
+    with the generator. This function returns the third Febrl dataset
+    as a :class:`pandas.DataFrame`.
 
-            *"This data set contains 5000 records (2000 originals and 3000
-            duplicates), with a maximum of 5 duplicates based on one original
-            record (and a Zipf distribution of duplicate records).
-            Distribution of duplicates:
+            *"This data set contains 5000 records (2000 originals and
+            3000 duplicates), with a maximum of 5 duplicates based on
+            one original record (and a Zipf distribution of duplicate
+            records). Distribution of duplicates:
             168 originals records have 5 duplicate records
             161 originals records have 4 duplicate records
             212 originals records have 3 duplicate records
@@ -146,8 +149,9 @@ def load_febrl3(return_links=False):
     Returns
     -------
     pandas.DataFrame
-        A pandas DataFrame with Febrl dataset3.csv. When return_links is True,
-        the function returns also the true links.
+        A :class:`pandas.DataFrame` with Febrl dataset3.csv. When
+        return_links is True, the function returns also the true
+        links.
 
     """
 
@@ -161,18 +165,19 @@ def load_febrl3(return_links=False):
 
 
 def load_febrl4(return_links=False):
-    """FEBRL dataset 4
+    """Load the FEBRL 4 datasets.
 
-    The Freely Extensible Biomedical Record Linkage (Febrl) package was
-    distributed with a dataset generator and four datasets generated with the
-    generator. This  functions returns the fourth Febrl dataset as a pandas
-    DataFrame.
+    The Freely Extensible Biomedical Record Linkage (Febrl) package is
+    distributed with a dataset generator and four datasets generated
+    with the generator. This function returns the fourth Febrl dataset
+    as a :class:`pandas.DataFrame`.
 
-            *"Generated as one data set with 10000 records (5000 originals and
-            5000  duplicates, with one duplicate per original), the originals
-            have been split from the duplicates, into dataset4a.csv
-            (containing the 5000 original records) and dataset4b.csv
-            (containing the 5000 duplicate records) These two data sets can be
+            *"Generated as one data set with 10000 records (5000
+            originals and 5000  duplicates, with one duplicate per
+            original), the originals have been split from the
+            duplicates, into dataset4a.csv (containing the 5000
+            original records) and dataset4b.csv (containing the
+            5000 duplicate records) These two data sets can be
             used for testing linkage procedures."*
 
     Parameters
@@ -183,8 +188,8 @@ def load_febrl4(return_links=False):
     Returns
     -------
     (pandas.DataFrame, pandas.DataFrame)
-        A pandas DataFrame with Febrl dataset4a.csv and a pandas dataframe
-        with Febrl dataset4b.csv. When return_links is True,
+        A :class:`pandas.DataFrame` with Febrl dataset4a.csv and a pandas
+        dataframe with Febrl dataset4b.csv. When return_links is True,
         the function returns also the true links.
 
     """
