@@ -45,20 +45,20 @@ def phonetic(s, method, concat=True, encoding='utf-8', decode_error='strict'):
 
     Parameters
     ----------
-    method: string
-        The algorithm that is used to phonetically encode the values. The
-        possible options are "soundex", "nysiis", "metaphone" or
+    method: str
+        The algorithm that is used to phonetically encode the values.
+        The possible options are "soundex", "nysiis", "metaphone" or
         "match_rating".
     concat: bool, optional
         Remove whitespace before phonetic encoding.
-    encoding: string, optional
-        If bytes are given, this encoding is used to decode. Default is
-        'utf-8'.
+    encoding: str, optional
+        If bytes are given, this encoding is used to decode. Default
+        is 'utf-8'.
     decode_error: {'strict', 'ignore', 'replace'}, optional
-        Instruction on what to do if a byte Series is given that contains
-        characters not of the given `encoding`. By default, it is 'strict',
-        meaning that a UnicodeDecodeError will be raised. Other values are
-        'ignore' and 'replace'.:type method: str
+        Instruction on what to do if a byte Series is given that
+        contains characters not of the given `encoding`. By default,
+        it is 'strict', meaning that a UnicodeDecodeError will be
+        raised. Other values are 'ignore' and 'replace'.
 
     Returns
     -------
@@ -67,8 +67,8 @@ def phonetic(s, method, concat=True, encoding='utf-8', decode_error='strict'):
 
     Note
     ----
-    The 'soundex' and 'nysiis' algorithms use the package 'jellyfish'. It can
-    be installed with pip (``pip install jellyfish``).
+    The 'soundex' and 'nysiis' algorithms use the package 'jellyfish'.
+    It can be installed with pip (``pip install jellyfish``).
 
     """
 

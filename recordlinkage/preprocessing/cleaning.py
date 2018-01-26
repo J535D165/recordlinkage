@@ -11,8 +11,8 @@ def clean(s, lowercase=True, replace_by_none=r'[^ \-\_A-Za-z0-9]+',
           remove_brackets=True, encoding='utf-8', decode_error='strict'):
     """Clean string variables.
 
-    Clean strings in the Series by removing unwanted tokens, whitespace and
-    brackets.
+    Clean strings in the Series by removing unwanted tokens,
+    whitespace and brackets.
 
     Parameters
     ----------
@@ -23,30 +23,35 @@ def clean(s, lowercase=True, replace_by_none=r'[^ \-\_A-Za-z0-9]+',
     replace_by_none : str, optional
         The matches of this regular expression are replaced by ''.
     replace_by_whitespace : str, optional
-        The matches of this regular expression are replaced by a whitespace.
+        The matches of this regular expression are replaced by a
+        whitespace.
     remove_brackets : bool, optional
-        Remove all content between brackets and the brackets themselves.
-        Default True.
+        Remove all content between brackets and the bracket
+        themselves. Default True.
     strip_accents : {'ascii', 'unicode', None}, optional
-        Remove accents during the preprocessing step. 'ascii' is a fast method
-        that only works on characters that have an direct ASCII mapping.
-        'unicode' is a slightly slower method that works on any characters.
-        None (default) does nothing.
-    encoding : string, optional
-        If bytes are given, this encoding is used to decode. Default is
-        'utf-8'.
+        Remove accents during the preprocessing step. 'ascii' is a
+        fast method that only works on characters that have an direct
+        ASCII mapping. 'unicode' is a slightly slower method that
+        works on any characters. None (default) does nothing.
+    encoding : str, optional
+        If bytes are given, this encoding is used to decode. Default
+        is 'utf-8'.
     decode_error : {'strict', 'ignore', 'replace'}, optional
-        Instruction on what to do if a byte Series is given that contains
-        characters not of the given `encoding`. By default, it is 'strict',
-        meaning that a UnicodeDecodeError will be raised. Other values are
-        'ignore' and 'replace'.
+        Instruction on what to do if a byte Series is given that
+        contains characters not of the given `encoding`. By default,
+        it is 'strict', meaning that a UnicodeDecodeError will be
+        raised. Other values are 'ignore' and 'replace'.
 
     Example
     -------
     >>> import pandas
     >>> from recordlinkage.preprocessing import clean
     >>>
-    >>> name = ['Mary-ann', 'Bob :)', 'Angel', 'Bob (alias Billy)', None]
+    >>> name = ['Mary-ann',
+                'Bob :)',
+                'Angel',
+                'Bob (alias Billy)',
+                None]
     >>> s = pandas.Series(names)
     >>> print(clean(s))
     0    mary ann
@@ -91,7 +96,8 @@ def clean(s, lowercase=True, replace_by_none=r'[^ \-\_A-Za-z0-9]+',
 
         # encoding
         s = s.apply(
-            lambda x: x.decode(encoding, decode_error) if type(x) == bytes else x)
+            lambda x: x.decode(encoding, decode_error) if
+            type(x) == bytes else x)
         s = s.map(lambda x: strip_accents_fn(x))
 
     # Remove all content between brackets
