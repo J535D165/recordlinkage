@@ -53,19 +53,6 @@ def fillna_decorator(missing_value=np.nan):
     return real_decorator
 
 
-def _check_labels(labels, df):
-
-    labels = [labels] if not is_list_like(labels) else labels
-    cols = df.columns.tolist() if isinstance(df, pandas.DataFrame) else df
-
-    # Do some checks
-    for label in labels:
-        if label not in cols:
-            raise KeyError(
-                'label [%s] not in dataframe' % label
-            )
-
-
 @fillna_decorator(0)
 def _string_internal(s1, s2, call_method, threshold=None, *args, **kw):
 
