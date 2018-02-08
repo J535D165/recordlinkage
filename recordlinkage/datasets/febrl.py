@@ -37,7 +37,7 @@ def _febrl_links(df):
     # merge the two frame and make MultiIndex.
     pairs = df_empty[org_bool].merge(df_empty[~org_bool], on='key')
     pairs_mi = pairs.set_index(['rec_id_x', 'rec_id_y']).index
-    pairs_mi.names = ['rec_id', 'rec_id']
+    pairs_mi.names = [None, None]
 
     return pairs_mi
 
