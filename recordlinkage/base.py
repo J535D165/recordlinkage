@@ -63,13 +63,14 @@ class BaseIndexator(object):
     ```
     """
 
-    def __init__(self, verify_integrity=True):
+    def __init__(self, verify_integrity=True, suffixes=('_1', '_2')):
         super(BaseIndexator, self).__init__()
+
+        self.suffixes = suffixes
+        self.verify_integrity = verify_integrity
 
         self._n = []
         self._n_max = []
-
-        self.verify_integrity = verify_integrity
 
         logging.info("Indexing - initialize {} class".format(
             self.__class__.__name__)
@@ -122,6 +123,15 @@ class BaseIndexator(object):
 
         return pairs
 
+    def _make_index_names(self, name1, name2):
+
+        if pandas.notnull(name1) and pandas.notnull(name2) and \
+                (name1 == name2):
+            return ["{}{}".format(name1, self.suffixes[0]),
+                    "{}{}".format(name1, self.suffixes[1])]
+        else:
+            return [name1, name2]
+
     def fit(self):
 
         raise AttributeError("indexing object has no attribute 'fit'")
@@ -168,16 +178,19 @@ class BaseIndexator(object):
 
         # linking
         if not self._deduplication(x):
-
             logging.info("Indexing - start indexing two DataFrames")
 
             pairs = self._link_index(*x)
+            names = self._make_index_names(x[0].index.name, x[1].index.name)
 
         # deduplication
         else:
             logging.info("Indexing - start indexing single DataFrame")
 
             pairs = self._dedup_index(*x)
+            names = self._make_index_names(x[0].index.name, x[0].index.name)
+
+        pairs.rename(names, inplace=True)
 
         # store the number of pairs
         self._n.append(pairs.shape[0])

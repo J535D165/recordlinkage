@@ -65,12 +65,10 @@ class FullIndex(BaseIndexator):
 
         levels = [df_a.index.values, df_a.index.values]
         labels = numpy.triu_indices(len(df_a.index), k=1)
-        names = [df_a.index.name, df_a.index.name]
 
         return pandas.MultiIndex(
             levels=levels,
             labels=labels,
-            names=names,
             verify_integrity=False
         )
 
@@ -168,7 +166,7 @@ class BlockIndex(BaseIndexator):
             data_right, how='inner', on=blocking_keys
         ).set_index(['index_x', 'index_y'])
 
-        return pairs.index.rename([df_a.index.name, df_b.index.name])
+        return pairs.index
 
 
 class SortedNeighbourhoodIndex(BaseIndexator):
@@ -352,7 +350,7 @@ class SortedNeighbourhoodIndex(BaseIndexator):
 
         pairs = pandas.concat(pairs_concat, axis=0).set_index(
             ['index_x', 'index_y']
-        ).index.rename([df_a.index.name, df_b.index.name])
+        ).index
 
         return pairs
 
@@ -431,12 +429,10 @@ class RandomIndex(BaseIndexator):
 
         levels = [df_a.index.values, df_b.index.values]
         labels = pairs
-        names = [df_a.index.name, df_b.index.name]
 
         return pandas.MultiIndex(
             levels=levels,
             labels=labels,
-            names=names,
             verify_integrity=False
         )
 
@@ -469,11 +465,9 @@ class RandomIndex(BaseIndexator):
 
         levels = [df_a.index.values, df_a.index.values]
         labels = pairs
-        names = [df_a.index.name, df_a.index.name]
 
         return pandas.MultiIndex(
             levels=levels,
             labels=labels,
-            names=names,
             verify_integrity=False
         )

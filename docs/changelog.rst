@@ -9,6 +9,9 @@ Version 0.12.0 (dev)
   a list of the available phonetic algorithms in the toolkit. The algorithms
   are exposed available in the 'recordlinkage.preprocessing.phonetic'
   function.
+- Duplicated MultiIndex names are no longer allowed by pandas (expect from
+  None, np.nan). Indexing classes now have an argument 'suffixes=('_1', '_2')'
+  to deal with duplicated index names. 
 
 Version 0.11.2
 ==============

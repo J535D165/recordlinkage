@@ -19,7 +19,7 @@ TEST_INDEXATION_OBJECTS = [
     param(recordlinkage.BlockIndex(on='var_arange')),
     param(recordlinkage.SortedNeighbourhoodIndex(on='var_arange')),
     param(recordlinkage.RandomIndex(10, random_state=100, replace=True)),
-    param(recordlinkage.RandomIndex(10, random_state=100, replace=False)),
+    param(recordlinkage.RandomIndex(10, random_state=100, replace=False))
 ]
 
 
@@ -136,30 +136,73 @@ class TestIndexApi(TestData):
         with self.assertRaises(ValueError):
             index_class.index(df_a)
 
-    @parameterized.expand(TEST_INDEXATION_OBJECTS)
+    @parameterized.expand([
+        param(recordlinkage.FullIndex()),
+        param(recordlinkage.BlockIndex(on='var_arange')),
+        param(recordlinkage.SortedNeighbourhoodIndex(on='var_arange')),
+        param(recordlinkage.RandomIndex(10, random_state=100, replace=True)),
+        param(recordlinkage.RandomIndex(10, random_state=100, replace=False))
+    ])
     def test_index_names_dedup(self, index_class):
-        """Test names of MultiIndex is case of dedup."""
 
-        index_names = ['dedup', None, 'index', int(1), float(1.00)]
+        index_names = ['dedup', None, 'index', int(1)]
+        expected = [
+            ['dedup_1', 'dedup_2'],
+            [None, None],
+            ['index_1', 'index_2'],
+            ['1_1', '1_2'],
+        ]
 
-        for name in index_names:
+        for i, name in enumerate(index_names):
 
             index_A = pd.Index(self.a.index).rename(name)
             df_A = pd.DataFrame(self.a, index=index_A)
 
             pairs = index_class.index((df_A))
 
-            self.assertEqual(pairs.names, [name, name])
+            self.assertEqual(pairs.names, expected[i])
             self.assertEqual(df_A.index.name, name)
 
-    @parameterized.expand(TEST_INDEXATION_OBJECTS)
+    @parameterized.expand([
+        param(recordlinkage.FullIndex()),
+        param(recordlinkage.BlockIndex(on='var_arange')),
+        param(recordlinkage.SortedNeighbourhoodIndex(on='var_arange')),
+        param(recordlinkage.RandomIndex(10, random_state=100, replace=True)),
+        param(recordlinkage.RandomIndex(10, random_state=100, replace=False))
+    ])
+    def test_duplicated_index_names_dedup(self, index_class):
+
+        # make an index for each dataframe with a new index name
+        index_a = pd.Index(self.a.index, name='index')
+        df_a = pd.DataFrame(self.a, index=index_a)
+
+        # make the index
+        pairs = index_class.index(df_a)
+        self.assertEqual(pairs.names, ['index_1', 'index_2'])
+
+        # check for inplace editing (not the intention)
+        self.assertEqual(df_a.index.name, 'index')
+
+        # make the index
+        index_class.suffixes = ['_a', '_b']
+        pairs = index_class.index(df_a)
+        self.assertEqual(pairs.names, ['index_a', 'index_b'])
+
+        # check for inplace editing (not the intention)
+        self.assertEqual(df_a.index.name, 'index')
+
+    @parameterized.expand([
+        param(recordlinkage.FullIndex()),
+        param(recordlinkage.BlockIndex(on='var_arange')),
+        param(recordlinkage.SortedNeighbourhoodIndex(on='var_arange')),
+        param(recordlinkage.RandomIndex(10, random_state=100, replace=True)),
+        param(recordlinkage.RandomIndex(10, random_state=100, replace=False))
+    ])
     def test_index_names_link(self, index_class):
-        """Test names of MultiIndex is case of dedup."""
 
         # tuples with the name of the first and second index
         index_names = [
             ('index1', 'index2'),
-            ('index', 'index'),
             ('index1', None),
             (None, 'index2'),
             (None, None),
@@ -170,21 +213,51 @@ class TestIndexApi(TestData):
         for name_a, name_b in index_names:
 
             # make an index for each dataframe with a new index name
-            index_a = pd.Index(self.a.index).rename(name_a)
-            index_b = pd.Index(self.b.index).rename(name_b)
-
+            index_a = pd.Index(self.a.index, name=name_a)
             df_a = pd.DataFrame(self.a, index=index_a)
+
+            index_b = pd.Index(self.b.index, name=name_b)
             df_b = pd.DataFrame(self.b, index=index_b)
 
-            # make the index
             pairs = index_class.index((df_a, df_b))
-
-            # test the names
             self.assertEqual(pairs.names, [name_a, name_b])
 
             # check for inplace editing (not the intention)
             self.assertEqual(df_a.index.name, name_a)
             self.assertEqual(df_b.index.name, name_b)
+
+    @parameterized.expand([
+        param(recordlinkage.FullIndex()),
+        param(recordlinkage.BlockIndex(on='var_arange')),
+        param(recordlinkage.SortedNeighbourhoodIndex(on='var_arange')),
+        param(recordlinkage.RandomIndex(10, random_state=100, replace=True)),
+        param(recordlinkage.RandomIndex(10, random_state=100, replace=False))
+    ])
+    def test_duplicated_index_names_link(self, index_class):
+
+        # make an index for each dataframe with a new index name
+        index_a = pd.Index(self.a.index, name='index')
+        df_a = pd.DataFrame(self.a, index=index_a)
+
+        index_b = pd.Index(self.b.index, name='index')
+        df_b = pd.DataFrame(self.b, index=index_b)
+
+        # make the index
+        pairs = index_class.index((df_a, df_b))
+        self.assertEqual(pairs.names, ['index_1', 'index_2'])
+
+        # check for inplace editing (not the intention)
+        self.assertEqual(df_a.index.name, 'index')
+        self.assertEqual(df_b.index.name, 'index')
+
+        # make the index
+        index_class.suffixes = ['_a', '_b']
+        pairs = index_class.index((df_a, df_b))
+        self.assertEqual(pairs.names, ['index_a', 'index_b'])
+
+        # check for inplace editing (not the intention)
+        self.assertEqual(df_a.index.name, 'index')
+        self.assertEqual(df_b.index.name, 'index')
 
     @parameterized.expand(TEST_INDEXATION_OBJECTS)
     def test_pickle(self, index_class):
@@ -391,8 +464,8 @@ class TestSortedNeighbourhoodIndexing(TestData):
             2 * np.sum(np.arange(len_a - 1, len_a - (window_d + 1), -1))
 
         # test
-        print ('expected number of pairs: %s' % n_pairs_expected)
-        print ('number of pairs found: %s' % len(pairs))
+        print('expected number of pairs: %s' % n_pairs_expected)
+        print('number of pairs found: %s' % len(pairs))
         self.assertEqual(len(pairs), n_pairs_expected)
 
     @parameterized.expand([
@@ -439,7 +512,7 @@ class TestSortedNeighbourhoodIndexing(TestData):
             on='var_arange', window=3, block_on='var_arange')
         pairs = index_class.index(self.a)
 
-        print (pairs.values)
+        print(pairs.values)
 
         # the length of pairs is 0
         self.assertEqual(len(pairs), 0)
