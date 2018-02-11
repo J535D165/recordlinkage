@@ -10,7 +10,6 @@ from recordlinkage.datasets import (load_febrl1,
                                     binary_vectors)
 
 
-# nosetests tests/test_datasets.py:TestExternalDatasets
 class TestExternalDatasets(unittest.TestCase):
 
     def test_febrl1(self):
@@ -83,13 +82,11 @@ class TestExternalDatasets(unittest.TestCase):
         krebs_block10, matches = load_krebsregister(10, missing_values=0)
         self.assertEqual(krebs_block10.isnull().sum().sum(), 0)
 
-
     def test_krebs_missings(self):
 
         # missing values
         krebs_block10, matches = load_krebsregister(10, missing_values=0)
         self.assertEqual(krebs_block10.isnull().sum().sum(), 0)
-
 
     def test_krebs_shuffle(self):
 
@@ -97,7 +94,6 @@ class TestExternalDatasets(unittest.TestCase):
         krebs_block10, matches = load_krebsregister(10, shuffle=False)
 
 
-# nosetests tests/test_datasets.py:TestGeneratedDatasets
 class TestGeneratedDatasets(unittest.TestCase):
 
     def test_random_comparison_vectors(self):
@@ -116,5 +112,3 @@ class TestGeneratedDatasets(unittest.TestCase):
 
         # Test the length of the dataframe
         self.assertEqual(len(df), n_record_pairs)
-
-
