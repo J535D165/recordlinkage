@@ -1,92 +1,10 @@
-from __future__ import division
-from __future__ import unicode_literals
-
-from functools import wraps
-
-import pandas
-import numpy as np
 
 from recordlinkage.base import BaseCompare
-from recordlinkage.types import is_list_like
-from recordlinkage.algorithms.compare import _compare_exact
-from recordlinkage.algorithms.compare import _compare_dates
-from recordlinkage.algorithms.distance import _1d_distance
-from recordlinkage.algorithms.distance import _haversine_distance
-from recordlinkage.algorithms.numeric import _step_sim
-from recordlinkage.algorithms.numeric import _linear_sim
-from recordlinkage.algorithms.numeric import _squared_sim
-from recordlinkage.algorithms.numeric import _exp_sim
-from recordlinkage.algorithms.numeric import _gauss_sim
-from recordlinkage.algorithms.string import jaro_similarity
-from recordlinkage.algorithms.string import jarowinkler_similarity
-from recordlinkage.algorithms.string import levenshtein_similarity
-from recordlinkage.algorithms.string import damerau_levenshtein_similarity
-from recordlinkage.algorithms.string import qgram_similarity
-from recordlinkage.algorithms.string import cosine_similarity
-from recordlinkage.algorithms.string import smith_waterman_similarity
-from recordlinkage.algorithms.string import longest_common_substring_similarity
-
-
-def fillna_decorator(missing_value=np.nan):
-
-    def real_decorator(func):
-
-        @wraps(func)
-        def func_wrapper(*args, **kwargs):
-
-            mv = kwargs.pop('missing_value', missing_value)
-
-            result = func(*args, **kwargs)
-
-            # fill missing values if missing_value is not a missing value like
-            # NaN or None.
-            if pandas.notnull(mv):
-                if isinstance(result, (np.ndarray)):
-                    result[np.isnan(result)] = mv
-                else:
-                    result.fillna(mv, inplace=True)
-
-            return result
-
-        return func_wrapper
-
-    return real_decorator
-
-
-@fillna_decorator(0)
-def _string_internal(s1, s2, call_method, threshold=None, *args, **kw):
-
-    c = call_method(s1, s2, *args, **kw)
-
-    if threshold:
-        return (c >= threshold).astype(np.float64)
-    else:
-        return c
-
-
-@fillna_decorator(0)
-def _num_internal(s1, s2, call_method, *args, **kwargs):
-    """Internal function to compute the numeric similarity."""
-
-    # compute the 1D distance between the values
-    d = _1d_distance(s1, s2)
-
-    return call_method(d, *args, **kwargs)
-
-
-@fillna_decorator(0)
-def _geo_internal(lat1, lng1, lat2, lng2, call_method, *args, **kw):
-
-    # compute the 1D distance between the values
-    d = _haversine_distance(lat1, lng1, lat2, lng2)
-
-    return call_method(d, *args, **kw)
-
-
-@fillna_decorator(0)
-def _dates_internal(s1, s2, *args, **kwargs):
-
-    return _compare_dates(s1, s2, *args, **kwargs)
+from recordlinkage.compare import (CompareExact,
+                                   CompareString,
+                                   CompareNumeric,
+                                   CompareGeographic,
+                                   CompareDate)
 
 
 class Compare(BaseCompare):
@@ -166,12 +84,10 @@ class Compare(BaseCompare):
 
         label = kwargs.pop('label', None)
 
-        return self._compare_vectorized(
-            _compare_exact, s1, s2, args, kwargs,
-            label=label,
-            name="exact",
-            description="Compare record pairs exactly."
-        )
+        compare = CompareExact(s1, s2, *args, **kwargs)
+        self.add(compare, label=label)
+
+        return self
 
     def string(self, s1, s2, method='levenshtein', threshold=None,
                *args, **kwargs):
@@ -208,46 +124,17 @@ class Compare(BaseCompare):
 
         """
 
-        if method == 'jaro':
-            str_sim_alg = jaro_similarity
-
-        elif method in ['jarowinkler', 'jaro_winkler', 'jw']:
-            str_sim_alg = jarowinkler_similarity
-
-        elif method == 'levenshtein':
-            str_sim_alg = levenshtein_similarity
-
-        elif method in ['dameraulevenshtein', 'damerau_levenshtein', 'dl']:
-            str_sim_alg = damerau_levenshtein_similarity
-
-        elif method == 'q_gram' or method == 'qgram':
-            str_sim_alg = qgram_similarity
-
-        elif method == 'cosine':
-            str_sim_alg = cosine_similarity
-
-        elif method in ['smith_waterman', "smithwaterman", "sw"]:
-            str_sim_alg = smith_waterman_similarity
-
-        elif method in ['longest_common_substring', 'lcs']:
-            str_sim_alg = longest_common_substring_similarity
-
-        else:
-            raise ValueError(
-                "The algorithm '{}' is not known.".format(method))
-
         label = kwargs.pop('label', None)
-        args = (str_sim_alg, threshold) + args
 
-        return self._compare_vectorized(
-            _string_internal, s1, s2, args, kwargs,
-            label=label,
-            name="string '{}'".format(method),
-            description="Compare record pairs on string with '{}'"
-                        "algorithm".format(method)
-        )
+        compare = CompareString(s1, s2,
+                                method=method,
+                                threshold=threshold,
+                                *args, **kwargs)
+        self.add(compare, label=label)
 
-    def numeric(self, s1, s2, method='linear', *args, **kwargs):
+        return self
+
+    def numeric(self, s1, s2, *args, **kwargs):
         """
         numeric(s1, s2, method='linear', offset, scale, origin=0, missing_value=0, label=None)
 
@@ -280,7 +167,7 @@ class Compare(BaseCompare):
         scale : float
             The scale of the numeric comparison method. See the image above.
             This argument is not available for the 'step' algorithm.
-        origin : str
+        origin : float
             The shift of bias between the values. See image above.
         missing_value : numpy.dtype
             The value if one or both records have a missing value on the
@@ -295,37 +182,14 @@ class Compare(BaseCompare):
 
         """
 
-        if method == 'step':
-            num_sim_alg = _step_sim
-
-        elif method in ['linear', 'lin']:
-            num_sim_alg = _linear_sim
-
-        elif method == 'squared':
-            num_sim_alg = _squared_sim
-
-        elif method in ['exp', 'exponential']:
-            num_sim_alg = _exp_sim
-
-        elif method in ['gauss', 'gaussian']:
-            num_sim_alg = _gauss_sim
-
-        else:
-            raise ValueError(
-                "The algorithm '{}' is not known.".format(method))
-
         label = kwargs.pop('label', None)
-        args = (num_sim_alg,) + args
 
-        return self._compare_vectorized(
-            _num_internal, s1, s2, args, kwargs,
-            label=label,
-            name="numeric '{}'".format(method),
-            description="Compare record pairs on numeric with '{}'"
-                        "algorithm".format(method)
-        )
+        compare = CompareNumeric(s1, s2, *args, **kwargs)
+        self.add(compare, label=label)
 
-    def geo(self, lat1, lng1, lat2, lng2, method='linear', *args, **kwargs):
+        return self
+
+    def geo(self, lat1, lng1, lat2, lng2, *args, **kwargs):
         """
         geo(lat1, lng1, lat2, lng2, method='linear', offset, scale, origin=0, missing_value=0, label=None)
 
@@ -363,35 +227,14 @@ class Compare(BaseCompare):
 
         """
 
-        if method == 'step':
-            num_sim_alg = _step_sim
-
-        elif method in ['linear', 'lin']:
-            num_sim_alg = _linear_sim
-
-        elif method == 'squared':
-            num_sim_alg = _squared_sim
-
-        elif method in ['exp', 'exponential']:
-            num_sim_alg = _exp_sim
-
-        elif method in ['gauss', 'gaussian']:
-            num_sim_alg = _gauss_sim
-
-        else:
-            raise ValueError(
-                "The algorithm '{}' is not known.".format(method))
-
         label = kwargs.pop('label', None)
-        args = (num_sim_alg,) + args
 
-        return self._compare_vectorized(
-            _geo_internal, (lat1, lng1), (lat2, lng2), args, kwargs,
-            label=label,
-            name="geographic '{}'".format(method),
-            description="Compare record pairs on geographic with '{}'"
-                        "algorithm".format(method)
+        compare = CompareGeographic(
+            (lat1, lng1), (lat2, lng2), *args, **kwargs
         )
+        self.add(compare, label=label)
+
+        return self
 
     def date(self, s1, s2, *args, **kwargs):
         """
@@ -406,36 +249,21 @@ class Compare(BaseCompare):
         s2 : str or int
             The name or position of the column in the right DataFrame.
         swap_month_day : float
-            The value if the month and day are swapped.
+            The value if the month and day are swapped. Default 0.5.
         swap_months : list of tuples
             A list of tuples with common errors caused by the translating of
             months into numbers, i.e. October is month 10. The format of the
             tuples is (month_good, month_bad, value). Default : swap_months =
             [(6, 7, 0.5), (7, 6, 0.5), (9, 10, 0.5), (10, 9, 0.5)]
         missing_value : numpy.dtype
-            The value for a comparison with a missing value. Default 0.
+            The value for a comparison with a missing value. Default 0.0.
         label : label
             The label of the column in the resulting dataframe.
         """
 
         label = kwargs.pop('label', None)
 
-        return self._compare_vectorized(
-            _dates_internal, s1, s2, args, kwargs,
-            label=label,
-            name="date",
-            description="Compare record pairs on dates."
-        )
+        compare = CompareDate(s1, s2, *args, **kwargs)
+        self.add(compare, label=label)
 
-
-def _missing(*args):
-    """ Missing values.
-
-    Internal function to return the index of record pairs with missing values
-    """
-
-    return np.any(
-        np.concatenate(
-            [np.array(pandas.DataFrame(arg).isnull()) for arg in args],
-            axis=1),
-        axis=1)
+        return self

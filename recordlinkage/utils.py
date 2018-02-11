@@ -120,3 +120,33 @@ def split_index(*args, **kwargs):
                   VisibleDeprecationWarning)
 
     return index_split(*args, **kwargs)
+
+
+def frame_indexing(frame, multi_index, level_i, indexing_type='label'):
+    """Index dataframe based on one level of MultiIndex.
+
+    Arguments
+    ---------
+    frame : pandas.DataFrame
+        The datafrme to select records from.
+    multi_index : pandas.MultiIndex
+        A pandas multiindex were one fo the levels is used to sample the
+        dataframe with.
+    level_i : int, str
+        The level of the multiIndex to index on.
+    indexing_type : str
+        The type of indexing. The value can be 'label' or 'position'.
+        Default 'label'.
+
+    """
+
+    if indexing_type == "label":
+        data = frame.loc[multi_index.get_level_values(level_i)]
+        data.index = multi_index
+    elif indexing_type == "position":
+        data = frame.iloc[multi_index.get_level_values(level_i)]
+        data.index = multi_index
+    else:
+        raise ValueError("indexing_type needs to be 'label' or 'position'")
+
+    return data

@@ -6,6 +6,7 @@ import tempfile
 import pickle
 
 import recordlinkage
+from recordlinkage.base import BaseCompareFeature
 
 import numpy as np
 from numpy import nan, arange
@@ -489,6 +490,17 @@ class TestCompareApi(TestData):
 
         pdt.assert_frame_equal(result_label, result_position)
 
+    def test_base_class(self):
+        # test using classes and the base class
+
+        A = DataFrame({'col': ['abc', 'abc', 'abc', 'abc', 'abc']})
+        B = DataFrame({'col': ['abc', 'abd', 'abc', 'abc', '123']})
+        ix = MultiIndex.from_arrays([A.index.values, B.index.values])
+
+        feature = BaseCompareFeature('col', 'col')
+        feature._f_compare_vectorized = lambda s1, s2: np.ones(len(s1))
+        feature.compute(ix, A, B)
+
 
 # tests/test_compare.py:TestCompareExact
 class TestCompareExact(TestData):
@@ -621,7 +633,6 @@ class TestCompareNumeric(TestData):
         pdt.assert_series_equal(result[2], expected)
 
     def test_numeric_with_missings(self):
-        """Test missing value handling."""
 
         A = DataFrame({'col': [1, 1, 1, nan, 0]})
         B = DataFrame({'col': [1, 1, 1, nan, nan]})
@@ -686,6 +697,9 @@ class TestCompareNumeric(TestData):
 
         if alg is not 'step':
 
+            print(alg)
+            print(result)
+
             # sim(scale) = 0.5
             expected_bool = Series(
                 [False, False, False, True, False], index=ix, name=alg)
@@ -725,19 +739,15 @@ class TestCompareNumeric(TestData):
                 comp.compute(self.index_AB, self.A, self.B)
 
     def test_numeric_does_not_exist(self):
-        """
-        Raise error is the algorithm doesn't exist.
-        """
+        # raise when algorithm doesn't exists
 
         A = DataFrame({'col': [1, 1, 1, nan, 0]})
         B = DataFrame({'col': [1, 1, 1, nan, nan]})
         ix = MultiIndex.from_arrays([A.index.values, B.index.values])
 
         comp = recordlinkage.Compare()
-
-        with self.assertRaises(ValueError):
-            comp.numeric('col', 'col', method='unknown_algorithm')
-            comp.compute(ix, A, B)
+        comp.numeric('col', 'col', method='unknown_algorithm')
+        self.assertRaises(ValueError, comp.compute, ix, A, B)
 
 
 # tests/test_compare.py:TestCompareDates
@@ -978,10 +988,20 @@ class TestCompareGeo(TestData):
 
     def test_geo_does_not_exist(self):
 
-        comp = recordlinkage.Compare()
+        # Utrecht, Amsterdam, Rotterdam (Cities in The Netherlands)
+        A = DataFrame({
+            'lat': [52.0842455, 52.3747388, 51.9280573],
+            'lng': [5.0124516, 4.7585305, 4.4203581]
+        })
+        B = DataFrame({
+            'lat': [52.3747388, 51.9280573, 52.0842455],
+            'lng': [4.7585305, 4.4203581, 5.0124516]
+        })
+        ix = MultiIndex.from_arrays([A.index.values, B.index.values])
 
-        self.assertRaises(ValueError, comp.geo, 'lat', 'lng',
-                          'lat', 'lng', method='unknown')
+        comp = recordlinkage.Compare()
+        comp.geo('lat', 'lng', 'lat', 'lng', method='unknown')
+        self.assertRaises(ValueError, comp.compute, ix, A, B)
 
 
 # tests/test_compare.py:TestCompareStrings
@@ -1072,7 +1092,11 @@ class TestCompareStrings(TestData):
 
     def test_fuzzy_does_not_exist(self):
 
-        comp = recordlinkage.Compare()
+        A = DataFrame(
+            {'col': [u'str_abc', u'str_abc', u'str_abc', nan, u'hsdkf']})
+        B = DataFrame({'col': [u'str_abc', u'str_abd', u'jaskdfsd', nan, nan]})
+        ix = MultiIndex.from_arrays([A.index.values, B.index.values])
 
-        self.assertRaises(ValueError, comp.string, 'col',
-                          'col', method='unknown_algorithm')
+        comp = recordlinkage.Compare()
+        comp.string('col', 'col', method='unknown_algorithm')
+        self.assertRaises(ValueError, comp.compute, ix, A, B)

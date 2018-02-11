@@ -2,8 +2,8 @@
 # register the configuration
 import recordlinkage.config_init
 
+from recordlinkage.api import *
 from recordlinkage.indexing import *
-from recordlinkage.comparing import *
 from recordlinkage.classifiers import *
 from recordlinkage.measures import *
 from recordlinkage.network import *
