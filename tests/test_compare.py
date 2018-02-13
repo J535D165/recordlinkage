@@ -86,7 +86,6 @@ class TestData(unittest.TestCase):
         shutil.rmtree(cls.test_dir)
 
 
-# tests/test_compare.py:TestCompareApi
 class TestCompareApi(TestData):
     """General unittest for the compare API."""
 
@@ -490,7 +489,10 @@ class TestCompareApi(TestData):
 
         pdt.assert_frame_equal(result_label, result_position)
 
-    def test_base_class(self):
+
+class TestCompareFeatures(TestData):
+
+    def test_feature(self):
         # test using classes and the base class
 
         A = DataFrame({'col': ['abc', 'abc', 'abc', 'abc', 'abc']})
@@ -501,8 +503,37 @@ class TestCompareApi(TestData):
         feature._f_compare_vectorized = lambda s1, s2: np.ones(len(s1))
         feature.compute(ix, A, B)
 
+    def test_feature_multicolumn_return(self):
+        # test using classes and the base class
 
-# tests/test_compare.py:TestCompareExact
+        A = DataFrame({'col': ['abc', 'abc', 'abc', 'abc', 'abc']})
+        B = DataFrame({'col': ['abc', 'abd', 'abc', 'abc', '123']})
+        ix = MultiIndex.from_arrays([A.index.values, B.index.values])
+
+        def ones(s1, s2):
+            return DataFrame(np.ones((len(s1), 3)))
+
+        feature = BaseCompareFeature('col', 'col')
+        feature._f_compare_vectorized = ones
+        result = feature.compute(ix, A, B)
+
+        self.assertTrue(result.shape[0], 3)
+
+    def test_feature_multicolumn_input(self):
+        # test using classes and the base class
+
+        A = DataFrame({'col1': ['abc', 'abc', 'abc', 'abc', 'abc'],
+                       'col2': ['abc', 'abc', 'abc', 'abc', 'abc']})
+        B = DataFrame({'col1': ['abc', 'abd', 'abc', 'abc', '123'],
+                       'col2': ['abc', 'abd', 'abc', 'abc', '123']})
+        ix = MultiIndex.from_arrays([A.index.values, B.index.values])
+
+        feature = BaseCompareFeature(['col1', 'col2'], ['col1', 'col2'])
+        feature._f_compare_vectorized = \
+            lambda s1_1, s1_2, s2_1, s2_2: np.ones(len(s1_1))
+        feature.compute(ix, A, B)
+
+
 class TestCompareExact(TestData):
     """Test the exact comparison method."""
 

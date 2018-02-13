@@ -224,8 +224,7 @@ class BaseCompareFeature(object):
     name = None
     description = None
 
-    def __init__(self, labels_left, labels_right, args=(),
-                 kwargs={}):
+    def __init__(self, labels_left, labels_right, args=(), kwargs={}):
 
         self.labels_left = labels_left
         self.labels_right = labels_right
@@ -323,14 +322,20 @@ class BaseCompareFeature(object):
         if x_link is not None and not isinstance(x_link, pandas.DataFrame):
             raise ValueError("expected pandas.DataFrame as third argument")
 
-        df_a_indexed = frame_indexing(x[self.labels_left], pairs, 0)
+        labels_left = listify(self.labels_left)
+        labels_right = listify(self.labels_right)
+
+        df_a = frame_indexing(x[labels_left], pairs, 0)
 
         if x_link is None:
-            df_b_indexed = frame_indexing(x[self.labels_right], pairs, 1)
+            df_b = frame_indexing(x[labels_right], pairs, 1)
         else:
-            df_b_indexed = frame_indexing(x_link[self.labels_right], pairs, 1)
+            df_b = frame_indexing(x_link[labels_right], pairs, 1)
 
-        results = self._compute(df_a_indexed, df_b_indexed)
+        data1 = tuple([df_a[lbl] for lbl in listify(self.labels_left)])
+        data2 = tuple([df_b[lbl] for lbl in listify(self.labels_right)])
+
+        results = self._compute(*tuple(data1 + data2))
 
         return results
 
