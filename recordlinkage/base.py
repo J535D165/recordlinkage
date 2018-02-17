@@ -22,6 +22,12 @@ from recordlinkage.measures import max_pairs
 from recordlinkage import rl_logging as logging
 
 
+def _parallel_compare_helper(class_obj, pairs, x, x_link=None):
+    """Internal function to overcome pickling problem in python2."""
+
+    return class_obj._compute(pairs, x, x_link)
+
+
 def chunk_pandas(frame_or_series, chunksize=None):
     """Chunk a frame into smaller, equal parts."""
 
@@ -465,7 +471,8 @@ class BaseCompare(object):
 
         df_chunks = index_split(pairs, n_jobs)
         result_chunks = Parallel(n_jobs=n_jobs)(
-            delayed(self._compute)(chunk, x, x_link) for chunk in df_chunks
+            delayed(_parallel_compare_helper)(self, chunk, x, x_link)
+            for chunk in df_chunks
         )
 
         result = pandas.concat(result_chunks)
