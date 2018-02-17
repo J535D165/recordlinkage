@@ -394,9 +394,7 @@ class TestCompareApi(TestData):
         # use two jobs
         comp = recordlinkage.Compare(n_jobs=2)
         comp.exact('given_name', 'given_name', label='my_feature_label')
-        result_2processes = comp._compute_parallel(
-            self.index_AB, self.A, self.B
-        )
+        result_2processes = comp.compute(self.index_AB, self.A, self.B)
         result_2processes.sort_index(inplace=True)
 
         # compare results
