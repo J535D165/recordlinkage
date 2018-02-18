@@ -3,7 +3,8 @@
 import recordlinkage.config_init
 
 from recordlinkage.api import *
-from recordlinkage.indexing import *
+from recordlinkage.index import (FullIndex, BlockIndex,
+                                 SortedNeighbourhoodIndex, RandomIndex)
 from recordlinkage.classifiers import *
 from recordlinkage.measures import *
 from recordlinkage.network import *

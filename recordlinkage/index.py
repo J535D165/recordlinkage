@@ -3,21 +3,21 @@ from __future__ import division
 import pandas
 import numpy
 
-from recordlinkage.base import BaseIndexator
-from recordlinkage.utils import IndexError
-from recordlinkage.utils import listify
+from recordlinkage.base import BaseIndexAlgorithm
+from recordlinkage.utils import (
+    IndexError,
+    DeprecationHelper,
+    listify)
 from recordlinkage.measures import full_index_size
-from recordlinkage.algorithms.indexing import \
-    random_pairs_with_replacement
-from recordlinkage.algorithms.indexing import \
-    random_pairs_without_replacement_small_frames
-from recordlinkage.algorithms.indexing import \
-    random_pairs_without_replacement_large_frames
+from recordlinkage.algorithms.indexing import (
+    random_pairs_with_replacement,
+    random_pairs_without_replacement_small_frames,
+    random_pairs_without_replacement_large_frames)
 
 from recordlinkage import rl_logging as logging
 
 
-class FullIndex(BaseIndexator):
+class Full(BaseIndexAlgorithm):
     """FullIndex()
     Class to generate a 'full' index.
 
@@ -35,8 +35,8 @@ class FullIndex(BaseIndexator):
 
     """
 
-    def __init__(self, *args, **kwargs):
-        super(FullIndex, self).__init__(*args, **kwargs)
+    def __init__(self):
+        super(Full, self).__init__()
 
     def _link_index(self, df_a, df_b):
 
@@ -73,28 +73,28 @@ class FullIndex(BaseIndexator):
         )
 
 
-class BlockIndex(BaseIndexator):
-    """BlockIndex(on=None, left_on=None, right_on=None)
+class Block(BaseIndexAlgorithm):
+    """Block(on=None, left_on=None, right_on=None)
     Make candidate record pairs that agree on one or more variables.
 
-    Returns all record pairs that agree on the given variable(s). This method
-    is known as *blocking*. Blocking is an effective way to make a subset of
-    the record space (A * B).
+    Returns all record pairs that agree on the given variable(s). This
+    method is known as *blocking*. Blocking is an effective way to make a
+    subset of the record space (A * B).
 
     Parameters
     ----------
     on : label, optional
-        A column name or a list of column names. These column(s) are used to
-        block on. When linking two dataframes, the 'on' argument needs to be
-        present in both dataframes.
+        A column name or a list of column names. These column(s) are used
+        to block on. When linking two dataframes, the 'on' argument needs
+        to be present in both dataframes.
     left_on : label, optional
         A column name or a list of column names of dataframe A. These
-        columns are used to block on. This argument is ignored when argument
-        'on' is given.
+        columns are used to block on. This argument is ignored when
+        argument 'on' is given.
     right_on : label, optional
         A column name or a list of column names of dataframe B. These
-        columns are used to block on. This argument is ignored when argument
-        'on' is given.
+        columns are used to block on. This argument is ignored when
+        argument 'on' is given.
 
     Examples
     --------
@@ -109,7 +109,7 @@ class BlockIndex(BaseIndexator):
 
     def __init__(self, on=None, left_on=None, right_on=None,
                  *args, **kwargs):
-        super(BlockIndex, self).__init__(*args, **kwargs)
+        super(Block, self).__init__(*args, **kwargs)
 
         # variables to block on
         self.on = on
@@ -169,29 +169,30 @@ class BlockIndex(BaseIndexator):
         return pairs.index
 
 
-class SortedNeighbourhoodIndex(BaseIndexator):
-    """SortedNeighbourhoodIndex(on=None, left_on=None, right_on=None, window=3, sorting_key_values=None, block_on=[], block_left_on=[], block_right_on=[])
+class SortedNeighbourhood(BaseIndexAlgorithm):
+    """SortedNeighbourhood(on=None, left_on=None, right_on=None, window=3, sorting_key_values=None, block_on=[], block_left_on=[], block_right_on=[])
     Make candidate record pairs with the SortedNeighbourhood algorithm.
 
     This algorithm returns record pairs that agree on the sorting key, but
-    also records pairs in their neighbourhood. A large window size results in
-    more record pairs. A window size of 1 returns the blocking index.
+    also records pairs in their neighbourhood. A large window size results
+    in more record pairs. A window size of 1 returns the blocking index.
 
     The Sorted Neighbourhood Index method is a great method when there is
-    relatively large amount of spelling mistakes. Blocking will fail in that
-    situation because it excludes to many records on minor spelling mistakes.
+    relatively large amount of spelling mistakes. Blocking will fail in
+    that situation because it excludes to many records on minor spelling
+    mistakes.
 
     Parameters
     ----------
     on : label, optional
-        The column name of the sorting key. When linking two dataframes, the
-        'on' argument needs to be present in both dataframes.
+        The column name of the sorting key. When linking two dataframes,
+        the 'on' argument needs to be present in both dataframes.
     left_on : label, optional
-        The column name of the sorting key of the first/left dataframe. This
-        argument is ignored when argument 'on' is not None.
+        The column name of the sorting key of the first/left dataframe.
+        This argument is ignored when argument 'on' is not None.
     right_on : label, optional
-        The column name of the sorting key of the second/right dataframe. This
-        argument is ignored when argument 'on' is not None.
+        The column name of the sorting key of the second/right dataframe.
+        This argument is ignored when argument 'on' is not None.
     window: int, optional
         The width of the window, default is 3
     sorting_key_values: array, optional
@@ -199,12 +200,11 @@ class SortedNeighbourhoodIndex(BaseIndexator):
     block_on: label
         Additional columns to apply standard blocking on.
     block_left_on: label
-        Additional columns in the left dataframe to apply standard blocking
-        on.
+        Additional columns in the left dataframe to apply standard
+        blocking on.
     block_right_on: label
-        Additional columns in the right dataframe to apply standard blocking
-        on.
-
+        Additional columns in the right dataframe to apply standard
+        blocking on.
 
     Examples
     --------
@@ -227,7 +227,7 @@ class SortedNeighbourhoodIndex(BaseIndexator):
     def __init__(self, on=None, left_on=None, right_on=None, window=3,
                  sorting_key_values=None, block_on=[], block_left_on=[],
                  block_right_on=[], *args, **kwargs):
-        super(SortedNeighbourhoodIndex, self).__init__(*args, **kwargs)
+        super(SortedNeighbourhood, self).__init__(*args, **kwargs)
 
         # variables to block on
         self.on = on
@@ -355,14 +355,14 @@ class SortedNeighbourhoodIndex(BaseIndexator):
         return pairs
 
 
-class RandomIndex(BaseIndexator):
-    """RandomIndex(n, replace=True, random_state=None)
+class Random(BaseIndexAlgorithm):
+    """Random(n, replace=True, random_state=None)
     Class to generate random pairs of records.
 
-    This class returns random pairs of records with or without replacement.
-    Use the random_state parameter to seed the algorithm and reproduce
-    results. This way to make record pairs is useful for the training of
-    unsupervised learning models for record linkage.
+    This class returns random pairs of records with or without
+    replacement. Use the random_state parameter to seed the algorithm and
+    reproduce results. This way to make record pairs is useful for the
+    training of unsupervised learning models for record linkage.
 
     Parameters
     ----------
@@ -374,13 +374,13 @@ class RandomIndex(BaseIndexator):
         Whether the sample of record pairs is with or without replacement.
         Default: True
     random_state : int or numpy.random.RandomState, optional
-        Seed for the random number generator (if int), or numpy RandomState
-        object.
+        Seed for the random number generator (if int), or
+        numpy.RandomState object.
 
     """
 
     def __init__(self, n, replace=True, random_state=None, *args, **kwargs):
-        super(RandomIndex, self).__init__(*args, **kwargs)
+        super(Random, self).__init__(*args, **kwargs)
 
         self.n = n
         self.replace = replace
@@ -471,3 +471,14 @@ class RandomIndex(BaseIndexator):
             labels=labels,
             verify_integrity=False
         )
+
+
+FullIndex = DeprecationHelper(
+    Full, "This class is moved to recordlinkage.index.Full.")
+BlockIndex = DeprecationHelper(
+    Block, "This class is moved to recordlinkage.index.Block.")
+SortedNeighbourhoodIndex = DeprecationHelper(
+    SortedNeighbourhood,
+    "This class is moved to recordlinkage.index.SortedNeighbourhood.")
+RandomIndex = DeprecationHelper(
+    Random, "This class is moved to recordlinkage.index.Random.")

@@ -12,14 +12,14 @@ import pandas.util.testing as ptm
 from parameterized import parameterized, param
 
 import recordlinkage
-
+from recordlinkage.index import Full, Block, SortedNeighbourhood, Random
 
 TEST_INDEXATION_OBJECTS = [
-    param(recordlinkage.FullIndex()),
-    param(recordlinkage.BlockIndex(on='var_arange')),
-    param(recordlinkage.SortedNeighbourhoodIndex(on='var_arange')),
-    param(recordlinkage.RandomIndex(10, random_state=100, replace=True)),
-    param(recordlinkage.RandomIndex(10, random_state=100, replace=False))
+    param(Full()),
+    param(Block(on='var_arange')),
+    param(SortedNeighbourhood(on='var_arange')),
+    param(Random(10, random_state=100, replace=True)),
+    param(Random(10, random_state=100, replace=False))
 ]
 
 
@@ -59,8 +59,52 @@ class TestData(unittest.TestCase):
         shutil.rmtree(cls.test_dir)
 
 
-# tests/test_indexing.py:TestIndexApi
 class TestIndexApi(TestData):
+
+    def test_init(self):
+
+        algorithms = Full()
+        indexer = recordlinkage.Index(algorithms)
+        result = indexer.index(self.a, self.b)
+
+        expected = Full().index(self.a, self.b)
+
+        ptm.assert_index_equal(result, expected)
+
+    def test_add_linking(self):
+
+        indexer1 = Full()
+        indexer2 = Block(left_on='var_arange', right_on='var_arange')
+        expected = indexer1.index(self.a, self.b).union(
+            indexer2.index(self.a, self.b))
+
+        indexer = recordlinkage.Index()
+        indexer.add([
+            Full(),
+            Block(left_on='var_arange', right_on='var_arange')])
+
+        result = indexer.index(self.a, self.b)
+
+        ptm.assert_index_equal(result, expected)
+
+    def test_add_dedup(self):
+
+        indexer1 = Full()
+        indexer2 = Block(left_on='var_arange', right_on='var_arange')
+        expected = indexer1.index(self.a).union(
+            indexer2.index(self.a))
+
+        indexer = recordlinkage.Index()
+        indexer.add([
+            Full(),
+            Block(left_on='var_arange', right_on='var_arange')])
+
+        result = indexer.index(self.a)
+
+        ptm.assert_index_equal(result, expected)
+
+
+class TestIndexAlgorithmApi(TestData):
     """General unittest for the indexing API."""
 
     @parameterized.expand(TEST_INDEXATION_OBJECTS)
@@ -90,12 +134,12 @@ class TestIndexApi(TestData):
         """Test the iterative behaviour."""
 
         # SINGLE STEP
-        index_class = recordlinkage.FullIndex()
+        index_class = Full()
         pairs = index_class.index((self.a, self.b))
         pairs = pd.DataFrame(index=pairs).sort_index()
 
         # MULTI STEP
-        index_class = recordlinkage.FullIndex()
+        index_class = Full()
 
         pairs1 = index_class.index((self.a[0:50], self.b))
         pairs2 = index_class.index((self.a[50:100], self.b))
@@ -114,7 +158,9 @@ class TestIndexApi(TestData):
         df_a = pd.DataFrame(columns=self.a.columns.tolist())
         df_b = pd.DataFrame(columns=self.b.columns.tolist())
 
-        if not isinstance(index_class, recordlinkage.RandomIndex):
+        from recordlinkage.index import Random
+
+        if not isinstance(index_class, Random):
             # make an index
             pairs = index_class.index((df_a, df_b))
 
@@ -137,11 +183,11 @@ class TestIndexApi(TestData):
             index_class.index(df_a)
 
     @parameterized.expand([
-        param(recordlinkage.FullIndex()),
-        param(recordlinkage.BlockIndex(on='var_arange')),
-        param(recordlinkage.SortedNeighbourhoodIndex(on='var_arange')),
-        param(recordlinkage.RandomIndex(10, random_state=100, replace=True)),
-        param(recordlinkage.RandomIndex(10, random_state=100, replace=False))
+        param(Full()),
+        param(Block(on='var_arange')),
+        param(SortedNeighbourhood(on='var_arange')),
+        param(Random(10, random_state=100, replace=True)),
+        param(Random(10, random_state=100, replace=False))
     ])
     def test_index_names_dedup(self, index_class):
 
@@ -164,11 +210,11 @@ class TestIndexApi(TestData):
             self.assertEqual(df_A.index.name, name)
 
     @parameterized.expand([
-        param(recordlinkage.FullIndex()),
-        param(recordlinkage.BlockIndex(on='var_arange')),
-        param(recordlinkage.SortedNeighbourhoodIndex(on='var_arange')),
-        param(recordlinkage.RandomIndex(10, random_state=100, replace=True)),
-        param(recordlinkage.RandomIndex(10, random_state=100, replace=False))
+        param(Full()),
+        param(Block(on='var_arange')),
+        param(SortedNeighbourhood(on='var_arange')),
+        param(Random(10, random_state=100, replace=True)),
+        param(Random(10, random_state=100, replace=False))
     ])
     def test_duplicated_index_names_dedup(self, index_class):
 
@@ -192,11 +238,11 @@ class TestIndexApi(TestData):
         self.assertEqual(df_a.index.name, 'index')
 
     @parameterized.expand([
-        param(recordlinkage.FullIndex()),
-        param(recordlinkage.BlockIndex(on='var_arange')),
-        param(recordlinkage.SortedNeighbourhoodIndex(on='var_arange')),
-        param(recordlinkage.RandomIndex(10, random_state=100, replace=True)),
-        param(recordlinkage.RandomIndex(10, random_state=100, replace=False))
+        param(Full()),
+        param(Block(on='var_arange')),
+        param(SortedNeighbourhood(on='var_arange')),
+        param(Random(10, random_state=100, replace=True)),
+        param(Random(10, random_state=100, replace=False))
     ])
     def test_index_names_link(self, index_class):
 
@@ -227,11 +273,11 @@ class TestIndexApi(TestData):
             self.assertEqual(df_b.index.name, name_b)
 
     @parameterized.expand([
-        param(recordlinkage.FullIndex()),
-        param(recordlinkage.BlockIndex(on='var_arange')),
-        param(recordlinkage.SortedNeighbourhoodIndex(on='var_arange')),
-        param(recordlinkage.RandomIndex(10, random_state=100, replace=True)),
-        param(recordlinkage.RandomIndex(10, random_state=100, replace=False))
+        param(Full()),
+        param(Block(on='var_arange')),
+        param(SortedNeighbourhood(on='var_arange')),
+        param(Random(10, random_state=100, replace=True)),
+        param(Random(10, random_state=100, replace=False))
     ])
     def test_duplicated_index_names_link(self, index_class):
 
@@ -275,15 +321,16 @@ class TestIndexApi(TestData):
         pickle.dump(index_class, open(pickle_path, 'wb'))
 
 
-# tests/test_indexing.py:TestFullIndexing
 class TestFullIndexing(TestData):
     """General unittest for the full indexing class."""
 
     def test_basic_dedup(self):
         """FULL: Test basic characteristics of full indexing (dedup)."""
 
+        from recordlinkage.index import Full
+
         # finding duplicates
-        index_cl = recordlinkage.FullIndex()
+        index_cl = Full()
         pairs = index_cl.index(self.a)
 
         self.assertIsInstance(pairs, pd.MultiIndex)
@@ -293,8 +340,10 @@ class TestFullIndexing(TestData):
     def test_basic_link(self):
         """FULL: Test basic characteristics of full indexing (link)."""
 
+        from recordlinkage.index import Full
+
         # finding duplicates
-        index_cl = recordlinkage.FullIndex()
+        index_cl = Full()
         pairs = index_cl.index((self.a, self.b))
 
         self.assertIsInstance(pairs, pd.MultiIndex)
@@ -302,7 +351,6 @@ class TestFullIndexing(TestData):
         self.assertTrue(pairs.is_unique)
 
 
-# tests/test_indexing.py:TestBlocking
 class TestBlocking(TestData):
     """General unittest for the block indexing class."""
 
@@ -312,24 +360,24 @@ class TestBlocking(TestData):
         # all the following cases return in the same index.
 
         # situation 1
-        index_cl1 = recordlinkage.BlockIndex('var_arange')
+        index_cl1 = Block('var_arange')
         pairs1 = index_cl1.index((self.a, self.b))
 
         # situation 2
-        index_cl2 = recordlinkage.BlockIndex(on='var_arange')
+        index_cl2 = Block(on='var_arange')
         pairs2 = index_cl2.index((self.a, self.b))
 
         # situation 3
-        index_cl3 = recordlinkage.BlockIndex(
+        index_cl3 = Block(
             left_on='var_arange', right_on='var_arange')
         pairs3 = index_cl3.index((self.a, self.b))
 
         # situation 4
-        index_cl4 = recordlinkage.BlockIndex(on=['var_arange'])
+        index_cl4 = Block(on=['var_arange'])
         pairs4 = index_cl4.index((self.a, self.b))
 
         # situation 5
-        index_cl5 = recordlinkage.BlockIndex(
+        index_cl5 = Block(
             left_on=['var_arange'], right_on=['var_arange'])
         pairs5 = index_cl5.index((self.a, self.b))
 
@@ -345,11 +393,11 @@ class TestBlocking(TestData):
         # all the following cases return in the same index.
 
         # situation 1
-        index_cl1 = recordlinkage.BlockIndex(['var_arange', 'var_block10'])
+        index_cl1 = Block(['var_arange', 'var_block10'])
         pairs1 = index_cl1.index((self.a, self.b))
 
         # situation 2
-        index_cl2 = recordlinkage.BlockIndex(
+        index_cl2 = Block(
             left_on=['var_arange', 'var_block10'],
             right_on=['var_arange', 'var_block10']
         )
@@ -362,19 +410,19 @@ class TestBlocking(TestData):
         """BLOCKING: test blocking algorithm for linking"""
 
         # situation 1: eye index
-        index_cl1 = recordlinkage.BlockIndex(on='var_arange')
+        index_cl1 = Block(on='var_arange')
         pairs1 = index_cl1.index((self.a, self.b))
         self.assertEqual(len(pairs1), len(self.a))
         self.assertTrue(pairs1.is_unique)
 
         # situation 2: 10 blocks
-        index_cl2 = recordlinkage.BlockIndex(on='var_block10')
+        index_cl2 = Block(on='var_block10')
         pairs2 = index_cl2.index((self.a, self.b))
         self.assertEqual(len(pairs2), len(self.a) * 10)
         self.assertTrue(pairs2.is_unique)
 
         # situation 3: full index
-        index_cl3 = recordlinkage.BlockIndex(on='var_single')
+        index_cl3 = Block(on='var_single')
         pairs3 = index_cl3.index((self.a, self.b))
         self.assertEqual(len(pairs3), len(self.a) * len(self.b))
         self.assertTrue(pairs3.is_unique)
@@ -385,25 +433,24 @@ class TestBlocking(TestData):
         len_a = len(self.a)
 
         # situation 1: eye index
-        index_cl1 = recordlinkage.BlockIndex(on='var_arange')
+        index_cl1 = Block(on='var_arange')
         pairs1 = index_cl1.index(self.a)
         self.assertEqual(len(pairs1), 0)
         self.assertTrue(pairs1.is_unique)
 
         # situation 2: 10 blocks
-        index_cl2 = recordlinkage.BlockIndex(on='var_block10')
+        index_cl2 = Block(on='var_block10')
         pairs2 = index_cl2.index(self.a)
         self.assertEqual(len(pairs2), (len_a * 10 - len_a) / 2)
         self.assertTrue(pairs2.is_unique)
 
         # situation 3: full index
-        index_cl3 = recordlinkage.BlockIndex(on='var_single')
+        index_cl3 = Block(on='var_single')
         pairs3 = index_cl3.index(self.a)
         self.assertEqual(len(pairs3), (len_a * len_a - len_a) / 2)
         self.assertTrue(pairs3.is_unique)
 
 
-# tests/test_indexing.py:TestSortedNeighbourhoodIndexing
 class TestSortedNeighbourhoodIndexing(TestData):
     """General unittest for the sorted neighbourhood indexing class."""
 
@@ -413,24 +460,24 @@ class TestSortedNeighbourhoodIndexing(TestData):
         # all the following cases return in the same index.
 
         # situation 1
-        index_cl1 = recordlinkage.SortedNeighbourhoodIndex('var_arange')
+        index_cl1 = SortedNeighbourhood('var_arange')
         pairs1 = index_cl1.index((self.a, self.b))
 
         # situation 2
-        index_cl2 = recordlinkage.SortedNeighbourhoodIndex(on='var_arange')
+        index_cl2 = SortedNeighbourhood(on='var_arange')
         pairs2 = index_cl2.index((self.a, self.b))
 
         # situation 3
-        index_cl3 = recordlinkage.SortedNeighbourhoodIndex(
+        index_cl3 = SortedNeighbourhood(
             left_on='var_arange', right_on='var_arange')
         pairs3 = index_cl3.index((self.a, self.b))
 
         # situation 4
-        index_cl4 = recordlinkage.SortedNeighbourhoodIndex(on=['var_arange'])
+        index_cl4 = SortedNeighbourhood(on=['var_arange'])
         pairs4 = index_cl4.index((self.a, self.b))
 
         # situation 5
-        index_cl5 = recordlinkage.SortedNeighbourhoodIndex(
+        index_cl5 = SortedNeighbourhood(
             left_on=['var_arange'], right_on=['var_arange'])
         pairs5 = index_cl5.index((self.a, self.b))
 
@@ -452,7 +499,7 @@ class TestSortedNeighbourhoodIndexing(TestData):
 
         # window = 7 # using paramereized tests instead
 
-        index_class = recordlinkage.SortedNeighbourhoodIndex(
+        index_class = SortedNeighbourhood(
             on='var_arange', window=window)
         pairs = index_class.index((self.a, self.b[0:len(self.a)]))
 
@@ -480,7 +527,7 @@ class TestSortedNeighbourhoodIndexing(TestData):
 
         # window = 7 # using paramereized tests instead
 
-        index_class = recordlinkage.SortedNeighbourhoodIndex(
+        index_class = SortedNeighbourhood(
             on='var_arange', window=window)
         pairs = index_class.index((self.a))
 
@@ -497,7 +544,7 @@ class TestSortedNeighbourhoodIndexing(TestData):
         """SNI: Test sni with blocking keys."""
 
         # sni
-        index_class = recordlinkage.SortedNeighbourhoodIndex(
+        index_class = SortedNeighbourhood(
             on='var_arange', window=3, block_on='var_arange')
         pairs = index_class.index((self.a, self.b[0:len(self.a)]))
 
@@ -508,7 +555,7 @@ class TestSortedNeighbourhoodIndexing(TestData):
         """SNI: Test sni with blocking keys."""
 
         # sni
-        index_class = recordlinkage.SortedNeighbourhoodIndex(
+        index_class = SortedNeighbourhood(
             on='var_arange', window=3, block_on='var_arange')
         pairs = index_class.index(self.a)
 
@@ -518,7 +565,6 @@ class TestSortedNeighbourhoodIndexing(TestData):
         self.assertEqual(len(pairs), 0)
 
 
-# tests/test_indexing.py:TestRandomIndexing
 class TestRandomIndexing(TestData):
     """General unittest for the random indexing class."""
 
@@ -526,9 +572,9 @@ class TestRandomIndexing(TestData):
         """Random: test seeding random algorithm"""
 
         # TEST IDENTICAL
-        index_cl1 = recordlinkage.RandomIndex(n=1000, random_state=100)
-        index_cl2 = recordlinkage.RandomIndex(n=1000, random_state=100)
-        index_cl3 = recordlinkage.RandomIndex(n=1000, random_state=101)
+        index_cl1 = Random(n=1000, random_state=100)
+        index_cl2 = Random(n=1000, random_state=100)
+        index_cl3 = Random(n=1000, random_state=101)
 
         pairs1 = index_cl1.index((self.a, self.b))
         pairs2 = index_cl2.index((self.a, self.b))
@@ -544,7 +590,7 @@ class TestRandomIndexing(TestData):
         """Random: test random indexing without replacement"""
 
         # situation 1: linking
-        index_cl1 = recordlinkage.RandomIndex(
+        index_cl1 = Random(
             n=1000, replace=False, random_state=100
         )
 
@@ -553,7 +599,7 @@ class TestRandomIndexing(TestData):
         self.assertTrue(pairs1.is_unique)
 
         # situation 2: dedup
-        index_cl2 = recordlinkage.RandomIndex(
+        index_cl2 = Random(
             n=1000, replace=False, random_state=100
         )
 
@@ -565,7 +611,7 @@ class TestRandomIndexing(TestData):
         """Random: test random indexing with replacement"""
 
         # situation 1: linking
-        index_cl1 = recordlinkage.RandomIndex(
+        index_cl1 = Random(
             n=1000, replace=True, random_state=100
         )
 
@@ -574,7 +620,7 @@ class TestRandomIndexing(TestData):
         self.assertFalse(pairs1.is_unique)
 
         # situation 2: dedup
-        index_cl2 = recordlinkage.RandomIndex(
+        index_cl2 = Random(
             n=1000, replace=True, random_state=101
         )
 

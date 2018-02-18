@@ -21,6 +21,8 @@ from recordlinkage.types import (is_string_like,
 from recordlinkage.measures import max_pairs
 from recordlinkage import rl_logging as logging
 
+from recordlinkage.utils import DeprecationHelper
+
 
 def _parallel_compare_helper(class_obj, pairs, x, x_link=None):
     """Internal function to overcome pickling problem in python2."""
@@ -41,7 +43,84 @@ def chunk_pandas(frame_or_series, chunksize=None):
         yield frame_or_series[b:b + chunksize]
 
 
-class BaseIndexator(object):
+class BaseIndex(object):
+    """Base class for all index classes in Python Record Linkage Toolkit.
+
+    Can be used for index passes.
+
+    """
+
+    def __init__(self, algorithms=[]):
+
+        logging.info("Index - initialize {} class".format(
+            self.__class__.__name__)
+        )
+
+        self.algorithms = []
+        self.add(algorithms)
+
+    def __repr__(self):
+        class_name = self.__class__.__name__
+        return "<{}>".format(class_name)
+
+    def __str__(self):
+        return repr(self)
+
+    def add(self, model):
+        """Add a index method.
+
+        This method is used to add index algorithms. If multiple algorithms
+        are added, the union of the record pairs from the algorithm is taken.
+
+        Parameters
+        ----------
+        model : list, class
+            A (list of) index algorithm(s) from
+            :mod:`recordlinkage.index`.
+        """
+        if isinstance(model, list):
+            self.algorithms = self.algorithms + model
+        else:
+            self.algorithms.append(model)
+
+    def index(self, x, x_link=None):
+        """Make an index of record pairs.
+
+        Parameters
+        ----------
+        x: pandas.DataFrame
+            A pandas DataFrame. When `x_link` is None, the algorithm makes
+            record pairs within the DataFrame. When `x_link` is not empty,
+            the algorithm makes pairs between `x` and `x_link`.
+        x_link: pandas.DataFrame, optional
+            A second DataFrame to link with the DataFrame x.
+
+        Returns
+        -------
+        pandas.MultiIndex
+            A pandas.MultiIndex with record pairs. Each record pair contains
+            the index labels of two records.
+
+        """
+        if not self.algorithms:
+            raise ValueError("No algorithms given.")
+
+        print(self.algorithms)
+        pairs = None
+        for cl_alg in self.algorithms:
+            print("test")
+            print(type(cl_alg))
+            pairs_i = cl_alg.index(x, x_link)
+
+            if pairs is None:
+                pairs = pairs_i
+            else:
+                pairs = pairs.union(pairs_i)
+
+        return pairs
+
+
+class BaseIndexAlgorithm(object):
     """Base class for all indexator classes in Python Record Linkage Toolkit.
 
     The structure of the indexing classes follow the framework of SciKit-
@@ -73,8 +152,11 @@ class BaseIndexator(object):
     ```
     """
 
+    name = None
+    description = None
+
     def __init__(self, verify_integrity=True, suffixes=('_1', '_2')):
-        super(BaseIndexator, self).__init__()
+        super(BaseIndexAlgorithm, self).__init__()
 
         self.suffixes = suffixes
         self.verify_integrity = verify_integrity
@@ -223,6 +305,9 @@ class BaseIndexator(object):
         return pairs
 
 
+BaseIndexator = DeprecationHelper(BaseIndexAlgorithm)
+
+
 class BaseCompareFeature(object):
     """BaseCompareFeature construction class.
     """
@@ -348,15 +433,37 @@ class BaseCompareFeature(object):
 
 class BaseCompare(object):
     """Base class for all comparing classes in Python Record Linkage Toolkit.
+
+    Parameters
+    ----------
+    features : list
+        List of compare algorithms.
+    n_jobs : integer, optional (default=1)
+        The number of jobs to run in parallel for comparing of record pairs.
+        If -1, then the number of jobs is set to the number of cores.
+    indexing_type : string, optional (default='label')
+        The indexing type. The MultiIndex is used to index the DataFrame(s).
+        This can be done with pandas ``.loc`` or with ``.iloc``. Use the value
+        'label' to make use of ``.loc`` and 'position' to make use of
+        ``.iloc``. The value 'position' is only available when the MultiIndex
+        consists of integers. The value 'position' is much faster.
+
+    Attributes
+    ----------
+    features: list
+        A list of algorithms to create features.
+
     """
 
-    def __init__(self, pairs=None, df_a=None, df_b=None, low_memory=False,
-                 block_size=1000000, n_jobs=1, indexing_type='label',
+    def __init__(self, features=[], n_jobs=1, indexing_type='label',
                  **kwargs):
 
         logging.info("Comparing - initialize {} class".format(
             self.__class__.__name__)
         )
+
+        self.features = []
+        self.add(features)
 
         # public
         self.n_jobs = n_jobs
@@ -366,7 +473,7 @@ class BaseCompare(object):
         # private
         self._compare_functions = []
 
-        if isinstance(pairs, (pandas.MultiIndex, pandas.Index)):
+        if isinstance(features, (pandas.MultiIndex, pandas.Index)):
             warnings.warn(
                 "It seems you are using the older version of the Compare API, "
                 "see the documentation about how to update to the new API. "
@@ -383,6 +490,18 @@ class BaseCompare(object):
         return repr(self)
 
     def add(self, model, label=None):
+        """Add a compare method.
+
+        This method is used to add compare features.
+
+        Parameters
+        ----------
+        model : list, class
+            A (list of) compare feature(s) from
+            :mod:`recordlinkage.compare`.
+        label : str, list
+            A label or list of labels to use for DataFrame column names.
+        """
 
         self.features.append((model, label))
 

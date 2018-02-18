@@ -22,6 +22,7 @@ from recordlinkage.algorithms.string import qgram_similarity
 from recordlinkage.algorithms.string import cosine_similarity
 from recordlinkage.algorithms.string import smith_waterman_similarity
 from recordlinkage.algorithms.string import longest_common_substring_similarity
+from recordlinkage.utils import DeprecationHelper
 
 
 def fillna_decorator(missing_value=np.nan):
@@ -74,7 +75,7 @@ def _missing(*args):
         axis=1)
 
 
-class CompareExact(BaseCompareFeature):
+class Exact(BaseCompareFeature):
     """Compare the record pairs exactly.
 
     This class is used to compare records in an exact way. The similarity
@@ -102,7 +103,7 @@ class CompareExact(BaseCompareFeature):
 
     def __init__(self, labels_left, labels_right, agree_value=1,
                  disagree_value=0, missing_value=0):
-        super(CompareExact, self).__init__(labels_left, labels_right)
+        super(Exact, self).__init__(labels_left, labels_right)
 
         self.agree_value = agree_value
         self.disagree_value = disagree_value
@@ -126,7 +127,7 @@ class CompareExact(BaseCompareFeature):
         return compare
 
 
-class CompareString(BaseCompareFeature):
+class String(BaseCompareFeature):
     """Compute the (partial) similarity between strings values.
 
     This class is used to compare string values. The implemented algorithms
@@ -158,7 +159,7 @@ class CompareString(BaseCompareFeature):
 
     def __init__(self, labels_left, labels_right, method=None,
                  threshold=None, missing_value=0.0):
-        super(CompareString, self).__init__(labels_left, labels_right)
+        super(String, self).__init__(labels_left, labels_right)
 
         self.method = method
         self.threshold = threshold
@@ -198,7 +199,7 @@ class CompareString(BaseCompareFeature):
             return c
 
 
-class CompareNumeric(BaseCompareFeature):
+class Numeric(BaseCompareFeature):
     """Compute the (partial) similarity between numeric values.
 
     This class is used to compare numeric values. The implemented algorithms
@@ -245,7 +246,7 @@ class CompareNumeric(BaseCompareFeature):
 
     def __init__(self, labels_left, labels_right, method='linear',
                  offset=0.0, scale=1.0, origin=0.0, missing_value=0.0):
-        super(CompareNumeric, self).__init__(labels_left, labels_right)
+        super(Numeric, self).__init__(labels_left, labels_right)
 
         self.method = method
         self.offset = offset
@@ -290,7 +291,7 @@ class CompareNumeric(BaseCompareFeature):
         return c
 
 
-class CompareGeographic(BaseCompareFeature):
+class Geographic(BaseCompareFeature):
     """Compute the (partial) similarity between WGS84 coordinate values.
 
     Compare the geometric (haversine) distance between two WGS-
@@ -327,8 +328,8 @@ class CompareGeographic(BaseCompareFeature):
 
     def __init__(self, labels_left, labels_right, method=None,
                  missing_value=0.0, *args, **kwargs):
-        super(CompareGeographic, self).__init__(labels_left, labels_right,
-                                                args=args, kwargs=kwargs)
+        super(Geographic, self).__init__(labels_left, labels_right,
+                                         args=args, kwargs=kwargs)
 
         self.method = method
 
@@ -354,7 +355,7 @@ class CompareGeographic(BaseCompareFeature):
         return c
 
 
-class CompareDate(BaseCompareFeature):
+class Date(BaseCompareFeature):
     """Compute the (partial) similarity between date values.
 
     Parameters
@@ -380,7 +381,7 @@ class CompareDate(BaseCompareFeature):
 
     def __init__(self, labels_left, labels_right, missing_value=0.0,
                  swap_month_day=0.5, swap_months='default', errors='coerce'):
-        super(CompareDate, self).__init__(labels_left, labels_right)
+        super(Date, self).__init__(labels_left, labels_right)
 
         self.missing_value = missing_value
         self.swap_months = swap_months
@@ -432,3 +433,15 @@ class CompareDate(BaseCompareFeature):
         c = pandas.Series(c)
         c[s1.isnull() | s2.isnull()] = self.missing_value
         return c
+
+
+CompareExact = DeprecationHelper(
+    Exact, "This class is renamed into Exact.")
+CompareString = DeprecationHelper(
+    String, "This class is renamed into String.")
+CompareNumeric = DeprecationHelper(
+    Numeric, "This class is renamed into Numeric.")
+CompareGeographic = DeprecationHelper(
+    Geographic, "This class is renamed into Geographic.")
+CompareDate = DeprecationHelper(
+    Date, "This class is renamed into Date.")
