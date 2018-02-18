@@ -18,9 +18,12 @@ it is a match or not.
         techniques for record linkage, entity resolution, and duplicate 
         detection. Springer Science & Business Media.
 
-.. automodule:: recordlinkage.classifiers
-    :members:
-    :inherited-members:
+.. autofunction:: recordlinkage.LogisticRegressionClassifier 
+.. autofunction:: recordlinkage.NaiveBayesClassifier
+.. autofunction:: recordlinkage.KMeansClassifier
+.. autofunction:: recordlinkage.SVMClassifier
+.. autofunction:: recordlinkage.ECMClassifier
+.. autofunction:: recordlinkage.Classifier
 
 
 Network
@@ -32,6 +35,6 @@ provides the functionality for one-to-one linking and one-to-many linking.
 It is also possible to detect all connected components which is useful in 
 data deduplication. 
 
-.. automodule:: recordlinkage.network
-    :members:
-    :inherited-members:
+.. autofunction:: recordlinkage.OneToOneLinking 
+.. autofunction:: recordlinkage.OneToManyLinking
+.. autofunction:: recordlinkage.ConnectedComponents

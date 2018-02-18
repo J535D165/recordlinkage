@@ -1,7 +1,7 @@
 Miscellaneous
 =============
 
-.. autofunction:: recordlinkage.utils.index_split
+.. autofunction:: recordlinkage.index_split
 
 .. autofunction:: recordlinkage.get_option
 .. autofunction:: recordlinkage.set_option
