@@ -15,7 +15,7 @@ from recordlinkage.utils import (listify,
                                  VisibleDeprecationWarning,
                                  index_split,
                                  frame_indexing)
-from recordlinkage.types import (is_string_like,
+from recordlinkage.types import (is_numpy_like,
                                  is_pandas_like,
                                  is_pandas_2d_multiindex)
 from recordlinkage.measures import max_pairs
@@ -105,11 +105,8 @@ class BaseIndex(object):
         if not self.algorithms:
             raise ValueError("No algorithms given.")
 
-        print(self.algorithms)
         pairs = None
         for cl_alg in self.algorithms:
-            print("test")
-            print(type(cl_alg))
             pairs_i = cl_alg.index(x, x_link)
 
             if pairs is None:
@@ -315,12 +312,14 @@ class BaseCompareFeature(object):
     name = None
     description = None
 
-    def __init__(self, labels_left, labels_right, args=(), kwargs={}):
+    def __init__(self, labels_left, labels_right, args=(), kwargs={},
+                 label=None):
 
         self.labels_left = labels_left
         self.labels_right = labels_right
         self.args = args
         self.kwargs = kwargs
+        self.label = label
         self._f_compare_vectorized = None
 
         # logging
@@ -362,7 +361,7 @@ class BaseCompareFeature(object):
         # start the timer for the comparing step
         start_time = time.time()
 
-        c = self._compute_vectorized(*args)
+        result = self._compute_vectorized(*args)
 
         # log timing
         total_time = time.time() - start_time
@@ -371,11 +370,7 @@ class BaseCompareFeature(object):
         logging.info(
             "Comparing - computation time: ~{:.2f}s".format(total_time))
 
-        # log results
-        logf_result = "Comparing - summary shape={}"
-        logging.info(logf_result.format(c.shape))
-
-        return c
+        return result
 
     def compute(self, pairs, x, x_link=None):
         """Compare the records of each record pair.
@@ -489,7 +484,7 @@ class BaseCompare(object):
     def __str__(self):
         return repr(self)
 
-    def add(self, model, label=None):
+    def add(self, model):
         """Add a compare method.
 
         This method is used to add compare features.
@@ -499,11 +494,9 @@ class BaseCompare(object):
         model : list, class
             A (list of) compare feature(s) from
             :mod:`recordlinkage.compare`.
-        label : str, list
-            A label or list of labels to use for DataFrame column names.
         """
 
-        self.features.append((model, label))
+        self.features.append(model)
 
     def compare_vectorized(self, comp_func, labels_left, labels_right,
                            *args, **kwargs):
@@ -550,17 +543,17 @@ class BaseCompare(object):
             labels_right = list(labels_right)
 
         feature = BaseCompareFeature(
-            labels_left, labels_right, args, kwargs)
+            labels_left, labels_right, args, kwargs, label=label)
         feature._f_compare_vectorized = comp_func
 
-        self.add(feature, label=label)
+        self.add(feature)
 
     def _get_labels_left(self, validate=None):
         """Get all labels of the left dataframe."""
 
         labels = []
 
-        for compare_func, _ in self.features:
+        for compare_func in self.features:
 
             labels = labels + listify(compare_func.labels_left)
 
@@ -575,7 +568,7 @@ class BaseCompare(object):
         """Get all labels of the right dataframe."""
         labels = []
 
-        for compare_func, _ in self.features:
+        for compare_func in self.features:
 
             labels = labels + listify(compare_func.labels_right)
 
@@ -617,10 +610,9 @@ class BaseCompare(object):
         # log timing
         index_time = time.time() - start_time
 
-        results = pandas.DataFrame(index=pairs)
-        label_num = 0  # make a label is label is None
+        features = []
 
-        for feat, label in self.features:
+        for feat in self.features:
 
             lbl1 = feat.labels_left
             lbl2 = feat.labels_right
@@ -628,25 +620,10 @@ class BaseCompare(object):
             data1 = tuple([df_a_indexed[lbl] for lbl in listify(lbl1)])
             data2 = tuple([df_b_indexed[lbl] for lbl in listify(lbl2)])
 
-            c = feat._compute(*tuple(data1 + data2))
+            result = feat._compute(*tuple(data1 + data2))
+            features.append((result, feat.label))
 
-            if is_pandas_like(c):
-                c = c.values  # convert pandas into numpy
-
-            if label is not None:
-                label = listify(label)
-
-            n_cols = 1 if len(c.shape) == 1 else c.shape[1]
-
-            labels = []
-            for i in range(0, n_cols):
-
-                label_val = label[i] if label is not None else label_num
-                label_num += 1
-
-                labels.append(label_val)
-
-            results[label_val] = c
+        features = self.union(features, pairs)
 
         # log timing
         total_time = time.time() - start_time
@@ -655,11 +632,68 @@ class BaseCompare(object):
         logging.info("Comparing - computation time: ~{:.2f}s (from which "
                      "indexing: ~{:.2f}s)".format(total_time, index_time))
 
-        # log results
+        # log features
         logf_result = "Comparing - summary shape={}"
-        logging.info(logf_result.format(results.shape))
+        logging.info(logf_result.format(features.shape))
 
-        return results
+        return features
+
+    def union(self, objs, index=None):
+        """Make a union of the features.
+
+        The term 'union' is based on the terminology of scikit-learn.
+
+        """
+
+        feat_conc = []
+
+        for feat, label in objs:
+
+            # result is tuple of results
+            if isinstance(feat, tuple):
+                if label is None:
+                    label = [None for _ in len(feat)]
+
+                partial_result = self.union(zip(feat, label))
+                feat_conc.append(partial_result)
+
+            # result is pandas.Series.
+            elif isinstance(feat, pandas.Series):
+                feat.reset_index(drop=True, inplace=True)
+                feat.rename(label, inplace=True)
+                feat_conc.append(feat)
+
+            # result is pandas.DataFrame
+            elif isinstance(feat, pandas.DataFrame):
+                feat.reset_index(drop=True, inplace=True)
+                feat.columns = label
+                feat_conc.append(feat)
+
+            # result is numpy 1d array
+            elif is_numpy_like(feat) and len(feat.shape) == 1:
+                f = pandas.Series(feat, name=label, copy=False)
+                feat_conc.append(f)
+
+            # result is numpy 2d array
+            elif is_numpy_like(feat) and len(feat.shape) == 2:
+                f = pandas.DataFrame(feat, columns=label, copy=False)
+                feat_conc.append(f)
+
+            # other results are not (yet) supported
+            else:
+                raise ValueError("expected numpy.ndarray or "
+                                 "pandas object to be returned, "
+                                 "got '{}'".format(feat.__class__.__name__))
+
+        result = pandas.concat(feat_conc, axis=1, copy=False)
+        if index is not None:
+            result.set_index(index, inplace=True)
+
+        # replace missing columns names by numbers
+        result.columns = [col if pandas.notnull(col) else j
+                          for j, col in enumerate(result.columns.tolist())]
+
+        return result
 
     def compute(self, pairs, x, x_link=None):
         """Compare the records of each record pair.

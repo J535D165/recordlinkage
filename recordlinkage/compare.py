@@ -102,8 +102,8 @@ class Exact(BaseCompareFeature):
     description = "Compare attributes of record pairs."
 
     def __init__(self, labels_left, labels_right, agree_value=1,
-                 disagree_value=0, missing_value=0):
-        super(Exact, self).__init__(labels_left, labels_right)
+                 disagree_value=0, missing_value=0, label=None):
+        super(Exact, self).__init__(labels_left, labels_right, label=label)
 
         self.agree_value = agree_value
         self.disagree_value = disagree_value
@@ -158,8 +158,8 @@ class String(BaseCompareFeature):
     description = "Compare string attributes of record pairs."
 
     def __init__(self, labels_left, labels_right, method=None,
-                 threshold=None, missing_value=0.0):
-        super(String, self).__init__(labels_left, labels_right)
+                 threshold=None, missing_value=0.0, label=None):
+        super(String, self).__init__(labels_left, labels_right, label=label)
 
         self.method = method
         self.threshold = threshold
@@ -190,7 +190,7 @@ class String(BaseCompareFeature):
                 "The algorithm '{}' is not known.".format(self.method)
             )
 
-        c = str_sim_alg(s1, s2, *self.args, **self.kwargs)
+        c = str_sim_alg(s1, s2)
         c = fillna(c, self.missing_value)
 
         if self.threshold:
@@ -245,8 +245,9 @@ class Numeric(BaseCompareFeature):
     description = "Compare numeric attributes of record pairs."
 
     def __init__(self, labels_left, labels_right, method='linear',
-                 offset=0.0, scale=1.0, origin=0.0, missing_value=0.0):
-        super(Numeric, self).__init__(labels_left, labels_right)
+                 offset=0.0, scale=1.0, origin=0.0, missing_value=0.0,
+                 label=None):
+        super(Numeric, self).__init__(labels_left, labels_right, label=label)
 
         self.method = method
         self.offset = offset
@@ -327,31 +328,52 @@ class Geographic(BaseCompareFeature):
     description = "Compare geographic attributes of record pairs."
 
     def __init__(self, labels_left, labels_right, method=None,
-                 missing_value=0.0, *args, **kwargs):
+                 offset=0.0, scale=1.0, origin=0.0, missing_value=0.0,
+                 label=None):
         super(Geographic, self).__init__(labels_left, labels_right,
-                                         args=args, kwargs=kwargs)
+                                         label=label)
 
         self.method = method
+        self.offset = offset
+        self.scale = scale
+        self.origin = origin
+        self.missing_value = missing_value
 
     def _compute_vectorized(self, lat1, lng1, lat2, lng2):
 
+        d = _haversine_distance(lat1, lng1, lat2, lng2)
+
         if self.method == 'step':
-            num_sim_alg = _step_sim
+            num_sim_alg = partial(_step_sim, d,
+                                  self.offset,
+                                  self.origin)
         elif self.method in ['linear', 'lin']:
-            num_sim_alg = _linear_sim
+            num_sim_alg = partial(_linear_sim, d,
+                                  self.scale,
+                                  self.offset,
+                                  self.origin)
         elif self.method == 'squared':
-            num_sim_alg = _squared_sim
+            num_sim_alg = partial(_squared_sim, d,
+                                  self.scale,
+                                  self.offset,
+                                  self.origin)
         elif self.method in ['exp', 'exponential']:
-            num_sim_alg = _exp_sim
+            num_sim_alg = partial(_exp_sim, d,
+                                  self.scale,
+                                  self.offset,
+                                  self.origin)
         elif self.method in ['gauss', 'gaussian']:
-            num_sim_alg = _gauss_sim
+            num_sim_alg = partial(_gauss_sim, d,
+                                  self.scale,
+                                  self.offset,
+                                  self.origin)
         else:
             raise ValueError(
                 "The algorithm '{}' is not known.".format(self.method))
 
-        d = _haversine_distance(lat1, lng1, lat2, lng2)
-        c = num_sim_alg(d, *self.args, **self.kwargs)
-        c = fillna(c)
+        c = num_sim_alg()
+        c = fillna(c, self.missing_value)
+
         return c
 
 
@@ -380,8 +402,9 @@ class Date(BaseCompareFeature):
     description = "Compare date attributes of record pairs."
 
     def __init__(self, labels_left, labels_right, missing_value=0.0,
-                 swap_month_day=0.5, swap_months='default', errors='coerce'):
-        super(Date, self).__init__(labels_left, labels_right)
+                 swap_month_day=0.5, swap_months='default', errors='coerce',
+                 label=None):
+        super(Date, self).__init__(labels_left, labels_right, label=label)
 
         self.missing_value = missing_value
         self.swap_months = swap_months

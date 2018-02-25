@@ -92,6 +92,7 @@ class TestCompareApi(TestData):
     def test_repr(self):
 
         comp = recordlinkage.Compare()
+        comp.exact('given_name', 'given_name')
         comp.string('given_name', 'given_name', method='jaro')
         comp.numeric('age', 'age', method='step', offset=3, origin=2)
         comp.numeric('age', 'age', method='step', offset=0, origin=2)
@@ -106,6 +107,7 @@ class TestCompareApi(TestData):
     def test_instance_linking(self):
 
         comp = recordlinkage.Compare()
+        comp.exact('given_name', 'given_name')
         comp.string('given_name', 'given_name', method='jaro')
         comp.numeric('age', 'age', method='step', offset=3, origin=2)
         comp.numeric('age', 'age', method='step', offset=0, origin=2)
@@ -169,9 +171,67 @@ class TestCompareApi(TestData):
 
         self.assertTrue("my_feature_label" in result.columns.tolist())
 
+    def test_multilabel_linking(self):
+
+        def ones_np_multi(s1, s2):
+            return np.ones(len(s1)), np.ones((len(s1), 3))
+
+        def ones_pd_multi(s1, s2):
+            return (
+                Series(np.ones(len(s1))),
+                DataFrame(np.ones((len(s1), 3)))
+            )
+
+        comp = recordlinkage.Compare()
+        comp.string('given_name', 'given_name', method='jaro')
+        comp.compare_vectorized(ones_np_multi, 'given_name', 'given_name',
+                                label=['a', ['b', 'c', 'd']])
+        comp.compare_vectorized(ones_pd_multi, 'given_name', 'given_name',
+                                label=['e', ['f', 'g', 'h']])
+        result = comp.compute(self.index_AB, self.A, self.B)
+
+        self.assertEqual([0, 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'],
+                         result.columns.tolist())
+
+    def test_multilabel_dedup(self):
+
+        def ones_np_multi(s1, s2):
+            return np.ones(len(s1)), np.ones((len(s1), 3))
+
+        def ones_pd_multi(s1, s2):
+            return (
+                Series(np.ones(len(s1))),
+                DataFrame(np.ones((len(s1), 3)))
+            )
+
+        comp = recordlinkage.Compare()
+        comp.string('given_name', 'given_name', method='jaro')
+        comp.compare_vectorized(ones_np_multi, 'given_name', 'given_name',
+                                label=['a', ['b', 'c', 'd']])
+        comp.compare_vectorized(ones_pd_multi, 'given_name', 'given_name',
+                                label=['e', ['f', 'g', 'h']])
+        result = comp.compute(self.index_AB, self.A)
+
+        self.assertEqual([0, 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'],
+                         result.columns.tolist())
+
+    def test_multilabel_error_dedup(self):
+
+        def ones(s1, s2):
+            return np.ones((len(s1), 2))
+
+        comp = recordlinkage.Compare()
+        comp.string('given_name', 'given_name', method='jaro')
+        comp.compare_vectorized(ones, 'given_name', 'given_name',
+                                label=['a', 'b', 'c'])
+
+        with self.assertRaises(ValueError):
+            comp.compute(self.index_AB, self.A)
+
     def test_incorrect_collabels_linking(self):
 
         comp = recordlinkage.Compare()
+        comp.string('given_name', 'given_name', method='jaro')
         comp.compare_vectorized(
             lambda s1, s2: np.ones(len(s1), dtype=np.int),
             "given_name", "not_existing_label"
@@ -214,11 +274,13 @@ class TestCompareApi(TestData):
             lambda s1, s2: np.ones(len(s1), dtype=np.int),
             'col',
             'col',
-            label='test'
+            label='my_feature_label'
         )
 
         result = comp.compute(ix, A, B)
-        expected = DataFrame([1, 1, 1, 1, 1], index=ix, columns=['test'])
+        expected = DataFrame([1, 1, 1, 1, 1],
+                             index=ix,
+                             columns=['my_feature_label'])
         pdt.assert_frame_equal(result, expected)
 
     # def test_compare_custom_nonvectorized_linking(self):

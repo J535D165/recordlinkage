@@ -154,10 +154,8 @@ class Compare(BaseCompare):
 
         """
 
-        label = kwargs.pop('label', None)
-
         compare = CompareExact(s1, s2, *args, **kwargs)
-        self.add(compare, label=label)
+        self.add(compare)
 
         return self
 
@@ -174,13 +172,11 @@ class Compare(BaseCompare):
 
         """
 
-        label = kwargs.pop('label', None)
-
         compare = CompareString(s1, s2,
                                 method=method,
                                 threshold=threshold,
                                 *args, **kwargs)
-        self.add(compare, label=label)
+        self.add(compare)
 
         return self
 
@@ -196,10 +192,8 @@ class Compare(BaseCompare):
 
         """
 
-        label = kwargs.pop('label', None)
-
         compare = CompareNumeric(s1, s2, *args, **kwargs)
-        self.add(compare, label=label)
+        self.add(compare)
 
         return self
 
@@ -215,12 +209,10 @@ class Compare(BaseCompare):
 
         """
 
-        label = kwargs.pop('label', None)
-
         compare = CompareGeographic(
             (lat1, lng1), (lat2, lng2), *args, **kwargs
         )
-        self.add(compare, label=label)
+        self.add(compare)
 
         return self
 
@@ -236,9 +228,7 @@ class Compare(BaseCompare):
 
         """
 
-        label = kwargs.pop('label', None)
-
         compare = CompareDate(s1, s2, *args, **kwargs)
-        self.add(compare, label=label)
+        self.add(compare)
 
         return self
