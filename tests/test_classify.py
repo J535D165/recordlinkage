@@ -1,83 +1,77 @@
-import os
-import shutil
-import unittest
-
 import pandas
 import numpy
 
 import recordlinkage
 
+import pytest
 
-# nosetests tests/test_classify.py:TestClassifyData --with-coverage --cover-package=recordlinkage
-class TestClassifyData(unittest.TestCase):
 
+class TestClassifyData(object):
     @classmethod
-    def setUpClass(self):
+    def setup_class(cls):
 
         N = 10000
         seed = 101
-        seed_gold = 1234
+        seed_gold = 1234  # noqa
 
         # set random state
         numpy.random.seed(seed)
 
-        self.y = pandas.DataFrame(
+        cls.y = pandas.DataFrame(
             numpy.random.random((N, 7)),
             index=pandas.MultiIndex.from_arrays(
                 [numpy.arange(0, N), numpy.arange(0, N)]),
             columns=[
-                'name', 'second_name', 'surname',
-                'age', 'street', 'state', 'zipcode'
-            ]
-        )
+                'name', 'second_name', 'surname', 'age', 'street', 'state',
+                'zipcode'
+            ])
 
-        self.matches_array = numpy.random.randint(0, 2, N)
-        self.matches_series = pandas.Series(self.matches_array, index=self.y.index)
-        self.matches_index = self.matches_series[self.matches_series == 1].index
+        cls.matches_array = numpy.random.randint(0, 2, N)
+        cls.matches_series = pandas.Series(
+            cls.matches_array, index=cls.y.index)
+        cls.matches_index = cls.matches_series[cls.matches_series == 1].index
 
-        self.y_train = self.y.iloc[0:1000]
+        cls.y_train = cls.y.iloc[0:1000]
 
 
-# nosetests tests/test_classify.py:TestClassifyAPI --with-coverage --cover-package=recordlinkage
 class TestClassifyAPI(TestClassifyData):
-
     def test_return_result_options(self):
 
         cl = recordlinkage.Classifier()
 
         prediction_default = cl._return_result(
             self.matches_array, comparison_vectors=self.y)
-        self.assertTrue(isinstance(prediction_default, pandas.MultiIndex))
+        assert isinstance(prediction_default, pandas.MultiIndex)
 
         prediction_multiindex = cl._return_result(
             self.matches_array, return_type='index', comparison_vectors=self.y)
-        self.assertTrue(isinstance(prediction_multiindex, pandas.MultiIndex))
+        assert isinstance(prediction_multiindex, pandas.MultiIndex)
 
         prediction_ndarray = cl._return_result(
             self.matches_array, return_type='array', comparison_vectors=self.y)
-        self.assertTrue(isinstance(prediction_ndarray, numpy.ndarray))
+        assert isinstance(prediction_ndarray, numpy.ndarray)
 
         prediction_series = cl._return_result(
-            self.matches_array, return_type='series', comparison_vectors=self.y)
-        self.assertTrue(isinstance(prediction_series, pandas.Series))
+            self.matches_array,
+            return_type='series',
+            comparison_vectors=self.y)
+        assert isinstance(prediction_series, pandas.Series)
 
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             cl._return_result(
                 self.matches_array,
                 return_type='unknown_return_type',
-                comparison_vectors=self.y
-            )
+                comparison_vectors=self.y)
 
     def test_probs(self):
 
         cl = recordlinkage.LogisticRegressionClassifier()
 
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             cl.prob(self.y, return_type='unknown_return_type')
 
-# nosetests tests/test_classify.py:TestClassifyAlgorithms --with-coverage --cover-package=recordlinkage
-class TestClassifyAlgorithms(TestClassifyData):
 
+class TestClassifyAlgorithms(TestClassifyData):
     def test_kmeans(self):
 
         kmeans = recordlinkage.KMeansClassifier()
@@ -85,7 +79,7 @@ class TestClassifyAlgorithms(TestClassifyData):
         kmeans.predict(self.y)
 
         # There are no probabilities
-        with self.assertRaises(AttributeError):
+        with pytest.raises(AttributeError):
             kmeans.prob(self.y)
 
     def test_kmeans_no_training_data(self):
@@ -93,7 +87,7 @@ class TestClassifyAlgorithms(TestClassifyData):
 
         kmeans = recordlinkage.KMeansClassifier()
 
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             kmeans.learn(pandas.DataFrame(columns=self.y_train.columns))
 
     def test_kmeans_not_trained(self):
@@ -104,7 +98,7 @@ class TestClassifyAlgorithms(TestClassifyData):
 
         kmeans = recordlinkage.KMeansClassifier()
 
-        with self.assertRaises(Exception):
+        with pytest.raises(Exception):
             kmeans.predict(self.y)
 
     def test_kmeans_manual(self):
@@ -119,8 +113,8 @@ class TestClassifyAlgorithms(TestClassifyData):
         kmeans = recordlinkage.KMeansClassifier()
 
         # Check if the cluster centers are None
-        self.assertIsNone(kmeans.match_cluster_center)
-        self.assertIsNone(kmeans.nonmatch_cluster_center)
+        assert kmeans.match_cluster_center is None
+        assert kmeans.nonmatch_cluster_center is None
 
         # Set the cluster centers
         kmeans.match_cluster_center = manual_mcc
@@ -132,8 +126,8 @@ class TestClassifyAlgorithms(TestClassifyData):
         # Check the match clusters
         mcc = kmeans.match_cluster_center
         nmcc = kmeans.nonmatch_cluster_center
-        self.assertEqual(mcc, manual_mcc)
-        self.assertEqual(nmcc, manual_nmcc)
+        assert mcc == manual_mcc
+        assert nmcc == manual_nmcc
 
     def test_logistic_regression_basic(self):
         """
@@ -166,8 +160,8 @@ class TestClassifyAlgorithms(TestClassifyData):
         logis = recordlinkage.LogisticRegressionClassifier()
 
         # Check if the cofficients and intercapt are None at this point
-        self.assertIsNone(logis.coefficients)
-        self.assertIsNone(logis.intercept)
+        assert logis.coefficients is None
+        assert logis.intercept is None
 
         # Set the parameters coefficients and intercept
         logis.coefficients = manual_coefficients
@@ -181,8 +175,8 @@ class TestClassifyAlgorithms(TestClassifyData):
         logis.predict(self.y)
 
         lc = numpy.array(logis.coefficients)
-        self.assertEqual(lc.shape, (self.y_train.shape[1],))
-        self.assertTrue(isinstance(logis.intercept, (float)))
+        assert lc.shape == (self.y_train.shape[1], )
+        assert isinstance(logis.intercept, (float))
 
     def test_bernoulli_naive_bayes(self):
         """Basic Naive Bayes"""
@@ -199,7 +193,7 @@ class TestClassifyAlgorithms(TestClassifyData):
         svm.predict(self.y)
 
         # There are no probabilities
-        with self.assertRaises(AttributeError):
+        with pytest.raises(AttributeError):
             svm.prob(self.y)
 
     def test_em(self):
@@ -209,4 +203,4 @@ class TestClassifyAlgorithms(TestClassifyData):
         ecm.predict(self.y.round())
         ecm.prob(self.y.round())
 
-        self.assertTrue(ecm.p is not None)
+        assert ecm.p is not None
