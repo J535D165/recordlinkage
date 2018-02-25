@@ -17,17 +17,17 @@ The workflow for contributing is as follows:
 Testing
 =======
 
-Install Nose:
+Install `pytest`:
 
 .. code:: sh
 
-	pip install nose parameterized
+	pip install pytest
 
 Run the following command to test the package
 
 .. code:: sh
 
-	nosetests
+	python -m pytest tests/
 
 Performance
 ===========
