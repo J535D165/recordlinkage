@@ -1,7 +1,9 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 from __future__ import print_function
 
 import os
-import unittest
 import tempfile
 import shutil
 import pickle
@@ -9,25 +11,28 @@ import pickle
 import numpy as np
 import pandas as pd
 import pandas.util.testing as ptm
-from parameterized import parameterized, param
+import pytest
 
 import recordlinkage
 from recordlinkage.index import Full, Block, SortedNeighbourhood, Random
 
-TEST_INDEXATION_OBJECTS = [
-    param(Full()),
-    param(Block(on='var_arange')),
-    param(SortedNeighbourhood(on='var_arange')),
-    param(Random(10, random_state=100, replace=True)),
-    param(Random(10, random_state=100, replace=False))
-]
+
+def get_test_algorithms():
+    """Return list of algorithms"""
+    return [
+        Full(),
+        Block(on='var_arange'),
+        SortedNeighbourhood(on='var_arange'),
+        Random(10, random_state=100, replace=True),
+        Random(10, random_state=100, replace=False)
+    ]
 
 
-class TestData(unittest.TestCase):
+class TestData(object):
     """Unittest object to setup test data."""
 
     @classmethod
-    def setUpClass(cls):
+    def setup_class(cls):
 
         n_a = 100
         n_b = 150
@@ -35,32 +40,35 @@ class TestData(unittest.TestCase):
         cls.index_a = ['rec_a_%s' % i for i in range(0, n_a)]
         cls.index_b = ['rec_b_%s' % i for i in range(0, n_b)]
 
-        cls.a = pd.DataFrame({
-            'var_single': np.repeat([1], n_a),
-            'var_arange': np.arange(n_a),
-            'var_arange_str': np.arange(n_a),
-            'var_block10': np.repeat(np.arange(n_a / 10), 10)
-        }, index=cls.index_a)
+        cls.a = pd.DataFrame(
+            {
+                'var_single': np.repeat([1], n_a),
+                'var_arange': np.arange(n_a),
+                'var_arange_str': np.arange(n_a),
+                'var_block10': np.repeat(np.arange(n_a / 10), 10)
+            },
+            index=cls.index_a)
 
-        cls.b = pd.DataFrame({
-            'var_single': np.repeat([1], n_b),
-            'var_arange': np.arange(n_b),
-            'var_arange_str': np.arange(n_b),
-            'var_block10': np.repeat(np.arange(n_b / 10), 10)
-        }, index=cls.index_b)
+        cls.b = pd.DataFrame(
+            {
+                'var_single': np.repeat([1], n_b),
+                'var_arange': np.arange(n_b),
+                'var_arange_str': np.arange(n_b),
+                'var_block10': np.repeat(np.arange(n_b / 10), 10)
+            },
+            index=cls.index_b)
 
         # Create a temporary directory
         cls.test_dir = tempfile.mkdtemp()
 
     @classmethod
-    def tearDownClass(cls):
+    def teardown_class(cls):
 
         # Remove the test directory
         shutil.rmtree(cls.test_dir)
 
 
 class TestIndexApi(TestData):
-
     def test_init(self):
 
         algorithms = Full()
@@ -79,9 +87,9 @@ class TestIndexApi(TestData):
             indexer2.index(self.a, self.b))
 
         indexer = recordlinkage.Index()
-        indexer.add([
-            Full(),
-            Block(left_on='var_arange', right_on='var_arange')])
+        indexer.add(
+            [Full(),
+             Block(left_on='var_arange', right_on='var_arange')])
 
         result = indexer.index(self.a, self.b)
 
@@ -91,13 +99,12 @@ class TestIndexApi(TestData):
 
         indexer1 = Full()
         indexer2 = Block(left_on='var_arange', right_on='var_arange')
-        expected = indexer1.index(self.a).union(
-            indexer2.index(self.a))
+        expected = indexer1.index(self.a).union(indexer2.index(self.a))
 
         indexer = recordlinkage.Index()
-        indexer.add([
-            Full(),
-            Block(left_on='var_arange', right_on='var_arange')])
+        indexer.add(
+            [Full(),
+             Block(left_on='var_arange', right_on='var_arange')])
 
         result = indexer.index(self.a)
 
@@ -107,17 +114,17 @@ class TestIndexApi(TestData):
 class TestIndexAlgorithmApi(TestData):
     """General unittest for the indexing API."""
 
-    @parameterized.expand(TEST_INDEXATION_OBJECTS)
+    @pytest.mark.parametrize("index_class", get_test_algorithms())
     def test_repr(self, index_class):
 
         index_str = str(index_class)
         index_repr = repr(index_class)
-        self.assertEqual(index_str, index_repr)
+        assert index_str == index_repr
 
         start_str = '<{}'.format(index_class.__class__.__name__)
-        self.assertTrue(index_str.startswith(start_str))
+        assert index_str.startswith(start_str)
 
-    @parameterized.expand(TEST_INDEXATION_OBJECTS)
+    @pytest.mark.parametrize("index_class", get_test_algorithms())
     def test_arguments(self, index_class):
         """Test the index method arguments"""
 
@@ -150,7 +157,7 @@ class TestIndexAlgorithmApi(TestData):
         ptm.assert_frame_equal(pairs, pairs_split)
         # note possible to sort MultiIndex, so made a frame out of it.
 
-    @parameterized.expand(TEST_INDEXATION_OBJECTS)
+    @pytest.mark.parametrize("index_class", get_test_algorithms())
     def test_empty_imput_dataframes(self, index_class):
         """Empty DataFrames"""
 
@@ -165,13 +172,13 @@ class TestIndexAlgorithmApi(TestData):
             pairs = index_class.index((df_a, df_b))
 
             # check if the MultiIndex has length 0
-            self.assertIsInstance(pairs, pd.MultiIndex)
-            self.assertEqual(len(pairs), 0)
+            assert isinstance(pairs, pd.MultiIndex)
+            assert len(pairs) == 0
         else:
-            with self.assertRaises(ValueError):
+            with pytest.raises(ValueError):
                 index_class.index((df_a, df_b))
 
-    @parameterized.expand(TEST_INDEXATION_OBJECTS)
+    @pytest.mark.parametrize("index_class", get_test_algorithms())
     def test_error_handling(self, index_class):
         """Test error handling on non-unique index."""
 
@@ -179,16 +186,10 @@ class TestIndexAlgorithmApi(TestData):
         df_a = self.a.rename(
             index={self.a.index[1]: self.a.index[0]}, inplace=False)
 
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             index_class.index(df_a)
 
-    @parameterized.expand([
-        param(Full()),
-        param(Block(on='var_arange')),
-        param(SortedNeighbourhood(on='var_arange')),
-        param(Random(10, random_state=100, replace=True)),
-        param(Random(10, random_state=100, replace=False))
-    ])
+    @pytest.mark.parametrize("index_class", get_test_algorithms())
     def test_index_names_dedup(self, index_class):
 
         index_names = ['dedup', None, 'index', int(1)]
@@ -206,16 +207,10 @@ class TestIndexAlgorithmApi(TestData):
 
             pairs = index_class.index((df_A))
 
-            self.assertEqual(pairs.names, expected[i])
-            self.assertEqual(df_A.index.name, name)
+            assert pairs.names == expected[i]
+            assert df_A.index.name == name
 
-    @parameterized.expand([
-        param(Full()),
-        param(Block(on='var_arange')),
-        param(SortedNeighbourhood(on='var_arange')),
-        param(Random(10, random_state=100, replace=True)),
-        param(Random(10, random_state=100, replace=False))
-    ])
+    @pytest.mark.parametrize("index_class", get_test_algorithms())
     def test_duplicated_index_names_dedup(self, index_class):
 
         # make an index for each dataframe with a new index name
@@ -224,37 +219,26 @@ class TestIndexAlgorithmApi(TestData):
 
         # make the index
         pairs = index_class.index(df_a)
-        self.assertEqual(pairs.names, ['index_1', 'index_2'])
+        assert pairs.names == ['index_1', 'index_2']
 
         # check for inplace editing (not the intention)
-        self.assertEqual(df_a.index.name, 'index')
+        assert df_a.index.name == 'index'
 
         # make the index
         index_class.suffixes = ['_a', '_b']
         pairs = index_class.index(df_a)
-        self.assertEqual(pairs.names, ['index_a', 'index_b'])
+        assert pairs.names == ['index_a', 'index_b']
 
         # check for inplace editing (not the intention)
-        self.assertEqual(df_a.index.name, 'index')
+        assert df_a.index.name == 'index'
 
-    @parameterized.expand([
-        param(Full()),
-        param(Block(on='var_arange')),
-        param(SortedNeighbourhood(on='var_arange')),
-        param(Random(10, random_state=100, replace=True)),
-        param(Random(10, random_state=100, replace=False))
-    ])
+    @pytest.mark.parametrize("index_class", get_test_algorithms())
     def test_index_names_link(self, index_class):
 
         # tuples with the name of the first and second index
-        index_names = [
-            ('index1', 'index2'),
-            ('index1', None),
-            (None, 'index2'),
-            (None, None),
-            (10, 'index2'),
-            (10, 11)
-        ]
+        index_names = [('index1', 'index2'), ('index1', None),
+                       (None, 'index2'), (None, None), (10, 'index2'), (10,
+                                                                        11)]
 
         for name_a, name_b in index_names:
 
@@ -266,19 +250,13 @@ class TestIndexAlgorithmApi(TestData):
             df_b = pd.DataFrame(self.b, index=index_b)
 
             pairs = index_class.index((df_a, df_b))
-            self.assertEqual(pairs.names, [name_a, name_b])
+            assert pairs.names == [name_a, name_b]
 
             # check for inplace editing (not the intention)
-            self.assertEqual(df_a.index.name, name_a)
-            self.assertEqual(df_b.index.name, name_b)
+            assert df_a.index.name == name_a
+            assert df_b.index.name == name_b
 
-    @parameterized.expand([
-        param(Full()),
-        param(Block(on='var_arange')),
-        param(SortedNeighbourhood(on='var_arange')),
-        param(Random(10, random_state=100, replace=True)),
-        param(Random(10, random_state=100, replace=False))
-    ])
+    @pytest.mark.parametrize("index_class", get_test_algorithms())
     def test_duplicated_index_names_link(self, index_class):
 
         # make an index for each dataframe with a new index name
@@ -290,22 +268,22 @@ class TestIndexAlgorithmApi(TestData):
 
         # make the index
         pairs = index_class.index((df_a, df_b))
-        self.assertEqual(pairs.names, ['index_1', 'index_2'])
+        assert pairs.names == ['index_1', 'index_2']
 
         # check for inplace editing (not the intention)
-        self.assertEqual(df_a.index.name, 'index')
-        self.assertEqual(df_b.index.name, 'index')
+        assert df_a.index.name == 'index'
+        assert df_b.index.name == 'index'
 
         # make the index
         index_class.suffixes = ['_a', '_b']
         pairs = index_class.index((df_a, df_b))
-        self.assertEqual(pairs.names, ['index_a', 'index_b'])
+        assert pairs.names == ['index_a', 'index_b']
 
         # check for inplace editing (not the intention)
-        self.assertEqual(df_a.index.name, 'index')
-        self.assertEqual(df_b.index.name, 'index')
+        assert df_a.index.name == 'index'
+        assert df_b.index.name == 'index'
 
-    @parameterized.expand(TEST_INDEXATION_OBJECTS)
+    @pytest.mark.parametrize("index_class", get_test_algorithms())
     def test_pickle(self, index_class):
         """Test if it is possible to pickle the class."""
 
@@ -333,9 +311,9 @@ class TestFullIndexing(TestData):
         index_cl = Full()
         pairs = index_cl.index(self.a)
 
-        self.assertIsInstance(pairs, pd.MultiIndex)
-        self.assertEqual(len(pairs), len(self.a) * (len(self.a) - 1) / 2)
-        self.assertTrue(pairs.is_unique)
+        assert isinstance(pairs, pd.MultiIndex)
+        assert len(pairs) == len(self.a) * (len(self.a) - 1) / 2
+        assert pairs.is_unique
 
     def test_basic_link(self):
         """FULL: Test basic characteristics of full indexing (link)."""
@@ -346,9 +324,9 @@ class TestFullIndexing(TestData):
         index_cl = Full()
         pairs = index_cl.index((self.a, self.b))
 
-        self.assertIsInstance(pairs, pd.MultiIndex)
-        self.assertEqual(len(pairs), len(self.a) * len(self.b))
-        self.assertTrue(pairs.is_unique)
+        assert isinstance(pairs, pd.MultiIndex)
+        assert len(pairs) == len(self.a) * len(self.b)
+        assert pairs.is_unique
 
 
 class TestBlocking(TestData):
@@ -368,8 +346,7 @@ class TestBlocking(TestData):
         pairs2 = index_cl2.index((self.a, self.b))
 
         # situation 3
-        index_cl3 = Block(
-            left_on='var_arange', right_on='var_arange')
+        index_cl3 = Block(left_on='var_arange', right_on='var_arange')
         pairs3 = index_cl3.index((self.a, self.b))
 
         # situation 4
@@ -377,8 +354,7 @@ class TestBlocking(TestData):
         pairs4 = index_cl4.index((self.a, self.b))
 
         # situation 5
-        index_cl5 = Block(
-            left_on=['var_arange'], right_on=['var_arange'])
+        index_cl5 = Block(left_on=['var_arange'], right_on=['var_arange'])
         pairs5 = index_cl5.index((self.a, self.b))
 
         # test
@@ -399,8 +375,7 @@ class TestBlocking(TestData):
         # situation 2
         index_cl2 = Block(
             left_on=['var_arange', 'var_block10'],
-            right_on=['var_arange', 'var_block10']
-        )
+            right_on=['var_arange', 'var_block10'])
         pairs2 = index_cl2.index((self.a, self.b))
 
         # test
@@ -412,20 +387,20 @@ class TestBlocking(TestData):
         # situation 1: eye index
         index_cl1 = Block(on='var_arange')
         pairs1 = index_cl1.index((self.a, self.b))
-        self.assertEqual(len(pairs1), len(self.a))
-        self.assertTrue(pairs1.is_unique)
+        assert len(pairs1) == len(self.a)
+        assert pairs1.is_unique
 
         # situation 2: 10 blocks
         index_cl2 = Block(on='var_block10')
         pairs2 = index_cl2.index((self.a, self.b))
-        self.assertEqual(len(pairs2), len(self.a) * 10)
-        self.assertTrue(pairs2.is_unique)
+        assert len(pairs2) == len(self.a) * 10
+        assert pairs2.is_unique
 
         # situation 3: full index
         index_cl3 = Block(on='var_single')
         pairs3 = index_cl3.index((self.a, self.b))
-        self.assertEqual(len(pairs3), len(self.a) * len(self.b))
-        self.assertTrue(pairs3.is_unique)
+        assert len(pairs3) == len(self.a) * len(self.b)
+        assert pairs3.is_unique
 
     def test_blocking_algorithm_dedup(self):
         """BLOCKING: test blocking algorithm for deduplication"""
@@ -435,20 +410,20 @@ class TestBlocking(TestData):
         # situation 1: eye index
         index_cl1 = Block(on='var_arange')
         pairs1 = index_cl1.index(self.a)
-        self.assertEqual(len(pairs1), 0)
-        self.assertTrue(pairs1.is_unique)
+        assert len(pairs1) == 0
+        assert pairs1.is_unique
 
         # situation 2: 10 blocks
         index_cl2 = Block(on='var_block10')
         pairs2 = index_cl2.index(self.a)
-        self.assertEqual(len(pairs2), (len_a * 10 - len_a) / 2)
-        self.assertTrue(pairs2.is_unique)
+        assert len(pairs2) == (len_a * 10 - len_a) / 2
+        assert pairs2.is_unique
 
         # situation 3: full index
         index_cl3 = Block(on='var_single')
         pairs3 = index_cl3.index(self.a)
-        self.assertEqual(len(pairs3), (len_a * len_a - len_a) / 2)
-        self.assertTrue(pairs3.is_unique)
+        assert len(pairs3) == (len_a * len_a - len_a) / 2
+        assert pairs3.is_unique
 
 
 class TestSortedNeighbourhoodIndexing(TestData):
@@ -487,20 +462,13 @@ class TestSortedNeighbourhoodIndexing(TestData):
         ptm.assert_index_equal(pairs1, pairs4)
         ptm.assert_index_equal(pairs1, pairs5)
 
-    @parameterized.expand([
-        (3,),
-        (5,),
-        (7,),
-        (9,),
-        (11,)
-    ])
+    @pytest.mark.parametrize("window", [3, 5, 7, 9, 11])
     def test_sni_algorithm_link(self, window):
         """SNI: Test the window size (link)."""
 
         # window = 7 # using paramereized tests instead
 
-        index_class = SortedNeighbourhood(
-            on='var_arange', window=window)
+        index_class = SortedNeighbourhood(on='var_arange', window=window)
         pairs = index_class.index((self.a, self.b[0:len(self.a)]))
 
         # the expected number of pairs
@@ -513,22 +481,15 @@ class TestSortedNeighbourhoodIndexing(TestData):
         # test
         print('expected number of pairs: %s' % n_pairs_expected)
         print('number of pairs found: %s' % len(pairs))
-        self.assertEqual(len(pairs), n_pairs_expected)
+        assert len(pairs) == n_pairs_expected
 
-    @parameterized.expand([
-        (3,),
-        (5,),
-        (7,),
-        (9,),
-        (11,)
-    ])
+    @pytest.mark.parametrize("window", [3, 5, 7, 9, 11])
     def test_sni_algorithm_dedup(self, window):
         """SNI: Test the window size (dedup)."""
 
         # window = 7 # using paramereized tests instead
 
-        index_class = SortedNeighbourhood(
-            on='var_arange', window=window)
+        index_class = SortedNeighbourhood(on='var_arange', window=window)
         pairs = index_class.index((self.a))
 
         # the expected number of pairs
@@ -538,7 +499,7 @@ class TestSortedNeighbourhoodIndexing(TestData):
             np.sum(np.arange(len_a - 1, len_a - (window_d + 1), -1))
 
         # test
-        self.assertEqual(len(pairs), n_pairs_expected)
+        assert len(pairs) == n_pairs_expected
 
     def test_sni_with_blocking_link(self):
         """SNI: Test sni with blocking keys."""
@@ -549,7 +510,7 @@ class TestSortedNeighbourhoodIndexing(TestData):
         pairs = index_class.index((self.a, self.b[0:len(self.a)]))
 
         # the length of pairs is length(self.a)
-        self.assertEqual(len(pairs), len(self.a))
+        assert len(pairs) == len(self.a)
 
     def test_sni_with_blocking_dedup(self):
         """SNI: Test sni with blocking keys."""
@@ -562,7 +523,7 @@ class TestSortedNeighbourhoodIndexing(TestData):
         print(pairs.values)
 
         # the length of pairs is 0
-        self.assertEqual(len(pairs), 0)
+        assert len(pairs) == 0
 
 
 class TestRandomIndexing(TestData):
@@ -584,46 +545,38 @@ class TestRandomIndexing(TestData):
         ptm.assert_index_equal(pairs1, pairs2)
 
         # are pairs1 and pairs3 not indentical? # numpy workaround
-        self.assertFalse(np.array_equal(pairs1.values, pairs3.values))
+        assert not np.array_equal(pairs1.values, pairs3.values)
 
     def test_random_without_replace(self):
         """Random: test random indexing without replacement"""
 
         # situation 1: linking
-        index_cl1 = Random(
-            n=1000, replace=False, random_state=100
-        )
+        index_cl1 = Random(n=1000, replace=False, random_state=100)
 
         pairs1 = index_cl1.index((self.a, self.b))
-        self.assertEqual(len(pairs1), 1000)
-        self.assertTrue(pairs1.is_unique)
+        assert len(pairs1) == 1000
+        assert pairs1.is_unique
 
         # situation 2: dedup
-        index_cl2 = Random(
-            n=1000, replace=False, random_state=100
-        )
+        index_cl2 = Random(n=1000, replace=False, random_state=100)
 
         pairs2 = index_cl2.index(self.a)
-        self.assertEqual(len(pairs2), 1000)
-        self.assertTrue(pairs2.is_unique)
+        assert len(pairs2) == 1000
+        assert pairs2.is_unique
 
     def test_random_with_replace(self):
         """Random: test random indexing with replacement"""
 
         # situation 1: linking
-        index_cl1 = Random(
-            n=1000, replace=True, random_state=100
-        )
+        index_cl1 = Random(n=1000, replace=True, random_state=100)
 
         pairs1 = index_cl1.index((self.a, self.b))
-        self.assertEqual(len(pairs1), 1000)
-        self.assertFalse(pairs1.is_unique)
+        assert len(pairs1) == 1000
+        assert not pairs1.is_unique
 
         # situation 2: dedup
-        index_cl2 = Random(
-            n=1000, replace=True, random_state=101
-        )
+        index_cl2 = Random(n=1000, replace=True, random_state=101)
 
         pairs2 = index_cl2.index(self.a)
-        self.assertEqual(len(pairs2), 1000)
-        self.assertFalse(pairs2.is_unique)
+        assert len(pairs2) == 1000
+        assert not pairs2.is_unique

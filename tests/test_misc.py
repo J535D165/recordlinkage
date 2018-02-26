@@ -1,9 +1,12 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 import pandas as pd
 import numpy as np
 
 # testing utils from pandas
-from nose.tools import raises
 import pandas.util.testing as ptm
+import pytest
 
 import recordlinkage as rl
 from recordlinkage import index_split
@@ -38,7 +41,7 @@ def test_options_context():
         assert rl.get_option("indexing.pairs") == "multiindex"
 
 
-@raises(ValueError)
 def test_options_incorrect_values():
     # incorrect value
-    rl.options.indexing.pairs = "non_existing"
+    with pytest.raises(ValueError):
+        rl.options.indexing.pairs = "non_existing"
