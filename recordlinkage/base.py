@@ -16,12 +16,11 @@ from recordlinkage.utils import (listify,
                                  index_split,
                                  frame_indexing)
 from recordlinkage.types import (is_numpy_like,
-                                 is_pandas_like,
                                  is_pandas_2d_multiindex)
 from recordlinkage.measures import max_pairs
 from recordlinkage import rl_logging as logging
 
-from recordlinkage.utils import DeprecationHelper
+from recordlinkage.utils import LearningError, DeprecationHelper
 
 
 def _parallel_compare_helper(class_obj, pairs, x, x_link=None):
@@ -761,3 +760,196 @@ class BaseCompare(object):
         """[DEPRECATED] Clear memory."""
 
         raise AttributeError("this method was removed in version 0.12.0")
+
+
+class BaseClassifier(object):
+    """Base class for classification of records pairs.
+
+    This class contains methods for training the classifier. Distinguish
+    different types of training, such as supervised and unsupervised learning.
+
+    """
+
+    def __init__(self):
+
+        logging.info("Classification - initialize {} class".format(
+            self.__class__.__name__)
+        )
+
+        # The actual classifier. Maybe this is slightly strange because of
+        # inheritance.
+        self.classifier = None
+
+    def learn(self, comparison_vectors, match_index, return_type='index'):
+        """Train the classifier.
+
+        Parameters
+        ----------
+        comparison_vectors : pandas.DataFrame
+            The comparison vectors.
+        match_index : pandas.MultiIndex
+            The true matches.
+        return_type : 'index' (default), 'series', 'array'
+            The format to return the classification result. The argument value
+            'index' will return the pandas.MultiIndex of the matches. The
+            argument value 'series' will return a pandas.Series with zeros
+            (distinct) and ones (matches). The argument value 'array' will
+            return a numpy.ndarray with zeros and ones.
+
+        Returns
+        -------
+        pandas.Series
+            A pandas Series with the labels 1 (for the matches) and 0 (for the
+            non-matches).
+
+        """
+
+        logging.info("Classifying - start learning {}".format(
+            self.__class__.__name__)
+        )
+
+        # start timing
+        start_time = time.time()
+
+        if isinstance(match_index, (pandas.MultiIndex, pandas.Index)):
+
+            # The match_index variable is of type MultiIndex
+            train_series = pandas.Series(False, index=comparison_vectors.index)
+
+            try:
+                train_series.loc[match_index & comparison_vectors.index] = True
+
+            except pandas.IndexError as err:
+
+                # The are no matches. So training is not possible.
+                if len(match_index & comparison_vectors.index) == 0:
+                    raise LearningError(
+                        "both matches and non-matches needed in the" +
+                        "trainingsdata, only non-matches found"
+                    )
+                else:
+                    raise err
+
+        self.classifier.fit(
+            comparison_vectors.as_matrix(),
+            np.array(train_series)
+        )
+
+        result = self._predict(comparison_vectors, return_type)
+
+        # log timing
+        logf_time = "Classifying - learning computation time: ~{:.2f}s"
+        logging.info(logf_time.format(time.time() - start_time))
+
+        return result
+
+    def predict(self, comparison_vectors, return_type='index'):
+        """Predict the class of the record pairs.
+
+        Classify a set of record pairs based on their comparison vectors into
+        matches, non-matches and possible matches. The classifier has to be
+        trained to call this method.
+
+
+        Parameters
+        ----------
+        comparison_vectors : pandas.DataFrame
+            Dataframe with comparison vectors.
+        return_type : 'index' (default), 'series', 'array'
+            The format to return the classification result. The argument value
+            'index' will return the pandas.MultiIndex of the matches. The
+            argument value 'series' will return a pandas.Series with zeros
+            (distinct) and ones (matches). The argument value 'array' will
+            return a numpy.ndarray with zeros and ones.
+
+        Returns
+        -------
+        pandas.Series
+            A pandas Series with the labels 1 (for the matches) and 0 (for the
+            non-matches).
+
+        """
+
+        logging.info("Classifying - predict matches and non-matches")
+
+        return self._predict(comparison_vectors, return_type)
+
+    def _predict(self, comparison_vectors, return_type):
+
+        from sklearn.utils.validation import NotFittedError
+
+        try:
+            prediction = self.classifier.predict(
+                comparison_vectors.as_matrix())
+        except NotFittedError:
+            raise NotFittedError(
+                "This {} is not fitted yet. Call 'learn' with appropriate "
+                "arguments before using this method.".format(
+                    type(self).__name__
+                )
+            )
+
+        return self._return_result(prediction, return_type, comparison_vectors)
+
+    def prob(self, comparison_vectors, return_type='series'):
+        """Compute the probabilities for each record pair.
+
+        For each pair of records, estimate the probability of being a match.
+
+        Parameters
+        ----------
+        comparison_vectors : pandas.DataFrame
+            The dataframe with comparison vectors.
+        return_type : 'series' or 'array'
+            Return a pandas series or numpy array. Default 'series'.
+
+        Returns
+        -------
+        pandas.Series or numpy.ndarray
+            The probability of being a match for each record pair.
+
+        """
+
+        logging.info("Classifying - compute probabilities")
+
+        probs = self.classifier.predict_proba(comparison_vectors.as_matrix())
+
+        if return_type == 'series':
+            return pandas.Series(probs[:, 0], index=comparison_vectors.index)
+        elif return_type == 'array':
+            return probs[:, 0]
+        else:
+            raise ValueError(
+                "return_type {} unknown. Choose 'index', 'series' or "
+                "'array'".format(return_type))
+
+    def _return_result(
+        self, result, return_type='index', comparison_vectors=None
+    ):
+        """Return different formatted classification results.
+
+        """
+
+        if type(result) != np.ndarray:
+            raise ValueError("numpy.ndarray expected.")
+
+        # return the pandas.MultiIndex
+        if return_type == 'index':
+            return comparison_vectors.index[result.astype(bool)]
+
+        # return a pandas.Series
+        elif return_type == 'series':
+            return pandas.Series(
+                result,
+                index=comparison_vectors.index,
+                name='classification')
+
+        # return a numpy.ndarray
+        elif return_type == 'array':
+            return result
+
+        # return_type not known
+        else:
+            raise ValueError(
+                "return_type {} unknown. Choose 'index', 'series' or "
+                "'array'".format(return_type))

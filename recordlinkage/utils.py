@@ -9,6 +9,10 @@ class IndexError(Exception):
     pass
 
 
+class LearningError(Exception):
+    """Learning error"""
+
+
 class VisibleDeprecationWarning(UserWarning):
     """Visible deprecation warning.
     Based on numpy's VisibleDeprecationWarning.
