@@ -49,8 +49,7 @@ class Full(BaseIndexAlgorithm):
             )
 
         return pandas.MultiIndex.from_product(
-            [df_a.index.values, df_b.index.values],
-            names=[df_a.index.name, df_b.index.name]
+            [df_a.index.values, df_b.index.values]
         )
 
     def _dedup_index(self, df_a):
