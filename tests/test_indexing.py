@@ -284,6 +284,32 @@ class TestIndexAlgorithmApi(TestData):
         assert df_b.index.name == 'index'
 
     @pytest.mark.parametrize("index_class", get_test_algorithms())
+    def test_index_names_pandas023(self, index_class):
+        # Pandas changes the behaviour of MultiIndex names.
+        # https://github.com/pandas-dev/pandas/pull/18882
+        # https://github.com/J535D165/recordlinkage/issues/55
+        # This test tests compatibility.
+
+        # make an index for each dataframe with a new index name
+        index_a = pd.Index(self.a.index, name='index')
+        df_a = pd.DataFrame(self.a, index=index_a)
+
+        index_b = pd.Index(self.b.index, name='index')
+        df_b = pd.DataFrame(self.b, index=index_b)
+
+        # make the index
+        pairs_link = index_class._link_index(df_a, df_b)
+
+        if pairs_link.names[0] is not None:
+            assert pairs_link.names[0] != pairs_link.names[1]
+
+        # make the index
+        pairs_dedup = index_class._dedup_index(df_a)
+
+        if pairs_link.names[0] is not None:
+            assert pairs_dedup.names[0] != pairs_dedup.names[1]
+
+    @pytest.mark.parametrize("index_class", get_test_algorithms())
     def test_pickle(self, index_class):
         """Test if it is possible to pickle the class."""
 
