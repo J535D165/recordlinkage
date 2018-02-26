@@ -125,7 +125,10 @@ class BaseIndex(object):
             else:
                 pairs = pairs.union(pairs_i)
 
-        n_max = max_pairs(x)
+        if x_link is not None:
+            n_max = max_pairs((x, x_link))
+        else:
+            n_max = max_pairs(x)
 
         # store the number of pairs
         n = pairs.shape[0]
