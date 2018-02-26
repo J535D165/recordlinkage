@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 import pandas
 
 from recordlinkage.datasets import (load_febrl1, load_febrl2, load_febrl3,
