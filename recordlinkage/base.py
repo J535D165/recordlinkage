@@ -52,12 +52,20 @@ class BaseIndex(object):
 
     def __init__(self, algorithms=[]):
 
-        logging.info("Index - initialize {} class".format(
+        logging.info("indexing - initialize {} class".format(
             self.__class__.__name__)
         )
 
         self.algorithms = []
         self.add(algorithms)
+
+        # logging
+        self._i = 1
+        self._i_max = None
+        self._n = []
+        self._n_max = []
+        self._eta = []
+        self._output_log_total = True
 
     def __repr__(self):
         class_name = self.__class__.__name__
@@ -105,6 +113,9 @@ class BaseIndex(object):
         if not self.algorithms:
             raise ValueError("No algorithms given.")
 
+        # start timing
+        start_time = time.time()
+
         pairs = None
         for cl_alg in self.algorithms:
             pairs_i = cl_alg.index(x, x_link)
@@ -113,6 +124,37 @@ class BaseIndex(object):
                 pairs = pairs_i
             else:
                 pairs = pairs.union(pairs_i)
+
+        n_max = max_pairs(x)
+
+        # store the number of pairs
+        n = pairs.shape[0]
+        eta = time.time() - start_time
+        rr = 1 - n / n_max
+        i_max = '?' if self._i_max is None else self._i_max
+
+        self._eta.append(eta)
+        self._n.append(n)
+        self._n_max.append(n_max)
+
+        # log
+        logging.info("indexing [{:d}/{}] - time: {:.2f}s - pairs: {:d}/{:d} - "
+                     "rr: {:0.5f}".format(self._i, i_max, eta, n, n_max, rr))
+
+        # log total
+        if self._output_log_total:
+
+            n_total = np.sum(self._n)
+            n_max_total = np.sum(self._n_max)
+            rr_avg = 1 - n_total / n_max_total
+            eta_total = np.sum(self._eta)
+
+            logging.info("indexing [{:d}/{}] - time: {:.2f}s - "
+                         "pairs_total: {:d}/{:d} - rr_total: {:0.5f}".format(
+                             self._i, i_max, eta_total,
+                             n_total, n_max_total, rr_avg))
+
+        self._i += 1
 
         return pairs
 
@@ -157,13 +199,6 @@ class BaseIndexAlgorithm(object):
 
         self.suffixes = suffixes
         self.verify_integrity = verify_integrity
-
-        self._n = []
-        self._n_max = []
-
-        logging.info("Indexing - initialize {} class".format(
-            self.__class__.__name__)
-        )
 
     def __repr__(self):
         class_name = self.__class__.__name__
@@ -262,42 +297,19 @@ class BaseIndexAlgorithm(object):
             for df in x:
                 self._verify_integrety(df)
 
-        # start timing
-        start_time = time.time()
-
         # linking
         if not self._deduplication(x):
-            logging.info("Indexing - start indexing two DataFrames")
 
             pairs = self._link_index(*x)
             names = self._make_index_names(x[0].index.name, x[1].index.name)
 
         # deduplication
         else:
-            logging.info("Indexing - start indexing single DataFrame")
 
             pairs = self._dedup_index(*x)
             names = self._make_index_names(x[0].index.name, x[0].index.name)
 
         pairs.rename(names, inplace=True)
-
-        # store the number of pairs
-        self._n.append(pairs.shape[0])
-        self._n_max.append(max_pairs(x))
-
-        # summary
-        n = len(pairs)
-        rr = 1 - self._n[-1] / self._n_max[-1]
-        rr_avg = 1 - np.sum(self._n) / np.sum(self._n_max)
-
-        # log timing
-        logf_time = "Indexing - computation time: ~{:.2f}s"
-        logging.info(logf_time.format(time.time() - start_time))
-
-        # log results
-        logf_result = "Indexing - summary n={:d}, " \
-            "reduction_ratio={:0.5f}, reduction_ratio_mean={:0.5f}"
-        logging.info(logf_result.format(n, rr, rr_avg))
 
         return pairs
 
@@ -321,15 +333,6 @@ class BaseCompareFeature(object):
         self.kwargs = kwargs
         self.label = label
         self._f_compare_vectorized = None
-
-        # logging
-        logging.info(
-            "{} - initialize exact algorithm "
-            "- compare {l_left} with {l_right}".format(
-                self.__class__.__name__,
-                l_left=labels_left,
-                l_right=labels_right)
-        )
 
     def _repr(self):
         return "<{} {!r}>".format(self.__class__.__name__, self.label)
@@ -356,19 +359,7 @@ class BaseCompareFeature(object):
 
     def _compute(self, *args):
 
-        logging.info("Comparing - start comparing data")
-
-        # start the timer for the comparing step
-        start_time = time.time()
-
         result = self._compute_vectorized(*args)
-
-        # log timing
-        total_time = time.time() - start_time
-
-        # log timing
-        logging.info(
-            "Comparing - computation time: ~{:.2f}s".format(total_time))
 
         return result
 
@@ -453,7 +444,7 @@ class BaseCompare(object):
     def __init__(self, features=[], n_jobs=1, indexing_type='label',
                  **kwargs):
 
-        logging.info("Comparing - initialize {} class".format(
+        logging.info("comparing - initialize {} class".format(
             self.__class__.__name__)
         )
 
@@ -464,6 +455,13 @@ class BaseCompare(object):
         self.n_jobs = n_jobs
         self.indexing_type = indexing_type  # label of position
         self.features = []
+
+        # logging
+        self._i = 1
+        self._i_max = None
+        self._n = []
+        self._eta = []
+        self._output_log_total = True
 
         # private
         self._compare_functions = []
@@ -592,8 +590,6 @@ class BaseCompare(object):
 
     def _compute(self, pairs, x, x_link=None):
 
-        logging.info("Comparing - start comparing data")
-
         # start the timer for the comparing step
         start_time = time.time()
 
@@ -608,7 +604,7 @@ class BaseCompare(object):
             df_b_indexed = frame_indexing(x_link[sublabels_right], pairs, 1)
 
         # log timing
-        index_time = time.time() - start_time
+        # index_time = time.time() - start_time
 
         features = []
 
@@ -626,15 +622,27 @@ class BaseCompare(object):
         features = self.union(features, pairs)
 
         # log timing
-        total_time = time.time() - start_time
+        n = pairs.shape[0]
+        i_max = '?' if self._i_max is None else self._i_max
+        eta = time.time() - start_time
+        self._eta.append(eta)
+        self._n.append(n)
 
-        # log timing
-        logging.info("Comparing - computation time: ~{:.2f}s (from which "
-                     "indexing: ~{:.2f}s)".format(total_time, index_time))
+        # log
+        logging.info("comparing [{:d}/{}] - time: {:.2f}s - pairs: {}".format(
+            self._i, i_max, eta, n))
 
-        # log features
-        logf_result = "Comparing - summary shape={}"
-        logging.info(logf_result.format(features.shape))
+        # log total
+        if self._output_log_total:
+
+            n_total = np.sum(self._n)
+            eta_total = np.sum(self._eta)
+
+            logging.info(
+                "comparing [{:d}/{}] - time: {:.2f}s - pairs_total: {}".format(
+                    self._i, i_max, eta_total, n_total))
+
+        self._i += 1
 
         return features
 

@@ -38,29 +38,18 @@ class Full(BaseIndexAlgorithm):
     def __init__(self):
         super(Full, self).__init__()
 
+        logging.warn(
+            "indexing - performance warning "
+            "- A full index can result in large number of record pairs."
+        )
+
     def _link_index(self, df_a, df_b):
-
-        n_max = full_index_size((df_a, df_b))
-
-        if n_max > 1e7:
-            logging.warn(
-                "The number of record pairs is large. Consider a different "
-                "indexation algorithm for better performance. "
-            )
 
         return pandas.MultiIndex.from_product(
             [df_a.index.values, df_b.index.values]
         )
 
     def _dedup_index(self, df_a):
-
-        n_max = full_index_size((df_a))
-
-        if n_max > 1e7:
-            logging.warn(
-                "The number of record pairs is large. Consider a different "
-                "indexation algorithm for better performance. "
-            )
 
         levels = [df_a.index.values, df_a.index.values]
         labels = numpy.triu_indices(len(df_a.index), k=1)
