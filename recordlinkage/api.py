@@ -1,9 +1,6 @@
-
 from recordlinkage.base import BaseIndex, BaseCompare
 from recordlinkage.index import Full, Block, SortedNeighbourhood, Random
-from recordlinkage.compare import (CompareExact, CompareString,
-                                   CompareNumeric, CompareGeographic,
-                                   CompareDate)
+from recordlinkage.compare import Exact, String, Numeric, Geographic, Date
 
 
 class Index(BaseIndex):
@@ -154,13 +151,18 @@ class Compare(BaseCompare):
 
         """
 
-        compare = CompareExact(s1, s2, *args, **kwargs)
+        compare = Exact(s1, s2, *args, **kwargs)
         self.add(compare)
 
         return self
 
-    def string(self, s1, s2, method='levenshtein', threshold=None,
-               *args, **kwargs):
+    def string(self,
+               s1,
+               s2,
+               method='levenshtein',
+               threshold=None,
+               *args,
+               **kwargs):
         """Compare attributes of pairs with string algorithm.
 
         Shortcut of :class:`recordlinkage.compare.String`::
@@ -172,10 +174,8 @@ class Compare(BaseCompare):
 
         """
 
-        compare = CompareString(s1, s2,
-                                method=method,
-                                threshold=threshold,
-                                *args, **kwargs)
+        compare = String(
+            s1, s2, method=method, threshold=threshold, *args, **kwargs)
         self.add(compare)
 
         return self
@@ -192,7 +192,7 @@ class Compare(BaseCompare):
 
         """
 
-        compare = CompareNumeric(s1, s2, *args, **kwargs)
+        compare = Numeric(s1, s2, *args, **kwargs)
         self.add(compare)
 
         return self
@@ -209,9 +209,7 @@ class Compare(BaseCompare):
 
         """
 
-        compare = CompareGeographic(
-            (lat1, lng1), (lat2, lng2), *args, **kwargs
-        )
+        compare = Geographic((lat1, lng1), (lat2, lng2), *args, **kwargs)
         self.add(compare)
 
         return self
@@ -228,7 +226,7 @@ class Compare(BaseCompare):
 
         """
 
-        compare = CompareDate(s1, s2, *args, **kwargs)
+        compare = Date(s1, s2, *args, **kwargs)
         self.add(compare)
 
         return self
