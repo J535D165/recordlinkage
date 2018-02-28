@@ -401,18 +401,18 @@ class BaseCompareFeature(object):
         if x_link is not None and not isinstance(x_link, pandas.DataFrame):
             raise ValueError("expected pandas.DataFrame as third argument")
 
-        labels_left = listify(self.labels_left)
-        labels_right = listify(self.labels_right)
-
-        df_a = frame_indexing(x[labels_left], pairs, 0)
+        labels_left = listify(self.labels_left, [])
+        labels_right = listify(self.labels_right, [])
 
         if x_link is None:
-            df_b = frame_indexing(x[labels_right], pairs, 1)
+            df_a = frame_indexing(x[labels_left + labels_right], pairs, 0)
+            data1 = tuple([df_a[lbl] for lbl in listify(self.labels_left)])
+            data2 = tuple([df_a[lbl] for lbl in listify(self.labels_right)])
         else:
+            df_a = frame_indexing(x[labels_left], pairs, 0)
+            data1 = tuple([df_a[lbl] for lbl in listify(self.labels_left)])
             df_b = frame_indexing(x_link[labels_right], pairs, 1)
-
-        data1 = tuple([df_a[lbl] for lbl in listify(self.labels_left)])
-        data2 = tuple([df_b[lbl] for lbl in listify(self.labels_right)])
+            data2 = tuple([df_b[lbl] for lbl in listify(self.labels_right)])
 
         results = self._compute(*tuple(data1 + data2))
 
