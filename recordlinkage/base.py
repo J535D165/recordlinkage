@@ -359,9 +359,9 @@ class BaseCompareFeature(object):
 
         raise NotImplementedError()
 
-    def _compute(self, *args):
+    def _compute(self, left_on, right_on):
 
-        result = self._compute_vectorized(*args)
+        result = self._compute_vectorized(*tuple(left_on + right_on))
 
         return result
 
@@ -414,7 +414,7 @@ class BaseCompareFeature(object):
             df_b = frame_indexing(x_link[labels_right], pairs, 1)
             data2 = tuple([df_b[lbl] for lbl in listify(self.labels_right)])
 
-        results = self._compute(*tuple(data1 + data2))
+        results = self._compute(data1, data2)
 
         return results
 
@@ -618,7 +618,7 @@ class BaseCompare(object):
             data1 = tuple([df_a_indexed[lbl] for lbl in listify(lbl1)])
             data2 = tuple([df_b_indexed[lbl] for lbl in listify(lbl2)])
 
-            result = feat._compute(*tuple(data1 + data2))
+            result = feat._compute(data1, data2)
             features.append((result, feat.label))
 
         features = self.union(features, pairs)
