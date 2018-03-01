@@ -648,7 +648,7 @@ class BaseCompare(object):
 
         return features
 
-    def union(self, objs, index=None):
+    def union(self, objs, index=None, column_i=0):
         """Make a union of the features.
 
         The term 'union' is based on the terminology of scikit-learn.
@@ -662,32 +662,48 @@ class BaseCompare(object):
             # result is tuple of results
             if isinstance(feat, tuple):
                 if label is None:
-                    label = [None for _ in len(feat)]
+                    label = [None] * len(feat)
 
-                partial_result = self.union(zip(feat, label))
+                partial_result = self.union(zip(feat, label), column_i=column_i)
                 feat_conc.append(partial_result)
+                column_i = column_i + partial_result.shape[1]
 
             # result is pandas.Series.
             elif isinstance(feat, pandas.Series):
                 feat.reset_index(drop=True, inplace=True)
+                if label is None:
+                    label = column_i
                 feat.rename(label, inplace=True)
                 feat_conc.append(feat)
+                column_i = column_i + 1
 
             # result is pandas.DataFrame
             elif isinstance(feat, pandas.DataFrame):
                 feat.reset_index(drop=True, inplace=True)
+                if label is None:
+                    label = np.arange(column_i, column_i + feat.shape[1])
                 feat.columns = label
                 feat_conc.append(feat)
+                column_i = column_i + feat.shape[1]
 
             # result is numpy 1d array
             elif is_numpy_like(feat) and len(feat.shape) == 1:
+                if label is None:
+                    label = column_i
                 f = pandas.Series(feat, name=label, copy=False)
+
                 feat_conc.append(f)
+                column_i = column_i + 1
 
             # result is numpy 2d array
             elif is_numpy_like(feat) and len(feat.shape) == 2:
-                f = pandas.DataFrame(feat, columns=label, copy=False)
-                feat_conc.append(f)
+                if label is None:
+                    label = np.arange(column_i, column_i + feat.shape[1])
+                feat_df = pandas.DataFrame(feat, columns=label, copy=False)
+                if label is None:
+                    feat_df.columns = [None for _ in range(feat_df.shape[1])]
+                feat_conc.append(feat_df)
+                column_i = column_i + feat.shape[1]
 
             # other results are not (yet) supported
             else:
@@ -698,10 +714,6 @@ class BaseCompare(object):
         result = pandas.concat(feat_conc, axis=1, copy=False)
         if index is not None:
             result.set_index(index, inplace=True)
-
-        # replace missing columns names by numbers
-        result.columns = [col if pandas.notnull(col) else j
-                          for j, col in enumerate(result.columns.tolist())]
 
         return result
 
