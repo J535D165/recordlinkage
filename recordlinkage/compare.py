@@ -666,15 +666,3 @@ class FrequencyB(Frequency):
             normalise=normalise,
             missing_value=missing_value,
             label=label)
-
-
-CompareExact = DeprecationHelper(
-    Exact, "This class is renamed into Exact.")
-CompareString = DeprecationHelper(
-    String, "This class is renamed into String.")
-CompareNumeric = DeprecationHelper(
-    Numeric, "This class is renamed into Numeric.")
-CompareGeographic = DeprecationHelper(
-    Geographic, "This class is renamed into Geographic.")
-CompareDate = DeprecationHelper(
-    Date, "This class is renamed into Date.")
