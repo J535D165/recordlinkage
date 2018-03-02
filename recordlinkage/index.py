@@ -462,11 +462,14 @@ class Random(BaseIndexAlgorithm):
 
 
 FullIndex = DeprecationHelper(
-    Full, "This class is moved to recordlinkage.index.Full.")
+    Full, "class recordlinkage.FullIndex is renamed and moved, "
+    "use recordlinkage.index.Full")
 BlockIndex = DeprecationHelper(
-    Block, "This class is moved to recordlinkage.index.Block.")
+    Block, "class recordlinkage.BlockIndex is renamed and moved, "
+    "use recordlinkage.index.Block")
 SortedNeighbourhoodIndex = DeprecationHelper(
-    SortedNeighbourhood,
-    "This class is moved to recordlinkage.index.SortedNeighbourhood.")
+    SortedNeighbourhood, "class recordlinkage.SortedNeighbourhoodIndex "
+    "is renamed and moved, use recordlinkage.index.SortedNeighbourhood")
 RandomIndex = DeprecationHelper(
-    Random, "This class is moved to recordlinkage.index.Random.")
+    Random, "class recordlinkage.RandomIndex is renamed and moved, "
+    "use recordlinkage.index.Random")
