@@ -16,6 +16,7 @@ import sys
 import os
 import mock
 import shlex
+import datetime
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -82,7 +83,8 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'Python Record Linkage Toolkit'
-copyright = u'2016, Jonathan de Bruin'
+now = datetime.datetime.now()
+copyright = u'2016-{}, Jonathan de Bruin'.format(now.year)
 author = u'Jonathan de Bruin'
 
 # The version info for the project you're documenting, acts as replacement for
