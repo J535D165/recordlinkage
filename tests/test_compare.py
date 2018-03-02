@@ -1320,3 +1320,62 @@ class TestCompareFreq(object):
         expected_np[90:] = missing_value
         expected = DataFrame(expected_np, index=ix)
         pdt.assert_frame_equal(result, expected)
+
+
+class TestCompareVariable(object):
+    def test_variable(self):
+
+        # data
+        arrayA = np.random.random((100,))
+        arrayB = np.random.random((100,))
+
+        # convert to pandas data
+        A = DataFrame({'col': arrayA})
+        B = DataFrame({'col': arrayB})
+        ix = MultiIndex.from_arrays([A.index.values, B.index.values])
+
+        # the part to test
+        from recordlinkage.compare import Variable, VariableA, VariableB
+
+        comp = recordlinkage.Compare()
+        comp.add(Variable(left_on='col'))
+        comp.add(VariableA('col'))
+        result = comp.compute(ix, A, B)
+
+        expected = Series(arrayA, index=ix)
+        pdt.assert_series_equal(result[0], expected.rename(0))
+        pdt.assert_series_equal(result[1], expected.rename(1))
+
+        comp = recordlinkage.Compare()
+        comp.add(Variable(right_on='col'))
+        comp.add(VariableB('col'))
+        result = comp.compute(ix, A, B)
+
+        expected = Series(arrayB, index=ix)
+        pdt.assert_series_equal(result[0], expected.rename(0))
+        pdt.assert_series_equal(result[1], expected.rename(1))
+
+    @pytest.mark.parametrize('missing_value', [0.0, np.nan, 10.0])
+    def test_variable_nan(self, missing_value):
+
+        # data
+        arrayA = np.random.random((100,))
+        arrayA[90:] = np.nan
+        arrayB = np.random.random((100,))
+
+        # convert to pandas data
+        A = DataFrame({'col': arrayA})
+        B = DataFrame({'col': arrayB})
+        ix = MultiIndex.from_arrays([A.index.values, B.index.values])
+
+        # the part to test
+        from recordlinkage.compare import Variable
+
+        comp = recordlinkage.Compare()
+        comp.add(Variable(left_on='col', missing_value=missing_value))
+        features = comp.compute(ix, A, B)
+        result = features[0].rename(None)
+
+        expected = Series(arrayA, index=ix)
+        expected.iloc[90:] = missing_value
+        pdt.assert_series_equal(result, expected)

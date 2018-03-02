@@ -458,6 +458,99 @@ class Date(BaseCompareFeature):
         return c
 
 
+class Variable(BaseCompareFeature):
+    """Add a variable of the dataframe as feature.
+
+    Parameters
+    ----------
+    left_on : str or int
+        The name or position of the column in the left DataFrame.
+    right_on : str or int
+        The name or position of the column in the right DataFrame.
+    missing_value : numpy.dtype
+        The value for a comparison with a missing value. Default 0.0.
+
+    """
+
+    name = "variable"
+    description = "Add a variable of the dataframe to the features."
+
+    def __init__(self,
+                 left_on=None,
+                 right_on=None,
+                 missing_value=0.0,
+                 label=None):
+        super(Variable, self).__init__(left_on, right_on, label=label)
+
+        self.missing_value = missing_value
+
+    def _compute_vectorized(self, *data):
+
+        result = []
+
+        if isinstance(data, tuple):
+            for col in data:
+                result_i = fillna(col, self.missing_value)
+                result.append(result_i)
+        else:
+            result_0 = fillna(data, self.missing_value)
+            result.append(result_0)
+
+        return tuple(result)
+
+
+class VariableA(Variable):
+    """Add a variable of the left dataframe as feature.
+
+    Parameters
+    ----------
+    on : str or int
+        The name or position of the column in the left DataFrame.
+    normalise : bool
+        Normalise the outcome. This is needed for good result in many
+        classification models. Default True.
+    missing_value : numpy.dtype
+        The value for a comparison with a missing value. Default 0.0.
+
+    """
+
+    name = "variable"
+    description = "Add a variable of the left dataframe to the features."
+
+    def __init__(self, on=None, missing_value=0.0, label=None):
+        super(VariableA, self).__init__(
+            on,
+            None,
+            missing_value=missing_value,
+            label=label)
+
+
+class VariableB(Variable):
+    """Add a variable of the right dataframe as feature.
+
+    Parameters
+    ----------
+    on : str or int
+        The name or position of the column in the right DataFrame.
+    normalise : bool
+        Normalise the outcome. This is needed for good result in many
+        classification models. Default True.
+    missing_value : numpy.dtype
+        The value for a comparison with a missing value. Default 0.0.
+
+    """
+
+    name = "variable"
+    description = "Add a variable of the right dataframe to the features."
+
+    def __init__(self, on=None, missing_value=0.0, label=None):
+        super(VariableB, self).__init__(
+            None,
+            on,
+            missing_value=missing_value,
+            label=label)
+
+
 class Frequency(BaseCompareFeature):
     """Compute the (relative) frequency of each variable.
 
