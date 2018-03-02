@@ -122,7 +122,7 @@ class BaseIndex(object):
             if pairs is None:
                 pairs = pairs_i
             else:
-                pairs = pairs.union(pairs_i)
+                pairs = pairs._union(pairs_i)
 
         if x_link is not None:
             n_max = max_pairs((x, x_link))
@@ -621,7 +621,7 @@ class BaseCompare(object):
             result = feat._compute(data1, data2)
             features.append((result, feat.label))
 
-        features = self.union(features, pairs)
+        features = self._union(features, pairs)
 
         # log timing
         n = pairs.shape[0]
@@ -648,7 +648,7 @@ class BaseCompare(object):
 
         return features
 
-    def union(self, objs, index=None, column_i=0):
+    def _union(self, objs, index=None, column_i=0):
         """Make a union of the features.
 
         The term 'union' is based on the terminology of scikit-learn.
@@ -664,7 +664,8 @@ class BaseCompare(object):
                 if label is None:
                     label = [None] * len(feat)
 
-                partial_result = self.union(zip(feat, label), column_i=column_i)
+                partial_result = self._union(
+                    zip(feat, label), column_i=column_i)
                 feat_conc.append(partial_result)
                 column_i = column_i + partial_result.shape[1]
 
