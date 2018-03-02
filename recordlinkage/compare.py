@@ -458,6 +458,132 @@ class Date(BaseCompareFeature):
         return c
 
 
+class Frequency(BaseCompareFeature):
+    """Compute the (relative) frequency of each variable.
+
+    Parameters
+    ----------
+    left_on : str or int
+        The name or position of the column in the left DataFrame.
+    right_on : str or int
+        The name or position of the column in the right DataFrame.
+    normalise : bool
+        Normalise the outcome. This is needed for good result in many
+        classification models. Default True.
+    missing_value : numpy.dtype
+        The value for a comparison with a missing value. Default 0.0.
+
+    """
+
+    name = "frequency"
+    description = "Compute the frequency."
+
+    def __init__(self,
+                 left_on=None,
+                 right_on=None,
+                 normalise=True,
+                 missing_value=0.0,
+                 label=None):
+        super(Frequency, self).__init__(left_on, right_on, label=label)
+
+        self.normalise = normalise
+        self.missing_value = missing_value
+
+    def _compute_frequency(self, col):
+
+        # https://github.com/pydata/pandas/issues/3729
+        na_value = 'NAN'
+        value_count = col.fillna(na_value)
+
+        c = value_count.groupby(by=value_count).transform('count')
+        c = c.astype(np.float64)
+
+        if self.normalise:
+            c = c / len(col)
+
+        # replace missing values
+        if pandas.notnull(self.missing_value):
+            c[col.isnull()] = self.missing_value
+
+        return c
+
+    def _compute(self, left_data=None, right_data=None):
+
+        result = []
+
+        if isinstance(left_data, tuple):
+            for col in left_data:
+                result_i = self._compute_frequency(col)
+                result.append(result_i)
+        else:
+            result_i = self._compute_frequency(col)
+            result.append(result_i)
+
+        if isinstance(right_data, tuple):
+            for col in right_data:
+                result_i = self._compute_frequency(col)
+                result.append(result_i)
+        else:
+            result_i = self._compute_frequency(col)
+            result.append(result_i)
+
+        return tuple(result)
+
+
+class FrequencyA(Frequency):
+    """Compute the frequency of a variable in the left dataframe.
+
+    Parameters
+    ----------
+    on : str or int
+        The name or position of the column in the left DataFrame.
+    normalise : bool
+        Normalise the outcome. This is needed for good result in many
+        classification models. Default True.
+    missing_value : numpy.dtype
+        The value for a comparison with a missing value. Default 0.0.
+
+    """
+
+    name = "frequency"
+    description = "Compute the frequency."
+
+    def __init__(self, on=None, normalise=True, missing_value=0.0, label=None):
+        super(FrequencyA, self).__init__(
+            on,
+            None,
+            normalise=normalise,
+            missing_value=missing_value,
+            label=label)
+
+
+class FrequencyB(Frequency):
+    """Compute the frequency of a variable in the right dataframe.
+
+    Parameters
+    ----------
+    on : str or int
+        The name or position of the column in the right DataFrame.
+    normalise : bool
+        Normalise the outcome. This is needed for good result in many
+        classification models. Default True.
+    missing_value : numpy.dtype
+        The value for a comparison with a missing value. Default 0.0.
+
+    """
+
+    name = "frequency"
+    description = "Compute the frequency."
+
+    def __init__(self, on=None, normalise=True, missing_value=0.0, label=None):
+        super(FrequencyB, self).__init__(
+            None,
+            on,
+            normalise=normalise,
+            missing_value=missing_value,
+            label=label)
+
+
 CompareExact = DeprecationHelper(
     Exact, "This class is renamed into Exact.")
 CompareString = DeprecationHelper(

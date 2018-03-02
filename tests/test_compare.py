@@ -1233,3 +1233,89 @@ class TestCompareStrings(TestData):
         comp = recordlinkage.Compare()
         comp.string('col', 'col', method='unknown_algorithm')
         pytest.raises(ValueError, comp.compute, ix, A, B)
+
+
+class TestCompareFreq(TestData):
+    def test_freq(self):
+
+        # data
+        array_repeated = np.repeat(np.arange(10), 10)
+        array_tiled = np.tile(np.arange(20), 5)
+
+        # convert to pandas data
+        A = DataFrame({'col': array_repeated})
+        B = DataFrame({'col': array_tiled})
+        ix = MultiIndex.from_arrays([A.index.values, B.index.values])
+
+        # the part to test
+        from recordlinkage.compare import Frequency, FrequencyA, FrequencyB
+
+        comp = recordlinkage.Compare()
+        comp.add(Frequency(left_on='col'))
+        comp.add(FrequencyA('col'))
+        result = comp.compute(ix, A, B)
+
+        expected = Series(np.ones((100, )) / 10, index=ix)
+        pdt.assert_series_equal(result[0], expected.rename(0))
+        pdt.assert_series_equal(result[1], expected.rename(1))
+
+        comp = recordlinkage.Compare()
+        comp.add(Frequency(right_on='col'))
+        comp.add(FrequencyB('col'))
+        result = comp.compute(ix, A, B)
+
+        expected = Series(np.ones((100, )) / 20, index=ix)
+        pdt.assert_series_equal(result[0], expected.rename(0))
+        pdt.assert_series_equal(result[1], expected.rename(1))
+
+    def test_freq_normalise(self):
+
+        # data
+        array_repeated = np.repeat(np.arange(10), 10)
+        array_tiled = np.tile(np.arange(20), 5)
+
+        # convert to pandas data
+        A = DataFrame({'col': array_repeated})
+        B = DataFrame({'col': array_tiled})
+        ix = MultiIndex.from_arrays([A.index.values, B.index.values])
+
+        # the part to test
+        from recordlinkage.compare import Frequency
+
+        comp = recordlinkage.Compare()
+        comp.add(Frequency(left_on='col', normalise=False))
+        result = comp.compute(ix, A, B)
+
+        expected = DataFrame(np.ones((100, )) * 10, index=ix)
+        pdt.assert_frame_equal(result, expected)
+
+        comp = recordlinkage.Compare()
+        comp.add(Frequency(right_on='col', normalise=False))
+        result = comp.compute(ix, A, B)
+
+        expected = DataFrame(np.ones((100, )) * 5, index=ix)
+        pdt.assert_frame_equal(result, expected)
+
+    def test_freq_nan(self):
+
+        # data
+        array_repeated = np.repeat(np.arange(10, dtype=np.float64), 10)
+        array_repeated[90:] = np.nan
+        array_tiled = np.tile(np.arange(20, dtype=np.float64), 5)
+
+        # convert to pandas data
+        A = DataFrame({'col': array_repeated})
+        B = DataFrame({'col': array_tiled})
+        ix = MultiIndex.from_arrays([A.index.values, B.index.values])
+
+        # the part to test
+        from recordlinkage.compare import Frequency
+
+        comp = recordlinkage.Compare()
+        comp.add(Frequency(left_on='col'))
+        result = comp.compute(ix, A, B)
+
+        expected_np = np.ones((100, )) / 10
+        expected_np[90:] = 0.0
+        expected = DataFrame(expected_np, index=ix)
+        pdt.assert_frame_equal(result, expected)
