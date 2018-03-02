@@ -502,29 +502,20 @@ class Frequency(BaseCompareFeature):
             c = c / len(col)
 
         # replace missing values
-        if pandas.notnull(self.missing_value):
-            c[col.isnull()] = self.missing_value
+        c[col.isnull()] = self.missing_value
 
         return c
 
-    def _compute(self, left_data=None, right_data=None):
+    def _compute_vectorized(self, *data):
 
         result = []
 
-        if isinstance(left_data, tuple):
-            for col in left_data:
+        if isinstance(data, tuple):
+            for col in data:
                 result_i = self._compute_frequency(col)
                 result.append(result_i)
         else:
-            result_i = self._compute_frequency(col)
-            result.append(result_i)
-
-        if isinstance(right_data, tuple):
-            for col in right_data:
-                result_i = self._compute_frequency(col)
-                result.append(result_i)
-        else:
-            result_i = self._compute_frequency(col)
+            result_i = self._compute_frequency(*data)
             result.append(result_i)
 
         return tuple(result)

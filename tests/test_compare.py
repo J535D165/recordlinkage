@@ -1235,7 +1235,7 @@ class TestCompareStrings(TestData):
         pytest.raises(ValueError, comp.compute, ix, A, B)
 
 
-class TestCompareFreq(TestData):
+class TestCompareFreq(object):
     def test_freq(self):
 
         # data
@@ -1296,7 +1296,8 @@ class TestCompareFreq(TestData):
         expected = DataFrame(np.ones((100, )) * 5, index=ix)
         pdt.assert_frame_equal(result, expected)
 
-    def test_freq_nan(self):
+    @pytest.mark.parametrize('missing_value', [0.0, np.nan, 10.0])
+    def test_freq_nan(self, missing_value):
 
         # data
         array_repeated = np.repeat(np.arange(10, dtype=np.float64), 10)
@@ -1312,10 +1313,10 @@ class TestCompareFreq(TestData):
         from recordlinkage.compare import Frequency
 
         comp = recordlinkage.Compare()
-        comp.add(Frequency(left_on='col'))
+        comp.add(Frequency(left_on='col', missing_value=missing_value))
         result = comp.compute(ix, A, B)
 
         expected_np = np.ones((100, )) / 10
-        expected_np[90:] = 0.0
+        expected_np[90:] = missing_value
         expected = DataFrame(expected_np, index=ix)
         pdt.assert_frame_equal(result, expected)
