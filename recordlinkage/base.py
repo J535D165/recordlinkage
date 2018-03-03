@@ -209,8 +209,7 @@ class BaseIndexAlgorithm(object):
     def __str__(self):
         return repr(self)
 
-    @classmethod
-    def _deduplication(cls, x):
+    def _deduplication(self, x):
 
         if isinstance(x, (tuple, list)) and len(x) > 1:
             return False
