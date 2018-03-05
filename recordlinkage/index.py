@@ -18,7 +18,7 @@ from recordlinkage import rl_logging as logging
 
 
 class Full(BaseIndexAlgorithm):
-    """FullIndex()
+    """Full()
     Class to generate a 'full' index.
 
     A full index is an index with all possible combinations of record pairs.
