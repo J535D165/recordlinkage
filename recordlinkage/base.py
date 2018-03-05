@@ -122,7 +122,7 @@ class BaseIndex(object):
             if pairs is None:
                 pairs = pairs_i
             else:
-                pairs = pairs._union(pairs_i)
+                pairs = pairs.union(pairs_i)
 
         if x_link is not None:
             n_max = max_pairs((x, x_link))
