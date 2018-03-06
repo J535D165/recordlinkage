@@ -159,8 +159,6 @@ class Compare(BaseCompare):
     def string(self,
                s1,
                s2,
-               method='levenshtein',
-               threshold=None,
                *args,
                **kwargs):
         """Compare attributes of pairs with string algorithm.
@@ -175,7 +173,7 @@ class Compare(BaseCompare):
         """
 
         compare = String(
-            s1, s2, method=method, threshold=threshold, *args, **kwargs)
+            s1, s2, *args, **kwargs)
         self.add(compare)
 
         return self

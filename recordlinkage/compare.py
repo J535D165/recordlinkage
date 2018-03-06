@@ -157,7 +157,7 @@ class String(BaseCompareFeature):
     name = "string"
     description = "Compare string attributes of record pairs."
 
-    def __init__(self, labels_left, labels_right, method=None,
+    def __init__(self, labels_left, labels_right, method='levenshtein',
                  threshold=None, missing_value=0.0, label=None):
         super(String, self).__init__(labels_left, labels_right, label=label)
 

@@ -1138,6 +1138,27 @@ class TestCompareGeo(TestData):
 class TestCompareStrings(TestData):
     """Test the exact comparison method."""
 
+    def test_defaults(self):
+
+        # default algorithm is levenshtein algorithm
+        # test default values are indentical to levenshtein
+
+        A = DataFrame({
+            'col': [u'str_abc', u'str_abc', u'str_abc', nan, u'hsdkf']
+        })
+        B = DataFrame({'col': [u'str_abc', u'str_abd', u'jaskdfsd', nan, nan]})
+        ix = MultiIndex.from_arrays([A.index.values, B.index.values])
+
+        comp = recordlinkage.Compare()
+        comp.string('col', 'col', label='default')
+        comp.string('col', 'col', method='levenshtein', label='with_args')
+        result = comp.compute(ix, A, B)
+
+        pdt.assert_series_equal(
+            result['default'].rename(None),
+            result['with_args'].rename(None)
+        )
+
     def test_fuzzy(self):
 
         A = DataFrame({
