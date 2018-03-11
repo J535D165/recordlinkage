@@ -45,6 +45,8 @@ def phonetic(s, method, concat=True, encoding='utf-8', decode_error='strict'):
 
     Parameters
     ----------
+    s : pandas.Series
+        A pandas.Series with string values (often names) to encode.
     method: str
         The algorithm that is used to phonetically encode the values.
         The possible options are "soundex", "nysiis", "metaphone" or
@@ -64,11 +66,6 @@ def phonetic(s, method, concat=True, encoding='utf-8', decode_error='strict'):
     -------
     pandas.Series
         A Series with phonetic encoded values.
-
-    Note
-    ----
-    The 'soundex' and 'nysiis' algorithms use the package 'jellyfish'.
-    It can be installed with pip (``pip install jellyfish``).
 
     """
 
