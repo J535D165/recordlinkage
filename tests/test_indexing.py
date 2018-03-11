@@ -324,6 +324,27 @@ class TestIndexAlgorithmApi(TestData):
         # pickle after indexing
         pickle.dump(index_class, open(pickle_path, 'wb'))
 
+    @pytest.mark.parametrize("index_class", get_test_algorithms())
+    def test_lower_triangular(self, index_class):
+
+        # make an index for each dataframe with a new index name
+        index_a = pd.Index(self.a.index, name='index')
+        df_a = pd.DataFrame(self.a, index=index_a)
+        pairs = index_class.index(df_a)
+
+        # expected
+        levels = [df_a.index.values, df_a.index.values]
+        labels = np.tril_indices(len(df_a.index), k=-1)
+
+        full_pairs = pd.MultiIndex(
+            levels=levels,
+            labels=labels,
+            verify_integrity=False
+        )
+
+        # all pairs are in the lower triangle of the matrix.
+        assert len(pairs.difference(full_pairs)) == 0
+
 
 class TestFullIndexing(TestData):
     """General unittest for the full indexing class."""

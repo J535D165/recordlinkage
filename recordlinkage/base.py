@@ -235,16 +235,28 @@ class BaseIndexAlgorithm(object):
         )
 
     def _dedup_index(self, df_a):
-        """Make record pairs of a single dataframe."""
+        """Build an index for deduplicating a dataset.
+
+        Parameters
+        ----------
+        df_a : (tuple of) pandas.Series
+            The data of the DataFrame to build the index with.
+
+        Returns
+        -------
+        pandas.MultiIndex
+            A pandas.MultiIndex with record pairs. Each record pair
+            contains the index values of two records. The records are
+            sampled from the lower triangular part of the matrix.
+
+        """
 
         pairs = self._link_index(df_a, df_a)
 
-        # Remove all pairs not in the upper triangular part of the matrix.
+        # Remove all pairs not in the lower triangular part of the matrix.
         # This part can be inproved by not comparing the level values, but the
         # level itself.
-        pairs = pairs[
-            pairs.get_level_values(0) < pairs.get_level_values(1)
-        ]
+        pairs = pairs[pairs.labels[0] > pairs.labels[1]]
 
         return pairs
 

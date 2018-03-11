@@ -52,7 +52,7 @@ class Full(BaseIndexAlgorithm):
     def _dedup_index(self, df_a):
 
         levels = [df_a.index.values, df_a.index.values]
-        labels = numpy.triu_indices(len(df_a.index), k=1)
+        labels = numpy.tril_indices(len(df_a.index), k=-1)
 
         return pandas.MultiIndex(
             levels=levels,
@@ -140,21 +140,33 @@ class Block(BaseIndexAlgorithm):
         blocking_keys = ["blocking_key_%d" % i for i, v in enumerate(left_on)]
 
         # make a dataset for the data on the left
-        data_left = df_a[left_on].dropna(axis=0, how='any', inplace=False)
+        # 1. make a dataframe
+        # 2. rename columns
+        # 3. add index col
+        # 4. drop na (last step to presever index)
+        data_left = pandas.DataFrame(df_a[left_on], copy=False)
         data_left.columns = blocking_keys
-        data_left['index_x'] = data_left.index
+        data_left['index_x'] = numpy.arange(len(df_a))
+        data_left.dropna(axis=0, how='any', subset=blocking_keys, inplace=True)
 
         # make a dataset for the data on the right
-        data_right = df_b[right_on].dropna(axis=0, how='any', inplace=False)
+        data_right = pandas.DataFrame(df_b[right_on], copy=False)
         data_right.columns = blocking_keys
-        data_right['index_y'] = data_right.index
+        data_right['index_y'] = numpy.arange(len(df_b))
+        data_right.dropna(axis=0, how='any',
+                          subset=blocking_keys,
+                          inplace=True)
 
         # merge the dataframes
-        pairs = data_left.merge(
+        pairs_df = data_left.merge(
             data_right, how='inner', on=blocking_keys
-        ).set_index(['index_x', 'index_y'])
+        )
 
-        return pairs.index
+        return pandas.MultiIndex(
+            levels=[df_a.index.values, df_b.index.values],
+            labels=[pairs_df['index_x'].values, pairs_df['index_y'].values],
+            verify_integrity=False
+        )
 
 
 class SortedNeighbourhood(BaseIndexAlgorithm):
@@ -289,20 +301,27 @@ class SortedNeighbourhood(BaseIndexAlgorithm):
             block_left_on = listify(self.block_on)
             block_right_on = listify(self.block_on)
 
-        # drop missing values and columns without relevant information
-        data_left = df_a[listify(left_on) + block_left_on].dropna(
-            axis=0, how='any', inplace=False
-        )
-        data_left.columns = ['sorting_key'] + \
+        blocking_keys = ['sorting_key'] + \
             ["blocking_key_%d" % i for i, v in enumerate(block_left_on)]
-        data_left['index_x'] = data_left.index
 
-        data_right = df_b[listify(right_on) + block_right_on].dropna(
-            axis=0, how='any', inplace=False
-        )
-        data_right.columns = ['sorting_key'] + \
-            ["blocking_key_%d" % i for i, v in enumerate(block_right_on)]
-        data_right['index_y'] = data_right.index
+        # make a dataset for the data on the left
+        # 1. make a dataframe
+        # 2. rename columns
+        # 3. add index col
+        # 4. drop na (last step to presever index)
+        data_left = pandas.DataFrame(
+            df_a[listify(left_on) + block_left_on], copy=False)
+        data_left.columns = blocking_keys
+        data_left['index_x'] = numpy.arange(len(df_a))
+        data_left.dropna(axis=0, how='any', subset=blocking_keys, inplace=True)
+
+        data_right = pandas.DataFrame(
+            df_b[listify(right_on) + block_right_on], copy=False)
+        data_right.columns = blocking_keys
+        data_right['index_y'] = numpy.arange(len(df_b))
+        data_right.dropna(axis=0, how='any',
+                          subset=blocking_keys,
+                          inplace=True)
 
         # sorting_key_values is the terminology in Data Matching [Christen,
         # 2012]
@@ -336,11 +355,13 @@ class SortedNeighbourhood(BaseIndexAlgorithm):
         pairs_concat = [merge_lagged(data_left, data_right, w)
                         for w in range(-_window, _window + 1)]
 
-        pairs = pandas.concat(pairs_concat, axis=0).set_index(
-            ['index_x', 'index_y']
-        ).index
+        pairs_df = pandas.concat(pairs_concat, axis=0)
 
-        return pairs
+        return pandas.MultiIndex(
+            levels=[df_a.index.values, df_b.index.values],
+            labels=[pairs_df['index_x'].values, pairs_df['index_y'].values],
+            verify_integrity=False
+        )
 
 
 class Random(BaseIndexAlgorithm):

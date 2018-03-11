@@ -5,8 +5,8 @@ import numpy as np
 from recordlinkage.measures import max_pairs
 
 
-def _map_triu_1d_on_2d(indices, dims):
-    """Map 1d indices on upper triangular matrix in 2d. """
+def _map_tril_1d_on_2d(indices, dims):
+    """Map 1d indices on lower triangular matrix in 2d. """
 
     N = (dims * dims - dims) / 2
 
@@ -14,7 +14,7 @@ def _map_triu_1d_on_2d(indices, dims):
     c = m - np.round(np.sqrt(2 * (N - indices))) - 1
     r = np.mod(indices + (c + 1) * (c + 2) / 2 - 1, m) + 1
 
-    return np.array([c, r], dtype=np.int64)
+    return np.array([r, c], dtype=np.int64)
 
 
 def _unique_rows_numpy(a):
@@ -39,7 +39,7 @@ def random_pairs_with_replacement(n, shape, random_state=None):
     indices = random_state.randint(0, n_max, n)
 
     if len(shape) == 1:
-        return _map_triu_1d_on_2d(indices, shape[0])
+        return _map_tril_1d_on_2d(indices, shape[0])
     else:
         return np.unravel_index(indices, shape)
 
@@ -61,7 +61,7 @@ def random_pairs_without_replacement_small_frames(
 
     # return 2d indices
     if len(shape) == 1:
-        return _map_triu_1d_on_2d(sample, shape[0])
+        return _map_tril_1d_on_2d(sample, shape[0])
     else:
         return np.unravel_index(sample, shape)
 
@@ -89,6 +89,6 @@ def random_pairs_without_replacement_large_frames(
 
     # return 2d indices
     if len(shape) == 1:
-        return _map_triu_1d_on_2d(sample[0:n], shape[0])
+        return _map_tril_1d_on_2d(sample[0:n], shape[0])
     else:
         return np.unravel_index(sample[0:n], shape)
