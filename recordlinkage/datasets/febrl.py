@@ -1,6 +1,7 @@
 import os
 
 import pandas
+import numpy
 
 
 def _febrl_load_data(filename):
@@ -27,19 +28,28 @@ def _febrl_load_data(filename):
 def _febrl_links(df):
     """Get the links of a FEBRL dataset."""
 
-    df_empty = df[[]].reset_index()
-    df_empty['key'] = df_empty['rec_id'].str. \
-        extract(r'rec-(\d+)', expand=True)[0]
+    index = df.index.to_series()
+    keys = index.str.extract(r'rec-(\d+)', expand=True)[0]
 
-    # split the dataframe (org and dup)
-    org_bool = df_empty['rec_id'].str.endswith("org")
+    index_int = numpy.arange(len(df))
+
+    df_helper = pandas.DataFrame({
+        'key': keys,
+        'index': index_int
+    })
 
     # merge the two frame and make MultiIndex.
-    pairs = df_empty[org_bool].merge(df_empty[~org_bool], on='key')
-    pairs_mi = pairs.set_index(['rec_id_x', 'rec_id_y']).index
-    pairs_mi.names = [None, None]
+    pairs_df = df_helper.merge(
+        df_helper, on='key'
+    )[['index_x', 'index_y']]
+    pairs_df = pairs_df[pairs_df['index_x'] > pairs_df['index_y']]
 
-    return pairs_mi
+    return pandas.MultiIndex(
+        levels=[df.index.values, df.index.values],
+        labels=[pairs_df['index_x'].values, pairs_df['index_y'].values],
+        names=[None, None],
+        verify_integrity=False
+    )
 
 
 def load_febrl1(return_links=False):
@@ -64,17 +74,15 @@ def load_febrl1(return_links=False):
     pandas.DataFrame
         A :class:`pandas.DataFrame` with Febrl dataset1.csv. When
         return_links is True, the function returns also the true
-        links.
+        links. The true links are all links in the lower triangular
+        part of the matrix.
 
     """
 
     df = _febrl_load_data('dataset1.csv')
 
     if return_links:
-        links = pandas.MultiIndex.from_arrays([
-            ["rec-{}-org".format(i) for i in range(0, 500)],
-            ["rec-{}-dup-0".format(i) for i in range(0, 500)]]
-        )
+        links = _febrl_links(df)
         return df, links
     else:
         return df
@@ -109,7 +117,8 @@ def load_febrl2(return_links=False):
     pandas.DataFrame
         A :class:`pandas.DataFrame` with Febrl dataset2.csv. When
         return_links is True, the function returns also the true
-        links.
+        links. The true links are all links in the lower triangular
+        part of the matrix.
 
     """
 
@@ -151,7 +160,8 @@ def load_febrl3(return_links=False):
     pandas.DataFrame
         A :class:`pandas.DataFrame` with Febrl dataset3.csv. When
         return_links is True, the function returns also the true
-        links.
+        links. The true links are all links in the lower triangular
+        part of the matrix.
 
     """
 

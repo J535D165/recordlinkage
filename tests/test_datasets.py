@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import pandas
+import numpy
 
 from recordlinkage.datasets import (load_febrl1, load_febrl2, load_febrl3,
                                     load_febrl4, load_krebsregister,
@@ -10,39 +11,46 @@ from recordlinkage.datasets import (load_febrl1, load_febrl2, load_febrl3,
 import pytest
 
 
+FEBRL_DEDUP = [
+    # nlinks = 500
+    (load_febrl1, 1000, 500),
+    # nlinks=19*6*5/2+47*5*4/2+107*4*3/2+141*3*2/2+114
+    (load_febrl2, 5000, 1934),
+    # nlinks=168*6*5/2+161*5*4/2+212*4*3/2+256*3*2/2+368
+    (load_febrl3, 5000, 6538)
+]
+
+
 class TestExternalDatasets(object):
-    def test_febrl1(self):
 
-        df = load_febrl1()
-        assert isinstance(df, pandas.DataFrame)
-        assert len(df) == 1000
+    @pytest.mark.parametrize("dataset,nrows,nlinks", FEBRL_DEDUP)
+    def test_febrl_dedup(self, dataset, nrows, nlinks):
 
-        df, links = load_febrl1(return_links=True)
+        df = dataset()
         assert isinstance(df, pandas.DataFrame)
-        assert len(df) == 1000
+        assert len(df) == nrows
+
+    @pytest.mark.parametrize("dataset,nrows,nlinks", FEBRL_DEDUP)
+    def test_febrl_dedup_links(self, dataset, nrows, nlinks):
+
+        df, links = dataset(return_links=True)
+        assert isinstance(df, pandas.DataFrame)
+        assert len(df) == nrows
+        assert len(links) == nlinks
         assert isinstance(links, pandas.MultiIndex)
 
-    def test_febrl2(self):
+    @pytest.mark.parametrize("dataset,nrows,nlinks", FEBRL_DEDUP)
+    def test_febrl_dedup_tril(self, dataset, nrows, nlinks):
 
-        df = load_febrl2()
-        assert isinstance(df, pandas.DataFrame)
-        assert len(df) == 5000
+        df, links = dataset(return_links=True)
 
-        df, links = load_febrl2(return_links=True)
-        assert isinstance(df, pandas.DataFrame)
-        assert len(df) == 5000
-        assert isinstance(links, pandas.MultiIndex)
+        s_level_1 = pandas.Series(numpy.arange(len(df)), index=df.index)
+        s_level_2 = pandas.Series(numpy.arange(len(df)), index=df.index)
 
-    def test_febrl3(self):
+        x1 = s_level_1.loc[links.get_level_values(0)]
+        x2 = s_level_2.loc[links.get_level_values(1)]
 
-        df = load_febrl3()
-        assert isinstance(df, pandas.DataFrame)
-        assert len(df) == 5000
-
-        df, links = load_febrl3(return_links=True)
-        assert isinstance(df, pandas.DataFrame)
-        assert len(df) == 5000
-        assert isinstance(links, pandas.MultiIndex)
+        assert numpy.all(x1.values > x2.values)
 
     def test_febrl4(self):
 
@@ -52,6 +60,7 @@ class TestExternalDatasets(object):
         assert len(dfa) == 5000
         assert len(dfb) == 5000
 
+    def test_febrl_links(self):
         dfa, dfb, links = load_febrl4(return_links=True)
         assert isinstance(dfa, pandas.DataFrame)
         assert isinstance(dfb, pandas.DataFrame)
