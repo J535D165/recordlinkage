@@ -21,8 +21,8 @@ def get_test_algorithms():
     """Return list of algorithms"""
     return [
         Full(),
-        Block(on='var_arange'),
-        SortedNeighbourhood(on='var_arange'),
+        Block('var_arange'),
+        SortedNeighbourhood('var_arange'),
         Random(10, random_state=100, replace=True),
         Random(10, random_state=100, replace=False)
     ]
@@ -389,7 +389,7 @@ class TestBlocking(TestData):
         pairs1 = index_cl1.index((self.a, self.b))
 
         # situation 2
-        index_cl2 = Block(on='var_arange')
+        index_cl2 = Block('var_arange')
         pairs2 = index_cl2.index((self.a, self.b))
 
         # situation 3
@@ -397,7 +397,7 @@ class TestBlocking(TestData):
         pairs3 = index_cl3.index((self.a, self.b))
 
         # situation 4
-        index_cl4 = Block(on=['var_arange'])
+        index_cl4 = Block(['var_arange'])
         pairs4 = index_cl4.index((self.a, self.b))
 
         # situation 5
@@ -432,19 +432,19 @@ class TestBlocking(TestData):
         """BLOCKING: test blocking algorithm for linking"""
 
         # situation 1: eye index
-        index_cl1 = Block(on='var_arange')
+        index_cl1 = Block('var_arange')
         pairs1 = index_cl1.index((self.a, self.b))
         assert len(pairs1) == len(self.a)
         assert pairs1.is_unique
 
         # situation 2: 10 blocks
-        index_cl2 = Block(on='var_block10')
+        index_cl2 = Block('var_block10')
         pairs2 = index_cl2.index((self.a, self.b))
         assert len(pairs2) == len(self.a) * 10
         assert pairs2.is_unique
 
         # situation 3: full index
-        index_cl3 = Block(on='var_single')
+        index_cl3 = Block('var_single')
         pairs3 = index_cl3.index((self.a, self.b))
         assert len(pairs3) == len(self.a) * len(self.b)
         assert pairs3.is_unique
@@ -455,22 +455,32 @@ class TestBlocking(TestData):
         len_a = len(self.a)
 
         # situation 1: eye index
-        index_cl1 = Block(on='var_arange')
+        index_cl1 = Block('var_arange')
         pairs1 = index_cl1.index(self.a)
         assert len(pairs1) == 0
         assert pairs1.is_unique
 
         # situation 2: 10 blocks
-        index_cl2 = Block(on='var_block10')
+        index_cl2 = Block('var_block10')
         pairs2 = index_cl2.index(self.a)
         assert len(pairs2) == (len_a * 10 - len_a) / 2
         assert pairs2.is_unique
 
         # situation 3: full index
-        index_cl3 = Block(on='var_single')
+        index_cl3 = Block('var_single')
         pairs3 = index_cl3.index(self.a)
         assert len(pairs3) == (len_a * len_a - len_a) / 2
         assert pairs3.is_unique
+
+    def test_depr_on_argument(self):
+
+        index_cl_new = Block('var_arange')
+        pairs_new = index_cl_new.index(self.a)
+
+        index_cl_old = Block(on='var_arange')
+        pairs_old = index_cl_old.index(self.a)
+
+        ptm.assert_index_equal(pairs_new, pairs_old)
 
 
 class TestSortedNeighbourhoodIndexing(TestData):
@@ -486,7 +496,7 @@ class TestSortedNeighbourhoodIndexing(TestData):
         pairs1 = index_cl1.index((self.a, self.b))
 
         # situation 2
-        index_cl2 = SortedNeighbourhood(on='var_arange')
+        index_cl2 = SortedNeighbourhood('var_arange')
         pairs2 = index_cl2.index((self.a, self.b))
 
         # situation 3
@@ -495,7 +505,7 @@ class TestSortedNeighbourhoodIndexing(TestData):
         pairs3 = index_cl3.index((self.a, self.b))
 
         # situation 4
-        index_cl4 = SortedNeighbourhood(on=['var_arange'])
+        index_cl4 = SortedNeighbourhood(['var_arange'])
         pairs4 = index_cl4.index((self.a, self.b))
 
         # situation 5
@@ -515,7 +525,7 @@ class TestSortedNeighbourhoodIndexing(TestData):
 
         # window = 7 # using paramereized tests instead
 
-        index_class = SortedNeighbourhood(on='var_arange', window=window)
+        index_class = SortedNeighbourhood('var_arange', window=window)
         pairs = index_class.index((self.a, self.b[0:len(self.a)]))
 
         # the expected number of pairs
@@ -536,7 +546,7 @@ class TestSortedNeighbourhoodIndexing(TestData):
 
         # window = 7 # using paramereized tests instead
 
-        index_class = SortedNeighbourhood(on='var_arange', window=window)
+        index_class = SortedNeighbourhood('var_arange', window=window)
         pairs = index_class.index((self.a))
 
         # the expected number of pairs
@@ -553,7 +563,7 @@ class TestSortedNeighbourhoodIndexing(TestData):
 
         # sni
         index_class = SortedNeighbourhood(
-            on='var_arange', window=3, block_on='var_arange')
+            'var_arange', window=3, block_on='var_arange')
         pairs = index_class.index((self.a, self.b[0:len(self.a)]))
 
         # the length of pairs is length(self.a)
@@ -564,13 +574,23 @@ class TestSortedNeighbourhoodIndexing(TestData):
 
         # sni
         index_class = SortedNeighbourhood(
-            on='var_arange', window=3, block_on='var_arange')
+            'var_arange', window=3, block_on='var_arange')
         pairs = index_class.index(self.a)
 
         print(pairs.values)
 
         # the length of pairs is 0
         assert len(pairs) == 0
+
+    def test_depr_on_argument(self):
+
+        index_cl_new = SortedNeighbourhood('var_arange')
+        pairs_new = index_cl_new.index(self.a)
+
+        index_cl_old = SortedNeighbourhood(on='var_arange')
+        pairs_old = index_cl_old.index(self.a)
+
+        ptm.assert_index_equal(pairs_new, pairs_old)
 
 
 class TestRandomIndexing(TestData):

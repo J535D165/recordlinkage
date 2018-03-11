@@ -1,13 +1,13 @@
 from __future__ import division
 
+import warnings
+
 import pandas
 import numpy
 
 from recordlinkage.base import BaseIndexAlgorithm
-from recordlinkage.utils import (
-    IndexError,
-    DeprecationHelper,
-    listify)
+from recordlinkage.utils import (IndexError, DeprecationHelper, listify,
+                                 VisibleDeprecationWarning)
 from recordlinkage.measures import full_index_size
 from recordlinkage.algorithms.indexing import (
     random_pairs_with_replacement,
@@ -40,14 +40,12 @@ class Full(BaseIndexAlgorithm):
 
         logging.warn(
             "indexing - performance warning "
-            "- A full index can result in large number of record pairs."
-        )
+            "- A full index can result in large number of record pairs.")
 
     def _link_index(self, df_a, df_b):
 
         return pandas.MultiIndex.from_product(
-            [df_a.index.values, df_b.index.values]
-        )
+            [df_a.index.values, df_b.index.values])
 
     def _dedup_index(self, df_a):
 
@@ -55,10 +53,7 @@ class Full(BaseIndexAlgorithm):
         labels = numpy.tril_indices(len(df_a.index), k=-1)
 
         return pandas.MultiIndex(
-            levels=levels,
-            labels=labels,
-            verify_integrity=False
-        )
+            levels=levels, labels=labels, verify_integrity=False)
 
 
 class Block(BaseIndexAlgorithm):
@@ -71,18 +66,13 @@ class Block(BaseIndexAlgorithm):
 
     Parameters
     ----------
-    on : label, optional
-        A column name or a list of column names. These column(s) are used
-        to block on. When linking two dataframes, the 'on' argument needs
-        to be present in both dataframes.
     left_on : label, optional
         A column name or a list of column names of dataframe A. These
-        columns are used to block on. This argument is ignored when
-        argument 'on' is given.
+        columns are used to block on.
     right_on : label, optional
         A column name or a list of column names of dataframe B. These
-        columns are used to block on. This argument is ignored when
-        argument 'on' is given.
+        columns are used to block on. If 'right_on' is None, the `left_on`
+        value is used. Default None.
 
     Examples
     --------
@@ -95,47 +85,41 @@ class Block(BaseIndexAlgorithm):
 
     """
 
-    def __init__(self, on=None, left_on=None, right_on=None,
-                 *args, **kwargs):
+    def __init__(self, left_on=None, right_on=None, *args, **kwargs):
+        on = kwargs.pop('on', None)
         super(Block, self).__init__(*args, **kwargs)
 
         # variables to block on
-        self.on = on
         self.left_on = left_on
         self.right_on = right_on
+
+        if on is not None:
+
+            warnings.warn("The argument 'on' is deprecated. Use "
+                          "'left_on=...' and 'right_on=None' to simulate the "
+                          "the behaviour of 'on'.", stacklevel=2)
+            self.left_on, self.right_on = on, on
 
     def __repr__(self):
 
         class_name = self.__class__.__name__
-
-        if self.on is not None:
-            left_on = right_on = self.on
-        else:
-            left_on, right_on = self.left_on, self.right_on
+        left_on, right_on = self._get_left_and_right_on()
 
         return "<{} left_on={!r}, right_on={!r}>".format(
             class_name, left_on, right_on)
 
+    def _get_left_and_right_on(self):
+
+        if self.right_on is None:
+            return (self.left_on, self.left_on)
+        else:
+            return (self.left_on, self.right_on)
+
     def _link_index(self, df_a, df_b):
 
-        if self.on is not None:
-            if self.left_on is not None or self.right_on is not None:
-                raise IndexError('Can only pass argument "on" OR "left_on" '
-                                 'and "right_on", not a combination of both.')
-            left_on = right_on = listify(self.on)
-        else:
-            if self.left_on is None and self.right_on is None:
-                raise IndexError('pass argument "on" OR "left_on" and '
-                                 '"right_on" at class initalization.')
-            elif self.left_on is None:
-                raise IndexError('Argument "left_on" is missing '
-                                 'at class initalization.')
-            elif self.right_on is None:
-                raise IndexError('Argument "right_on" is missing '
-                                 'at class initalization.')
-            else:
-                left_on = listify(self.left_on)
-                right_on = listify(self.right_on)
+        left_on, right_on = self._get_left_and_right_on()
+        left_on = listify(left_on)
+        right_on = listify(right_on)
 
         blocking_keys = ["blocking_key_%d" % i for i, v in enumerate(left_on)]
 
@@ -153,20 +137,16 @@ class Block(BaseIndexAlgorithm):
         data_right = pandas.DataFrame(df_b[right_on], copy=False)
         data_right.columns = blocking_keys
         data_right['index_y'] = numpy.arange(len(df_b))
-        data_right.dropna(axis=0, how='any',
-                          subset=blocking_keys,
-                          inplace=True)
+        data_right.dropna(
+            axis=0, how='any', subset=blocking_keys, inplace=True)
 
         # merge the dataframes
-        pairs_df = data_left.merge(
-            data_right, how='inner', on=blocking_keys
-        )
+        pairs_df = data_left.merge(data_right, how='inner', on=blocking_keys)
 
         return pandas.MultiIndex(
             levels=[df_a.index.values, df_b.index.values],
             labels=[pairs_df['index_x'].values, pairs_df['index_y'].values],
-            verify_integrity=False
-        )
+            verify_integrity=False)
 
 
 class SortedNeighbourhood(BaseIndexAlgorithm):
@@ -184,15 +164,10 @@ class SortedNeighbourhood(BaseIndexAlgorithm):
 
     Parameters
     ----------
-    on : label, optional
-        The column name of the sorting key. When linking two dataframes,
-        the 'on' argument needs to be present in both dataframes.
     left_on : label, optional
         The column name of the sorting key of the first/left dataframe.
-        This argument is ignored when argument 'on' is not None.
     right_on : label, optional
         The column name of the sorting key of the second/right dataframe.
-        This argument is ignored when argument 'on' is not None.
     window: int, optional
         The width of the window, default is 3
     sorting_key_values: array, optional
@@ -224,13 +199,20 @@ class SortedNeighbourhood(BaseIndexAlgorithm):
 
     """
 
-    def __init__(self, on=None, left_on=None, right_on=None, window=3,
-                 sorting_key_values=None, block_on=[], block_left_on=[],
-                 block_right_on=[], *args, **kwargs):
+    def __init__(self,
+                 left_on=None,
+                 right_on=None,
+                 window=3,
+                 sorting_key_values=None,
+                 block_on=[],
+                 block_left_on=[],
+                 block_right_on=[],
+                 *args,
+                 **kwargs):
+        on = kwargs.pop('on', None)
         super(SortedNeighbourhood, self).__init__(*args, **kwargs)
 
         # variables to block on
-        self.on = on
         self.left_on = left_on
         self.right_on = right_on
         self.window = window
@@ -239,17 +221,27 @@ class SortedNeighbourhood(BaseIndexAlgorithm):
         self.block_left_on = block_left_on
         self.block_right_on = block_right_on
 
+        if on is not None:
+
+            warnings.warn("The argument 'on' is deprecated. Use "
+                          "'left_on=...' and 'right_on=None' to simulate the "
+                          "the behaviour of 'on'.", stacklevel=2)
+            self.left_on, self.right_on = on, on
+
     def __repr__(self):
 
         class_name = self.__class__.__name__
-
-        if self.on is not None:
-            left_on = right_on = self.on
-        else:
-            left_on, right_on = self.left_on, self.right_on
+        left_on, right_on = self._get_left_and_right_on()
 
         return "<{} left_on={!r}, right_on={!r}>".format(
             class_name, left_on, right_on)
+
+    def _get_left_and_right_on(self):
+
+        if self.right_on is None:
+            return (self.left_on, self.left_on)
+        else:
+            return (self.left_on, self.right_on)
 
     def _get_sorting_key_values(self, array1, array2):
         """return the sorting key values as a series"""
@@ -261,31 +253,15 @@ class SortedNeighbourhood(BaseIndexAlgorithm):
 
     def _link_index(self, df_a, df_b):
 
-        if self.on is not None:
-            if self.left_on is not None or self.right_on is not None:
-                raise IndexError('Can only pass argument "on" OR "left_on" '
-                                 'and "right_on", not a combination of both.')
-            left_on = right_on = listify(self.on)
-        else:
-            if self.left_on is None and self.right_on is None:
-                raise IndexError('pass argument "on" OR "left_on" and '
-                                 '"right_on" at class initalization.')
-            elif self.left_on is None:
-                raise IndexError('Argument "left_on" is missing '
-                                 'at class initalization.')
-            elif self.right_on is None:
-                raise IndexError('Argument "right_on" is missing '
-                                 'at class initalization.')
-            else:
-                left_on = listify(self.left_on)
-                right_on = listify(self.right_on)
+        left_on, right_on = self._get_left_and_right_on()
+        left_on = listify(left_on)
+        right_on = listify(right_on)
 
         window = self.window
 
         # Check if window is an odd number
         if not isinstance(window, int) or (window < 0) or not bool(window % 2):
-            raise ValueError(
-                'window is not a positive and odd integer')
+            raise ValueError('window is not a positive and odd integer')
 
         # # sorting key is single column
         # if isinstance(self.on, (tuple, list, dict)):
@@ -319,9 +295,8 @@ class SortedNeighbourhood(BaseIndexAlgorithm):
             df_b[listify(right_on) + block_right_on], copy=False)
         data_right.columns = blocking_keys
         data_right['index_y'] = numpy.arange(len(df_b))
-        data_right.dropna(axis=0, how='any',
-                          subset=blocking_keys,
-                          inplace=True)
+        data_right.dropna(
+            axis=0, how='any', subset=blocking_keys, inplace=True)
 
         # sorting_key_values is the terminology in Data Matching [Christen,
         # 2012]
@@ -329,17 +304,16 @@ class SortedNeighbourhood(BaseIndexAlgorithm):
 
             self.sorting_key_values = self._get_sorting_key_values(
                 data_left['sorting_key'].values,
-                data_right['sorting_key'].values
-            )
+                data_right['sorting_key'].values)
 
         sorting_key_factors = pandas.Series(
             numpy.arange(len(self.sorting_key_values)),
             index=self.sorting_key_values)
 
-        data_left['sorting_key'] = data_left[
-            'sorting_key'].map(sorting_key_factors)
-        data_right['sorting_key'] = data_right[
-            'sorting_key'].map(sorting_key_factors)
+        data_left['sorting_key'] = data_left['sorting_key'].map(
+            sorting_key_factors)
+        data_right['sorting_key'] = data_right['sorting_key'].map(
+            sorting_key_factors)
 
         # Internal window size
         _window = int((window - 1) / 2)
@@ -352,16 +326,17 @@ class SortedNeighbourhood(BaseIndexAlgorithm):
 
             return x.merge(y, how='inner')
 
-        pairs_concat = [merge_lagged(data_left, data_right, w)
-                        for w in range(-_window, _window + 1)]
+        pairs_concat = [
+            merge_lagged(data_left, data_right, w)
+            for w in range(-_window, _window + 1)
+        ]
 
         pairs_df = pandas.concat(pairs_concat, axis=0)
 
         return pandas.MultiIndex(
             levels=[df_a.index.values, df_b.index.values],
             labels=[pairs_df['index_x'].values, pairs_df['index_y'].values],
-            verify_integrity=False
-        )
+            verify_integrity=False)
 
 
 class Random(BaseIndexAlgorithm):
@@ -399,8 +374,8 @@ class Random(BaseIndexAlgorithm):
 
         class_name = self.__class__.__name__
 
-        return "<{} n={!r}, replace={!r}>".format(
-            class_name, self.n, self.replace)
+        return "<{} n={!r}, replace={!r}>".format(class_name, self.n,
+                                                  self.replace)
 
     def _link_index(self, df_a, df_b):
 
@@ -414,11 +389,10 @@ class Random(BaseIndexAlgorithm):
         if self.replace:
 
             if n_max == 0:
-                raise ValueError(
-                    "one of the dataframes is empty")
+                raise ValueError("one of the dataframes is empty")
 
-            pairs = random_pairs_with_replacement(
-                self.n, shape, self.random_state)
+            pairs = random_pairs_with_replacement(self.n, shape,
+                                                  self.random_state)
 
         # without replacement
         else:
@@ -440,19 +414,16 @@ class Random(BaseIndexAlgorithm):
         labels = pairs
 
         return pandas.MultiIndex(
-            levels=levels,
-            labels=labels,
-            verify_integrity=False
-        )
+            levels=levels, labels=labels, verify_integrity=False)
 
     def _dedup_index(self, df_a):
 
-        shape = (len(df_a),)
+        shape = (len(df_a), )
 
         # with replacement
         if self.replace:
-            pairs = random_pairs_with_replacement(
-                self.n, shape, self.random_state)
+            pairs = random_pairs_with_replacement(self.n, shape,
+                                                  self.random_state)
 
         # without replacement
         else:
@@ -476,10 +447,7 @@ class Random(BaseIndexAlgorithm):
         labels = pairs
 
         return pandas.MultiIndex(
-            levels=levels,
-            labels=labels,
-            verify_integrity=False
-        )
+            levels=levels, labels=labels, verify_integrity=False)
 
 
 FullIndex = DeprecationHelper(
