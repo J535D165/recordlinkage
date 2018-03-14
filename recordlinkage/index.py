@@ -17,13 +17,18 @@ from recordlinkage import rl_logging as logging
 
 
 class Full(BaseIndexAlgorithm):
-    """Full()
-    Class to generate a 'full' index.
+    """Class to generate a 'full' index.
 
     A full index is an index with all possible combinations of record pairs.
     In case of linking, this indexation method generates the cartesian product
     of both DataFrame's. In case of deduplicating DataFrame A, this indexation
     method are the pairs defined by the upper triangular matrix of the A x A.
+
+    Parameters
+    ----------
+    **kwargs :
+        Additional keyword arguments to pass to
+        :class:`recordlinkage.base.BaseIndexAlgorithm`.
 
     Note
     ----
@@ -34,8 +39,8 @@ class Full(BaseIndexAlgorithm):
 
     """
 
-    def __init__(self):
-        super(Full, self).__init__()
+    def __init__(self, **kwargs):
+        super(Full, self).__init__(**kwargs)
 
         logging.warn(
             "indexing - performance warning "
@@ -56,8 +61,7 @@ class Full(BaseIndexAlgorithm):
 
 
 class Block(BaseIndexAlgorithm):
-    """Block(on=None, left_on=None, right_on=None)
-    Make candidate record pairs that agree on one or more variables.
+    """Make candidate record pairs that agree on one or more variables.
 
     Returns all record pairs that agree on the given variable(s). This
     method is known as *blocking*. Blocking is an effective way to make a
@@ -72,6 +76,9 @@ class Block(BaseIndexAlgorithm):
         A column name or a list of column names of dataframe B. These
         columns are used to block on. If 'right_on' is None, the `left_on`
         value is used. Default None.
+    **kwargs :
+        Additional keyword arguments to pass to
+        :class:`recordlinkage.base.BaseIndexAlgorithm`.
 
     Examples
     --------
@@ -84,9 +91,9 @@ class Block(BaseIndexAlgorithm):
 
     """
 
-    def __init__(self, left_on=None, right_on=None, *args, **kwargs):
+    def __init__(self, left_on=None, right_on=None, **kwargs):
         on = kwargs.pop('on', None)
-        super(Block, self).__init__(*args, **kwargs)
+        super(Block, self).__init__(**kwargs)
 
         # variables to block on
         self.left_on = left_on
@@ -149,8 +156,7 @@ class Block(BaseIndexAlgorithm):
 
 
 class SortedNeighbourhood(BaseIndexAlgorithm):
-    """SortedNeighbourhood(on=None, left_on=None, right_on=None, window=3, sorting_key_values=None, block_on=[], block_left_on=[], block_right_on=[])
-    Make candidate record pairs with the SortedNeighbourhood algorithm.
+    """Make candidate record pairs with the SortedNeighbourhood algorithm.
 
     This algorithm returns record pairs that agree on the sorting key, but
     also records pairs in their neighbourhood. A large window size results
@@ -179,6 +185,9 @@ class SortedNeighbourhood(BaseIndexAlgorithm):
     block_right_on: label
         Additional columns in the right dataframe to apply standard
         blocking on.
+    **kwargs :
+        Additional keyword arguments to pass to
+        :class:`recordlinkage.base.BaseIndexAlgorithm`.
 
     Examples
     --------
@@ -206,10 +215,9 @@ class SortedNeighbourhood(BaseIndexAlgorithm):
                  block_on=[],
                  block_left_on=[],
                  block_right_on=[],
-                 *args,
                  **kwargs):
         on = kwargs.pop('on', None)
-        super(SortedNeighbourhood, self).__init__(*args, **kwargs)
+        super(SortedNeighbourhood, self).__init__(**kwargs)
 
         # variables to block on
         self.left_on = left_on
@@ -339,8 +347,7 @@ class SortedNeighbourhood(BaseIndexAlgorithm):
 
 
 class Random(BaseIndexAlgorithm):
-    """Random(n, replace=True, random_state=None)
-    Class to generate random pairs of records.
+    """Class to generate random pairs of records.
 
     This class returns random pairs of records with or without
     replacement. Use the random_state parameter to seed the algorithm and
@@ -359,11 +366,14 @@ class Random(BaseIndexAlgorithm):
     random_state : int or numpy.random.RandomState, optional
         Seed for the random number generator (if int), or
         numpy.RandomState object.
+    **kwargs :
+        Additional keyword arguments to pass to
+        :class:`recordlinkage.base.BaseIndexAlgorithm`.
 
     """
 
-    def __init__(self, n, replace=True, random_state=None, *args, **kwargs):
-        super(Random, self).__init__(*args, **kwargs)
+    def __init__(self, n, replace=True, random_state=None, **kwargs):
+        super(Random, self).__init__(**kwargs)
 
         self.n = n
         self.replace = replace
