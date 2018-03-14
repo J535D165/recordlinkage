@@ -162,35 +162,45 @@ class BaseIndex(object):
 
 
 class BaseIndexAlgorithm(object):
-    """Base class for all indexator classes in Python Record Linkage Toolkit.
+    """Base class for all index algorithms.
 
-    The structure of the indexing classes follow the framework of SciKit-
-    learn and tensorflow.
+    BaseIndexAlgorithm is an abstract class for indexing algorithms.
+    The method
+    :func:`~recordlinkage.base.BaseIndexAlgorithm._link_index`
+
+
+    Parameters
+    ----------
+    verify_integrity : bool
+        Verify the integrity of the input dataframe(s). The index is
+        checked for duplicate values.
+    suffixes : tuple
+        If the names of the resulting MultiIndex are identical, the
+        suffixes are used to distinguish the names.
 
     Example
     -------
-    Make your own indexation class
-    ```
-    class CustomIndex(BaseIndexator):
+    Make your own indexation class::
 
-        def _link_index(self, df_a, df_b):
+        class CustomIndex(BaseIndexAlgorithm):
 
-            # Custom link index.
+            def _link_index(self, df_a, df_b):
 
-            return ...
+                # Custom link index.
 
-        def _dedup_index(self, df_a):
+                return ...
 
-            # Custom deduplication index, optional.
+            def _dedup_index(self, df_a):
 
-            return ...
-    ```
+                # Custom deduplication index, optional.
 
-    Call the class in the same way
-    ```
-    custom_index = CustomIndex():
-    custom_index.index()
-    ```
+                return ...
+
+    Call the class in the same way::
+
+        custom_index = CustomIndex():
+        custom_index.index()
+
     """
 
     name = None
@@ -229,8 +239,24 @@ class BaseIndexAlgorithm(object):
             )
 
     def _link_index(self, df_a, df_b):
+        """Build an index for linking two datasets.
 
-        return NotImplementedError(
+        Parameters
+        ----------
+        df_a : (tuple of) pandas.Series
+            The data of the left DataFrame to build the index with.
+        df_b : (tuple of) pandas.Series
+            The data of the right DataFrame to build the index with.
+
+        Returns
+        -------
+        pandas.MultiIndex
+            A pandas.MultiIndex with record pairs. Each record pair
+            contains the index values of two records.
+
+        """
+
+        raise NotImplementedError(
             "Not possible to call index for the BaseEstimator"
         )
 
@@ -331,7 +357,24 @@ BaseIndexator = DeprecationHelper(BaseIndexAlgorithm)
 
 
 class BaseCompareFeature(object):
-    """BaseCompareFeature construction class.
+    """Base abstract class for compare feature engineering.
+
+    Parameters
+    ----------
+    labels_left : list, str, int
+        The labels to use for comparing record pairs in the left
+        dataframe.
+    labels_right : list, str, int
+        The labels to use for comparing record pairs in the right
+        dataframe (linking) or left dataframe (deduplication).
+    args : tuple
+        Additional arguments to pass to the `_compare_vectorized`
+        method.
+    kwargs : tuple
+        Keyword additional arguments to pass to the `_compare_vectorized`
+        method.
+    label : list, str, int
+        The indentifying label(s) for the returned values.
     """
 
     name = None
@@ -357,7 +400,21 @@ class BaseCompareFeature(object):
         return repr(self)
 
     def _compute_vectorized(self, *args):
-        """Compare attributes (vectorized)"""
+        """Compare attributes (vectorized)
+
+        Parameters
+        ----------
+        *args : pandas.Series
+            pandas.Series' as arguments.
+
+        Returns
+        -------
+        pandas.Series, pandas.DataFrame, numpy.ndarray
+            The result of comparing record pairs (the features). Can be
+            a tuple with multiple pandas.Series, pandas.DataFrame,
+            numpy.ndarray objects.
+
+        """
 
         if self._f_compare_vectorized:
             return self._f_compare_vectorized(
@@ -365,12 +422,28 @@ class BaseCompareFeature(object):
         else:
             raise NotImplementedError()
 
-    def _compute_single(self):
-        """Compare attributes (non-vectorized)"""
-
-        raise NotImplementedError()
-
     def _compute(self, left_on, right_on):
+        """Compare the data on the left and right.
+
+        :meth:`BaseCompareFeature._compute` and
+        :meth:`BaseCompareFeature.compute` differ on the accepted
+        arguments. `_compute` accepts indexed data while `compute`
+        accepts the record pairs and the DataFrame's.
+
+        Parameters
+        ----------
+        left_on : (tuple of) pandas.Series
+            Data to compare with `right_on`
+        right_on : (tuple of) pandas.Series
+            Data to compare with `left_on`
+
+        Returns
+        -------
+        pandas.Series, pandas.DataFrame, numpy.ndarray
+            The result of comparing record pairs (the features). Can be
+            a tuple with multiple pandas.Series, pandas.DataFrame,
+            numpy.ndarray objects.
+        """
 
         result = self._compute_vectorized(*tuple(left_on + right_on))
 
@@ -395,9 +468,10 @@ class BaseCompareFeature(object):
 
         Returns
         -------
-        pandas.DataFrame
-            A pandas DataFrame with feature vectors, i.e. the result of
-            comparing each record pair.
+        pandas.Series, pandas.DataFrame, numpy.ndarray
+            The result of comparing record pairs (the features). Can be
+            a tuple with multiple pandas.Series, pandas.DataFrame,
+            numpy.ndarray objects.
         """
 
         if not is_pandas_2d_multiindex(pairs):

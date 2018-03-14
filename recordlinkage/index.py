@@ -6,8 +6,7 @@ import pandas
 import numpy
 
 from recordlinkage.base import BaseIndexAlgorithm
-from recordlinkage.utils import (IndexError, DeprecationHelper, listify,
-                                 VisibleDeprecationWarning)
+from recordlinkage.utils import DeprecationHelper, listify
 from recordlinkage.measures import full_index_size
 from recordlinkage.algorithms.indexing import (
     random_pairs_with_replacement,
@@ -94,10 +93,10 @@ class Block(BaseIndexAlgorithm):
         self.right_on = right_on
 
         if on is not None:
-
-            warnings.warn("The argument 'on' is deprecated. Use "
-                          "'left_on=...' and 'right_on=None' to simulate the "
-                          "the behaviour of 'on'.", stacklevel=2)
+            warnings.warn(
+                "The argument 'on' is deprecated. Use 'left_on=...' and "
+                "'right_on=None' to simulate the behaviour of 'on'.",
+                stacklevel=2)
             self.left_on, self.right_on = on, on
 
     def __repr__(self):
@@ -222,10 +221,10 @@ class SortedNeighbourhood(BaseIndexAlgorithm):
         self.block_right_on = block_right_on
 
         if on is not None:
-
-            warnings.warn("The argument 'on' is deprecated. Use "
-                          "'left_on=...' and 'right_on=None' to simulate the "
-                          "the behaviour of 'on'.", stacklevel=2)
+            warnings.warn(
+                "The argument 'on' is deprecated. Use 'left_on=...' and "
+                "'right_on=None' to simulate the behaviour of 'on'.",
+                stacklevel=2)
             self.left_on, self.right_on = on, on
 
     def __repr__(self):

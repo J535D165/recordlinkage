@@ -1,10 +1,10 @@
 from __future__ import division
 from __future__ import unicode_literals
 
-from functools import wraps, partial
+from functools import partial
 
 import pandas
-import numpy as np
+import numpy
 
 from recordlinkage.base import BaseCompareFeature
 from recordlinkage.algorithms.distance import _1d_distance
@@ -22,57 +22,7 @@ from recordlinkage.algorithms.string import qgram_similarity
 from recordlinkage.algorithms.string import cosine_similarity
 from recordlinkage.algorithms.string import smith_waterman_similarity
 from recordlinkage.algorithms.string import longest_common_substring_similarity
-from recordlinkage.utils import DeprecationHelper
-
-
-def fillna_decorator(missing_value=np.nan):
-
-    def real_decorator(func):
-
-        @wraps(func)
-        def func_wrapper(*args, **kwargs):
-
-            mv = kwargs.pop('missing_value', missing_value)
-
-            result = func(*args, **kwargs)
-
-            # fill missing values if missing_value is not a missing value like
-            # NaN or None.
-            if pandas.notnull(mv):
-                if isinstance(result, (np.ndarray)):
-                    result[np.isnan(result)] = mv
-                else:
-                    result.fillna(mv, inplace=True)
-
-            return result
-
-        return func_wrapper
-
-    return real_decorator
-
-
-def fillna(series_or_arr, missing_value=0.0):
-
-    if pandas.notnull(missing_value):
-        if isinstance(series_or_arr, (np.ndarray)):
-            series_or_arr[np.isnan(series_or_arr)] = missing_value
-        else:
-            series_or_arr.fillna(missing_value, inplace=True)
-
-    return series_or_arr
-
-
-def _missing(*args):
-    """ Missing values.
-
-    Internal function to return the index of record pairs with missing values
-    """
-
-    return np.any(
-        np.concatenate(
-            [np.array(pandas.DataFrame(arg).isnull()) for arg in args],
-            axis=1),
-        axis=1)
+from recordlinkage.utils import fillna as _fillna
 
 
 class Exact(BaseCompareFeature):
@@ -84,9 +34,9 @@ class Exact(BaseCompareFeature):
     Parameters
     ----------
 
-    labels_left : str or int
+    left_on : str or int
         Field name to compare in left DataFrame.
-    labels_right : str or int
+    right_on : str or int
         Field name to compare in right DataFrame.
     agree_value : float, str, numpy.dtype
         The value when two records are identical. Default 1. If 'values'
@@ -101,28 +51,33 @@ class Exact(BaseCompareFeature):
     name = "exact"
     description = "Compare attributes of record pairs."
 
-    def __init__(self, labels_left, labels_right, agree_value=1,
-                 disagree_value=0, missing_value=0, label=None):
-        super(Exact, self).__init__(labels_left, labels_right, label=label)
+    def __init__(self,
+                 left_on,
+                 right_on,
+                 agree_value=1,
+                 disagree_value=0,
+                 missing_value=0,
+                 label=None):
+        super(Exact, self).__init__(left_on, right_on, label=label)
 
         self.agree_value = agree_value
         self.disagree_value = disagree_value
         self.missing_value = missing_value
 
-    def _compute_vectorized(self, s1, s2):
+    def _compute_vectorized(self, s_left, s_right):
 
         # Values or agree/disagree
         if self.agree_value == 'value':
-            compare = s1.copy()
-            compare[s1 != s2] = self.disagree_value
+            compare = s_left.copy()
+            compare[s_left != s_right] = self.disagree_value
 
         else:
-            compare = pandas.Series(self.disagree_value, index=s1.index)
-            compare[s1 == s2] = self.agree_value
+            compare = pandas.Series(self.disagree_value, index=s_left.index)
+            compare[s_left == s_right] = self.agree_value
 
         # Only when disagree value is not identical with the missing value
         if self.disagree_value != self.missing_value:
-            compare[(s1.isnull() | s2.isnull())] = self.missing_value
+            compare[(s_left.isnull() | s_right.isnull())] = self.missing_value
 
         return compare
 
@@ -139,9 +94,9 @@ class String(BaseCompareFeature):
 
     Parameters
     ----------
-    s1 : str or int
+    left_on : str or int
         The name or position of the column in the left DataFrame.
-    s2 : str or int
+    right_on : str or int
         The name or position of the column in the right DataFrame.
     method : str, default 'levenshtein'
         An approximate string comparison method. Options are ['jaro',
@@ -157,15 +112,20 @@ class String(BaseCompareFeature):
     name = "string"
     description = "Compare string attributes of record pairs."
 
-    def __init__(self, labels_left, labels_right, method='levenshtein',
-                 threshold=None, missing_value=0.0, label=None):
-        super(String, self).__init__(labels_left, labels_right, label=label)
+    def __init__(self,
+                 left_on,
+                 right_on,
+                 method='levenshtein',
+                 threshold=None,
+                 missing_value=0.0,
+                 label=None):
+        super(String, self).__init__(left_on, right_on, label=label)
 
         self.method = method
         self.threshold = threshold
         self.missing_value = missing_value
 
-    def _compute_vectorized(self, s1, s2):
+    def _compute_vectorized(self, s_left, s_right):
 
         if self.method == 'jaro':
             str_sim_alg = jaro_similarity
@@ -173,9 +133,9 @@ class String(BaseCompareFeature):
             str_sim_alg = jarowinkler_similarity
         elif self.method == 'levenshtein':
             str_sim_alg = levenshtein_similarity
-        elif self.method in ['dameraulevenshtein',
-                             'damerau_levenshtein',
-                             'dl']:
+        elif self.method in [
+                'dameraulevenshtein', 'damerau_levenshtein', 'dl'
+        ]:
             str_sim_alg = damerau_levenshtein_similarity
         elif self.method in ['q_gram', 'qgram']:
             str_sim_alg = qgram_similarity
@@ -186,15 +146,14 @@ class String(BaseCompareFeature):
         elif self.method in ['longest_common_substring', 'lcs']:
             str_sim_alg = longest_common_substring_similarity
         else:
-            raise ValueError(
-                "The algorithm '{}' is not known.".format(self.method)
-            )
+            raise ValueError("The algorithm '{}' is not known.".format(
+                self.method))
 
-        c = str_sim_alg(s1, s2)
-        c = fillna(c, self.missing_value)
+        c = str_sim_alg(s_left, s_right)
+        c = _fillna(c, self.missing_value)
 
-        if self.threshold:
-            return (c >= self.threshold).astype(np.float64)
+        if self.threshold is not None:
+            return (c >= self.threshold).astype(numpy.float64)
         else:
             return c
 
@@ -211,14 +170,15 @@ class Numeric(BaseCompareFeature):
 
     .. image:: /images/elas_1705.png
         :width: 100%
-        :target: https://www.elastic.co/guide/en/elasticsearch/guide/current/decay-functions.html
+        :target: https://www.elastic.co/guide/en/elasticsearch/
+            guide/current/decay-functions.html
         :alt: Decay functions, like in ElasticSearch
 
     Parameters
     ----------
-    s1 : str or int
+    left_on : str or int
         The name or position of the column in the left DataFrame.
-    s2 : str or int
+    right_on : str or int
         The name or position of the column in the right DataFrame.
     method : float
         The metric used. Options 'step', 'linear', 'exp', 'gauss' or
@@ -244,10 +204,16 @@ class Numeric(BaseCompareFeature):
     name = "numeric"
     description = "Compare numeric attributes of record pairs."
 
-    def __init__(self, labels_left, labels_right, method='linear',
-                 offset=0.0, scale=1.0, origin=0.0, missing_value=0.0,
+    def __init__(self,
+                 left_on,
+                 right_on,
+                 method='linear',
+                 offset=0.0,
+                 scale=1.0,
+                 origin=0.0,
+                 missing_value=0.0,
                  label=None):
-        super(Numeric, self).__init__(labels_left, labels_right, label=label)
+        super(Numeric, self).__init__(left_on, right_on, label=label)
 
         self.method = method
         self.offset = offset
@@ -255,40 +221,30 @@ class Numeric(BaseCompareFeature):
         self.origin = origin
         self.missing_value = missing_value
 
-    def _compute_vectorized(self, s1, s2):
+    def _compute_vectorized(self, s_left, s_right):
 
-        d = _1d_distance(s1, s2)
+        d = _1d_distance(s_left, s_right)
 
         if self.method == 'step':
-            num_sim_alg = partial(_step_sim, d,
-                                  self.offset,
-                                  self.origin)
+            num_sim_alg = partial(_step_sim, d, self.offset, self.origin)
         elif self.method in ['linear', 'lin']:
-            num_sim_alg = partial(_linear_sim, d,
-                                  self.scale,
-                                  self.offset,
+            num_sim_alg = partial(_linear_sim, d, self.scale, self.offset,
                                   self.origin)
         elif self.method == 'squared':
-            num_sim_alg = partial(_squared_sim, d,
-                                  self.scale,
-                                  self.offset,
+            num_sim_alg = partial(_squared_sim, d, self.scale, self.offset,
                                   self.origin)
         elif self.method in ['exp', 'exponential']:
-            num_sim_alg = partial(_exp_sim, d,
-                                  self.scale,
-                                  self.offset,
+            num_sim_alg = partial(_exp_sim, d, self.scale, self.offset,
                                   self.origin)
         elif self.method in ['gauss', 'gaussian']:
-            num_sim_alg = partial(_gauss_sim, d,
-                                  self.scale,
-                                  self.offset,
+            num_sim_alg = partial(_gauss_sim, d, self.scale, self.offset,
                                   self.origin)
         else:
-            raise ValueError(
-                "The algorithm '{}' is not known.".format(self.method))
+            raise ValueError("The algorithm '{}' is not known.".format(
+                self.method))
 
         c = num_sim_alg()
-        c = fillna(c, self.missing_value)
+        c = _fillna(c, self.missing_value)
         return c
 
 
@@ -302,14 +258,18 @@ class Geographic(BaseCompareFeature):
 
     Parameters
     ----------
-    lat1 : str or int
-        The name or position of the column in the left DataFrame.
-    lng1 : str or int
-        The name or position of the column in the left DataFrame.
-    lat2 : str or int
-        The name or position of the column in the right DataFrame.
-    lng2 : str or int
-        The name or position of the column in the right DataFrame.
+    left_on_lat : tuple
+        The name or position of the latitude in the
+        left DataFrame.
+    left_on_lng : tuple
+        The name or position of the longitude in the
+        left DataFrame.
+    right_on_lat : tuple
+        The name or position of the latitude in the
+        right DataFrame.
+    right_on_lng : tuple
+        The name or position of the longitude in the
+        right DataFrame.
     method : str
         The metric used. Options 'step', 'linear', 'exp', 'gauss' or
         'squared'. Default 'linear'.
@@ -327,11 +287,20 @@ class Geographic(BaseCompareFeature):
     name = "geographic"
     description = "Compare geographic attributes of record pairs."
 
-    def __init__(self, labels_left, labels_right, method=None,
-                 offset=0.0, scale=1.0, origin=0.0, missing_value=0.0,
+    def __init__(self,
+                 left_on_lat,
+                 left_on_lng,
+                 right_on_lat,
+                 right_on_lng,
+                 method=None,
+                 offset=0.0,
+                 scale=1.0,
+                 origin=0.0,
+                 missing_value=0.0,
                  label=None):
-        super(Geographic, self).__init__(labels_left, labels_right,
-                                         label=label)
+        super(Geographic, self).__init__(
+            (left_on_lat, left_on_lng), (right_on_lat, right_on_lng),
+            label=label)
 
         self.method = method
         self.offset = offset
@@ -344,35 +313,25 @@ class Geographic(BaseCompareFeature):
         d = _haversine_distance(lat1, lng1, lat2, lng2)
 
         if self.method == 'step':
-            num_sim_alg = partial(_step_sim, d,
-                                  self.offset,
-                                  self.origin)
+            num_sim_alg = partial(_step_sim, d, self.offset, self.origin)
         elif self.method in ['linear', 'lin']:
-            num_sim_alg = partial(_linear_sim, d,
-                                  self.scale,
-                                  self.offset,
+            num_sim_alg = partial(_linear_sim, d, self.scale, self.offset,
                                   self.origin)
         elif self.method == 'squared':
-            num_sim_alg = partial(_squared_sim, d,
-                                  self.scale,
-                                  self.offset,
+            num_sim_alg = partial(_squared_sim, d, self.scale, self.offset,
                                   self.origin)
         elif self.method in ['exp', 'exponential']:
-            num_sim_alg = partial(_exp_sim, d,
-                                  self.scale,
-                                  self.offset,
+            num_sim_alg = partial(_exp_sim, d, self.scale, self.offset,
                                   self.origin)
         elif self.method in ['gauss', 'gaussian']:
-            num_sim_alg = partial(_gauss_sim, d,
-                                  self.scale,
-                                  self.offset,
+            num_sim_alg = partial(_gauss_sim, d, self.scale, self.offset,
                                   self.origin)
         else:
-            raise ValueError(
-                "The algorithm '{}' is not known.".format(self.method))
+            raise ValueError("The algorithm '{}' is not known.".format(
+                self.method))
 
         c = num_sim_alg()
-        c = fillna(c, self.missing_value)
+        c = _fillna(c, self.missing_value)
 
         return c
 
@@ -382,9 +341,9 @@ class Date(BaseCompareFeature):
 
     Parameters
     ----------
-    s1 : str or int
+    left_on : str or int
         The name or position of the column in the left DataFrame.
-    s2 : str or int
+    right_on : str or int
         The name or position of the column in the right DataFrame.
     swap_month_day : float
         The value if the month and day are swapped. Default 0.5.
@@ -401,41 +360,44 @@ class Date(BaseCompareFeature):
     name = "date"
     description = "Compare date attributes of record pairs."
 
-    def __init__(self, labels_left, labels_right, missing_value=0.0,
-                 swap_month_day=0.5, swap_months='default', errors='coerce',
+    def __init__(self,
+                 left_on,
+                 right_on,
+                 swap_month_day=0.5,
+                 swap_months='default',
+                 errors='coerce',
+                 missing_value=0.0,
                  label=None):
-        super(Date, self).__init__(labels_left, labels_right, label=label)
+        super(Date, self).__init__(left_on, right_on, label=label)
 
         self.missing_value = missing_value
         self.swap_months = swap_months
         self.swap_month_day = swap_month_day
         self.errors = errors
 
-    def _compute_vectorized(self, s1, s2):
+    def _compute_vectorized(self, s_left, s_right):
 
         # validate datatypes
-        if str(s1.dtype) != 'datetime64[ns]':
+        if str(s_left.dtype) != 'datetime64[ns]':
             raise ValueError('Left column is not of type datetime64[ns]')
 
-        if str(s2.dtype) != 'datetime64[ns]':
+        if str(s_right.dtype) != 'datetime64[ns]':
             raise ValueError('Right column is not of type datetime64[ns]')
 
-        c = (s1 == s2).astype(np.int64)  # start with int64
+        c = (s_left == s_right).astype(numpy.int64)  # start with int64
 
         # The case is which there is a swap_month_day value given.
         if (self.swap_month_day and self.swap_month_day != 0):
 
-            c[(s1.dt.year == s2.dt.year) &
-              (s1.dt.month == s2.dt.day) &
-              (s1.dt.day == s2.dt.month) &
+            c[(s_left.dt.year == s_right.dt.year) &
+              (s_left.dt.month == s_right.dt.day) &
+              (s_left.dt.day == s_right.dt.month) &
               (c != 1)] = self.swap_month_day
 
         if (self.swap_months and self.swap_months != 0):
 
             if self.swap_months == 'default':
-                self.swap_months = [(6, 7, 0.5),
-                                    (7, 6, 0.5),
-                                    (9, 10, 0.5),
+                self.swap_months = [(6, 7, 0.5), (7, 6, 0.5), (9, 10, 0.5),
                                     (10, 9, 0.5)]
             else:
                 try:
@@ -448,13 +410,13 @@ class Date(BaseCompareFeature):
 
             for month1, month2, value in self.swap_months:
 
-                c[(s1.dt.year == s2.dt.year) &
-                  (s1.dt.month == month1) & (s2.dt.month == month2) &
-                  (s1.dt.day == s2.dt.day) &
-                  (c != 1)] = value
+                c[(s_left.dt.year == s_right.dt.year) &
+                  (s_left.dt.month == month1) &
+                  (s_right.dt.month == month2) &
+                  (s_left.dt.day == s_right.dt.day) & (c != 1)] = value
 
         c = pandas.Series(c)
-        c[s1.isnull() | s2.isnull()] = self.missing_value
+        c[s_left.isnull() | s_right.isnull()] = self.missing_value
         return c
 
 
@@ -490,10 +452,10 @@ class Variable(BaseCompareFeature):
 
         if isinstance(data, tuple):
             for col in data:
-                result_i = fillna(col, self.missing_value)
+                result_i = _fillna(col, self.missing_value)
                 result.append(result_i)
         else:
-            result_0 = fillna(data, self.missing_value)
+            result_0 = _fillna(data, self.missing_value)
             result.append(result_0)
 
         return tuple(result)
@@ -519,10 +481,7 @@ class VariableA(Variable):
 
     def __init__(self, on=None, missing_value=0.0, label=None):
         super(VariableA, self).__init__(
-            on,
-            None,
-            missing_value=missing_value,
-            label=label)
+            on, None, missing_value=missing_value, label=label)
 
 
 class VariableB(Variable):
@@ -545,10 +504,7 @@ class VariableB(Variable):
 
     def __init__(self, on=None, missing_value=0.0, label=None):
         super(VariableB, self).__init__(
-            None,
-            on,
-            missing_value=missing_value,
-            label=label)
+            None, on, missing_value=missing_value, label=label)
 
 
 class Frequency(BaseCompareFeature):
@@ -589,7 +545,7 @@ class Frequency(BaseCompareFeature):
         value_count = col.fillna(na_value)
 
         c = value_count.groupby(by=value_count).transform('count')
-        c = c.astype(np.float64)
+        c = c.astype(numpy.float64)
 
         if self.normalise:
             c = c / len(col)

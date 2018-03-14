@@ -184,3 +184,30 @@ def frame_indexing(frame, multi_index, level_i, indexing_type='label'):
         raise ValueError("indexing_type needs to be 'label' or 'position'")
 
     return data
+
+
+def fillna(series_or_arr, missing_value=0.0):
+    """Fill missing values in pandas objects and numpy arrays.
+
+    Arguments
+    ---------
+    series_or_arr : pandas.Series, numpy.ndarray
+        The numpy array or pandas series for which the missing values
+        need to be replaced.
+    missing_value : float, int, str
+        The value to replace the missing value with. Default 0.0.
+
+    Returns
+    -------
+    pandas.Series, numpy.ndarray
+        The numpy array or pandas series with the missing values
+        filled.
+    """
+
+    if pandas.notnull(missing_value):
+        if isinstance(series_or_arr, (numpy.ndarray)):
+            series_or_arr[numpy.isnan(series_or_arr)] = missing_value
+        else:
+            series_or_arr.fillna(missing_value, inplace=True)
+
+    return series_or_arr

@@ -6,10 +6,16 @@ from recordlinkage.compare import Exact, String, Numeric, Geographic, Date
 class Index(BaseIndex):
     """Class to make an index of record pairs.
 
+    Parameters
+    ----------
+    algorithms: list
+        A list of index algorithm classes. The classes are based on
+        :class:`recordlinkage.base.BaseIndexAlgorithm`
+
     Example
     -------
-    Consider two historical datasets with census data to link. The datasets
-    are named ``census_data_1980`` and ``census_data_1990``::
+    Consider two historical datasets with census data to link. The
+    datasets are named ``census_data_1980`` and ``census_data_1990``::
 
         indexer = recordlinkage.Index()
         indexer.block(left_on='first_name', right_on='givenname')
@@ -89,18 +95,19 @@ class Index(BaseIndex):
 class Compare(BaseCompare):
     """Class to compare record pairs with efficiently.
 
-    Class to compare the attributes of candidate record pairs. The ``Compare``
-    class has methods like ``string``, ``exact`` and ``numeric`` to initialise
-    the comparing of the records. The ``compute`` method is used to start the
-    actual comparing.
+    Class to compare the attributes of candidate record pairs. The
+    ``Compare`` class has methods like ``string``, ``exact`` and
+    ``numeric`` to initialise the comparing of the records. The
+    ``compute`` method is used to start the actual comparing.
 
     Example
     -------
+
     Consider two historical datasets with census data to link. The datasets
     are named ``census_data_1980`` and ``census_data_1990``. The MultiIndex
-    ``candidate_pairs`` contains the record pairs to compare. The record pairs
-    are compared on the first name, last name, sex, date of birth, address,
-    place, and income::
+    ``candidate_pairs`` contains the record pairs to compare. The record
+    pairs are compared on the first name, last name, sex, date of birth,
+    address, place, and income::
 
         # initialise class
         comp = recordlinkage.Compare()
@@ -122,14 +129,16 @@ class Compare(BaseCompare):
     features : list
         List of compare algorithms.
     n_jobs : integer, optional (default=1)
-        The number of jobs to run in parallel for comparing of record pairs.
+        The number of jobs to run in parallel for comparing of record
+        pairs.
         If -1, then the number of jobs is set to the number of cores.
     indexing_type : string, optional (default='label')
-        The indexing type. The MultiIndex is used to index the DataFrame(s).
-        This can be done with pandas ``.loc`` or with ``.iloc``. Use the value
-        'label' to make use of ``.loc`` and 'position' to make use of
-        ``.iloc``. The value 'position' is only available when the MultiIndex
-        consists of integers. The value 'position' is much faster.
+        The indexing type. The MultiIndex is used to index the
+        DataFrame(s). This can be done with pandas ``.loc`` or with
+        ``.iloc``. Use the value 'label' to make use of ``.loc`` and
+        'position' to make use of ``.iloc``. The value 'position' is
+        only available when the MultiIndex consists of integers. The
+        value 'position' is much faster.
 
     Attributes
     ----------
@@ -139,7 +148,7 @@ class Compare(BaseCompare):
 
     """
 
-    def exact(self, s1, s2, *args, **kwargs):
+    def exact(self, *args, **kwargs):
         """Compare attributes of pairs exactly.
 
         Shortcut of :class:`recordlinkage.compare.Exact`::
@@ -151,16 +160,12 @@ class Compare(BaseCompare):
 
         """
 
-        compare = Exact(s1, s2, *args, **kwargs)
+        compare = Exact(*args, **kwargs)
         self.add(compare)
 
         return self
 
-    def string(self,
-               s1,
-               s2,
-               *args,
-               **kwargs):
+    def string(self, *args, **kwargs):
         """Compare attributes of pairs with string algorithm.
 
         Shortcut of :class:`recordlinkage.compare.String`::
@@ -172,13 +177,12 @@ class Compare(BaseCompare):
 
         """
 
-        compare = String(
-            s1, s2, *args, **kwargs)
+        compare = String(*args, **kwargs)
         self.add(compare)
 
         return self
 
-    def numeric(self, s1, s2, *args, **kwargs):
+    def numeric(self, *args, **kwargs):
         """Compare attributes of pairs with numeric algorithm.
 
         Shortcut of :class:`recordlinkage.compare.Numeric`::
@@ -190,12 +194,12 @@ class Compare(BaseCompare):
 
         """
 
-        compare = Numeric(s1, s2, *args, **kwargs)
+        compare = Numeric(*args, **kwargs)
         self.add(compare)
 
         return self
 
-    def geo(self, lat1, lng1, lat2, lng2, *args, **kwargs):
+    def geo(self, *args, **kwargs):
         """Compare attributes of pairs with geo algorithm.
 
         Shortcut of :class:`recordlinkage.compare.Geographic`::
@@ -207,12 +211,12 @@ class Compare(BaseCompare):
 
         """
 
-        compare = Geographic((lat1, lng1), (lat2, lng2), *args, **kwargs)
+        compare = Geographic(*args, **kwargs)
         self.add(compare)
 
         return self
 
-    def date(self, s1, s2, *args, **kwargs):
+    def date(self, *args, **kwargs):
         """Compare attributes of pairs with date algorithm.
 
         Shortcut of :class:`recordlinkage.compare.Date`::
@@ -224,7 +228,7 @@ class Compare(BaseCompare):
 
         """
 
-        compare = Date(s1, s2, *args, **kwargs)
+        compare = Date(*args, **kwargs)
         self.add(compare)
 
         return self
