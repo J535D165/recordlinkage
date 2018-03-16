@@ -12,6 +12,26 @@ pairs_type_doc = """
     Valid values: 'multiindex'
 """
 
+classification_return_type_doc = """
+: str
+    The format of the classification result. The value 'index' returns the
+    classification result as a pandas.MultiIndex. The MultiIndex contains
+    the predicted matching record pairs. The value 'series' returns a
+    pandas.Series with zeros (distinct) and ones (matches). The argument
+    value 'array' will return a numpy.ndarray with zeros and ones.
+
+"""
+
 with cf.config_prefix('indexing'):
-    cf.register_option('pairs', 'multiindex', pairs_type_doc,
-                       validator=is_one_of_factory(['multiindex']))
+    cf.register_option(
+        'pairs',
+        'multiindex',
+        pairs_type_doc,
+        validator=is_one_of_factory(['multiindex']))
+
+with cf.config_prefix('classification'):
+    cf.register_option(
+        'return_type',
+        'index',
+        classification_return_type_doc,
+        validator=is_one_of_factory(['index', 'series', 'array']))

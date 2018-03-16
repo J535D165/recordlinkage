@@ -14,6 +14,7 @@ from recordlinkage.utils import (listify,
                                  unique,
                                  is_label_dataframe,
                                  VisibleDeprecationWarning,
+                                 return_type_deprecator,
                                  index_split,
                                  frame_indexing)
 from recordlinkage.types import (is_numpy_like,
@@ -22,6 +23,7 @@ from recordlinkage.measures import max_pairs
 from recordlinkage import rl_logging as logging
 
 from recordlinkage.utils import LearningError, DeprecationHelper
+import recordlinkage.config as cf
 
 
 def _parallel_compare_helper(class_obj, pairs, x, x_link=None):
@@ -874,13 +876,14 @@ class BaseClassifier(ABC):
         pass
 
     def learn(self, *args, **kwargs):
-        """[DEPRECATED] use 'fit_predict' from now
+        """[DEPRECATED] Use 'fit_predict'.
         """
 
-        warnings.warn("learn is deprecated, {}.fit_predict instead".format(self.__class__.__name__))
+        warnings.warn("learn is deprecated, {}.fit_predict "
+                      "instead".format(self.__class__.__name__))
         return self.fit_predict(*args, **kwargs)
 
-    def _initialise_classifier(self, comparison_vectors=None):
+    def _initialise_classifier(self, comparison_vectors):
         """Initialise the classifier.
 
         Parameters
@@ -888,6 +891,10 @@ class BaseClassifier(ABC):
         comparison_vectors : pandas.DataFrame
             The comparison vectors (or features) to fit the classifier with.
         """
+        pass
+
+    @abstractmethod
+    def _fit(self, *args, **kwargs):
         pass
 
     def fit(self, comparison_vectors, match_index=None):
@@ -922,12 +929,9 @@ class BaseClassifier(ABC):
 
         if isinstance(match_index, (pandas.MultiIndex, pandas.Index)):
 
-            # The match_index variable is of type MultiIndex
-            y = pandas.Series(1, index=comparison_vectors.index)
-
             try:
+                y = pandas.Series(1, index=comparison_vectors.index)
                 y.loc[match_index & comparison_vectors.index] = 0
-                y = np.array(y)
             except pandas.IndexError as err:
 
                 # The are no matches. So training is not possible.
@@ -938,19 +942,20 @@ class BaseClassifier(ABC):
                     )
                 else:
                     raise err
+
+            self._fit(comparison_vectors.as_matrix(), y.values)
+
         elif match_index is None:
-            y = None
+            self._fit(comparison_vectors.as_matrix())
         else:
             raise ValueError("'match_index' has incorrect type '{}'".format(type(match_index)))
-
-        self._fit(comparison_vectors.as_matrix(), y)
 
         # log timing
         logf_time = "Classification - training computation time: ~{:.2f}s"
         logging.info(logf_time.format(time.time() - start_time))
 
-    def fit_predict(self, comparison_vectors, match_index=None,
-                    return_type='index'):
+    @return_type_deprecator
+    def fit_predict(self, comparison_vectors, match_index=None):
         """Train the classifier.
 
         Parameters
@@ -959,13 +964,10 @@ class BaseClassifier(ABC):
             The comparison vectors.
         match_index : pandas.MultiIndex
             The true matches.
-        return_type : 'index' (default), 'series', 'array'
-            The format to return the classification result. The
-            argument value 'index' will return the pandas.MultiIndex
-            of the matches. The argument value 'series' will return a
-            pandas.Series with zeros (distinct) and ones (matches).
-            The argument value 'array' will return a numpy.ndarray
-            with zeros and ones.
+        return_type : str
+            Deprecated. Use recordlinkage.options instead. Use the option
+            `recordlinkage.set_option('classification.return_type', 'index')`
+            instead.
 
         Returns
         -------
@@ -976,11 +978,12 @@ class BaseClassifier(ABC):
         """
 
         self.fit(comparison_vectors, match_index)
-        result = self.predict(comparison_vectors, return_type=return_type)
+        result = self.predict(comparison_vectors)
 
         return result
 
-    def predict(self, comparison_vectors, return_type='index'):
+    @return_type_deprecator
+    def predict(self, comparison_vectors):
         """Predict the class of the record pairs.
 
         Classify a set of record pairs based on their comparison vectors into
@@ -991,12 +994,10 @@ class BaseClassifier(ABC):
         ----------
         comparison_vectors : pandas.DataFrame
             Dataframe with comparison vectors.
-        return_type : 'index' (default), 'series', 'array'
-            The format to return the classification result. The argument value
-            'index' will return the pandas.MultiIndex of the matches. The
-            argument value 'series' will return a pandas.Series with zeros
-            (distinct) and ones (matches). The argument value 'array' will
-            return a numpy.ndarray with zeros and ones.
+        return_type : str
+            Deprecated. Use recordlinkage.options instead. Use the option
+            `recordlinkage.set_option('classification.return_type', 'index')`
+            instead.
 
         Returns
         -------
@@ -1008,11 +1009,12 @@ class BaseClassifier(ABC):
 
         logging.info("Classification - predict matches and non-matches")
 
-        prediction = self._predict(comparison_vectors, return_type)
-        result = self._return_result(prediction, return_type, comparison_vectors)
+        # make the predicition
+        prediction = self._predict(comparison_vectors)
+        self._post_predict(prediction)
 
-        self._post_predict(result)
-        return result
+        # format and return the result
+        return self._return_result(prediction, comparison_vectors)
 
     def _post_predict(self, result):
         """Method called after prediction.
@@ -1028,7 +1030,7 @@ class BaseClassifier(ABC):
     def _prob_match(self, *args, **kwargs):
         pass
 
-    def prob(self, comparison_vectors, return_type='series'):
+    def prob(self, comparison_vectors, return_type=None):
         """Compute the probabilities for each record pair.
 
         For each pair of records, estimate the probability of being a match.
@@ -1038,8 +1040,7 @@ class BaseClassifier(ABC):
         comparison_vectors : pandas.DataFrame
             The dataframe with comparison vectors.
         return_type : str
-            Return a pandas.Series when `return_type='series'` or
-            a numpy.ndarray when `return_type='array'`. Default 'series'.
+            Deprecated. (default 'series')
 
         Returns
         -------
@@ -1048,25 +1049,22 @@ class BaseClassifier(ABC):
 
         """
 
+        # deprecation
+        if return_type is not None:
+            warnings.warn("The argument 'return_type' is removed. "
+                          "Default value is now 'series'.", VisibleDeprecationWarning, stacklevel=2)
+
         logging.info("Classification - compute probabilities")
 
         prob_match = self._prob_match(comparison_vectors.as_matrix())
+        return pandas.Series(prob_match, index=comparison_vectors.index)
 
-        if return_type == 'series':
-            return pandas.Series(prob_match, index=comparison_vectors.index)
-        elif return_type == 'array':
-            return prob_match
-        else:
-            raise ValueError(
-                "return_type {} unknown. Choose 'index', 'series' or "
-                "'array'".format(return_type))
-
-    def _return_result(
-        self, result, return_type='index', comparison_vectors=None
-    ):
+    def _return_result(self, result, comparison_vectors=None):
         """Return different formatted classification results.
 
         """
+
+        return_type = cf.get_option('classification.return_type')
 
         if type(result) != np.ndarray:
             raise ValueError("numpy.ndarray expected.")
@@ -1100,7 +1098,19 @@ class SKLearnClassifier(object):
         # sklearn classifier (or one that behaves like an sklearn classifier)
         self.classifier = None
 
-    def _predict(self, features, return_type):
+    def _predict(self, features):
+        """Predict matches and non-matches.
+
+        Parameters
+        ----------
+        features : numpy.ndarray
+            The data to predict the class of.
+
+        Returns
+        -------
+        numpy.ndarray
+            The predicted classes.
+        """
 
         from sklearn.exceptions import NotFittedError
 
@@ -1116,7 +1126,7 @@ class SKLearnClassifier(object):
 
         return prediction
 
-    def _fit(self, features, y):
+    def _fit(self, features, y=None):
 
         if y is None:  # unsupervised
             self.classifier.fit(features)

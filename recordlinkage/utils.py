@@ -2,6 +2,8 @@ import pandas
 import numpy
 import warnings
 
+import recordlinkage.config as cf
+
 
 # Errors and Exception handlers
 class IndexError(Exception):
@@ -48,6 +50,25 @@ class DeprecationHelper(object):
     def __getattr__(self, attr):
         self._warn()
         return getattr(self.new_target, attr)
+
+
+def return_type_deprecator(func):
+    def func_wrapper(*args, **kwargs):
+        return_type = kwargs.pop('return_type', None)
+        if return_type is not None:
+            warnings.warn(
+                "The argument 'return_type' is deprecated in the next "
+                "version. Use recordlinkage.set_option('classification."
+                "return_type', '{}') instead.".format(return_type),
+                VisibleDeprecationWarning,
+                stacklevel=2)
+            with cf.option_context('classification.return_type', return_type):
+                return func(*args, **kwargs)
+        else:
+            return func(*args, **kwargs)
+
+    return func_wrapper
+
 
 # Checks and conversions
 

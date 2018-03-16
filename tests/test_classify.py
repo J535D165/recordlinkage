@@ -6,10 +6,22 @@ import numpy
 from sklearn.exceptions import NotFittedError
 
 import recordlinkage
+import recordlinkage.config as cf
 
 import pytest
 from numpy.testing.utils import assert_almost_equal
 import pandas.util.testing as ptm
+
+
+SUPERVISED_CLASSIFIERS = [
+    recordlinkage.LogisticRegressionClassifier,
+    recordlinkage.NaiveBayesClassifier,
+    recordlinkage.SVMClassifier
+]
+
+UNSUPERVISED_CLASSIFIERS = [
+    recordlinkage.KMeansClassifier
+]
 
 
 class TestClassifyData(object):
@@ -41,33 +53,62 @@ class TestClassifyData(object):
 
 
 class TestClassifyAPI(TestClassifyData):
-    def test_return_result_options(self):
 
-        cl = recordlinkage.Classifier()
+    @pytest.mark.parametrize('classifier', SUPERVISED_CLASSIFIERS)
+    def test_return_result_options(self, classifier):
 
-        prediction_default = cl._return_result(
-            self.matches_array, comparison_vectors=self.y)
+        cl = classifier()
+        cl.fit(self.y, self.matches_index)
+
+        prediction_default = cl.predict(self.y)
         assert isinstance(prediction_default, pandas.MultiIndex)
 
-        prediction_multiindex = cl._return_result(
-            self.matches_array, return_type='index', comparison_vectors=self.y)
+        with cf.option_context('classification.return_type', 'index'):
+            prediction_multiindex = cl.predict(comparison_vectors=self.y)
+            assert isinstance(prediction_multiindex, pandas.MultiIndex)
+
+        with cf.option_context('classification.return_type', 'array'):
+            prediction_ndarray = cl.predict(comparison_vectors=self.y)
+            assert isinstance(prediction_ndarray, numpy.ndarray)
+
+        with cf.option_context('classification.return_type', 'series'):
+            prediction_series = cl.predict(comparison_vectors=self.y)
+            assert isinstance(prediction_series, pandas.Series)
+
+        with pytest.raises(ValueError):
+            with cf.option_context('classification.return_type',
+                                   'unknown_return_type'):
+                cl.predict(
+                    comparison_vectors=self.y
+                )
+
+    @pytest.mark.parametrize('classifier', SUPERVISED_CLASSIFIERS)
+    def test_return_result_options_depr(self, classifier):
+
+        cl = classifier()
+        cl.fit(self.y, self.matches_index)
+
+        prediction_default = cl.predict(self.y)
+        assert isinstance(prediction_default, pandas.MultiIndex)
+
+        prediction_multiindex = cl.predict(
+            comparison_vectors=self.y, return_type='index')
         assert isinstance(prediction_multiindex, pandas.MultiIndex)
 
-        prediction_ndarray = cl._return_result(
-            self.matches_array, return_type='array', comparison_vectors=self.y)
+        prediction_ndarray = cl.predict(
+            comparison_vectors=self.y, return_type='array')
         assert isinstance(prediction_ndarray, numpy.ndarray)
 
-        prediction_series = cl._return_result(
-            self.matches_array,
-            return_type='series',
-            comparison_vectors=self.y)
+        prediction_series = cl.predict(
+            comparison_vectors=self.y,
+            return_type='series')
         assert isinstance(prediction_series, pandas.Series)
 
         with pytest.raises(ValueError):
-            cl._return_result(
-                self.matches_array,
-                return_type='unknown_return_type',
-                comparison_vectors=self.y)
+            cl.predict(
+                comparison_vectors=self.y,
+                return_type='unknown_return_type'
+            )
 
     def test_probs(self):
 
