@@ -3,10 +3,13 @@
 
 import pandas
 import numpy
+from sklearn.exceptions import NotFittedError
 
 import recordlinkage
 
 import pytest
+from numpy.testing.utils import assert_almost_equal
+import pandas.util.testing as ptm
 
 
 class TestClassifyData(object):
@@ -74,24 +77,41 @@ class TestClassifyAPI(TestClassifyData):
             cl.prob(self.y, return_type='unknown_return_type')
 
 
-class TestClassifyAlgorithms(TestClassifyData):
+class TestKMeansAlgorithms(TestClassifyData):
+
     def test_kmeans(self):
 
         kmeans = recordlinkage.KMeansClassifier()
-        kmeans.learn(self.y_train)
-        kmeans.predict(self.y)
+        kmeans.fit(self.y_train)
+        result = kmeans.predict(self.y_train)
+
+        assert isinstance(result, pandas.MultiIndex)
+        assert result.shape[0] == 519
+
+        kmeans2 = recordlinkage.KMeansClassifier()
+        expected = kmeans2.fit_predict(self.y_train)
+
+        assert isinstance(expected, pandas.MultiIndex)
+
+        assert result.values.shape == expected.values.shape
+        ptm.assert_index_equal(result, expected)
+
+    def test_kmeans_error(self):
+
+        kmeans = recordlinkage.KMeansClassifier()
+        kmeans.fit(self.y_train)
 
         # There are no probabilities
         with pytest.raises(AttributeError):
             kmeans.prob(self.y)
 
-    def test_kmeans_no_training_data(self):
+    def test_kmeans_empty_frame(self):
         """ Kmeans, no training data"""
 
         kmeans = recordlinkage.KMeansClassifier()
 
         with pytest.raises(ValueError):
-            kmeans.learn(pandas.DataFrame(columns=self.y_train.columns))
+            kmeans.fit(pandas.DataFrame(columns=self.y_train.columns))
 
     def test_kmeans_not_trained(self):
         """
@@ -101,7 +121,7 @@ class TestClassifyAlgorithms(TestClassifyData):
 
         kmeans = recordlinkage.KMeansClassifier()
 
-        with pytest.raises(Exception):
+        with pytest.raises(NotFittedError):
             kmeans.predict(self.y)
 
     def test_kmeans_manual(self):
@@ -132,6 +152,8 @@ class TestClassifyAlgorithms(TestClassifyData):
         assert mcc == manual_mcc
         assert nmcc == manual_nmcc
 
+
+class TestClassifyAlgorithms(TestClassifyData):
     def test_logistic_regression_basic(self):
         """
 
@@ -143,7 +165,7 @@ class TestClassifyAlgorithms(TestClassifyData):
         logis = recordlinkage.LogisticRegressionClassifier()
 
         # Test the basics
-        logis.learn(self.y_train, self.matches_index)
+        logis.fit(self.y_train, self.matches_index)
         logis.predict(self.y)
         logis.prob(self.y)
 
@@ -174,7 +196,7 @@ class TestClassifyAlgorithms(TestClassifyData):
         logis.predict(self.y)
 
         # Train the classifier after manula setting
-        logis.learn(self.y_train, self.matches_index)
+        logis.fit(self.y_train, self.matches_index)
         logis.predict(self.y)
 
         lc = numpy.array(logis.coefficients)
@@ -185,14 +207,14 @@ class TestClassifyAlgorithms(TestClassifyData):
         """Basic Naive Bayes"""
 
         bernb = recordlinkage.NaiveBayesClassifier()
-        bernb.learn(self.y_train.round(), self.matches_index)
+        bernb.fit(self.y_train.round(), self.matches_index)
         bernb.predict(self.y.round())
         bernb.prob(self.y.round())
 
     def test_svm(self):
 
         svm = recordlinkage.SVMClassifier()
-        svm.learn(self.y_train, self.matches_index)
+        svm.fit(self.y_train, self.matches_index)
         svm.predict(self.y)
 
         # There are no probabilities
@@ -202,7 +224,7 @@ class TestClassifyAlgorithms(TestClassifyData):
     def test_em(self):
 
         ecm = recordlinkage.ECMClassifier()
-        ecm.learn(self.y_train.round())
+        ecm.fit(self.y_train.round())
         ecm.predict(self.y.round())
         ecm.prob(self.y.round())
 

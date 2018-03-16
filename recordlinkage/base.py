@@ -4,6 +4,7 @@ from __future__ import division
 
 import time
 import warnings
+from abc import ABC, abstractmethod
 
 import pandas
 import numpy as np
@@ -860,51 +861,61 @@ class BaseCompare(object):
         raise AttributeError("this method was removed in version 0.12.0")
 
 
-class BaseClassifier(object):
+class BaseClassifier(ABC):
     """Base class for classification of records pairs.
 
-    This class contains methods for training the classifier. Distinguish
-    different types of training, such as supervised and unsupervised learning.
+    This class contains methods for training the classifier.
+    Distinguish different types of training, such as supervised and
+    unsupervised learning.
 
     """
 
     def __init__(self):
+        pass
 
-        logging.info("Classification - initialize {} class".format(
-            self.__class__.__name__)
-        )
+    def learn(self, *args, **kwargs):
+        """[DEPRECATED] use 'fit_predict' from now
+        """
 
-        # The actual classifier. Maybe this is slightly strange because of
-        # inheritance.
-        self.classifier = None
+        warnings.warn("learn is deprecated, {}.fit_predict instead".format(self.__class__.__name__))
+        return self.fit_predict(*args, **kwargs)
 
-    def learn(self, comparison_vectors, match_index, return_type='index'):
+    def _initialise_classifier(self, comparison_vectors=None):
+        """Initialise the classifier.
+
+        Parameters
+        ----------
+        comparison_vectors : pandas.DataFrame
+            The comparison vectors (or features) to fit the classifier with.
+        """
+        pass
+
+    def fit(self, comparison_vectors, match_index=None):
         """Train the classifier.
 
         Parameters
         ----------
         comparison_vectors : pandas.DataFrame
-            The comparison vectors.
+            The comparison vectors (or features) to train the model with.
         match_index : pandas.MultiIndex
-            The true matches.
-        return_type : 'index' (default), 'series', 'array'
-            The format to return the classification result. The argument value
-            'index' will return the pandas.MultiIndex of the matches. The
-            argument value 'series' will return a pandas.Series with zeros
-            (distinct) and ones (matches). The argument value 'array' will
-            return a numpy.ndarray with zeros and ones.
+            A pandas.MultiIndex object with the true matches.
+            The MultiIndex contains only the true matches. Default None.
 
-        Returns
-        -------
-        pandas.Series
-            A pandas Series with the labels 1 (for the matches) and 0 (for the
-            non-matches).
+        Note
+        ----
+
+        A note in case of finding links within a single dataset (for example
+        deduplication). Unsure that the training record pairs are from the
+        lower triangular part of the dataset/matrix. See detailed information
+        here: link.
 
         """
 
-        logging.info("Classifying - start learning {}".format(
+        logging.info("Classification - start training {}".format(
             self.__class__.__name__)
         )
+
+        self._initialise_classifier(comparison_vectors)
 
         # start timing
         start_time = time.time()
@@ -912,11 +923,11 @@ class BaseClassifier(object):
         if isinstance(match_index, (pandas.MultiIndex, pandas.Index)):
 
             # The match_index variable is of type MultiIndex
-            train_series = pandas.Series(False, index=comparison_vectors.index)
+            y = pandas.Series(1, index=comparison_vectors.index)
 
             try:
-                train_series.loc[match_index & comparison_vectors.index] = True
-
+                y.loc[match_index & comparison_vectors.index] = 0
+                y = np.array(y)
             except pandas.IndexError as err:
 
                 # The are no matches. So training is not possible.
@@ -927,17 +938,45 @@ class BaseClassifier(object):
                     )
                 else:
                     raise err
+        elif match_index is None:
+            y = None
+        else:
+            raise ValueError("'match_index' has incorrect type '{}'".format(type(match_index)))
 
-        self.classifier.fit(
-            comparison_vectors.as_matrix(),
-            np.array(train_series)
-        )
-
-        result = self._predict(comparison_vectors, return_type)
+        self._fit(comparison_vectors.as_matrix(), y)
 
         # log timing
-        logf_time = "Classifying - learning computation time: ~{:.2f}s"
+        logf_time = "Classification - training computation time: ~{:.2f}s"
         logging.info(logf_time.format(time.time() - start_time))
+
+    def fit_predict(self, comparison_vectors, match_index=None,
+                    return_type='index'):
+        """Train the classifier.
+
+        Parameters
+        ----------
+        comparison_vectors : pandas.DataFrame
+            The comparison vectors.
+        match_index : pandas.MultiIndex
+            The true matches.
+        return_type : 'index' (default), 'series', 'array'
+            The format to return the classification result. The
+            argument value 'index' will return the pandas.MultiIndex
+            of the matches. The argument value 'series' will return a
+            pandas.Series with zeros (distinct) and ones (matches).
+            The argument value 'array' will return a numpy.ndarray
+            with zeros and ones.
+
+        Returns
+        -------
+        pandas.Series
+            A pandas Series with the labels 1 (for the matches) and 0 (for the
+            non-matches).
+
+        """
+
+        self.fit(comparison_vectors, match_index)
+        result = self.predict(comparison_vectors, return_type=return_type)
 
         return result
 
@@ -947,7 +986,6 @@ class BaseClassifier(object):
         Classify a set of record pairs based on their comparison vectors into
         matches, non-matches and possible matches. The classifier has to be
         trained to call this method.
-
 
         Parameters
         ----------
@@ -968,26 +1006,27 @@ class BaseClassifier(object):
 
         """
 
-        logging.info("Classifying - predict matches and non-matches")
+        logging.info("Classification - predict matches and non-matches")
 
-        return self._predict(comparison_vectors, return_type)
+        prediction = self._predict(comparison_vectors, return_type)
+        result = self._return_result(prediction, return_type, comparison_vectors)
 
-    def _predict(self, comparison_vectors, return_type):
+        self._post_predict(result)
+        return result
 
-        from sklearn.utils.validation import NotFittedError
+    def _post_predict(self, result):
+        """Method called after prediction.
 
-        try:
-            prediction = self.classifier.predict(
-                comparison_vectors.as_matrix())
-        except NotFittedError:
-            raise NotFittedError(
-                "This {} is not fitted yet. Call 'learn' with appropriate "
-                "arguments before using this method.".format(
-                    type(self).__name__
-                )
-            )
+        Parameters
+        ----------
+        result : pandas.Series
+            The resulting classification.
+        """
+        pass
 
-        return self._return_result(prediction, return_type, comparison_vectors)
+    @abstractmethod
+    def _prob_match(self, *args, **kwargs):
+        pass
 
     def prob(self, comparison_vectors, return_type='series'):
         """Compute the probabilities for each record pair.
@@ -998,8 +1037,9 @@ class BaseClassifier(object):
         ----------
         comparison_vectors : pandas.DataFrame
             The dataframe with comparison vectors.
-        return_type : 'series' or 'array'
-            Return a pandas series or numpy array. Default 'series'.
+        return_type : str
+            Return a pandas.Series when `return_type='series'` or
+            a numpy.ndarray when `return_type='array'`. Default 'series'.
 
         Returns
         -------
@@ -1008,14 +1048,14 @@ class BaseClassifier(object):
 
         """
 
-        logging.info("Classifying - compute probabilities")
+        logging.info("Classification - compute probabilities")
 
-        probs = self.classifier.predict_proba(comparison_vectors.as_matrix())
+        prob_match = self._prob_match(comparison_vectors.as_matrix())
 
         if return_type == 'series':
-            return pandas.Series(probs[:, 0], index=comparison_vectors.index)
+            return pandas.Series(prob_match, index=comparison_vectors.index)
         elif return_type == 'array':
-            return probs[:, 0]
+            return prob_match
         else:
             raise ValueError(
                 "return_type {} unknown. Choose 'index', 'series' or "
@@ -1051,3 +1091,57 @@ class BaseClassifier(object):
             raise ValueError(
                 "return_type {} unknown. Choose 'index', 'series' or "
                 "'array'".format(return_type))
+
+
+class SKLearnClassifier(object):
+
+    def __init__(self):
+
+        # sklearn classifier (or one that behaves like an sklearn classifier)
+        self.classifier = None
+
+    def _predict(self, features, return_type):
+
+        from sklearn.exceptions import NotFittedError
+
+        try:
+            prediction = self.classifier.predict(features)
+        except NotFittedError:
+            raise NotFittedError(
+                "{} is not fitted yet. Call 'fit' with appropriate "
+                "arguments before using this method.".format(
+                    type(self).__name__
+                )
+            )
+
+        return prediction
+
+    def _fit(self, features, y):
+
+        if y is None:  # unsupervised
+            self.classifier.fit(features)
+        else:
+            self.classifier.fit(features, y)
+
+    def _prob_match(self, features):
+        """Compute match probabilities.
+
+        Parameters
+        ----------
+        features : numpy.ndarray
+            The data to train the model on.
+
+        Returns
+        -------
+        numpy.ndarray
+            The match probabilties.
+        """
+
+        # compute the probabilities
+        probs = self.classifier.predict_proba(features)
+
+        # get the position of match probabilities
+        classes = list(self.classifier.classes_)
+        match_class_position = classes.index(1)
+
+        return probs[:, match_class_position]
