@@ -217,6 +217,19 @@ class TestKMeansAlgorithms(TestClassifyData):
         assert isinstance(result, pd.MultiIndex)
         assert result.shape[0] == 519
 
+    def test_kmean_parameters(self):
+
+        kmeans = rl.KMeansClassifier()
+        kmeans.fit(self.y_train)
+
+        _, n_features = self.y_train.shape
+
+        assert isinstance(kmeans.match_cluster_center, np.ndarray)
+        assert kmeans.match_cluster_center.shape == (n_features,)
+
+        assert isinstance(kmeans.nonmatch_cluster_center, np.ndarray)
+        assert kmeans.nonmatch_cluster_center.shape == (n_features,)
+
     def test_kmeans_error(self):
 
         kmeans = rl.KMeansClassifier()
@@ -238,8 +251,8 @@ class TestKMeansAlgorithms(TestClassifyData):
         kmeans = rl.KMeansClassifier()
 
         # Check if the cluster centers are None
-        assert kmeans.match_cluster_center is None
-        assert kmeans.nonmatch_cluster_center is None
+        assert not hasattr(kmeans, 'match_cluster_center')
+        assert not hasattr(kmeans, 'nonmatch_cluster_center')
 
         # Set the cluster centers
         kmeans.match_cluster_center = manual_mcc
@@ -251,8 +264,8 @@ class TestKMeansAlgorithms(TestClassifyData):
         # Check the match clusters
         mcc = kmeans.match_cluster_center
         nmcc = kmeans.nonmatch_cluster_center
-        assert mcc == manual_mcc
-        assert nmcc == manual_nmcc
+        assert_almost_equal(mcc, manual_mcc)
+        assert_almost_equal(nmcc, manual_nmcc)
 
 
 class TestClassifyAlgorithms(TestClassifyData):
@@ -274,10 +287,8 @@ class TestClassifyAlgorithms(TestClassifyData):
 
         # Initialize the LogisticRegressionClassifier
         logis = rl.LogisticRegressionClassifier()
-
-        # Check if the cofficients and intercapt are None at this point
-        assert logis.coefficients is None
-        assert logis.intercept is None
+        assert not hasattr(logis, 'coefficients')
+        assert not hasattr(logis, 'intercept')
 
         # Set the parameters coefficients and intercept
         logis.coefficients = manual_coefficients
@@ -286,11 +297,11 @@ class TestClassifyAlgorithms(TestClassifyData):
         # Perform the prediction
         logis.predict(self.y)
 
-        # Train the classifier after manula setting
+        # Train the classifier after manual setting
         logis.fit(self.y_train, self.matches_index)
         logis.predict(self.y)
 
-        lc = np.array(logis.coefficients)
+        lc = logis.coefficients
         assert lc.shape == (self.y_train.shape[1], )
         assert isinstance(logis.intercept, (float))
 

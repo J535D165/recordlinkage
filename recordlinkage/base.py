@@ -1097,10 +1097,18 @@ class BaseClassifier(ABC):
 
 class SKLearnClassifier(object):
 
-    def __init__(self):
+    # # sklearn classifier (or one that behaves like an sklearn classifier)
+    # # make this an abstract attribute
+    # self.kernel = None
 
-        # sklearn classifier (or one that behaves like an sklearn classifier)
-        self.classifier = None
+    @property
+    def classifier(self):
+        # raise warning
+        return self.kernel
+
+    @classifier.setter
+    def classifier(self, classifier):
+        self.kernel = classifier
 
     def _predict(self, features):
         """Predict matches and non-matches.
@@ -1119,7 +1127,7 @@ class SKLearnClassifier(object):
         from sklearn.exceptions import NotFittedError
 
         try:
-            prediction = self.classifier.predict(features)
+            prediction = self.kernel.predict(features)
         except NotFittedError:
             raise NotFittedError(
                 "{} is not fitted yet. Call 'fit' with appropriate "
@@ -1133,9 +1141,9 @@ class SKLearnClassifier(object):
     def _fit(self, features, y=None):
 
         if y is None:  # unsupervised
-            self.classifier.fit(features)
+            self.kernel.fit(features)
         else:
-            self.classifier.fit(features, y)
+            self.kernel.fit(features, y)
 
     def _prob_match(self, features):
         """Compute match probabilities.
@@ -1152,10 +1160,10 @@ class SKLearnClassifier(object):
         """
 
         # compute the probabilities
-        probs = self.classifier.predict_proba(features)
+        probs = self.kernel.predict_proba(features)
 
         # get the position of match probabilities
-        classes = list(self.classifier.classes_)
+        classes = list(self.kernel.classes_)
         match_class_position = classes.index(1)
 
         return probs[:, match_class_position]
