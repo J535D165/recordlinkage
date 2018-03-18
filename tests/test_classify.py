@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import pandas
-import numpy
+import pandas as pd
+import numpy as np
 from sklearn.exceptions import NotFittedError
 
-import recordlinkage
+import recordlinkage as rl
 import recordlinkage.config as cf
 
 import pytest
@@ -14,38 +14,60 @@ import pandas.util.testing as ptm
 
 
 SUPERVISED_CLASSIFIERS = [
-    recordlinkage.LogisticRegressionClassifier,
-    recordlinkage.NaiveBayesClassifier,
-    recordlinkage.SVMClassifier
+    rl.LogisticRegressionClassifier,
+    rl.NaiveBayesClassifier,
+    rl.SVMClassifier
 ]
 
 UNSUPERVISED_CLASSIFIERS = [
-    recordlinkage.KMeansClassifier
+    rl.KMeansClassifier,
+    rl.ECMClassifier
 ]
+
+CLASSIFIERS = SUPERVISED_CLASSIFIERS + UNSUPERVISED_CLASSIFIERS
+
+CLASSIFIERS_WITH_PROBS = [
+    rl.LogisticRegressionClassifier,
+    rl.NaiveBayesClassifier
+]
+
+N = 10000
+Y = pd.DataFrame(
+    np.random.random((N, 7)),
+    index=pd.MultiIndex.from_arrays(
+        [np.arange(0, N), np.arange(0, N)]),
+    columns=[
+        'name', 'second_name', 'surname', 'age', 'street', 'state',
+        'zipcode'
+    ])
+Y_TRAIN = Y.iloc[0:1000]
+
+MATCHES_ARRAY = np.random.randint(0, 2, N)
+MATCHES_SERIES = pd.Series(MATCHES_ARRAY, index=Y.index)
+MATCHES_INDEX = MATCHES_SERIES[MATCHES_SERIES == 1].index
 
 
 class TestClassifyData(object):
     @classmethod
     def setup_class(cls):
 
-        N = 10000
         seed = 101
         seed_gold = 1234  # noqa
 
         # set random state
-        numpy.random.seed(seed)
+        np.random.seed(seed)
 
-        cls.y = pandas.DataFrame(
-            numpy.random.random((N, 7)),
-            index=pandas.MultiIndex.from_arrays(
-                [numpy.arange(0, N), numpy.arange(0, N)]),
+        cls.y = pd.DataFrame(
+            np.random.random((N, 7)),
+            index=pd.MultiIndex.from_arrays(
+                [np.arange(0, N), np.arange(0, N)]),
             columns=[
                 'name', 'second_name', 'surname', 'age', 'street', 'state',
                 'zipcode'
             ])
 
-        cls.matches_array = numpy.random.randint(0, 2, N)
-        cls.matches_series = pandas.Series(
+        cls.matches_array = np.random.randint(0, 2, N)
+        cls.matches_series = pd.Series(
             cls.matches_array, index=cls.y.index)
         cls.matches_index = cls.matches_series[cls.matches_series == 1].index
 
@@ -61,19 +83,19 @@ class TestClassifyAPI(TestClassifyData):
         cl.fit(self.y, self.matches_index)
 
         prediction_default = cl.predict(self.y)
-        assert isinstance(prediction_default, pandas.MultiIndex)
+        assert isinstance(prediction_default, pd.MultiIndex)
 
         with cf.option_context('classification.return_type', 'index'):
             prediction_multiindex = cl.predict(comparison_vectors=self.y)
-            assert isinstance(prediction_multiindex, pandas.MultiIndex)
+            assert isinstance(prediction_multiindex, pd.MultiIndex)
 
         with cf.option_context('classification.return_type', 'array'):
             prediction_ndarray = cl.predict(comparison_vectors=self.y)
-            assert isinstance(prediction_ndarray, numpy.ndarray)
+            assert isinstance(prediction_ndarray, np.ndarray)
 
         with cf.option_context('classification.return_type', 'series'):
             prediction_series = cl.predict(comparison_vectors=self.y)
-            assert isinstance(prediction_series, pandas.Series)
+            assert isinstance(prediction_series, pd.Series)
 
         with pytest.raises(ValueError):
             with cf.option_context('classification.return_type',
@@ -89,20 +111,20 @@ class TestClassifyAPI(TestClassifyData):
         cl.fit(self.y, self.matches_index)
 
         prediction_default = cl.predict(self.y)
-        assert isinstance(prediction_default, pandas.MultiIndex)
+        assert isinstance(prediction_default, pd.MultiIndex)
 
         prediction_multiindex = cl.predict(
             comparison_vectors=self.y, return_type='index')
-        assert isinstance(prediction_multiindex, pandas.MultiIndex)
+        assert isinstance(prediction_multiindex, pd.MultiIndex)
 
         prediction_ndarray = cl.predict(
             comparison_vectors=self.y, return_type='array')
-        assert isinstance(prediction_ndarray, numpy.ndarray)
+        assert isinstance(prediction_ndarray, np.ndarray)
 
         prediction_series = cl.predict(
             comparison_vectors=self.y,
             return_type='series')
-        assert isinstance(prediction_series, pandas.Series)
+        assert isinstance(prediction_series, pd.Series)
 
         with pytest.raises(ValueError):
             cl.predict(
@@ -110,71 +132,110 @@ class TestClassifyAPI(TestClassifyData):
                 return_type='unknown_return_type'
             )
 
-    def test_probs(self):
+    @pytest.mark.parametrize('classifier', CLASSIFIERS_WITH_PROBS)
+    def test_probs(self, classifier):
 
-        cl = recordlinkage.LogisticRegressionClassifier()
+        cl = classifier()
+        cl.fit(self.y, self.matches_index)
+
+        probs = cl.prob(self.y)
+
+        assert isinstance(probs, pd.Series)
+        assert probs.max() <= 1.0
+        assert probs.min() >= 0.0
+
+    @pytest.mark.parametrize('classifier', UNSUPERVISED_CLASSIFIERS)
+    def test_fit_predict_unsupervised(self, classifier):
+
+        cl = classifier()
+        cl.fit(self.y_train)
+        result = cl.predict(self.y_train)
+
+        assert isinstance(result, pd.MultiIndex)
+
+        cl2 = classifier()
+        expected = cl2.fit_predict(self.y_train)
+
+        assert isinstance(expected, pd.MultiIndex)
+        assert result.values.shape == expected.values.shape
+
+        ptm.assert_index_equal(result, expected)
+
+    @pytest.mark.parametrize('classifier', SUPERVISED_CLASSIFIERS)
+    def test_fit_predict_supervised(self, classifier):
+
+        cl = classifier()
+        cl.fit(self.y_train, self.matches_index)
+        result = cl.predict(self.y_train)
+
+        assert isinstance(result, pd.MultiIndex)
+
+        cl2 = classifier()
+        expected = cl2.fit_predict(self.y_train, self.matches_index)
+
+        assert isinstance(expected, pd.MultiIndex)
+        assert result.values.shape == expected.values.shape
+
+        ptm.assert_index_equal(result, expected)
+
+    @pytest.mark.parametrize('classifier', CLASSIFIERS)
+    def test_predict_but_not_trained(self, classifier):
+
+        cl = classifier()
+
+        with pytest.raises(NotFittedError):
+            cl.predict(self.y)
+
+    @pytest.mark.parametrize('classifier', SUPERVISED_CLASSIFIERS)
+    def test_fit_empty_frame_supervised(self, classifier):
+
+        cl = classifier()
 
         with pytest.raises(ValueError):
-            cl.prob(self.y, return_type='unknown_return_type')
+            cl.fit(
+                pd.DataFrame(columns=self.y_train.columns),
+                self.matches_index
+            )
+
+    @pytest.mark.parametrize('classifier', UNSUPERVISED_CLASSIFIERS)
+    def test_fit_empty_frame_unsupervised(self, classifier):
+
+        cl = classifier()
+
+        with pytest.raises(ValueError):
+            cl.fit(pd.DataFrame(columns=self.y_train.columns))
 
 
 class TestKMeansAlgorithms(TestClassifyData):
 
     def test_kmeans(self):
 
-        kmeans = recordlinkage.KMeansClassifier()
+        kmeans = rl.KMeansClassifier()
         kmeans.fit(self.y_train)
         result = kmeans.predict(self.y_train)
 
-        assert isinstance(result, pandas.MultiIndex)
+        assert isinstance(result, pd.MultiIndex)
         assert result.shape[0] == 519
-
-        kmeans2 = recordlinkage.KMeansClassifier()
-        expected = kmeans2.fit_predict(self.y_train)
-
-        assert isinstance(expected, pandas.MultiIndex)
-
-        assert result.values.shape == expected.values.shape
-        ptm.assert_index_equal(result, expected)
 
     def test_kmeans_error(self):
 
-        kmeans = recordlinkage.KMeansClassifier()
+        kmeans = rl.KMeansClassifier()
         kmeans.fit(self.y_train)
 
         # There are no probabilities
         with pytest.raises(AttributeError):
             kmeans.prob(self.y)
 
-    def test_kmeans_empty_frame(self):
-        """ Kmeans, no training data"""
-
-        kmeans = recordlinkage.KMeansClassifier()
-
-        with pytest.raises(ValueError):
-            kmeans.fit(pandas.DataFrame(columns=self.y_train.columns))
-
-    def test_kmeans_not_trained(self):
-        """
-        Raise an error if the classifier is not trained, but a prediction is
-        asked.
-        """
-
-        kmeans = recordlinkage.KMeansClassifier()
-
-        with pytest.raises(NotFittedError):
-            kmeans.predict(self.y)
-
     def test_kmeans_manual(self):
         """KMeansClassifier with manual cluster centers"""
 
         # Make random test data.
-        numpy.random.seed(535)
-        manual_mcc = list(numpy.random.randn(self.y_train.shape[1]))
-        manual_nmcc = list(numpy.random.randn(self.y_train.shape[1]))
+        np.random.seed(535)
+        manual_mcc = list(np.random.randn(self.y_train.shape[1]))
+        manual_nmcc = list(np.random.randn(self.y_train.shape[1]))
 
         # Initialize the KMeansClassifier
-        kmeans = recordlinkage.KMeansClassifier()
+        kmeans = rl.KMeansClassifier()
 
         # Check if the cluster centers are None
         assert kmeans.match_cluster_center is None
@@ -196,14 +257,8 @@ class TestKMeansAlgorithms(TestClassifyData):
 
 class TestClassifyAlgorithms(TestClassifyData):
     def test_logistic_regression_basic(self):
-        """
 
-        Test the LogisticRegressionClassifier by training it, predict on a
-        dataset and get the probabilities.
-
-        """
-
-        logis = recordlinkage.LogisticRegressionClassifier()
+        logis = rl.LogisticRegressionClassifier()
 
         # Test the basics
         logis.fit(self.y_train, self.matches_index)
@@ -211,19 +266,14 @@ class TestClassifyAlgorithms(TestClassifyData):
         logis.prob(self.y)
 
     def test_logistic_regression_manual(self):
-        """
-        Test the LogisticRegressionClassifier in case of setting the
-        parameters manually.
-
-        """
 
         # Make random test data.
-        numpy.random.seed(535)
-        manual_coefficients = numpy.random.randn(self.y_train.shape[1])
-        manual_intercept = numpy.random.rand()
+        np.random.seed(535)
+        manual_coefficients = np.random.randn(self.y_train.shape[1])
+        manual_intercept = np.random.rand()
 
         # Initialize the LogisticRegressionClassifier
-        logis = recordlinkage.LogisticRegressionClassifier()
+        logis = rl.LogisticRegressionClassifier()
 
         # Check if the cofficients and intercapt are None at this point
         assert logis.coefficients is None
@@ -240,21 +290,13 @@ class TestClassifyAlgorithms(TestClassifyData):
         logis.fit(self.y_train, self.matches_index)
         logis.predict(self.y)
 
-        lc = numpy.array(logis.coefficients)
+        lc = np.array(logis.coefficients)
         assert lc.shape == (self.y_train.shape[1], )
         assert isinstance(logis.intercept, (float))
 
-    def test_bernoulli_naive_bayes(self):
-        """Basic Naive Bayes"""
-
-        bernb = recordlinkage.NaiveBayesClassifier()
-        bernb.fit(self.y_train.round(), self.matches_index)
-        bernb.predict(self.y.round())
-        bernb.prob(self.y.round())
-
     def test_svm(self):
 
-        svm = recordlinkage.SVMClassifier()
+        svm = rl.SVMClassifier()
         svm.fit(self.y_train, self.matches_index)
         svm.predict(self.y)
 
@@ -262,11 +304,51 @@ class TestClassifyAlgorithms(TestClassifyData):
         with pytest.raises(AttributeError):
             svm.prob(self.y)
 
-    def test_em(self):
 
-        ecm = recordlinkage.ECMClassifier()
+class TestClassifyECM(TestClassifyData):
+
+    def test_ecm_probs(self):
+
+        ecm = rl.ECMClassifier()
         ecm.fit(self.y_train.round())
-        ecm.predict(self.y.round())
-        ecm.prob(self.y.round())
 
-        assert ecm.p is not None
+        assert (ecm.p <= 1.0) & (ecm.p >= 0.0)
+
+    def test_ecm_predict(self):
+
+        ecm = rl.ECMClassifier()
+        ecm.fit(self.y.round())
+        prediction = ecm.predict(self.y.round())
+
+
+class TestFellegiSunter(TestClassifyData):
+
+    @pytest.mark.parametrize('classifier, fit_args', [
+        (rl.NaiveBayesClassifier, (Y_TRAIN, MATCHES_INDEX)),
+        (rl.ECMClassifier, (Y_TRAIN,))
+    ])
+    def test_FS_parameters(self, classifier, fit_args):
+
+        cl = classifier()
+        cl.fit(*fit_args)
+
+        # p
+        assert np.isscalar(cl.p)
+        assert np.exp(cl.log_p) == cl.p
+
+        # m
+        assert isinstance(cl.m_probs, np.ndarray)
+        assert cl.m_probs.shape == (Y_TRAIN.shape[1],)
+        assert_almost_equal(np.exp(cl.log_m_probs), cl.m_probs)
+
+        # u
+        assert isinstance(cl.u_probs, np.ndarray)
+        assert cl.u_probs.shape == (Y_TRAIN.shape[1],)
+        assert_almost_equal(np.exp(cl.log_u_probs), cl.u_probs)
+
+    # def test_FS_supervised_binarize(self):
+
+    #     cl = rl.NaiveBayesClassifier(binarize=None)
+    #     cl.fit(self.y_train, self.matches_index)
+    #     cl.predict(self.y)
+    #     cl.prob(self.y)
