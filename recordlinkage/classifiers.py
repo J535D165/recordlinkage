@@ -1,16 +1,10 @@
-import warnings
-import time
-
-import pandas
 import numpy
 
 from sklearn import cluster, linear_model, naive_bayes, svm
 
 from recordlinkage.base import BaseClassifier as Classifier
 from recordlinkage.base import SKLearnClassifier
-from recordlinkage.algorithms.em import ECMEstimate
-
-from recordlinkage import rl_logging as logging
+from recordlinkage.algorithms.em_sklearn import ECM
 
 
 class FellegiSunter(object):
@@ -407,10 +401,10 @@ class SVMClassifier(SKLearnClassifier, Classifier):
             "probabilities for the SVMClassfier")
 
 
-class ECMClassifier(FellegiSunter):
+class ECMClassifier(SKLearnClassifier, Classifier, FellegiSunter):
     """Expectation/Conditional Maxisation classifier (Unsupervised).
 
-    [EXPERIMENTAL] Expectation/Conditional Maximisation algorithm used as
+    Expectation/Conditional Maximisation algorithm used as
     classifier. This probabilistic record linkage algorithm is used in
     combination with Fellegi and Sunter model.
 
@@ -419,151 +413,10 @@ class ECMClassifier(FellegiSunter):
     def __init__(self, *args, **kwargs):
         super(ECMClassifier, self).__init__()
 
-        self.classifier = ECMEstimate(*args, **kwargs)
+        self.classifier = ECM(*args, **kwargs)
 
     @property
     def algorithm(self):
-        """[DEPRECATED] The classifier itself."""
-
-        warnings.warn(DeprecationWarning,
-                      "property renamed into classifier",
-                      stacklevel=2)
-        return self._classifier
-
-    def fit(self, comparison_vectors, return_type='index'):
-        """ Train the algorithm.
-
-        Train the Expectation-Maximisation classifier. This method is well-
-        known as the ECM-algorithm implementation in the context of record
-        linkage.
-
-        Parameters
-        ----------
-        comparison_vectors : pandas.DataFrame
-            The dataframe with comparison vectors.
-        return_type : 'index' (default), 'series', 'array'
-            The format to return the classification result. The argument value
-            'index' will return the pandas.MultiIndex of the matches. The
-            argument value 'series' will return a pandas.Series with zeros
-            (distinct) and ones (matches). The argument value 'array' will
-            return a numpy.ndarray with zeros and ones.
-
-        Returns
-        -------
-        pandas.Series
-            A pandas Series with the labels 1 (for the matches) and 0 (for the
-            non-matches).
-
-        """
-
-        logging.info("Classification - start learning {}".format(
-            self.__class__.__name__)
-        )
-
-        # start timing
-        start_time = time.time()
-
-        probs = self.classifier.train(comparison_vectors.as_matrix())
-
-        n_matches = int(self.classifier.p * len(probs))
-        self.p_threshold = numpy.sort(probs)[len(probs) - n_matches]
-
-        prediction = self._decision_rule(probs, self.p_threshold)
-
-        result = self._return_result(
-            prediction, return_type, comparison_vectors
-        )
-
-        # log timing
-        logf_time = "Classification - learning computation time: ~{:.2f}s"
-        logging.info(logf_time.format(time.time() - start_time))
-
-        return result
-
-    def predict(self, comparison_vectors, return_type='index',
-                *args, **kwargs):
-        """Predict the class of reord pairs.
-
-        Classify a set of record pairs based on their comparison vectors into
-        matches, non-matches and possible matches. The classifier has to be
-        trained to call this method.
-
-        Parameters
-        ----------
-        comparison_vectors : pandas.DataFrame
-            The dataframe with comparison vectors.
-        return_type : 'index' (default), 'series', 'array'
-            The format to return the classification result. The argument value
-            'index' will return the pandas.MultiIndex of the matches. The
-            argument value 'series' will return a pandas.Series with zeros
-            (distinct) and ones (matches). The argument value 'array' will
-            return a numpy.ndarray with zeros and ones.
-
-        Returns
-        -------
-        pandas.Series
-            A pandas Series with the labels 1 (for the matches) and 0 (for the
-            non-matches).
-
-        Note
-        ----
-        Prediction is risky for this unsupervised learning method. Be aware
-        that the sample from the population is valid.
-
-
-        """
-
-        logging.info("Classification - predict matches and non-matches")
-
-        enc_vectors = self.classifier._transform_vectors(
-            comparison_vectors.as_matrix())
-        probs = self.classifier._expectation(enc_vectors)
-        prediction = self._decision_rule(probs, self.p_threshold)
-
-        return self._return_result(prediction, return_type, comparison_vectors)
-
-    def fit_predict(self, comparison_vectors):
-        """Fit and predict"""
-
-        return self.fit(comparison_vectors)
-
-    def prob(self, comparison_vectors):
-        """Compute the probabilities for each record pair.
-
-        For each pair of records, estimate the probability of being a match.
-
-        Parameters
-        ----------
-        comparison_vectors : pandas.DataFrame
-            The dataframe with comparison vectors.
-        return_type : 'series' or 'array'
-            Return a pandas series or numpy array. Default 'series'.
-
-        Returns
-        -------
-        pandas.Series or numpy.ndarray
-            The probability of being a match for each record pair.
-
-        """
-
-        logging.info("Classification - compute probabilities")
-
-        enc_vectors = self.classifier._transform_vectors(
-            comparison_vectors.as_matrix())
-
-        return pandas.Series(
-            self.classifier._expectation(enc_vectors),
-            index=comparison_vectors.index
-        )
-
-    def _prob_match(self, features):
-
-        logging.info("Classification - compute probabilities")
-
-        enc_vectors = self.classifier._transform_vectors(
-            features.as_matrix())
-
-        return pandas.Series(
-            self.classifier._expectation(enc_vectors),
-            index=features.index
-        )
+        # Deprecated
+        raise AttributeError(
+            "This attribute is deprecated. Use 'classifier' instead.")
