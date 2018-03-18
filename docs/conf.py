@@ -14,7 +14,6 @@
 
 import sys
 import os
-import mock
 import shlex
 import datetime
 
@@ -22,31 +21,6 @@ import datetime
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 sys.path.insert(0, os.path.abspath('..'))
-# sys.path.insert(0, os.path.abspath('../recordlinkage'))
-
-# why does autodoc_mock_imports fail on rtd
-MOCK_MODULES = [
-    'numpy',
-    'scipy',
-    'scipy.sparse',
-    'pandas',
-    'sklearn',
-    'sklearn.feature_extraction',
-    'sklearn.feature_extraction.text',
-    'sklearn.utils',
-    'sklearn.utils.validation',
-    'sklearn.preprocessing',
-    'sklearn.externals',
-    'sklearn.externals.joblib',
-    'jellyfish',
-    'six'
-]
-
-
-for mod_name in MOCK_MODULES:
-
-    if mod_name not in sys.modules:
-        sys.modules[mod_name] = mock.Mock()
 
 import recordlinkage
 
@@ -328,10 +302,20 @@ autodoc_member_order = 'bysource'
 intersphinx_mapping = {
   'python': ('http://docs.python.org/3/', None),
   'pandas': ('http://pandas.pydata.org/pandas-docs/stable', None),
-  'numpy': ('https://docs.scipy.org/doc/numpy/', None)
+  'numpy': ('https://docs.scipy.org/doc/numpy/', None),
+  'sklearn': ('http://scikit-learn.org/stable/', None)
 }
 
 nbsphinx_execute = 'never'
+
+autodoc_mock_imports = [
+  'numpy',
+  'scipy',
+  'pandas',
+  'sklearn',
+  'jellyfish',
+  'six'
+]
 
 # -- Napoleon options ---------------------------------------------------
 
