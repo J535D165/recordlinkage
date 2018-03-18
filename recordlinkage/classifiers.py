@@ -320,7 +320,7 @@ class LogisticRegressionClassifier(SKLearnClassifier, Classifier):
             raise ValueError('incorrect type')
 
 
-class NaiveBayesClassifier(SKLearnClassifier, Classifier):
+class NaiveBayesClassifier(SKLearnClassifier, Classifier, FellegiSunter):
     """Naive Bayes Classifier.
 
     The `Naive Bayes classifier (wikipedia)
@@ -381,10 +381,6 @@ class NaiveBayesClassifier(SKLearnClassifier, Classifier):
                 pass
         else:
             raise ValueError('incorrect type')
-
-    def weights(self):
-
-        return self.feature_log_prob_[1] - self.feature_log_prob_[0]
 
 
 class SVMClassifier(SKLearnClassifier, Classifier):
