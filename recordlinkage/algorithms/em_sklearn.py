@@ -283,14 +283,6 @@ class ECM(BaseDiscreteNB):
         Threshold for binarizing (mapping to booleans) of sample features.
         If None, input is presumed to already consist of binary vectors.
 
-    fit_prior : boolean, optional (default=True)
-        Whether to learn class prior probabilities or not.
-        If false, a uniform prior will be used.
-
-    class_prior : array-like, size=[n_classes,], optional (default=None)
-        Prior probabilities of the classes. If specified the priors are not
-        adjusted according to the data.
-
     Attributes
     ----------
     class_log_prior_ : array, shape = [n_classes]
@@ -303,13 +295,9 @@ class ECM(BaseDiscreteNB):
 
     def __init__(self,
                  binarize=.8,
-                 fit_prior=True,
-                 class_prior=None,
                  max_iter=100,
                  atol=10e-4):
         self.binarize = binarize
-        self.fit_prior = fit_prior
-        self.class_prior = class_prior
         self.max_iter = max_iter
         self.atol = atol
 
