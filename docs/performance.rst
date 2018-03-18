@@ -3,24 +3,17 @@ Performance
 ===========
 
 Performance plays an important role in record linkage. Record linkage problems
-scale quadratically with the size of the file(s). The number of record pairs
-can be enormous and so are the number of comparisons. Over the years, smart
-techniques are developed to reduce the number of record pairs. The *Python
-Record Linkage Toolkit* offers several effective techniques for making record
-pairs. Nevertheless, the Python Record Linkage Toolkit is **NOT** developed
-with speed in mind. **Understandability**, **usability** and **extensibility**
-are the main focus points in the development. This makes the toolkit very
-useful for linking small or medium sized files.
-
-Okeee... There is not only bad news. The performance of many algorithms
-is good. Nevertheless, there are plenty of options to increase the
-performance of your record linkage implementation. Some methods are
-discussed in this topic.
+scale quadratically with the size of the dataset(s). The number of record
+pairs can be enormous and so are the number of comparisons. The Python Record
+Linkage Toolkit can be used for large scale record linkage applications.
+Nevertheless, the toolkit is developed with experimenting in first place and
+performance on the second place. This page provides tips and tricks to improve
+the performance.
 
 Do you know more tricks? Let us know!
 
-Indexation
-----------
+Indexing
+--------
 
 Block on multiple columns
 ~~~~~~~~~~~~~~~~~~~~~~~~~

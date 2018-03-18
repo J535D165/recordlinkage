@@ -1,5 +1,6 @@
+*************
 Miscellaneous
-=============
+*************
 
 .. autofunction:: recordlinkage.index_split
 

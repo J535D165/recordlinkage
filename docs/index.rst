@@ -10,23 +10,27 @@ All you need to start linking records.
 
 	about
 	installation
-
+	notebooks/link_two_dataframes.ipynb
+	notebooks/data_deduplication.ipynb
 
 .. toctree::
 	:caption: Record linkage
 	:maxdepth: 2
 
-	notebooks/link_two_dataframes.ipynb
-	notebooks/data_deduplication.ipynb
-	notebooks/classifiers.ipynb
-	notebooks/custom_algorithms.ipynb
-	performance.rst
+	ref-preprocessing
+	ref-index
+	ref-compare
+	ref-classifiers
+	ref-evaluation
+	ref-datasets
+	ref-misc
 
 .. toctree::
-	:caption: API reference
+	:caption: Advanced
 	:maxdepth: 2
 
-	reference
+	notebooks/classifiers.ipynb
+	performance.rst
 
 .. toctree::
 	:caption: Developers

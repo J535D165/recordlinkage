@@ -1,5 +1,6 @@
-Evaluation
-==========
+*************
+4. Evaluation
+*************
 
 Evaluation of classifications plays an important role in record linkage.
 Express your classification quality in terms accuracy, recall and F-score
