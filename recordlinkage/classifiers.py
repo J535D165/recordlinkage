@@ -13,7 +13,7 @@ from recordlinkage.algorithms.em import ECMEstimate
 from recordlinkage import rl_logging as logging
 
 
-class FellegiSunter(Classifier):
+class FellegiSunter(object):
     """Fellegi and Sunter framework.
 
     Base class for probabilistic classification of records pairs with the
@@ -24,16 +24,80 @@ class FellegiSunter(Classifier):
     def __init__(self, *args, **kwargs):
         super(FellegiSunter, self).__init__(*args, **kwargs)
 
-    @property
-    def p(self):
-        try:
-            return self.classifier._p
-        except Exception:
-            pass
-
     def _decision_rule(self, probabilities, threshold):
 
         return (probabilities >= threshold).astype(int)
+
+    def _match_class_pos(self):
+        # add notfitted warnings
+
+        if self.classifier.classes_.shape[0] != 2:
+            raise ValueError("Number of classes is {}, expected 2.".format(self.classifier.classes_.shape[0]))        
+
+        # get the position of match probabilities
+        classes = list(self.classifier.classes_)
+        return classes.index(1)
+
+    def _nonmatch_class_pos(self):
+        # add notfitted warnings
+
+        if self.classifier.classes_.shape[0] != 2:
+            raise ValueError("Number of classes is {}, expected 2.".format(self.classifier.classes_.shape[0]))        
+
+        # get the position of match probabilities
+        classes = list(self.classifier.classes_)
+        return classes.index(0)
+
+    @property
+    def log_p(self):
+        """Log match probability as described in the FS framework."""
+        return self.classifier.class_log_prior_[self._match_class_pos()]
+
+    @property
+    def log_m_probs(self):
+        """Log probability P(x_i==1|Match) as described in the FS framework."""
+        return self.classifier.feature_log_prob_[self._match_class_pos()]
+
+    @property
+    def log_u_probs(self):
+        """Log probability P(x_i==1|Non-match) as described in the FS framework."""
+        return self.classifier.feature_log_prob_[self._nonmatch_class_pos()]
+
+    @property
+    def log_weights(self):
+        """Log weights as described in the FS framework."""
+
+        match_pos = self._match_class_pos()
+        nonmatch_pos = self._nonmatch_class_pos()
+
+        weights = self.classifier.feature_log_prob_[match_pos]
+        weights -= self.classifier.feature_log_prob_[nonmatch_pos]
+
+        return weights
+
+    @property
+    def p(self):
+        """Match probability as described in the FS framework."""
+
+        return numpy.exp(self.log_p)
+
+    @property
+    def m_probs(self):
+        """Probability P(x_i==1|Match) as described in the FS framework."""
+
+        return numpy.exp(self.log_m_probs)
+
+    @property
+    def u_probs(self):
+        """Probability P(x_i==1|Non-match) as described in the FS framework."""
+
+        return numpy.exp(self.log_u_probs)
+
+    @property
+    def weigths(self):
+        """Weights as described in the FS framework."""
+
+        return numpy.exp(self.log_weights)
 
 
 class KMeansClassifier(SKLearnClassifier, Classifier):
