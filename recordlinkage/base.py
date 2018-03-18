@@ -982,6 +982,10 @@ class BaseClassifier(ABC):
 
         return result
 
+    @abstractmethod
+    def _predict(self, comparison_vectors):
+        pass
+
     @return_type_deprecator
     def predict(self, comparison_vectors):
         """Predict the class of the record pairs.
@@ -1010,7 +1014,7 @@ class BaseClassifier(ABC):
         logging.info("Classification - predict matches and non-matches")
 
         # make the predicition
-        prediction = self._predict(comparison_vectors)
+        prediction = self._predict(comparison_vectors.as_matrix())
         self._post_predict(prediction)
 
         # format and return the result
