@@ -80,10 +80,18 @@ class FellegiSunter(object):
         """Log match probability as described in the FS framework."""
         return self.kernel.class_log_prior_[self._match_class_pos()]
 
+    @log_p.setter
+    def log_p(self, value):
+        self.kernel.class_log_prior_[self._match_class_pos()] = value
+
     @property
     def log_m_probs(self):
         """Log probability P(x_i==1|Match) as described in the FS framework."""
         return self.kernel.feature_log_prob_[self._match_class_pos()]
+
+    @log_m_probs.setter
+    def log_m_probs(self, value):
+        self.kernel.feature_log_prob_[self._match_class_pos()] = value
 
     @property
     def log_u_probs(self):
@@ -91,17 +99,21 @@ class FellegiSunter(object):
         """
         return self.kernel.feature_log_prob_[self._nonmatch_class_pos()]
 
+    @log_u_probs.setter
+    def log_u_probs(self, value):
+        self.kernel.feature_log_prob_[self._nonmatch_class_pos()] = value
+
     @property
     def log_weights(self):
         """Log weights as described in the FS framework."""
 
-        match_pos = self._match_class_pos()
-        nonmatch_pos = self._nonmatch_class_pos()
+        return self.log_m_probs - self.log_u_probs
 
-        weights = self.kernel.feature_log_prob_[match_pos]
-        weights -= self.kernel.feature_log_prob_[nonmatch_pos]
-
-        return weights
+    @log_weights.setter
+    def log_weights(self, value):
+        raise AttributeError(
+            "setting 'log_weights' or 'weights' is not possible"
+        )
 
     @property
     def p(self):
@@ -109,11 +121,19 @@ class FellegiSunter(object):
 
         return numpy.exp(self.log_p)
 
+    @p.setter
+    def p(self, value):
+        self.__p = value
+
     @property
     def m_probs(self):
         """Probability P(x_i==1|Match) as described in the FS framework."""
 
         return numpy.exp(self.log_m_probs)
+
+    @m_probs.setter
+    def m_probs(self, value):
+        self.__m_probs = numpy.log(value)
 
     @property
     def u_probs(self):
@@ -121,11 +141,21 @@ class FellegiSunter(object):
 
         return numpy.exp(self.log_u_probs)
 
+    @u_probs.setter
+    def u_probs(self, value):
+        self.__u_probs = numpy.log(value)
+
     @property
-    def weigths(self):
+    def weights(self):
         """Weights as described in the FS framework."""
 
         return numpy.exp(self.log_weights)
+
+    @weights.setter
+    def weights(self, value):
+        raise AttributeError(
+            "setting 'log_weights' or 'weights' is not possible"
+        )
 
 
 class KMeansClassifier(SKLearnClassifier, Classifier):

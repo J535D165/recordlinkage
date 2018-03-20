@@ -334,14 +334,17 @@ class TestClassifyECM(TestClassifyData):
 
 class TestFellegiSunter(TestClassifyData):
 
-    @pytest.mark.parametrize('classifier, fit_args', [
-        (rl.NaiveBayesClassifier, (Y_TRAIN, MATCHES_INDEX)),
-        (rl.ECMClassifier, (Y_TRAIN,))
+    @pytest.mark.parametrize('classifier', [
+        rl.NaiveBayesClassifier,
+        rl.ECMClassifier
     ])
-    def test_FS_parameters(self, classifier, fit_args):
+    def test_FS_parameters(self, classifier):
 
         cl = classifier()
-        cl.fit(*fit_args)
+        if isinstance(cl, tuple(UNSUPERVISED_CLASSIFIERS)):
+            cl.fit(Y_TRAIN)
+        else:
+            cl.fit(Y_TRAIN, MATCHES_INDEX)
 
         # p
         assert np.isscalar(cl.p)
@@ -356,6 +359,43 @@ class TestFellegiSunter(TestClassifyData):
         assert isinstance(cl.u_probs, np.ndarray)
         assert cl.u_probs.shape == (Y_TRAIN.shape[1],)
         assert_almost_equal(np.exp(cl.log_u_probs), cl.u_probs)
+
+    @pytest.mark.parametrize('classifier', [
+        rl.NaiveBayesClassifier,
+        rl.ECMClassifier
+    ])
+    def test_FS_parameters_set_get(self, classifier):
+
+        # there were some issues with setting and getting parameters. Afters
+        # getting parameters, the internel parameters were messed up.
+
+        cl = classifier()
+        if isinstance(cl, tuple(UNSUPERVISED_CLASSIFIERS)):
+            cl.fit(Y_TRAIN)
+        else:
+            cl.fit(Y_TRAIN, MATCHES_INDEX)
+
+        probs_before = cl.prob(Y_TRAIN)
+        predict_before = cl.predict(Y_TRAIN)
+
+        # p
+        attributes = ["p", "log_p",
+                      "m_probs", "u_probs",
+                      "log_m_probs", "log_u_probs",
+                      "weights", "log_weights"]
+
+        for attr in attributes:
+            print(attr)
+            value = getattr(cl, attr)
+
+            if attr not in ["weights", "log_weights"]:
+                setattr(cl, attr, value)
+
+        probs_after = cl.prob(Y_TRAIN)
+        predict_after = cl.predict(Y_TRAIN)
+
+        ptm.assert_series_equal(probs_before, probs_after)
+        ptm.assert_index_equal(predict_before, predict_after)
 
     # def test_FS_supervised_binarize(self):
 
