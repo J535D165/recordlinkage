@@ -24,12 +24,14 @@ UNSUPERVISED_CLASSIFIERS = [
     rl.ECMClassifier
 ]
 
-CLASSIFIERS = SUPERVISED_CLASSIFIERS + UNSUPERVISED_CLASSIFIERS
-
 CLASSIFIERS_WITH_PROBS = [
     rl.LogisticRegressionClassifier,
-    rl.NaiveBayesClassifier
+    rl.NaiveBayesClassifier,
+    rl.ECMClassifier
 ]
+
+CLASSIFIERS = SUPERVISED_CLASSIFIERS + UNSUPERVISED_CLASSIFIERS
+
 
 N = 10000
 Y = pd.DataFrame(
@@ -136,13 +138,33 @@ class TestClassifyAPI(TestClassifyData):
     def test_probs(self, classifier):
 
         cl = classifier()
-        cl.fit(self.y, self.matches_index)
+
+        if isinstance(cl, tuple(UNSUPERVISED_CLASSIFIERS)):
+            cl.fit(self.y)
+        else:
+            cl.fit(self.y, self.matches_index)
 
         probs = cl.prob(self.y)
+        print(probs)
 
         assert isinstance(probs, pd.Series)
+        assert probs.notnull().all()
         assert probs.max() <= 1.0
         assert probs.min() >= 0.0
+
+    @pytest.mark.parametrize('classifier', CLASSIFIERS)
+    def test_predict(self, classifier):
+
+        cl = classifier()
+
+        if isinstance(cl, tuple(UNSUPERVISED_CLASSIFIERS)):
+            cl.fit(self.y)
+        else:
+            cl.fit(self.y, self.matches_index)
+
+        expected = cl.predict(self.y)
+
+        assert isinstance(expected, pd.MultiIndex)
 
     @pytest.mark.parametrize('classifier', UNSUPERVISED_CLASSIFIERS)
     def test_fit_predict_unsupervised(self, classifier):
