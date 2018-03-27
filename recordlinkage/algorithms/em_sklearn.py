@@ -174,14 +174,59 @@ class BaseNB(six.with_metaclass(ABCMeta, BaseEstimator, ClassifierMixin)):
         return np.exp(self.predict_log_proba(X))
 
 
-class BaseDiscreteNB(BaseNB):
-    """Abstract base class for naive Bayes on discrete/categorical data
+class ECM(BaseNB):
+    """ECM classifier for multivariate Bernoulli models.
 
-    Any estimator based on this class should provide:
+    ECM is designed for binary/boolean features.
 
-    __init__
-    _joint_log_likelihood(X) as per BaseNB
+    Parameters
+    ----------
+
+    binarize : float or None, optional (default=0.0)
+        Threshold for binarizing (mapping to booleans) of sample features.
+        If None, input is presumed to already consist of binary vectors.
+
+    Attributes
+    ----------
+    class_log_prior_ : array, shape = [n_classes]
+        Log probability of each class (smoothed).
+
+    feature_log_prob_ : array, shape = [n_classes, n_features]
+        Empirical log probability of features given a class, P(x_i|y).
+
     """
+
+    def __init__(self,
+                 binarize=.8,
+                 max_iter=100,
+                 atol=10e-4):
+        self.binarize = binarize
+        self.max_iter = max_iter
+        self.atol = atol
+
+    def _joint_log_likelihood(self, X):
+        """Calculate the posterior log probability of the samples X"""
+        check_is_fitted(self, "classes_")
+
+        X = check_array(X, accept_sparse='csr')
+
+        if self.binarize is not None:
+            X = binarize(X, threshold=self.binarize)
+
+        n_classes, n_features = self.feature_log_prob_.shape
+        n_samples, n_features_X = X.shape
+
+        if n_features_X != n_features:
+            raise ValueError(
+                "Expected input with %d features, got %d instead" %
+                (n_features, n_features_X))
+
+        neg_prob = np.log(1 - np.exp(self.feature_log_prob_))
+        # Compute neg_prob · (1 - X).T  as  ∑neg_prob - X · neg_prob
+        jll = safe_sparse_dot(X, (self.feature_log_prob_ - neg_prob).T)
+        jll += self.class_log_prior_ + neg_prob.sum(axis=1)
+
+        return jll
 
     def fit(self, X):
         """Fit ECM classifier according to X
@@ -269,58 +314,3 @@ class BaseDiscreteNB(BaseNB):
 
     coef_ = property(_get_coef)
     intercept_ = property(_get_intercept)
-
-
-class ECM(BaseDiscreteNB):
-    """ECM classifier for multivariate Bernoulli models.
-
-    ECM is designed for binary/boolean features.
-
-    Parameters
-    ----------
-
-    binarize : float or None, optional (default=0.0)
-        Threshold for binarizing (mapping to booleans) of sample features.
-        If None, input is presumed to already consist of binary vectors.
-
-    Attributes
-    ----------
-    class_log_prior_ : array, shape = [n_classes]
-        Log probability of each class (smoothed).
-
-    feature_log_prob_ : array, shape = [n_classes, n_features]
-        Empirical log probability of features given a class, P(x_i|y).
-
-    """
-
-    def __init__(self,
-                 binarize=.8,
-                 max_iter=100,
-                 atol=10e-4):
-        self.binarize = binarize
-        self.max_iter = max_iter
-        self.atol = atol
-
-    def _joint_log_likelihood(self, X):
-        """Calculate the posterior log probability of the samples X"""
-        check_is_fitted(self, "classes_")
-
-        X = check_array(X, accept_sparse='csr')
-
-        if self.binarize is not None:
-            X = binarize(X, threshold=self.binarize)
-
-        n_classes, n_features = self.feature_log_prob_.shape
-        n_samples, n_features_X = X.shape
-
-        if n_features_X != n_features:
-            raise ValueError(
-                "Expected input with %d features, got %d instead" %
-                (n_features, n_features_X))
-
-        neg_prob = np.log(1 - np.exp(self.feature_log_prob_))
-        # Compute neg_prob · (1 - X).T  as  ∑neg_prob - X · neg_prob
-        jll = safe_sparse_dot(X, (self.feature_log_prob_ - neg_prob).T)
-        jll += self.class_log_prior_ + neg_prob.sum(axis=1)
-
-        return jll
