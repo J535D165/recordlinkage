@@ -1056,7 +1056,8 @@ class BaseClassifier(ABC):
         # deprecation
         if return_type is not None:
             warnings.warn("The argument 'return_type' is removed. "
-                          "Default value is now 'series'.", VisibleDeprecationWarning, stacklevel=2)
+                          "Default value is now 'series'.", 
+                          VisibleDeprecationWarning, stacklevel=2)
 
         logging.info("Classification - compute probabilities")
 
