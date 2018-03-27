@@ -147,7 +147,7 @@ comparisons.
 .. _Jellyfish: https://github.com/jamesturk/jellyfish
 .. _Numexpr: https://github.com/pydata/numexpr
 
-The license for this record linkage tool is GPLv3.
+The license for this record linkage tool is BSD-3-Clause.
 
 Need help?
 ----------
