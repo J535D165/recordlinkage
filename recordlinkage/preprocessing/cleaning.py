@@ -94,7 +94,7 @@ def clean(s, lowercase=True, replace_by_none=r'[^ \-\_A-Za-z0-9]+',
     # Remove accents etc
     if strip_accents:
         def strip_accents_fn_wrapper(x):
-            if type(value) == str:
+            if type(x) == str:
                 return strip_accents_fn(x)
             else:
                 return x
