@@ -47,7 +47,7 @@ def clean(s, lowercase=True, replace_by_none=r'[^ \-\_A-Za-z0-9]+',
     >>> import pandas
     >>> from recordlinkage.preprocessing import clean
     >>>
-    >>> name = ['Mary-ann',
+    >>> names = ['Mary-ann',
                 'Bob :)',
                 'Angel',
                 'Bob (alias Billy)',
