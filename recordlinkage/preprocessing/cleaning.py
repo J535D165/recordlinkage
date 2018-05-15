@@ -93,12 +93,17 @@ def clean(s, lowercase=True, replace_by_none=r'[^ \-\_A-Za-z0-9]+',
 
     # Remove accents etc
     if strip_accents:
+        def strip_accents_fn_wrapper(x):
+            if type(value) == str:
+                return strip_accents_fn(x)
+            else:
+                return x
 
         # encoding
         s = s.apply(
             lambda x: x.decode(encoding, decode_error) if
             type(x) == bytes else x)
-        s = s.map(lambda x: strip_accents_fn(x))
+        s = s.map(lambda x: strip_accents_fn_wrapper(x))
 
     # Remove all content between brackets
     if remove_brackets is True:
