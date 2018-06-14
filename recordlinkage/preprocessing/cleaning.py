@@ -1,3 +1,4 @@
+import sys
 from __future__ import division
 from __future__ import absolute_import
 # from __future__ import unicode_literals
@@ -94,10 +95,16 @@ def clean(s, lowercase=True, replace_by_none=r'[^ \-\_A-Za-z0-9]+',
     # Remove accents etc
     if strip_accents:
         def strip_accents_fn_wrapper(x):
-            if type(x) == str:
-                return strip_accents_fn(x)
+            if sys.version_info[0] >= 3:
+                if isinstance(x, str):
+                    return strip_accents_fn(x)
+                else:
+                    return x
             else:
-                return x
+                if isinstance(x, unicode):
+                    return strip_accents_fn(x)
+                else:
+                    return x
 
         # encoding
         s = s.apply(
