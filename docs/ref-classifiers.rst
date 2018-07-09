@@ -36,7 +36,7 @@ User-defined algorithms
 
 Classifiers can make use of the :class:`recordlinkage.base.BaseClassifier` for
 algorithms. ScitKit-learn based models may want
-:class:`recordlinkage.base.SKLearnClassifier` as subclass as well.
+:class:`recordlinkage.adapters.SKLearnAdapter` as subclass as well.
 
 .. autoclass:: recordlinkage.base.BaseClassifier
 
