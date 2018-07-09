@@ -3,8 +3,8 @@ import numpy
 from sklearn import cluster, linear_model, naive_bayes, svm
 
 from recordlinkage.base import BaseClassifier as Classifier
-from recordlinkage.base import SKLearnClassifier
-from recordlinkage.algorithms.em_sklearn import ECM
+from recordlinkage.adapters import SKLearnAdapter
+from recordlinkage.algorithms.nb_sklearn import ECM, NaiveBayes
 
 
 class FellegiSunter(object):
@@ -49,71 +49,103 @@ class FellegiSunter(object):
 
     """
 
+    def __init__(self, use_col_names=True, *args, **kwargs):
+        super(FellegiSunter, *args, **kwargs)
+
+        self.use_col_names = use_col_names
+
     def _decision_rule(self, probabilities, threshold):
 
         return (probabilities >= threshold).astype(int)
 
     def _match_class_pos(self):
-        # add notfitted warnings
+        """Return the position of the match class."""
+        # TODO: add notfitted warnings
 
         if self.kernel.classes_.shape[0] != 2:
             raise ValueError("Number of classes is {}, expected 2.".format(
                 self.kernel.classes_.shape[0]))
 
-        # get the position of match probabilities
-        classes = list(self.kernel.classes_)
-        return classes.index(1)
+        # # get the position of match probabilities
+        # classes = list(self.kernel.classes_)
+        # return classes.index(1)
+
+        return 1
 
     def _nonmatch_class_pos(self):
-        # add notfitted warnings
+        """Return the position of the non-match class."""
+        # TODO: add notfitted warnings
 
         if self.kernel.classes_.shape[0] != 2:
             raise ValueError("Number of classes is {}, expected 2.".format(
                 self.kernel.classes_.shape[0]))
 
-        # get the position of match probabilities
-        classes = list(self.kernel.classes_)
-        return classes.index(0)
+        # # get the position of match probabilities
+        # classes = list(self.kernel.classes_)
+        # return classes.index(0)
+
+        return 0
 
     @property
     def log_p(self):
         """Log match probability as described in the FS framework."""
         return self.kernel.class_log_prior_[self._match_class_pos()]
 
-    @log_p.setter
-    def log_p(self, value):
-        self.kernel.class_log_prior_[self._match_class_pos()] = value
+    # @log_p.setter
+    # def log_p(self, value):
+    #     self.kernel.class_log_prior_[self._match_class_pos()] = value
+
+    def _prob_inverse_transform(self, prob):
+
+        result = {}
+        counter = 0
+
+        for i, b in enumerate(self.kernel._binarizers):
+            keys = b.classes_
+
+            # select relevant m values
+            prob_bin = prob[counter:counter + len(keys)]
+            result[i] = {k: v for k, v in zip(keys, prob_bin)}
+            counter += len(keys)
+
+        return result
 
     @property
     def log_m_probs(self):
         """Log probability P(x_i==1|Match) as described in the FS framework."""
-        return self.kernel.feature_log_prob_[self._match_class_pos()]
 
-    @log_m_probs.setter
-    def log_m_probs(self, value):
-        self.kernel.feature_log_prob_[self._match_class_pos()] = value
+        m = self.kernel.feature_log_prob_[self._match_class_pos()]
+        return self._prob_inverse_transform(m)
+
+    # @log_m_probs.setter
+    # def log_m_probs(self, value):
+    #     self.kernel.feature_log_prob_[self._match_class_pos()] = value
 
     @property
     def log_u_probs(self):
         """Log probability P(x_i==1|Non-match) as described in the FS framework.
         """
-        return self.kernel.feature_log_prob_[self._nonmatch_class_pos()]
+        u = self.kernel.feature_log_prob_[self._nonmatch_class_pos()]
+        return self._prob_inverse_transform(u)
 
-    @log_u_probs.setter
-    def log_u_probs(self, value):
-        self.kernel.feature_log_prob_[self._nonmatch_class_pos()] = value
+    # @log_u_probs.setter
+    # def log_u_probs(self, value):
+    #     self.kernel.feature_log_prob_[self._nonmatch_class_pos()] = value
 
     @property
     def log_weights(self):
         """Log weights as described in the FS framework."""
 
-        return self.log_m_probs - self.log_u_probs
+        m = self.kernel.feature_log_prob_[self._match_class_pos()]
+        u = self.kernel.feature_log_prob_[self._nonmatch_class_pos()]
 
-    @log_weights.setter
-    def log_weights(self, value):
-        raise AttributeError(
-            "setting 'log_weights' or 'weights' is not possible"
-        )
+        return self._prob_inverse_transform(m - u)
+
+    # @log_weights.setter
+    # def log_weights(self, value):
+    #     raise AttributeError(
+    #         "setting 'log_weights' or 'weights' is not possible"
+    #     )
 
     @property
     def p(self):
@@ -121,44 +153,51 @@ class FellegiSunter(object):
 
         return numpy.exp(self.log_p)
 
-    @p.setter
-    def p(self, value):
-        self.__p = value
+    # @p.setter
+    # def p(self, value):
+    #     self.__p = value
 
     @property
     def m_probs(self):
         """Probability P(x_i==1|Match) as described in the FS framework."""
 
-        return numpy.exp(self.log_m_probs)
+        log_m = self.kernel.feature_log_prob_[self._match_class_pos()]
 
-    @m_probs.setter
-    def m_probs(self, value):
-        self.__m_probs = numpy.log(value)
+        return self._prob_inverse_transform(numpy.exp(log_m))
+
+    # @m_probs.setter
+    # def m_probs(self, value):
+    #     self.__m_probs = numpy.log(value)
 
     @property
     def u_probs(self):
         """Probability P(x_i==1|Non-match) as described in the FS framework."""
 
-        return numpy.exp(self.log_u_probs)
+        log_u = self.kernel.feature_log_prob_[self._nonmatch_class_pos()]
 
-    @u_probs.setter
-    def u_probs(self, value):
-        self.__u_probs = numpy.log(value)
+        return self._prob_inverse_transform(numpy.exp(log_u))
+
+    # @u_probs.setter
+    # def u_probs(self, value):
+    #     self.__u_probs = numpy.log(value)
 
     @property
     def weights(self):
         """Weights as described in the FS framework."""
 
-        return numpy.exp(self.log_weights)
+        m = self.kernel.feature_log_prob_[self._match_class_pos()]
+        u = self.kernel.feature_log_prob_[self._nonmatch_class_pos()]
 
-    @weights.setter
-    def weights(self, value):
-        raise AttributeError(
-            "setting 'log_weights' or 'weights' is not possible"
-        )
+        return self._prob_inverse_transform(numpy.exp(m - u))
+
+    # @weights.setter
+    # def weights(self, value):
+    #     raise AttributeError(
+    #         "setting 'log_weights' or 'weights' is not possible"
+    #     )
 
 
-class KMeansClassifier(SKLearnClassifier, Classifier):
+class KMeansClassifier(SKLearnAdapter, Classifier):
     """KMeans classifier.
 
     The `K-means clusterings algorithm (wikipedia)
@@ -271,7 +310,7 @@ class KMeansClassifier(SKLearnClassifier, Classifier):
                              "probabilities for the KMeansClassfier")
 
 
-class LogisticRegressionClassifier(SKLearnClassifier, Classifier):
+class LogisticRegressionClassifier(SKLearnAdapter, Classifier):
     """Logistic Regression Classifier.
 
     This classifier is an application of the `logistic regression model
@@ -371,29 +410,32 @@ class LogisticRegressionClassifier(SKLearnClassifier, Classifier):
                 pass
 
 
-class NaiveBayesClassifier(SKLearnClassifier, Classifier, FellegiSunter):
+class NaiveBayesClassifier(SKLearnAdapter, Classifier, FellegiSunter):
     """Naive Bayes Classifier.
 
     The `Naive Bayes classifier (wikipedia)
     <https://en.wikipedia.org/wiki/Naive_Bayes_classifier>`_ partitions
     candidate record pairs into matches and non-matches. The classifier is
     based on probabilistic principles. The Naive Bayes classification method
-    is proven to be mathematical equivalent with the Fellegi and Sunter model.
+    has a close mathematical connection with the Fellegi and Sunter model.
 
-    The NaiveBayesClassifier classifier uses the
-    :class:`sklearn.naive_bayes.BernoulliNB` classification algorithm from
-    SciKit-learn as kernel.
+    Note
+    ----
+
+    The NaiveBayesClassifier classifier differs of the Naive Bayes models
+    in SciKit-learn. With binary input vectors, the NaiveBayesClassifier
+    behaves like :class:`sklearn.naive_bayes.BernoulliNB`.
 
     Parameters
     ----------
 
     alpha : float
         Additive (Laplace/Lidstone) smoothing parameter (0 for no smoothing).
-        Default 0.0.
+        Default 1e-4.
 
-    **kwargs :
-        Additional arguments to pass to
-        :class:`sklearn.naive_bayes.BernoulliNB`.
+    binarize : float or None, optional (default=None)
+        Threshold for binarizing (mapping to booleans) of sample features.
+        If None, input is presumed to consist of multilevel vectors.
 
     Attributes
     ----------
@@ -429,18 +471,19 @@ class NaiveBayesClassifier(SKLearnClassifier, Classifier, FellegiSunter):
     """
 
     def __init__(self,
-                 alpha=0.0,
+                 alpha=1e-4,
+                 binarize=None,
                  **kwargs):
         super(NaiveBayesClassifier, self).__init__()
 
-        self.kernel = naive_bayes.BernoulliNB(
+        self.kernel = NaiveBayes(
             alpha=alpha,
-            binarize=None,
+            binarize=binarize,
             **kwargs
         )
 
 
-class SVMClassifier(SKLearnClassifier, Classifier):
+class SVMClassifier(SKLearnAdapter, Classifier):
     """Support Vector Machines Classifier
 
     The `Support Vector Machine classifier (wikipedia)
@@ -479,7 +522,7 @@ class SVMClassifier(SKLearnClassifier, Classifier):
                              "probabilities for the SVMClassfier")
 
 
-class ECMClassifier(SKLearnClassifier, Classifier, FellegiSunter):
+class ECMClassifier(SKLearnAdapter, Classifier, FellegiSunter):
     """Expectation/Conditional Maxisation classifier (Unsupervised).
 
     Expectation/Conditional Maximisation algorithm used as

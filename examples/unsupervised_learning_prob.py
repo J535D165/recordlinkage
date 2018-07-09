@@ -1,9 +1,9 @@
 '''Example: Unsupervised learning with the ECM algorithm.
 
-Train data is often hard to get in record linkage or data matching problems.
-The Expectation-Conditional Maximisation (ECM) algorithm is the most well
-known algorithm for unsupervised data matching. The algorithm preforms
-relatively well compared to other supervised methods.
+Train data is often hard to collect in record linkage or data matching
+problems. The Expectation-Conditional Maximisation (ECM) algorithm is the most
+well known algorithm for unsupervised data matching. The algorithm preforms
+relatively well compared to supervised methods.
 
 '''
 
@@ -30,7 +30,7 @@ X_data, links_true = binary_vectors(
     return_links=True)  # return true links
 
 # Initialise the Expectation-Conditional Maximisation classifier.
-cl = rl.ECMClassifier()
+cl = rl.ECMClassifier(init='jaro')
 cl.fit(X_data)
 
 # Print the parameters that are trained (m, u and p). Note that the estimates
@@ -38,7 +38,9 @@ cl.fit(X_data)
 print("p probability P(Match):", cl.p)
 print("m probabilities P(x_i=1|Match):", cl.m_probs)
 print("u probabilities P(x_i=1|Non-Match):", cl.u_probs)
-
+print("log m probabilities P(x_i=1|Match):", cl.log_m_probs)
+print("log u probabilities P(x_i=1|Non-Match):", cl.log_u_probs)
+print("Weights of features:", cl.log_weights)
 print("Weights of features:", cl.weights)
 
 # evaluate the model
