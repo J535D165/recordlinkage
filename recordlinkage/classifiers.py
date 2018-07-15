@@ -1,4 +1,5 @@
 import numpy
+import pandas
 
 from sklearn import cluster, linear_model, naive_bayes, svm
 
@@ -53,6 +54,7 @@ class FellegiSunter(object):
         super(FellegiSunter, *args, **kwargs)
 
         self.use_col_names = use_col_names
+        self._column_labels = None
 
     def _decision_rule(self, probabilities, threshold):
 
@@ -103,9 +105,19 @@ class FellegiSunter(object):
         for i, b in enumerate(self.kernel._binarizers):
             keys = b.classes_
 
+            if self.use_col_names:
+                try:
+                    column_label_i = self._column_labels[i]
+                except IndexError:
+                    raise IndexError(
+                        "shape of column labels doesn't match"
+                    )
+            else:
+                column_label_i = i
+
             # select relevant m values
             prob_bin = prob[counter:counter + len(keys)]
-            result[i] = {k: v for k, v in zip(keys, prob_bin)}
+            result[column_label_i] = {k: v for k, v in zip(keys, prob_bin)}
             counter += len(keys)
 
         return result
@@ -410,7 +422,7 @@ class LogisticRegressionClassifier(SKLearnAdapter, Classifier):
                 pass
 
 
-class NaiveBayesClassifier(SKLearnAdapter, Classifier, FellegiSunter):
+class NaiveBayesClassifier(FellegiSunter, SKLearnAdapter, Classifier):
     """Naive Bayes Classifier.
 
     The `Naive Bayes classifier (wikipedia)
@@ -482,6 +494,14 @@ class NaiveBayesClassifier(SKLearnAdapter, Classifier, FellegiSunter):
             **kwargs
         )
 
+    def fit(self, X, *args, **kwargs):
+        __doc__ = Classifier.__doc__  # noqa
+
+        if isinstance(X, pandas.DataFrame):
+            self._column_labels = X.columns.tolist()
+
+        Classifier.fit(self, X, *args, **kwargs)
+
 
 class SVMClassifier(SKLearnAdapter, Classifier):
     """Support Vector Machines Classifier
@@ -522,7 +542,7 @@ class SVMClassifier(SKLearnAdapter, Classifier):
                              "probabilities for the SVMClassfier")
 
 
-class ECMClassifier(SKLearnAdapter, Classifier, FellegiSunter):
+class ECMClassifier(FellegiSunter, SKLearnAdapter, Classifier):
     """Expectation/Conditional Maxisation classifier (Unsupervised).
 
     Expectation/Conditional Maximisation algorithm used as
@@ -587,6 +607,14 @@ class ECMClassifier(SKLearnAdapter, Classifier, FellegiSunter):
         super(ECMClassifier, self).__init__()
 
         self.kernel = ECM(*args, **kwargs)
+
+    def fit(self, X, *args, **kwargs):
+        __doc__ = Classifier.__doc__  # noqa
+
+        if isinstance(X, pandas.DataFrame):
+            self._column_labels = X.columns.tolist()
+
+        Classifier.fit(self, X, *args, **kwargs)
 
     @property
     def algorithm(self):
