@@ -432,7 +432,7 @@ class ECM(BaseNB):
     def __init__(self,
                  init='jaro',
                  max_iter=100,
-                 atol=10e-4):
+                 atol=10e-5):
         self.init = init
         self.max_iter = max_iter
         self.atol = atol
