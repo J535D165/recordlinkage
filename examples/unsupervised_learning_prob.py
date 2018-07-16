@@ -30,7 +30,7 @@ X_data, links_true = binary_vectors(
     return_links=True)  # return true links
 
 # Initialise the Expectation-Conditional Maximisation classifier.
-cl = rl.ECMClassifier(init='jaro')
+cl = rl.ECMClassifier()
 cl.fit(X_data)
 
 # Print the parameters that are trained (m, u and p). Note that the estimates
