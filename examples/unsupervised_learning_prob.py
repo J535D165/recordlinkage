@@ -60,3 +60,4 @@ print('precision', precision)
 
 # Predict the match probability for each pair in the dataset.
 probs = cl.prob(X_data)
+print(probs)
