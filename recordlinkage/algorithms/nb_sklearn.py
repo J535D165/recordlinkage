@@ -169,6 +169,7 @@ class BaseNB(six.with_metaclass(ABCMeta, BaseEstimator, ClassifierMixin)):
         jll = self._joint_log_likelihood(X)
         # normalize by P(x) = P(f_1, ..., f_n)
         log_prob_x = logsumexp(jll, axis=1)
+
         return jll - np.atleast_2d(log_prob_x).T
 
     def predict_proba(self, X):
@@ -377,8 +378,6 @@ class NaiveBayes(BaseNB):
         alpha = self._check_alpha()
         self._update_feature_log_prob(alpha)
         self._update_class_log_prior(class_prior=class_prior)
-
-        print(self.feature_log_prob_)
 
         return self
 
