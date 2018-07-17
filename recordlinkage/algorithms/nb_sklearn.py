@@ -231,11 +231,12 @@ class BaseNB(six.with_metaclass(ABCMeta, BaseEstimator, ClassifierMixin)):
         for i in range(X.shape[1]):
 
             X_i = self._binarizers[i].transform(X[:, i])
-            X_parts.append(X_i)
 
             # sklearn returns ndarray with shape (samples, 1) on binary input.
             if self._binarizers[i].classes_.shape[0] == 2:
-                X_i = X_parts.append(1 - X_i)
+                X_parts.append(1 - X_i)
+
+            X_parts.append(X_i)
 
         return np.concatenate(X_parts, axis=1)
 
@@ -493,8 +494,8 @@ class ECM(BaseNB):
             # TODO: ensure classes are [0, 1] (not [1, 0])
             # TODO: check with bin.y_type_
 
-            feature_prob[0, :] = np.tile([.1, .9], int(n_features / 2))
-            feature_prob[1, :] = np.tile([.9, .1], int(n_features / 2))
+            feature_prob[0, :] = np.tile([.9, .1], int(n_features / 2))
+            feature_prob[1, :] = np.tile([.1, .9], int(n_features / 2))
 
         return np.log(class_prior), np.log(feature_prob)
 
