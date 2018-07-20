@@ -1,11 +1,14 @@
+# -*- coding: utf-8 -*-
+
 """Base module for record linkage."""
 
 from __future__ import division
 
 import time
 import warnings
-from abc import ABC, abstractmethod
+from abc import ABCMeta, abstractmethod
 
+import six
 import pandas
 import numpy as np
 from sklearn.externals.joblib import Parallel, delayed
@@ -863,7 +866,7 @@ class BaseCompare(object):
         raise AttributeError("this method was removed in version 0.12.0")
 
 
-class BaseClassifier(ABC):
+class BaseClassifier(six.with_metaclass(ABCMeta)):
     """Base class for classification of records pairs.
 
     This class contains methods for training the classifier.
