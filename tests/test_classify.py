@@ -8,7 +8,6 @@ from sklearn.preprocessing import binarize
 
 import recordlinkage as rl
 from recordlinkage.datasets import binary_vectors
-import recordlinkage.config as cf
 
 import pytest
 from numpy.testing.utils import assert_almost_equal
@@ -98,20 +97,20 @@ class TestClassifyAPI(TestClassifyData):
         prediction_default = cl.predict(self.X_test)
         assert isinstance(prediction_default, pd.MultiIndex)
 
-        with cf.option_context('classification.return_type', 'index'):
+        with rl.option_context('classification.return_type', 'index'):
             prediction_multiindex = cl.predict(comparison_vectors=self.X_train)
             assert isinstance(prediction_multiindex, pd.MultiIndex)
 
-        with cf.option_context('classification.return_type', 'array'):
+        with rl.option_context('classification.return_type', 'array'):
             prediction_ndarray = cl.predict(comparison_vectors=self.X_train)
             assert isinstance(prediction_ndarray, np.ndarray)
 
-        with cf.option_context('classification.return_type', 'series'):
+        with rl.option_context('classification.return_type', 'series'):
             prediction_series = cl.predict(comparison_vectors=self.X_train)
             assert isinstance(prediction_series, pd.Series)
 
         with pytest.raises(ValueError):
-            with cf.option_context('classification.return_type',
+            with rl.option_context('classification.return_type',
                                    'unknown_return_type'):
                 cl.predict(
                     comparison_vectors=self.X_train
