@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import numpy
 import pandas
 
@@ -45,7 +47,7 @@ class FellegiSunter(object):
     References
     ----------
 
-    Fellegi, Ivan P and Alan B Sunter. 1969. “A theory for record linkage.”
+    Fellegi, Ivan P and Alan B Sunter. 1969. "A theory for record linkage."
     Journal of the American Statistical Association 64(328):1183–1210.
 
     """
