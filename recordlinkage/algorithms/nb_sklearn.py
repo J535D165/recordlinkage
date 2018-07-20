@@ -544,6 +544,9 @@ class ECM(BaseNB):
         iteration = 0
         stop_iteration = False
 
+        self._log_class_log_prior = np.atleast_2d(self.class_log_prior_)
+        self._log_feature_log_prob = np.atleast_3d(self.feature_log_prob_)
+
         while iteration < self.max_iter and not stop_iteration:
 
             # expectation step
@@ -572,6 +575,15 @@ class ECM(BaseNB):
             self.class_log_prior_ = class_log_prior_
             self.feature_log_prob_ = feature_log_prob_
 
+            # create logs
+            self._log_class_log_prior = np.concatenate(
+                [self._log_class_log_prior,
+                 np.atleast_2d(self.class_log_prior_)]
+            )
+            self._log_feature_log_prob = np.concatenate(
+                [self._log_feature_log_prob,
+                 np.atleast_3d(self.feature_log_prob_)], axis=2
+            )
             # Increment counter
             iteration += 1
 
