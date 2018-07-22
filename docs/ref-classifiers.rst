@@ -1,15 +1,14 @@
-Classification
-==============
+*****************
+3. Classification
+*****************
 
 Classifiers
------------
+===========
 
 Classification is the step in the record linkage process were record pairs are
 classified into matches, non-matches and possible matches [Christen2012_].
-Classification algorithms can be supervised or unsupervised (rougly speaking:
-with or without training data). Many of the algorithms need trainings data to
-classify the record pairs. Trainings data is data for which is known whether
-it is a match or not.
+Classification algorithms can be supervised or unsupervised (with or without
+training data).
 
 
 .. seealso::
@@ -18,23 +17,50 @@ it is a match or not.
         techniques for record linkage, entity resolution, and duplicate 
         detection. Springer Science & Business Media.
 
-.. autofunction:: recordlinkage.LogisticRegressionClassifier 
-.. autofunction:: recordlinkage.NaiveBayesClassifier
-.. autofunction:: recordlinkage.KMeansClassifier
-.. autofunction:: recordlinkage.SVMClassifier
-.. autofunction:: recordlinkage.ECMClassifier
-.. autofunction:: recordlinkage.Classifier
+Supervised
+----------
+
+.. autoclass:: recordlinkage.LogisticRegressionClassifier 
+.. autoclass:: recordlinkage.NaiveBayesClassifier
+.. autoclass:: recordlinkage.SVMClassifier
+
+Unsupervised
+------------
+
+.. autoclass:: recordlinkage.ECMClassifier
+.. autoclass:: recordlinkage.KMeansClassifier
+
+
+User-defined algorithms
+=======================
+
+Classifiers can make use of the :class:`recordlinkage.base.BaseClassifier` for
+algorithms. ScitKit-learn based models may want
+:class:`recordlinkage.adapters.SKLearnAdapter` as subclass as well.
+
+.. autoclass:: recordlinkage.base.BaseClassifier
+
+Probabilistic models can use the Fellegi and Sunter base class. This class is
+used for the :class:`recordlinkage.ECMClassifier` and the
+:class:`recordlinkage.NaiveBayesClassifier`.
+
+.. autoclass:: recordlinkage.classifiers.FellegiSunter
+
+Examples
+========
+
+Unsupervised learning with the ECM algorithm. [See example on Github.](https://github.com/J535D165/recordlinkage/examples/unsupervised_learning.py)
 
 
 Network
--------
+=======
 
-The Python Record Linkage Toolkit provides network analysis tools for 
-classification of record pairs into matches and distinct pairs. The toolkit 
-provides the functionality for one-to-one linking and one-to-many linking. 
-It is also possible to detect all connected components which is useful in 
-data deduplication. 
+The Python Record Linkage Toolkit provides network/graph analysis tools for
+classification of record pairs into matches and distinct pairs. The toolkit
+provides the functionality for one-to-one linking and one-to-many linking. It
+is also possible to detect all connected components which is useful in  data
+deduplication.
 
-.. autofunction:: recordlinkage.OneToOneLinking 
-.. autofunction:: recordlinkage.OneToManyLinking
-.. autofunction:: recordlinkage.ConnectedComponents
+.. autoclass:: recordlinkage.OneToOneLinking 
+.. autoclass:: recordlinkage.OneToManyLinking
+.. autoclass:: recordlinkage.ConnectedComponents
