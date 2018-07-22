@@ -11,6 +11,7 @@ env:
   - PANDAS="0.19"
   - PANDAS="0.20"
   - PANDAS="0.21"
+  - PANDAS="0.22"
   - PANDAS="latest"
 
 install:
