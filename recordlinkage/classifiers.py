@@ -17,6 +17,14 @@ class FellegiSunter(object):
     Sunter class is used for the :class:`recordlinkage.NaiveBayesClassifier`
     and :class:`recordlinkage.ECMClassifier`.
 
+    Parameters
+    ----------
+
+    use_col_names : bool
+        Use the column names of the pandas.DataFrame to identify the
+        parameters. If False, the column index of the feature is used.
+        Default True.
+
     Attributes
     ----------
 
@@ -443,13 +451,16 @@ class NaiveBayesClassifier(FellegiSunter, SKLearnAdapter, Classifier):
     Parameters
     ----------
 
-    alpha : float
-        Additive (Laplace/Lidstone) smoothing parameter (0 for no smoothing).
-        Default 1e-4.
-
     binarize : float or None, optional (default=None)
         Threshold for binarizing (mapping to booleans) of sample features.
         If None, input is presumed to consist of multilevel vectors.
+    alpha : float
+        Additive (Laplace/Lidstone) smoothing parameter (0 for no smoothing).
+        Default 1e-4.
+    use_col_names : bool
+        Use the column names of the pandas.DataFrame to identify the
+        parameters. If False, the column index of the feature is used.
+        Default True.
 
     Attributes
     ----------
@@ -485,10 +496,13 @@ class NaiveBayesClassifier(FellegiSunter, SKLearnAdapter, Classifier):
     """
 
     def __init__(self,
-                 alpha=1e-4,
                  binarize=None,
+                 alpha=1e-4,
+                 use_col_names=True,
                  **kwargs):
-        super(NaiveBayesClassifier, self).__init__()
+        super(NaiveBayesClassifier, self).__init__(
+            use_col_names=use_col_names
+        )
 
         self.kernel = NaiveBayes(
             alpha=alpha,
@@ -547,25 +561,31 @@ class SVMClassifier(SKLearnAdapter, Classifier):
 class ECMClassifier(FellegiSunter, SKLearnAdapter, Classifier):
     """Expectation/Conditional Maxisation classifier (Unsupervised).
 
-    Expectation/Conditional Maximisation algorithm used as
-    classifier. This probabilistic record linkage algorithm is used in
-    combination with Fellegi and Sunter model.
+    Expectation/Conditional Maximisation algorithm used to classify
+    record pairs. This probabilistic record linkage algorithm is used
+    in combination with Fellegi and Sunter model. This classifier
+    doesn't need training data (unsupervised).
 
     Parameters
     ----------
 
-    binarize : float or None, optional (default=0.0)
-        Threshold for binarizing (mapping to booleans) of sample features.
-        If None, input is presumed to already consist of binary vectors.
-
+    init : str
+        Initialisation method for the algorithm. Options are:
+        'jaro' and 'random'. Default 'jaro'.
     max_iter : int
         The maximum number of iterations of the EM algorithm. Default 100.
-
+    binarize : float or None, optional (default=None)
+        Threshold for binarizing (mapping to booleans) of sample features.
+        If None, input is presumed to already consist of binary vectors.
     atol : float
         The tolerance between parameters between each interation. If the
         difference between the parameters between the iterations is smaller
         than this value, the algorithm is considered to be converged.
         Default 10e-4.
+    use_col_names : bool
+        Use the column names of the pandas.DataFrame to identify the
+        parameters. If False, the column index of the feature is used.
+        Default True.
 
     Attributes
     ----------
@@ -603,12 +623,32 @@ class ECMClassifier(FellegiSunter, SKLearnAdapter, Classifier):
     Herzog, Thomas N, Fritz J Scheuren and William E Winkler. 2007. Data
     quality and record linkage techniques. Vol. 1 Springer.
 
+    Fellegi, Ivan P and Alan B Sunter. 1969. "A theory for record linkage."
+    Journal of the American Statistical Association 64(328):1183–1210.
+
+    Collins, M. "The Naive Bayes Model, Maximum-Likelihood
+    Estimation, and the EM Algorithm".
+    http://www.cs.columbia.edu/~mcollins/em.pdf
+
     """
 
-    def __init__(self, *args, **kwargs):
-        super(ECMClassifier, self).__init__()
+    def __init__(self,
+                 init='jaro',
+                 binarize=None,
+                 max_iter=100,
+                 atol=10e-5,
+                 use_col_names=True,
+                 *args, **kwargs):
+        super(ECMClassifier, self).__init__(
+            use_col_names=use_col_names
+        )
 
-        self.kernel = ECM(*args, **kwargs)
+        self.kernel = ECM(
+            init=init,
+            binarize=binarize,
+            max_iter=max_iter,
+            atol=atol, *args, **kwargs
+        )
 
     def fit(self, X, *args, **kwargs):
         __doc__ = Classifier.__doc__  # noqa

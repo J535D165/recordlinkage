@@ -206,6 +206,9 @@ class BaseNB(six.with_metaclass(ABCMeta, BaseEstimator, ClassifierMixin)):
 
         """
 
+        if self.binarize is not None:
+            X = binarize(X, threshold=self.binarize)
+
         for i in range(X.shape[1]):
 
             # initialise binarizer and save
@@ -222,6 +225,9 @@ class BaseNB(six.with_metaclass(ABCMeta, BaseEstimator, ClassifierMixin)):
 
         if self._binarizers == []:
             raise NotFittedError()
+
+        if self.binarize is not None:
+            X = binarize(X, threshold=self.binarize)
 
         if len(self._binarizers) != X.shape[1]:
             raise ValueError(
@@ -262,6 +268,15 @@ class NaiveBayes(BaseNB):
         Threshold for binarizing (mapping to booleans) of sample features.
         If None, input is presumed to already consist of binary vectors.
 
+    alpha: float
+        Default 1.0.
+
+    fit_prior: bool
+        Default True.
+
+    class_prior: np.array
+        Default None.
+
     Attributes
     ----------
     class_log_prior_ : array, shape = [n_classes]
@@ -285,8 +300,6 @@ class NaiveBayes(BaseNB):
 
     def _count(self, X, Y):
         """Count and smooth feature occurrences."""
-        if self.binarize is not None:
-            X = binarize(X, threshold=self.binarize)
 
         self.feature_count_ += safe_sparse_dot(Y.T, X)
         self.class_count_ += Y.sum(axis=0)
@@ -353,7 +366,6 @@ class NaiveBayes(BaseNB):
         X_bin = self._fit_data(X)
         _, n_features = X_bin.shape
 
-        # import pdb; pdb.set_trace()
         # prepare Y
         labelbin = LabelBinarizer()
         Y = labelbin.fit_transform(y)
@@ -407,10 +419,13 @@ class ECM(BaseNB):
     ----------
 
     init : str
-        Initialisation method for the algorithms. Options are:
+        Initialisation method for the algorithm. Options are:
         'jaro' and 'random'. Default 'jaro'.
     max_iter : int
         Maximum number of iterations. Default 100.
+    binarize : float or None, optional (default=0.0)
+        Threshold for binarizing (mapping to booleans) of sample features.
+        If None, input is presumed to already consist of binary vectors.
     atol : float
         Difference between trainable parameters between iterations
         needs to be less than this value. If less than this value, the
@@ -434,9 +449,11 @@ class ECM(BaseNB):
     def __init__(self,
                  init='jaro',
                  max_iter=100,
+                 binarize=binarize,
                  atol=10e-5):
         self.init = init
         self.max_iter = max_iter
+        self.binarize = binarize
         self.atol = atol
 
         self._binarizers = []
