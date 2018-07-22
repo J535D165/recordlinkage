@@ -128,10 +128,11 @@ class BaseNB(six.with_metaclass(ABCMeta, BaseEstimator, ClassifierMixin)):
                 "Expected input with %d features, got %d instead" %
                 (n_features, n_features_X))
 
-        neg_prob = np.log(1 - np.exp(self.feature_log_prob_))
-        # Compute neg_prob · (1 - X).T  as  ∑neg_prob - X · neg_prob
-        jll = safe_sparse_dot(X_bin, (self.feature_log_prob_ - neg_prob).T)
-        jll += self.class_log_prior_ + neg_prob.sum(axis=1)
+        # see chapter 4.1 of http://www.cs.columbia.edu/~mcollins/em.pdf
+        # implementation as in Formula 4.
+
+        jll = safe_sparse_dot(X_bin, self.feature_log_prob_.T)
+        jll += self.class_log_prior_
 
         return jll
 
@@ -167,8 +168,9 @@ class BaseNB(six.with_metaclass(ABCMeta, BaseEstimator, ClassifierMixin)):
             order, as they appear in the attribute `classes_`.
         """
         jll = self._joint_log_likelihood(X)
+
         # normalize by P(x) = P(f_1, ..., f_n)
-        log_prob_x = logsumexp(jll, axis=1)
+        log_prob_x = logsumexp(jll, axis=1)  # return shape = (2,)
 
         return jll - np.atleast_2d(log_prob_x).T
 
