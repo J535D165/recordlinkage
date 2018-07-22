@@ -22,7 +22,7 @@ The easiest way of installing the Python Record Linkage Toolkit is using
 	pip install --user recordlinkage
 
 You can also clone the project on Github. The license of this record linkage
-package is GPLv3.
+package is BSD-3-Clause.
 
 Dependencies
 ============

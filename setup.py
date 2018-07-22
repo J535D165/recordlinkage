@@ -35,5 +35,5 @@ setup(
     packages=find_packages(exclude=["benchmarks", "tests", "docs"]),
     include_package_data=True,
     package_data={'recordlinkage': ['datasets/*/*.csv']},
-    license='GPL-3.0'
+    license='BSD-3-Clause'
 )
