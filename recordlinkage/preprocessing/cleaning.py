@@ -2,6 +2,8 @@ from __future__ import division
 from __future__ import absolute_import
 # from __future__ import unicode_literals
 
+import sys
+
 from sklearn.feature_extraction.text import strip_accents_ascii, \
     strip_accents_unicode
 
@@ -47,7 +49,7 @@ def clean(s, lowercase=True, replace_by_none=r'[^ \-\_A-Za-z0-9]+',
     >>> import pandas
     >>> from recordlinkage.preprocessing import clean
     >>>
-    >>> name = ['Mary-ann',
+    >>> names = ['Mary-ann',
                 'Bob :)',
                 'Angel',
                 'Bob (alias Billy)',
@@ -93,12 +95,23 @@ def clean(s, lowercase=True, replace_by_none=r'[^ \-\_A-Za-z0-9]+',
 
     # Remove accents etc
     if strip_accents:
+        def strip_accents_fn_wrapper(x):
+            if sys.version_info[0] >= 3:
+                if isinstance(x, str):
+                    return strip_accents_fn(x)
+                else:
+                    return x
+            else:
+                if isinstance(x, unicode):
+                    return strip_accents_fn(x)
+                else:
+                    return x
 
         # encoding
         s = s.apply(
             lambda x: x.decode(encoding, decode_error) if
             type(x) == bytes else x)
-        s = s.map(lambda x: strip_accents_fn(x))
+        s = s.map(lambda x: strip_accents_fn_wrapper(x))
 
     # Remove all content between brackets
     if remove_brackets is True:
