@@ -24,7 +24,7 @@ X_data, links_true = binary_vectors(
     random_state=535,  # set seed
     return_links=True)  # return true links
 
-# Initialise the Expectation-Conditional Maximisation classifier.
+# Initialise the NaiveBayesClassifier.
 cl = rl.NaiveBayesClassifier()
 cl.fit(X_data, links_true)
 
@@ -35,8 +35,8 @@ print("m probabilities P(x_i=1|Match):", cl.m_probs)
 print("u probabilities P(x_i=1|Non-Match):", cl.u_probs)
 print("log m probabilities P(x_i=1|Match):", cl.log_m_probs)
 print("log u probabilities P(x_i=1|Non-Match):", cl.log_u_probs)
-print("Weights of features:", cl.log_weights)
-print("Weights of features:", cl.weights)
+print("log weights of features:", cl.log_weights)
+print("weights of features:", cl.weights)
 
 # evaluate the model
 links_pred = cl.predict(X_data)
