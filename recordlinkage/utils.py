@@ -1,3 +1,5 @@
+from functools import wraps
+
 import pandas
 import numpy
 import warnings
@@ -53,6 +55,8 @@ class DeprecationHelper(object):
 
 
 def return_type_deprecator(func):
+
+    @wraps(func)
     def func_wrapper(*args, **kwargs):
         return_type = kwargs.pop('return_type', None)
         if return_type is not None:
