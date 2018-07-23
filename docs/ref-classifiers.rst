@@ -21,14 +21,27 @@ Supervised
 ----------
 
 .. autoclass:: recordlinkage.LogisticRegressionClassifier 
+    :members:
+    :inherited-members:
+
 .. autoclass:: recordlinkage.NaiveBayesClassifier
+    :members:
+    :inherited-members:
+
 .. autoclass:: recordlinkage.SVMClassifier
+    :members:
+    :inherited-members:
 
 Unsupervised
 ------------
 
 .. autoclass:: recordlinkage.ECMClassifier
+    :members:
+    :inherited-members:
+
 .. autoclass:: recordlinkage.KMeansClassifier
+    :members:
+    :inherited-members:
 
 
 User-defined algorithms
