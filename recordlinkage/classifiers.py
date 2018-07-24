@@ -379,11 +379,11 @@ class LogisticRegressionClassifier(SKLearnAdapter, Classifier):
                  **kwargs):
         super(LogisticRegressionClassifier, self).__init__()
 
-        self.coefficients = coefficients
-        self.intercept = intercept
-
         self.kernel = linear_model.LogisticRegression(**kwargs)
         self.kernel.classes_ = numpy.array([0, 1])
+
+        self.coefficients = coefficients
+        self.intercept = intercept
 
     @property
     def params(self):
