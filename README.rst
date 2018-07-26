@@ -47,8 +47,9 @@ are returned.
 
 .. code:: python
 
-    block_class = recordlinkage.BlockIndex('surname')
-    candidate_links = block_class.index(df_a, df_b)
+    indexer = recordlinkage.Index()
+    indexer.block('surname')
+    candidate_links = indexer.index(df_a, df_b)
 
 For each candidate link, compare the records with one of the
 comparison or similarity algorithms in the Compare class.
@@ -74,7 +75,7 @@ others are unsupervised. An example of supervised learning:
 .. code:: python
 
     logrg = recordlinkage.LogisticRegressionClassifier()
-    logrg.learn(TRAINING_COMPARISON_VECTORS, TRAINING_CLASSES)
+    logrg.fit(TRAINING_COMPARISON_VECTORS, TRAINING_CLASSES)
 
     logrg.predict(feature_vectors)
 
@@ -83,7 +84,7 @@ and an example of unsupervised learning (the well known ECM-algorithm):
 .. code:: python
 
     ecm = recordlinkage.ECMClassifier()
-    ecm.learn(feature_vectors)
+    ecm.fit_predict(feature_vectors)
 
 Main Features
 -------------

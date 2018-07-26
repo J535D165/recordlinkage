@@ -26,27 +26,22 @@ record pairs agree on the given name **and** surname.
 
 .. code:: python
 
-    p = recordlinkage.BlockIndex(left_on=['first_name', 'surname'], 
+    from recordlinkage.index import Block
+    indexer = Block(left_on=['first_name', 'surname'], 
                                  right_on=['name', 'surname'])
-    pairs = p.index(dfA, dfB)
+    pairs = indexer.index(dfA, dfB)
 
 You might exclude more links then desired. This can be solved by
-repeating the process with a different combinations of blocking
-variables. In the end, merge the links of the two, so called, index
-passes.
+repeating the process with different blocking variables.
 
 .. code:: python
 
-    p_surname = recordlinkage.BlockIndex(left_on=['first_name', 'surname'], 
-                                         right_on=['name', 'surname'])
-    p_age = recordlinkage.BlockIndex(left_on=['first_name', 'age'], 
-                                     right_on=['name', 'age'])
-
-    pairs_surname = p_surname.index(dfA, dfB)
-    pairs_age = p_age.index(dfA, dfB)
-
-    # make a union of the candidate links of both classes
-    pairs_surname.union(pairs_age)
+    indexer = recordlinkage.Index()
+    indexer.block(left_on=['first_name', 'surname'], 
+                  right_on=['name', 'surname'])
+    indexer.block(left_on=['first_name', 'age'], 
+                  right_on=['name', 'age'])
+    pairs = indexer.index(dfA, dfB)
 
 .. note:: Sorted Neighbourhood indexing supports, besides the sorted
         neighbourhood, additional blocking on variables. 
@@ -114,7 +109,7 @@ blocks. Consider full indexing:
     import recordlinkage
     import numpy
 
-    cl = recordlinkage.FullIndex()
+    cl = recordlinkage.index.Full()
     
     for dfB_subset in numpy.split(dfB):
         

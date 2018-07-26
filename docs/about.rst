@@ -98,8 +98,9 @@ surname are included.
 
 .. code:: python
 
-    block_class = recordlinkage.BlockIndex('surname')
-    candidate_links = block_class.index(df_a, df_b)
+    indexer = recordlinkage.Index()
+    indexer.block('surname')
+    candidate_links = indexer.index(df_a, df_b)
 
 Each ``candidate_link`` needs to be compared on the comparable attributes.
 This can be done easily with the Compare class and the available comparison
@@ -128,7 +129,7 @@ some others are unsupervised. An example of supervised learning:
     true_linkage = pandas.Series(YOUR_GOLDEN_DATA, index=pandas.MultiIndex(YOUR_MULTI_INDEX))
 
     logrg = recordlinkage.LogisticRegressionClassifier()
-    logrg.learn(compare_vectors[true_linkage.index], true_linkage)
+    logrg.fit(compare_vectors[true_linkage.index], true_linkage)
 
     logrg.predict(compare_vectors)
 
@@ -137,6 +138,6 @@ and an example of unsupervised learning (the well known ECM-algorithm):
 .. code:: python
 
     ecm = recordlinkage.BernoulliEMClassifier()
-    ecm.learn(compare_vectors)
+    ecm.fit_predict(compare_vectors)
 
 
