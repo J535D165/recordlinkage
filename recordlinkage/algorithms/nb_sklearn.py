@@ -12,7 +12,6 @@ module is based on scikit-learn's subdule :mod:`sklearn.naive_bayes`.
 # is BSD 3 clause. Modifications copyright Jonathan de Bruin.
 
 import warnings
-from abc import ABCMeta
 
 import numpy as np
 
@@ -26,8 +25,6 @@ try:  # SciPy >= 0.19
 except ImportError:
     from scipy.misc import logsumexp  # noqa
 from scipy.sparse import issparse
-
-import six
 
 from recordlinkage.types import is_string_like
 
@@ -110,7 +107,7 @@ def unique_rows_counts(a):
     return a[unq_idx], counts
 
 
-class BaseNB(six.with_metaclass(ABCMeta, BaseEstimator, ClassifierMixin)):
+class BaseNB(BaseEstimator, ClassifierMixin):
     """Abstract base class for naive Bayes estimators"""
 
     def _joint_log_likelihood(self, X):
