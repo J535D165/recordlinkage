@@ -31,6 +31,7 @@ setup(
         "pandas>=0.18.0",
         "scipy>=0.17.1",
         "scikit-learn>=0.19.0",
+        "joblib"
     ],
     packages=find_packages(exclude=["benchmarks", "tests", "docs"]),
     include_package_data=True,

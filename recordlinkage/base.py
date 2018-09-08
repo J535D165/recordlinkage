@@ -11,7 +11,7 @@ from abc import ABCMeta, abstractmethod
 import six
 import pandas
 import numpy as np
-from sklearn.externals.joblib import Parallel, delayed
+from joblib import Parallel, delayed
 
 from recordlinkage.utils import (listify,
                                  unique,
