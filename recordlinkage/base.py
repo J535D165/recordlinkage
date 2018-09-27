@@ -380,7 +380,7 @@ class BaseCompareFeature(object):
         Keyword additional arguments to pass to the `_compare_vectorized`
         method.
     label : list, str, int
-        The indentifying label(s) for the returned values.
+        The identifying label(s) for the returned values.
     """
 
     name = None
