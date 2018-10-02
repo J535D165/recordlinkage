@@ -25,6 +25,3 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 """contrib module containing community contributions or experimental code."""
-
-
-from recordlinkage.contrib import compare
