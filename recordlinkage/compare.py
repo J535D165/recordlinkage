@@ -153,7 +153,8 @@ class String(BaseCompareFeature):
         c = _fillna(c, self.missing_value)
 
         if self.threshold is not None:
-            return (c >= self.threshold).astype(numpy.float64)
+            return c.where(c >= self.threshold, other=0.0)
+            # return (c >= self.threshold).astype(numpy.float64)
         else:
             return c
 
