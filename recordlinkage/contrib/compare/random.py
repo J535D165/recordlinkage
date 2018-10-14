@@ -7,7 +7,11 @@ from recordlinkage.base import BaseCompareFeature
 
 
 class RandomContinuous(BaseCompareFeature):
-    """Add a feature with discrete random values.
+    """Add a feature with continuous random values.
+
+    A column with continuous random values between 'a' and 'b' is
+    returned. This comparison vector/feature can be useful for model
+    testing.
 
     Parameters
     ----------
@@ -23,7 +27,7 @@ class RandomContinuous(BaseCompareFeature):
     """
 
     name = "random"
-    description = "Add a feature with only random values."
+    description = "Feature with continuous random values."
 
     def __init__(self,
                  a=0.0,
@@ -46,7 +50,7 @@ class RandomContinuous(BaseCompareFeature):
         return random_values
 
     def compute(self, pairs, x=None, x_link=None):
-        """Compare the records of each record pair.
+        """Return continuous random values for each record pair.
 
         Parameters
         ----------
