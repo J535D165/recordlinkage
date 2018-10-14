@@ -703,11 +703,31 @@ class BaseCompare(object):
 
         for feat in self.features:
 
-            lbl1 = feat.labels_left
-            lbl2 = feat.labels_right
+            # --- DATA1
+            # None: no data passed to func
+            if feat.labels_left is None:
+                data1 = tuple()
+            # empty array: empty df with index passed to func
+            elif feat.labels_left is []:
+                data1 = df_a_indexed[[]]
+            # else: subset columns and pass tuple of series
+            else:
+                data1 = tuple(
+                    [df_a_indexed[lbl] for lbl in listify(feat.labels_left)]
+                )
 
-            data1 = tuple([df_a_indexed[lbl] for lbl in listify(lbl1)])
-            data2 = tuple([df_b_indexed[lbl] for lbl in listify(lbl2)])
+            # --- DATA2
+            # None: no data passed to func
+            if feat.labels_right is None:
+                data2 = tuple()
+            # empty array: empty df with index passed to func
+            elif feat.labels_right is []:
+                data2 = df_b_indexed[[]]
+            # else: subset columns and pass tuple of series
+            else:
+                data2 = tuple(
+                    [df_b_indexed[lbl] for lbl in listify(feat.labels_right)]
+                )
 
             result = feat._compute(data1, data2)
             features.append((result, feat.label))
