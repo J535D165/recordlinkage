@@ -66,8 +66,6 @@ class RandomContinuous(BaseCompareFeature):
 
     def _compute_vectorized(self, args, y):
 
-        print(args.index.shape[0])
-
         random_values = random_sample(args.index.shape[0])
 
         if self.a != 0.0 or self.b != 1.0:
