@@ -708,8 +708,8 @@ class BaseCompare(object):
             if feat.labels_left is None:
                 data1 = tuple()
             # empty array: empty df with index passed to func
-            elif feat.labels_left is []:
-                data1 = df_a_indexed[[]]
+            elif feat.labels_left == []:
+                data1 = (df_a_indexed[[]],)
             # else: subset columns and pass tuple of series
             else:
                 data1 = tuple(
@@ -721,8 +721,8 @@ class BaseCompare(object):
             if feat.labels_right is None:
                 data2 = tuple()
             # empty array: empty df with index passed to func
-            elif feat.labels_right is []:
-                data2 = df_b_indexed[[]]
+            elif feat.labels_right == []:
+                data2 = (df_b_indexed[[]],)
             # else: subset columns and pass tuple of series
             else:
                 data2 = tuple(
