@@ -26,10 +26,14 @@
 
 """Random compare strategy to test model behaviour."""
 
-from numpy.random import random_sample
+import numpy as np
+from numpy.random import random_sample, choice
 import pandas as pd
 
 from recordlinkage.base import BaseCompareFeature
+
+
+__all__ = ['RandomContinuous', 'RandomDiscrete']
 
 
 class RandomContinuous(BaseCompareFeature):
@@ -52,8 +56,8 @@ class RandomContinuous(BaseCompareFeature):
 
     """
 
-    name = "random"
-    description = "Feature with continuous random values."
+    name = "random_cont"
+    description = "Feature for continuous random values."
 
     def __init__(self,
                  a=0.0,
@@ -75,6 +79,75 @@ class RandomContinuous(BaseCompareFeature):
 
     def compute(self, pairs, x=None, x_link=None):
         """Return continuous random values for each record pair.
+
+        Parameters
+        ----------
+        pairs : pandas.MultiIndex
+            A pandas MultiIndex with the record pairs to compare. The indices
+            in the MultiIndex are indices of the DataFrame(s) to link.
+        x : pandas.DataFrame
+            The DataFrame to link. If `x_link` is given, the comparing is a
+            linking problem. If `x_link` is not given, the problem is one of
+            deduplication.
+        x_link : pandas.DataFrame, optional
+            The second DataFrame.
+
+        Returns
+        -------
+        pandas.Series, pandas.DataFrame, numpy.ndarray
+            The result of comparing record pairs (the features). Can be
+            a tuple with multiple pandas.Series, pandas.DataFrame,
+            numpy.ndarray objects.
+        """
+
+        df_empty = pd.DataFrame(index=pairs)
+        return self._compute(
+            tuple([df_empty]),
+            tuple([df_empty])
+        )
+
+
+class RandomDiscrete(BaseCompareFeature):
+    """Add a feature with discrete random values.
+
+    A column with discrete random values. This comparison vector/feature can
+    be useful for model testing. By default, random values are sampled from
+    a Bernoulli distribution with p=0.5.
+
+    Parameters
+    ----------
+    a : int, numpy.ndarray
+        If an ndarray, a random sample is generated from its
+        elements. If an int, the random sample is generated
+        as if a were np.arange(a). Default [0, 1]
+    dtype : data-type
+        The type of the data to return. Default np.int64.
+    label : list, str, int
+        The identifying label(s) for the returned values.
+
+    """
+
+    name = "random_desc"
+    description = "Feature for discrete random values."
+
+    def __init__(self,
+                 a=[0, 1],
+                 dtype=np.int64,
+                 label=None):
+        super(RandomDiscrete, self).__init__([], [], label=label)
+
+        self.a = a
+        self.dtype = dtype
+
+    def _compute_vectorized(self, args, y):
+
+        random_values = choice(self.a, args.index.shape[0])
+        random_values = random_values.astype(self.dtype)
+
+        return random_values
+
+    def compute(self, pairs, x=None, x_link=None):
+        """Return discrete random values for each record pair.
 
         Parameters
         ----------
