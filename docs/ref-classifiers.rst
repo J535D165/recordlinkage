@@ -44,6 +44,49 @@ Unsupervised
     :inherited-members:
 
 
+Adapters
+========
+
+Adapters can be used to wrap a machine learning models from external packages
+like ScitKit-learn and Keras. For example, this makes it possible to classify
+record pairs with an neural network developed in Keras.
+
+.. autoclass:: recordlinkage.adapters.SKLearnAdapter
+
+.. autoclass:: recordlinkage.adapters.KerasAdapter
+
+Example of a Keras model used for classification. 
+
+..code:: python
+
+    from tensorflow.keras import layers
+    from recordlinkage.base import BaseClassifier
+    from recordlinkage.adapters import KerasAdapter
+
+    class NNClassifier(KerasAdapter, BaseClassifier):
+        """Neural network classifier."""
+
+        def __init__(self, *args, **kwargs):
+            super(NNClassifier, self).__init__()
+
+            model = tf.keras.Sequential()
+            model.add(layers.Dense(16, input_dim=8, activation='relu'))
+            model.add(layers.Dense(8, activation='relu'))
+            model.add(layers.Dense(1, activation='sigmoid'))
+            model.compile(optimizer=tf.train.AdamOptimizer(0.001),
+                          loss='binary_crossentropy',
+                          metrics=['accuracy'])
+
+            self.kernel = model
+
+    # initialise the model
+    cl = NNClassifier()
+    # fit the model to the data
+    cl.fit(X_train, links_true)
+    # predict the class of the data
+    cl.predict(X_pred)
+
+
 User-defined algorithms
 =======================
 

@@ -1,12 +1,14 @@
+"""Module to wrap external machine learning models."""
 
 __all__ = ["SKLearnAdapter", "KerasAdapter"]
 
 
 class SKLearnAdapter(object):
+    """SciKit-learn adapter for record pair classification.
 
-    # # sklearn classifier (or one that behaves like an sklearn classifier)
-    # # make this an abstract attribute
-    # self.kernel = None
+    SciKit-learn adapter for record pair classification with SciKit-learn
+    models.
+    """
 
     @property
     def classifier(self):
@@ -77,7 +79,10 @@ class SKLearnAdapter(object):
 
 
 class KerasAdapter(object):
-    """Keras adapter for record pair classification with Keras models."""
+    """Keras adapter for record pair classification.
+
+    Keras adapter for record pair classification with Keras models.
+    """
 
     @property
     def classifier(self):
