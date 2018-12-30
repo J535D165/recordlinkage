@@ -654,7 +654,7 @@ class TestRandomIndexing(TestData):
 
 # NeighbourhoodBlock
 
-class TestNeighbouroodBlocking(TestData):
+class TestNeighbouroodBlock(TestData):
     """General unittest for the NeighbourhoodBlocking indexing class."""
 
     @classmethod
