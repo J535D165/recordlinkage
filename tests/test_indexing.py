@@ -667,7 +667,7 @@ class TestNeighbouroodBlock(TestData):
             nan_count = round(len(df) * nan_proportion)
             def with_nulls(vals):
                 vals = vals.copy()
-                vals.iloc[np.random.choice(len(df), size=nan_count, replace=False)] = np.nan
+                vals.iloc[np.random.choice(np.arange(len(df)), size=nan_count, replace=False)] = np.nan
                 return vals
             return df.copy() if nan_count <= 0 else df.apply(with_nulls)
 
