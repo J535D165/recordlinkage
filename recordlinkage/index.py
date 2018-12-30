@@ -558,8 +558,9 @@ class NeighbourhoodBlock(Block):
                                      default_on_possibilities()))
             key_columns = [listify(side_on or default_on)
                            for side_on in [self.left_on, self.right_on]]
-            n_key_cols, *n_key_cols_error = list(set(map(len, key_columns)))
-            if n_key_cols_error or (n_key_cols == 0):
+            key_cols = set(map(len, key_columns))
+            n_key_cols = next(iter(key_cols))
+            if (len(key_cols)>1) or (n_key_cols == 0):
                 raise IndexError('Invalid blocking keys')
             combined_ranks = numpy.vstack([pandas.concat([df[col] for df, col in zip(dfs, col_grp)]).rank(method='dense', na_option='keep').fillna(0).astype(int).values - 1
                                            for col_grp in zip(*key_columns)]).astype(float).T
