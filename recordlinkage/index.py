@@ -514,9 +514,9 @@ class NeighbourhoodBlock(Block):
     >>> indexer.index(census_data_1980, census_data_1990)
     '''
 
-    def __init__(self, *args, max_nulls=0, max_non_matches=0, windows=1,
+    def __init__(self, left_on=None, right_on=None, max_nulls=0, max_non_matches=0, windows=1,
                  **kwargs):
-        super(NeighbourhoodBlock, self).__init__(*args, **kwargs)
+        super(NeighbourhoodBlock, self).__init__(left_on=left_on, right_on=right_on, **kwargs)
         self.max_nulls = max_nulls
         self.max_non_matches = max_non_matches
         self.windows = listify(windows)
