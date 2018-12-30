@@ -554,8 +554,8 @@ class NeighbourhoodBlock(Block):
                 yield [c for c in dfs[0].columns
                        if all(c in df.columns
                        for df in dfs)]
-            default_on = next(filter(lambda x: x is not None,
-                                     default_on_possibilities()))
+            default_on = next(iter(filter(lambda x: x is not None,
+                                          default_on_possibilities())))
             key_columns = [listify(side_on or default_on)
                            for side_on in [self.left_on, self.right_on]]
             key_cols = set(map(len, key_columns))
