@@ -36,6 +36,13 @@ class NeighbourhoodBlock(Block):
         Additional keyword arguments to pass to
         :class:`recordlinkage.base.BaseIndexAlgorithm`.
 
+    Wildcard matching
+    -----------------
+    Missing values can be treated as wild (ie: matching any other value)
+    for a limited number of fields determined by the max_nulls parameter.
+
+    Relationship to other index types
+    ---------------------------------
     Special cases of this indexer are equivalent to other indexers in this
     module:
         * :class:`Block`: max_nulls=0, max_non_matches=0, *windows=1
