@@ -1,5 +1,5 @@
 from recordlinkage.base import BaseIndex, BaseCompare
-from recordlinkage.index import Full, Block, SortedNeighbourhood, NeighbourhoodBlock, Random
+from recordlinkage.index import Full, Block, SortedNeighbourhood, Random
 from recordlinkage.compare import Exact, String, Numeric, Geographic, Date
 
 
@@ -91,22 +91,6 @@ class Index(BaseIndex):
 
         return self
 
-    def neighbourhoodblock(self, *args, **kwargs):
-        """Add a Neighbourhood Blocking Index.
-
-        Shortcut of :class:`recordlinkage.index.NeighbourhoodBlock`::
-
-            from recordlinkage.index import NeighbourhoodBlock
-
-            indexer = recordlinkage.Index()
-            indexer.add(NeighbourhoodBlock())
-
-        """
-
-        indexer = NeighbourhoodBlock(*args, **kwargs)
-        self.add(indexer)
-
-        return self
 
 class Compare(BaseCompare):
     """Class to compare record pairs with efficiently.

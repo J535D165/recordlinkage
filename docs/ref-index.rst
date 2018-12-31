@@ -23,7 +23,6 @@ references for background information about indexation.
     .. automethod:: recordlinkage.Index.full
     .. automethod:: recordlinkage.Index.block
     .. automethod:: recordlinkage.Index.sortedneighbourhood
-    .. automethod:: recordlinkage.Index.neighbourhoodblock
     .. automethod:: recordlinkage.Index.random
 
 
@@ -38,7 +37,6 @@ Popular algorithms in the toolkit are:
 - :class:`recordlinkage.index.Full`,
 - :class:`recordlinkage.index.Block`,
 - :class:`recordlinkage.index.SortedNeighbourhood`
-- :class:`recordlinkage.index.NeighbourhoodBlock`
 
 The algorithms are available in the submodule `recordlinkage.index`. Import
 the algorithms in the following way (use blocking algorithm as example):
@@ -63,7 +61,6 @@ class that is used for indexing algorithms. The classes
 - :class:`recordlinkage.index.Full`
 - :class:`recordlinkage.index.Block`
 - :class:`recordlinkage.index.SortedNeighbourhood`
-- :class:`recordlinkage.index.NeighbourhoodBlock`
 - :class:`recordlinkage.index.Random`
 
 are inherited from this abstract base class. You can use BaseIndexAlgorithm to

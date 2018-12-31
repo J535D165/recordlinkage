@@ -14,8 +14,8 @@ import pandas.util.testing as ptm
 import pytest
 
 import recordlinkage
-from recordlinkage.index import (Full, Block, SortedNeighbourhood,
-                                 Random, NeighbourhoodBlock)
+from recordlinkage.index import Full, Block, SortedNeighbourhood, Random
+from recordlinkage.contrib.index import NeighbourhoodBlock
 
 from operator import eq, gt, ge
 
@@ -654,7 +654,7 @@ class TestRandomIndexing(TestData):
 
 # NeighbourhoodBlock
 
-class TestNeighbouroodBlock(TestData):
+class TestNeighbourhoodBlock(TestData):
     """General unittest for the NeighbourhoodBlocking indexing class."""
 
     @classmethod
