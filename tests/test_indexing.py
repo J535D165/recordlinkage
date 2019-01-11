@@ -15,7 +15,7 @@ import pytest
 
 import recordlinkage
 from recordlinkage.index import Full, Block, SortedNeighbourhood, Random
-
+from recordlinkage.contrib.index import NeighbourhoodBlock
 
 def get_test_algorithms():
     """Return list of algorithms"""
@@ -24,7 +24,8 @@ def get_test_algorithms():
         Block('var_arange'),
         SortedNeighbourhood('var_arange'),
         Random(10, random_state=100, replace=True),
-        Random(10, random_state=100, replace=False)
+        Random(10, random_state=100, replace=False),
+        NeighbourhoodBlock('var_arange'),
     ]
 
 

@@ -34,8 +34,8 @@ The Python Record Linkage Toolkit contains basic and advanced indexing (or
 blocking) algorithms to make record pairs. The algorithms are Python classes.
 Popular algorithms in the toolkit are:
 
-- :class:`recordlinkage.index.Full`, 
-- :class:`recordlinkage.index.Block`, 
+- :class:`recordlinkage.index.Full`,
+- :class:`recordlinkage.index.Block`,
 - :class:`recordlinkage.index.SortedNeighbourhood`
 
 The algorithms are available in the submodule `recordlinkage.index`. Import
@@ -56,7 +56,7 @@ User-defined algorithms
 
 A user-defined algorithm can be defined based on
 :class:`recordlinkage.base.BaseIndexAlgorithm`. The :class:`recordlinkage.base.BaseIndexAlgorithm` class is an abstract base
-class that is used for indexing algorithms. The classes 
+class that is used for indexing algorithms. The classes
 
 - :class:`recordlinkage.index.Full`
 - :class:`recordlinkage.index.Block`
