@@ -33,7 +33,10 @@ setup(
         "scikit-learn>=0.19.0",
         "joblib"
     ],
-    packages=find_packages(exclude=["benchmarks", "tests", "docs"]),
+    packages=find_packages(
+        exclude=["benchmarks", "docs",
+                 "*.tests", "*.tests.*", "tests.*", "tests"]
+    ),
     include_package_data=True,
     package_data={'recordlinkage': ['datasets/*/*.csv']},
     license='BSD-3-Clause'

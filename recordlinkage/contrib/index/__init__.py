@@ -24,4 +24,5 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from .neighbourhoodblock import NeighbourhoodBlock
+from recordlinkage.contrib.index.neighbourhoodblock.neighbourhoodblock import \
+	NeighbourhoodBlock
