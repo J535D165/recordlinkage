@@ -903,7 +903,7 @@ class BaseClassifier(six.with_metaclass(ABCMeta)):
         """
 
         warnings.warn("learn is deprecated, {}.fit_predict "
-                      "instead".format(self.__class__.__name__))
+                         "instead".format(self.__class__.__name__))
         return self.fit_predict(*args, **kwargs)
 
     def _initialise_classifier(self, comparison_vectors):
@@ -966,12 +966,16 @@ class BaseClassifier(six.with_metaclass(ABCMeta)):
                 else:
                     raise err
 
-            self._fit(comparison_vectors.as_matrix(), y.values)
+            self._fit(comparison_vectors.values, y.values)
 
         elif match_index is None:
-            self._fit(comparison_vectors.as_matrix())
+            self._fit(comparison_vectors.values)
         else:
-            raise ValueError("'match_index' has incorrect type '{}'".format(type(match_index)))
+            raise ValueError(
+                "'match_index' has incorrect type '{}'".format(
+                    type(match_index)
+                )
+            )
 
         # log timing
         logf_time = "Classification - training computation time: ~{:.2f}s"
@@ -1037,7 +1041,7 @@ class BaseClassifier(six.with_metaclass(ABCMeta)):
         logging.info("Classification - predict matches and non-matches")
 
         # make the predicition
-        prediction = self._predict(comparison_vectors.as_matrix())
+        prediction = self._predict(comparison_vectors.values)
         self._post_predict(prediction)
 
         # format and return the result
@@ -1084,7 +1088,7 @@ class BaseClassifier(six.with_metaclass(ABCMeta)):
 
         logging.info("Classification - compute probabilities")
 
-        prob_match = self._prob_match(comparison_vectors.as_matrix())
+        prob_match = self._prob_match(comparison_vectors.values)
         return pandas.Series(prob_match, index=comparison_vectors.index)
 
     def _return_result(self, result, comparison_vectors=None):
