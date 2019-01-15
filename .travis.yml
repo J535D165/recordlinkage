@@ -15,7 +15,7 @@ env:
   - PANDAS="latest"
 
 install:
-  - travis_retry pip install codecov coverage
-  - travis_retry pip install tox-travis
-script: travis_retry tox
+  - pip install codecov coverage
+  - pip install tox-travis
+script: tox
 after_success: coverage combine && codecov
