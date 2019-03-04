@@ -4,11 +4,6 @@ python:
   - "3.6"
 dist: xenial
 
-addons:
-  apt:
-    packages:
-      - pandoc
-
 python:
   - "2.7"
   - "3.5"
@@ -26,9 +21,11 @@ matrix:
   include:
     - python: 3.6
       env: TOXENV=flake8
-    - python: 3.6
-      env: TOXENV=docs
 
+before_install:
+  - wget https://github.com/jgm/pandoc/releases/download/2.2.3.2/pandoc-2.2.3.2-1-amd64.deb
+  - sudo dpkg -i pandoc-2.2.3.2-1-amd64.deb
+  - pandoc -v
 install:
  - pip install wheel codecov coverage tox-travis
  - python setup.py bdist_wheel
