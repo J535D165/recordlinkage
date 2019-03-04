@@ -53,11 +53,42 @@ record pairs with an neural network developed in Keras.
 
 .. autoclass:: recordlinkage.adapters.SKLearnAdapter
 
+
+.. code:: python
+    
+    # import ScitKit-Learn classifier
+    from sklearn.ensemble import RandomForestClassifier
+
+    # import BaseClassifier from recordlinkage.base
+    from recordlinkage.base import BaseClassifier
+    from recordlinkage.adapters import SKLearnClassifier
+    from recordlinkage.datasets import binary_vectors
+
+    class RandomForest(SKLearnClassifier, BaseClassifier):
+
+        def __init__(*args, **kwargs):
+            super(self, RandomForest).__init__()
+
+            # set the kernel
+            kernel = RandomForestClassifier(*args, **kwargs)
+
+
+    # make a sample dataset
+    features, links = binary_vectors(10000, 2000, return_links=True)
+
+    # initialise the random forest
+    cl = RandomForest(n_estimators=20)
+    cl.fit(features, links)
+
+    # predict the matches
+    cl.predict(...)
+
+
 .. autoclass:: recordlinkage.adapters.KerasAdapter
 
 Example of a Keras model used for classification. 
 
-..code:: python
+.. code:: python
 
     from tensorflow.keras import layers
     from recordlinkage.base import BaseClassifier
@@ -65,17 +96,18 @@ Example of a Keras model used for classification.
 
     class NNClassifier(KerasAdapter, BaseClassifier):
         """Neural network classifier."""
-
-        def __init__(self, *args, **kwargs):
+        def __init__(self):
             super(NNClassifier, self).__init__()
 
             model = tf.keras.Sequential()
             model.add(layers.Dense(16, input_dim=8, activation='relu'))
             model.add(layers.Dense(8, activation='relu'))
             model.add(layers.Dense(1, activation='sigmoid'))
-            model.compile(optimizer=tf.train.AdamOptimizer(0.001),
-                          loss='binary_crossentropy',
-                          metrics=['accuracy'])
+            model.compile(
+                optimizer=tf.train.AdamOptimizer(0.001),
+                loss='binary_crossentropy',
+                metrics=['accuracy']
+            )
 
             self.kernel = model
 
