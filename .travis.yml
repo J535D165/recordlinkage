@@ -5,6 +5,7 @@ python:
   - "2.7"
   - "3.5"
   - "3.6"
+  - "3.7"
 
 env:
   - PANDAS="0.18"
@@ -15,7 +16,8 @@ env:
   - PANDAS="latest"
 
 install:
-  - pip install codecov coverage
-  - pip install tox-travis
-script: tox
+ - pip install wheel codecov coverage tox-travis
+ - python setup.py bdist_wheel
+ - pip install ./dist/tox_travis-*.whl
+script: tox --installpkg ./dist/tox_travis-*.whl
 after_success: coverage combine && codecov
