@@ -18,6 +18,6 @@ env:
 install:
  - pip install wheel codecov coverage tox-travis
  - python setup.py bdist_wheel
- - pip install ./dist/tox_travis-*.whl
-script: tox --installpkg ./dist/tox_travis-*.whl
+ - pip install ./dist/recordlinkage-*.whl
+script: tox --installpkg ./dist/recordlinkage-*.whl
 after_success: coverage combine && codecov
