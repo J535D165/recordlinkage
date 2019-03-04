@@ -15,6 +15,11 @@ env:
   - PANDAS="0.22"
   - PANDAS="latest"
 
+matrix:
+  include:
+    - python: 3.6
+      env: TOXENV=flake8
+
 install:
  - pip install wheel codecov coverage tox-travis
  - python setup.py bdist_wheel
