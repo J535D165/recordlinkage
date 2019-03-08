@@ -32,5 +32,4 @@ install:
  - pip install ./dist/recordlinkage-*.whl
 script: tox --installpkg ./dist/recordlinkage-*.whl
 after_success: 
-  - rm -r .coverage.*
   - codecov
