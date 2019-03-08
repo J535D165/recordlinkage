@@ -1,6 +1,10 @@
 
 recordlinkage/datasets/krebsregister/*
 
+
+.DS_Store
+*/.DS_Store
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -45,6 +49,7 @@ htmlcov/
 .coverage.*
 .cache
 nosetests.xml
+.pytest_cache/*
 coverage.xml
 *,cover
 
