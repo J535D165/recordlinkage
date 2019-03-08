@@ -1,5 +1,8 @@
 sudo: false
 language: python
+python:
+  - "3.6"
+dist: xenial
 
 python:
   - "2.7"
@@ -14,8 +17,19 @@ env:
   - PANDAS="0.22"
   - PANDAS="latest"
 
+matrix:
+  include:
+    - python: 3.6
+      env: TOXENV=flake8
+
+before_install:
+  - wget https://github.com/jgm/pandoc/releases/download/2.2.3.2/pandoc-2.2.3.2-1-amd64.deb
+  - sudo dpkg -i pandoc-2.2.3.2-1-amd64.deb
+  - pandoc -v
 install:
-  - travis_retry pip install codecov coverage
-  - travis_retry pip install tox-travis
-script: travis_retry tox
-after_success: coverage combine && codecov
+ - pip install wheel codecov coverage tox-travis
+ - python setup.py bdist_wheel
+ - pip install ./dist/recordlinkage-*.whl
+script: tox --installpkg ./dist/recordlinkage-*.whl
+after_success: 
+  - codecov
