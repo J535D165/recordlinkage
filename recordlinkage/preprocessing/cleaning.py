@@ -1,5 +1,5 @@
-from __future__ import division
 from __future__ import absolute_import
+from __future__ import division
 # from __future__ import unicode_literals
 
 import sys
@@ -102,7 +102,7 @@ def clean(s, lowercase=True, replace_by_none=r'[^ \-\_A-Za-z0-9]+',
                 else:
                     return x
             else:
-                if isinstance(x, unicode):
+                if isinstance(x, unicode):  # noqa
                     return strip_accents_fn(x)
                 else:
                     return x

@@ -1,9 +1,10 @@
 import sys
 
-import numpy as np
-import pandas
-
 import jellyfish
+
+import numpy as np
+
+import pandas
 
 
 _phonetic_algorithms = [{
@@ -76,7 +77,7 @@ def phonetic(s, method, concat=True, encoding='utf-8', decode_error='strict'):
             if type(x) == bytes else x)
 
     if concat:
-        s = s.str.replace('[\-\_\s]', '')
+        s = s.str.replace(r"[\-\_\s]", "")
 
     for alg in _phonetic_algorithms:
         if method in alg['argument_names']:

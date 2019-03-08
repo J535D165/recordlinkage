@@ -1,7 +1,8 @@
 import recordlinkage.config as cf
-from recordlinkage.config import (is_int, is_bool, is_text,
-                                  is_instance_factory, is_one_of_factory,
-                                  get_default_val, is_callable)
+from recordlinkage.config import (get_default_val, is_bool, is_callable,
+                                  is_instance_factory, is_int,
+                                  is_one_of_factory, is_text
+                                  )
 
 pairs_type_doc = """
 : str

@@ -7,8 +7,8 @@ from recordlinkage.index import Block
 class NeighbourhoodBlock(Block):
     '''
     :class:`recordlinkage.index.Block` with extended matching types
-        * Proximity in record ranking order (like :class:`SortedNeighbourhood`),
-          except multiple orderings (one for each field) are allowed
+        * Proximity in record ranking order (like :class:`SortedNeighbourhood`)
+          , except multiple orderings (one for each field) are allowed
         * Wildcard matching of null values
         * A limited number of complete field mismatches
 

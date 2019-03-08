@@ -1,6 +1,6 @@
-from recordlinkage.base import BaseIndex, BaseCompare
-from recordlinkage.index import Full, Block, SortedNeighbourhood, Random
-from recordlinkage.compare import Exact, String, Numeric, Geographic, Date
+from recordlinkage.base import BaseCompare, BaseIndex
+from recordlinkage.compare import Date, Exact, Geographic, Numeric, String
+from recordlinkage.index import Block, Full, Random, SortedNeighbourhood
 
 
 class Index(BaseIndex):
@@ -34,7 +34,6 @@ class Index(BaseIndex):
             indexer.add(Full())
 
         """
-
         indexer = Full()
         self.add(indexer)
 
@@ -51,7 +50,6 @@ class Index(BaseIndex):
             indexer.add(Block())
 
         """
-
         indexer = Block(*args, **kwargs)
         self.add(indexer)
 
@@ -68,7 +66,6 @@ class Index(BaseIndex):
             indexer.add(SortedNeighbourhood())
 
         """
-
         indexer = SortedNeighbourhood(*args, **kwargs)
         self.add(indexer)
 
@@ -85,7 +82,6 @@ class Index(BaseIndex):
             indexer.add(Random())
 
         """
-
         indexer = Random()
         self.add(indexer)
 
@@ -159,7 +155,6 @@ class Compare(BaseCompare):
             indexer.add(Exact())
 
         """
-
         compare = Exact(*args, **kwargs)
         self.add(compare)
 
@@ -176,7 +171,6 @@ class Compare(BaseCompare):
             indexer.add(String())
 
         """
-
         compare = String(*args, **kwargs)
         self.add(compare)
 
@@ -193,7 +187,6 @@ class Compare(BaseCompare):
             indexer.add(Numeric())
 
         """
-
         compare = Numeric(*args, **kwargs)
         self.add(compare)
 
@@ -210,7 +203,6 @@ class Compare(BaseCompare):
             indexer.add(Geographic())
 
         """
-
         compare = Geographic(*args, **kwargs)
         self.add(compare)
 
@@ -227,7 +219,6 @@ class Compare(BaseCompare):
             indexer.add(Date())
 
         """
-
         compare = Date(*args, **kwargs)
         self.add(compare)
 

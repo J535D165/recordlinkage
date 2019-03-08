@@ -3,12 +3,10 @@ from __future__ import unicode_literals
 
 import warnings
 
-import pandas
-import numpy as np
 import jellyfish
-
+import numpy as np
+import pandas
 from sklearn.feature_extraction.text import CountVectorizer
-
 
 # Ingore zero devision errors in cosine and qgram algorithms
 # warnings.filterwarnings("ignore")
@@ -103,10 +101,7 @@ def qgram_similarity(s1, s2, include_wb=True, ngram=(2, 2)):
 
     # The vectorizer
     vectorizer = CountVectorizer(
-        analyzer=analyzer, 
-        strip_accents='unicode', 
-        ngram_range=ngram
-    )
+        analyzer=analyzer, strip_accents='unicode', ngram_range=ngram)
 
     vec_fit = vectorizer.fit_transform(data)
 
@@ -153,9 +148,14 @@ def cosine_similarity(s1, s2, include_wb=True, ngram=(2, 2)):
     return _metric_sparse_cosine(vec_fit[:len(s1)], vec_fit[len(s1):])
 
 
-def smith_waterman_similarity(s1, s2, match=5, mismatch=-5, gap_start=-5, gap_continue=-1, norm="mean"):
-    """
-    smith_waterman_similarity(s1, s2, match=5, mismatch=-5, gap_start=-5, gap_continue=-1, norm="mean")
+def smith_waterman_similarity(s1,
+                              s2,
+                              match=5,
+                              mismatch=-5,
+                              gap_start=-5,
+                              gap_continue=-1,
+                              norm="mean"):
+    """Smith-Waterman string comparison.
 
     An implementation of the Smith-Waterman string comparison algorithm
     described in Christen, Peter (2012).
@@ -191,9 +191,12 @@ def smith_waterman_similarity(s1, s2, match=5, mismatch=-5, gap_start=-5, gap_co
         A pandas series with similarity values. Values equal or between 0
         and 1.
     """
-    # Assert that match is greater than or equal to mismatch, gap_start, and gap_continue.
+
+    # Assert that match is greater than or equal to mismatch, gap_start, and
+    # gap_continue.
     assert match >= max(mismatch, gap_start, gap_continue), \
-        "match must be greater than or equal to mismatch, gap_start, and gap_continue"
+        "match must be greater than or equal to mismatch, " \
+        "gap_start, and gap_continue"
 
     if len(s1) != len(s2):
         raise ValueError('Arrays or Series have to be same length.')
@@ -246,7 +249,8 @@ def smith_waterman_similarity(s1, s2, match=5, mismatch=-5, gap_start=-5, gap_co
             m = [[0] * (1 + len(str2)) for i in range(1 + len(str1))]
 
             # Initialize the trace matrix with empty lists
-            trace = [[[] for _ in range(1 + len(str2))] for _ in range(1 + len(str1))]
+            trace = [[[] for _ in range(1 + len(str2))]
+                     for _ in range(1 + len(str1))]
 
             # Initialize the highest seen score to 0
             highest = 0
@@ -255,30 +259,36 @@ def smith_waterman_similarity(s1, s2, match=5, mismatch=-5, gap_start=-5, gap_co
             for x in range(1, 1 + len(str1)):
                 for y in range(1, 1 + len(str2)):
                     # Calculate Diagonal Score
-                    if str1[x-1] == str2[y-1]:
-                        # If characters match, add the match score to the diagonal score
-                        diagonal = m[x-1][y-1] + match
+                    if str1[x - 1] == str2[y - 1]:
+                        # If characters match, add the match score to the
+                        # diagonal score
+                        diagonal = m[x - 1][y - 1] + match
                     else:
-                        # If characters do not match, add the mismatch score to the diagonal score
-                        diagonal = m[x-1][y-1] + mismatch
+                        # If characters do not match, add the mismatch score
+                        # to the diagonal score
+                        diagonal = m[x - 1][y - 1] + mismatch
 
                     # Calculate the Left Gap Score
-                    if "H" in trace[x-1][y]:
-                        # If cell to the left's score was calculated based on a horizontal gap,
-                        # add the gap continuation penalty to the left score.
-                        gap_horizontal = m[x-1][y] + gap_continue
+                    if "H" in trace[x - 1][y]:
+                        # If cell to the left's score was calculated based on
+                        # a horizontal gap, add the gap continuation penalty
+                        # to the left score.
+                        gap_horizontal = m[x - 1][y] + gap_continue
                     else:
-                        # Otherwise, add the gap start penalty to the left score
-                        gap_horizontal = m[x-1][y] + gap_start
+                        # Otherwise, add the gap start penalty to the left
+                        # score
+                        gap_horizontal = m[x - 1][y] + gap_start
 
                     # Calculate the Above Gap Score
-                    if "V" in trace[x][y-1]:
-                        # If above cell's score was calculated based on a vertical gap,
-                        # add the gap continuation penalty to the above score.
-                        gap_vertical = m[x][y-1] + gap_continue
+                    if "V" in trace[x][y - 1]:
+                        # If above cell's score was calculated based on a
+                        # vertical gap, add the gap continuation penalty to
+                        # the above score.
+                        gap_vertical = m[x][y - 1] + gap_continue
                     else:
-                        # Otherwise, add the gap start penalty to the above score
-                        gap_vertical = m[x][y-1] + gap_start
+                        # Otherwise, add the gap start penalty to the above
+                        # score
+                        gap_vertical = m[x][y - 1] + gap_start
 
                     # Choose the highest of the three scores
                     score = max(diagonal, gap_horizontal, gap_vertical)
@@ -331,16 +341,19 @@ def smith_waterman_similarity(s1, s2, match=5, mismatch=-5, gap_start=-5, gap_co
             """
             if norm == "min":
                 # Normalize by the shorter string's length
-                return score/(min(len(str1), len(str2)) * match)
+                return score / (min(len(str1), len(str2)) * match)
             if norm == "max":
                 # Normalize by the longer string's length
-                return score/(max(len(str1), len(str2)) * match)
+                return score / (max(len(str1), len(str2)) * match)
             if norm == "mean":
                 # Normalize by the mean length of the two strings
-                return 2*score/((len(str1) + len(str2)) * match)
+                return 2 * score / ((len(str1) + len(str2)) * match)
             else:
-                warnings.warn('Unrecognized longest common substring normalization. Defaulting to "mean" method.')
-                return 2*score/((len(str1) + len(str2)) * match)
+                warnings.warn(
+                    'Unrecognized longest common substring normalization. '
+                    'Defaulting to "mean" method.')
+                return 2 * score / ((len(str1) + len(str2)) * match)
+
         try:
             if len(str1) == 0 or len(str2) == 0:
                 return 0
@@ -391,10 +404,10 @@ def longest_common_substring_similarity(s1, s2, norm='dice', min_len=2):
         """
         lcs_iteration(x)
 
-        A helper function implementation of a single iteration longest common substring algorithm,
-        adapted from
-        https://en.wikibooks.org/wiki/Algorithm_Implementation/Strings/Longest_common_substring.
-        but oriented towards the iterative approach described by Christen, Peter (2012).
+        A helper function implementation of a single iteration longest common
+        substring algorithm, adapted from https://en.wikibooks.org/wiki/Algori
+        thm_Implementation/Strings/Longest_common_substring. but oriented
+        towards the iterative approach described by Christen, Peter (2012).
 
         Parameters
         ----------
@@ -408,7 +421,8 @@ def longest_common_substring_similarity(s1, s2, norm='dice', min_len=2):
         str1 = x[0]
         str2 = x[1]
 
-        if str1 is np.nan or str2 is np.nan or min(len(str1), len(str2)) < min_len:
+        if str1 is np.nan or str2 is np.nan or min(len(str1),
+                                                   len(str2)) < min_len:
             longest = 0
             new_str1 = None
             new_str2 = None
@@ -419,7 +433,8 @@ def longest_common_substring_similarity(s1, s2, norm='dice', min_len=2):
             # Track length of longest substring seen
             longest = 0
 
-            # Track the ending position of this substring in str1 (x) and str2(y)
+            # Track the ending position of this substring in str1 (x) and
+            # str2(y)
             x_longest = 0
             y_longest = 0
 
@@ -430,7 +445,8 @@ def longest_common_substring_similarity(s1, s2, norm='dice', min_len=2):
                     if str1[x - 1] == str2[y - 1]:
                         # add 1 to the diagonal
                         m[x][y] = m[x - 1][y - 1] + 1
-                        # Update values if longer than previous longest substring
+                        # Update values if longer than previous longest
+                        # substring
                         if m[x][y] > longest:
                             longest = m[x][y]
                             x_longest = x
@@ -441,8 +457,8 @@ def longest_common_substring_similarity(s1, s2, norm='dice', min_len=2):
 
             # Copy str1 and str2, but subtract the longest common substring
             # for the next iteration.
-            new_str1 = str1[0:x_longest-longest]+str1[x_longest:]
-            new_str2 = str2[0:y_longest-longest]+str2[y_longest:]
+            new_str1 = str1[0:x_longest - longest] + str1[x_longest:]
+            new_str2 = str2[0:y_longest - longest] + str2[y_longest:]
 
         return (new_str1, new_str2), longest
 
@@ -504,9 +520,9 @@ def longest_common_substring_similarity(s1, s2, norm='dice', min_len=2):
             normalize_lcs(lcs_value)
 
             A helper function used to normalize the score produced by
-            compute_score() to a score between 0 and 1. Applies one of
-            the normalization schemes described in in Christen, Peter (2012).
-            The normalization method is determined by the norm argument provided
+            compute_score() to a score between 0 and 1. Applies one of the
+            normalization schemes described in in Christen, Peter (2012). The
+            normalization method is determined by the norm argument provided
             to the parent, longest_common_substring_similarity function.
 
             Parameters
@@ -524,14 +540,17 @@ def longest_common_substring_similarity(s1, s2, norm='dice', min_len=2):
             if norm == 'overlap':
                 return lcs_value / min(len(x[0]), len(x[1]))
             elif norm == 'jaccard':
-                return lcs_value / (len(x[0])+len(x[1])-abs(lcs_value))
+                return lcs_value / (len(x[0]) + len(x[1]) - abs(lcs_value))
             elif norm == 'dice':
-                return lcs_value*2 / (len(x[0])+len(x[1]))
+                return lcs_value * 2 / (len(x[0]) + len(x[1]))
             else:
-                warnings.warn('Unrecognized longest common substring normalization. Defaulting to "dice" method.')
-                return lcs_value*2 / (len(x[0])+len(x[1]))
+                warnings.warn(
+                    'Unrecognized longest common substring normalization. '
+                    'Defaulting to "dice" method.')
+                return lcs_value * 2 / (len(x[0]) + len(x[1]))
 
-        # Average the two orderings, since lcs may be sensitive to comparison order.
-        return (normalize_lcs(lcs_acc_1)+normalize_lcs(lcs_acc_2)) / 2
+        # Average the two orderings, since lcs may be sensitive to comparison
+        # order.
+        return (normalize_lcs(lcs_acc_1) + normalize_lcs(lcs_acc_2)) / 2
 
     return conc.apply(lcs_apply)

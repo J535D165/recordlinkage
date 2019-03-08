@@ -2,18 +2,18 @@ from __future__ import division
 
 import warnings
 
-import pandas
 import numpy
 
-from recordlinkage.base import BaseIndexAlgorithm
-from recordlinkage.utils import DeprecationHelper, listify
-from recordlinkage.measures import full_index_size
-from recordlinkage.algorithms.indexing import (
-    random_pairs_with_replacement,
-    random_pairs_without_replacement_small_frames,
-    random_pairs_without_replacement_large_frames)
+import pandas
 
 from recordlinkage import rl_logging as logging
+from recordlinkage.algorithms.indexing import (
+    random_pairs_with_replacement,
+    random_pairs_without_replacement_large_frames,
+    random_pairs_without_replacement_small_frames)
+from recordlinkage.base import BaseIndexAlgorithm
+from recordlinkage.measures import full_index_size
+from recordlinkage.utils import DeprecationHelper, listify
 
 
 class Full(BaseIndexAlgorithm):
@@ -195,7 +195,9 @@ class SortedNeighbourhood(BaseIndexAlgorithm):
     datasets with census data. The datasets are named ``census_data_1980``
     and ``census_data_1990``.
 
-    >>> indexer = recordlinkage.SortedNeighbourhoodIndex('first_name', window=9)
+    >>> indexer = recordlinkage.SortedNeighbourhoodIndex(
+            'first_name', window=9
+        )
     >>> indexer.index(census_data_1980, census_data_1990)
 
     When the sorting key has different names in both dataframes:

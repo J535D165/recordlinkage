@@ -3,25 +3,26 @@ from __future__ import unicode_literals
 
 from functools import partial
 
-import pandas
 import numpy
 
-from recordlinkage.base import BaseCompareFeature
+import pandas
+
 from recordlinkage.algorithms.distance import _1d_distance
 from recordlinkage.algorithms.distance import _haversine_distance
-from recordlinkage.algorithms.numeric import _step_sim
-from recordlinkage.algorithms.numeric import _linear_sim
-from recordlinkage.algorithms.numeric import _squared_sim
 from recordlinkage.algorithms.numeric import _exp_sim
 from recordlinkage.algorithms.numeric import _gauss_sim
+from recordlinkage.algorithms.numeric import _linear_sim
+from recordlinkage.algorithms.numeric import _squared_sim
+from recordlinkage.algorithms.numeric import _step_sim
+from recordlinkage.algorithms.string import cosine_similarity
+from recordlinkage.algorithms.string import damerau_levenshtein_similarity
 from recordlinkage.algorithms.string import jaro_similarity
 from recordlinkage.algorithms.string import jarowinkler_similarity
 from recordlinkage.algorithms.string import levenshtein_similarity
-from recordlinkage.algorithms.string import damerau_levenshtein_similarity
-from recordlinkage.algorithms.string import qgram_similarity
-from recordlinkage.algorithms.string import cosine_similarity
-from recordlinkage.algorithms.string import smith_waterman_similarity
 from recordlinkage.algorithms.string import longest_common_substring_similarity
+from recordlinkage.algorithms.string import qgram_similarity
+from recordlinkage.algorithms.string import smith_waterman_similarity
+from recordlinkage.base import BaseCompareFeature
 from recordlinkage.utils import fillna as _fillna
 
 
@@ -283,7 +284,6 @@ class Geographic(BaseCompareFeature):
     missing_value : numpy.dtype
         The value for a comparison with a missing value. Default 0.
     """
-
     name = "geographic"
     description = "Compare geographic attributes of record pairs."
 

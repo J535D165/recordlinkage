@@ -3,6 +3,7 @@
 from __future__ import division
 
 import numpy
+
 import pandas
 
 from recordlinkage.utils import get_length

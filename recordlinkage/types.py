@@ -11,8 +11,10 @@ import re
 from numbers import Number
 
 import numpy
+
 import pandas
-from six import string_types, binary_type, text_type
+
+from six import binary_type, string_types, text_type
 
 string_and_binary_types = (string_types,) + (binary_type,)
 

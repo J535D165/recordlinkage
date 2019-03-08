@@ -1,18 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import pandas as pd
 import numpy as np
+from numpy.testing.utils import assert_almost_equal
+
+import pandas as pd
+import pandas.util.testing as ptm
+
+import pytest
+
 from sklearn.exceptions import NotFittedError
-from sklearn.preprocessing import binarize
 
 import recordlinkage as rl
 from recordlinkage.datasets import binary_vectors
-
-import pytest
-from numpy.testing.utils import assert_almost_equal
-import pandas.util.testing as ptm
-
 
 SUPERVISED_CLASSIFIERS = [
     rl.LogisticRegressionClassifier,
@@ -350,7 +350,7 @@ class TestECM(TestClassifyData):
 
         ecm = rl.ECMClassifier()
         ecm.fit(self.X_train.round())
-        prediction = ecm.predict(self.X_test)
+        ecm.predict(self.X_test)
 
 
 class TestFellegiSunter(TestClassifyData):

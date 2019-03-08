@@ -1,13 +1,16 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import numpy as np
+import pandas as pd
 import pandas.util.testing as pdt
 import pytest
 
-from recordlinkage.preprocessing import *
-
-import numpy as np
-import pandas as pd
+from recordlinkage.preprocessing import clean
+from recordlinkage.preprocessing import phonenumbers
+from recordlinkage.preprocessing import phonetic
+from recordlinkage.preprocessing import phonetic_algorithms
+from recordlinkage.preprocessing import value_occurence
 
 
 class TestCleaningStandardise(object):
@@ -73,8 +76,8 @@ class TestCleaningStandardise(object):
         clean_series = clean(
             values,
             lowercase=True,
-            replace_by_none='[^ \-\_A-Za-z0-9]+',
-            replace_by_whitespace='[\-\_]',
+            replace_by_none=r'[^ \-\_A-Za-z0-9]+',
+            replace_by_whitespace=r'[\-\_]',
             remove_brackets=True)
 
         # Check if series are identical.

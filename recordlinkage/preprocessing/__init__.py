@@ -1,5 +1,5 @@
 from recordlinkage.preprocessing.cleaning import (
-    clean, value_occurence, phonenumbers)
+    clean, phonenumbers, value_occurence)
 from recordlinkage.preprocessing.encoding import (
     _list_phonetic_algorithms, phonetic
 )

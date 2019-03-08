@@ -25,4 +25,4 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 from recordlinkage.contrib.index.neighbourhoodblock.neighbourhoodblock import \
-	NeighbourhoodBlock
+    NeighbourhoodBlock

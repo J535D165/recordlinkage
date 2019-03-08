@@ -1,8 +1,9 @@
+import warnings
 from functools import wraps
 
-import pandas
 import numpy
-import warnings
+
+import pandas
 
 import recordlinkage.config as cf
 

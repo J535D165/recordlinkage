@@ -2,21 +2,22 @@
 # -*- coding: utf-8 -*-
 
 import os
-import sys
-import shutil
-import tempfile
 import pickle
-
-import recordlinkage
-from recordlinkage.base import BaseCompareFeature
+import shutil
+import sys
+import tempfile
 
 import numpy as np
-from numpy import nan, arange
-from pandas import Series, DataFrame, MultiIndex, to_datetime
+from numpy import arange, nan
+
+import pandas.util.testing as pdt
+from pandas import DataFrame, MultiIndex, Series, to_datetime
 
 # dependencies testing specific
 import pytest
-import pandas.util.testing as pdt
+
+import recordlinkage
+from recordlinkage.base import BaseCompareFeature
 
 STRING_SIM_ALGORITHMS = [
     'jaro', 'q_gram', 'cosine', 'jaro_winkler', 'dameraulevenshtein',
@@ -802,7 +803,7 @@ class TestCompareNumeric(TestData):
         assert (result >= 0.0).all()
         assert (result <= 1.0).all()
 
-        if alg is not 'step':
+        if alg != 'step':
 
             print(alg)
             print(result)

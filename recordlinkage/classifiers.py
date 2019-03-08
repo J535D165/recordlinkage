@@ -3,10 +3,10 @@
 import numpy
 import pandas
 
-from sklearn import cluster, linear_model, naive_bayes, svm
+from sklearn import cluster, linear_model, svm
 
-from recordlinkage.base import BaseClassifier as Classifier
 from recordlinkage.adapters import SKLearnAdapter
+from recordlinkage.base import BaseClassifier as Classifier
 from recordlinkage.algorithms.nb_sklearn import ECM, NaiveBayes
 
 
@@ -73,7 +73,6 @@ class FellegiSunter(object):
     def _match_class_pos(self):
         """Return the position of the match class."""
         # TODO: add notfitted warnings
-
         if self.kernel.classes_.shape[0] != 2:
             raise ValueError("Number of classes is {}, expected 2.".format(
                 self.kernel.classes_.shape[0]))
@@ -87,7 +86,6 @@ class FellegiSunter(object):
     def _nonmatch_class_pos(self):
         """Return the position of the non-match class."""
         # TODO: add notfitted warnings
-
         if self.kernel.classes_.shape[0] != 2:
             raise ValueError("Number of classes is {}, expected 2.".format(
                 self.kernel.classes_.shape[0]))
@@ -135,7 +133,6 @@ class FellegiSunter(object):
     @property
     def log_m_probs(self):
         """Log probability P(x_i==1|Match) as described in the FS framework."""
-
         m = self.kernel.feature_log_prob_[self._match_class_pos()]
         return self._prob_inverse_transform(m)
 
@@ -157,7 +154,6 @@ class FellegiSunter(object):
     @property
     def log_weights(self):
         """Log weights as described in the FS framework."""
-
         m = self.kernel.feature_log_prob_[self._match_class_pos()]
         u = self.kernel.feature_log_prob_[self._nonmatch_class_pos()]
 
@@ -172,7 +168,6 @@ class FellegiSunter(object):
     @property
     def p(self):
         """Match probability as described in the FS framework."""
-
         return numpy.exp(self.log_p)
 
     # @p.setter
@@ -182,7 +177,6 @@ class FellegiSunter(object):
     @property
     def m_probs(self):
         """Probability P(x_i==1|Match) as described in the FS framework."""
-
         log_m = self.kernel.feature_log_prob_[self._match_class_pos()]
 
         return self._prob_inverse_transform(numpy.exp(log_m))
@@ -194,7 +188,6 @@ class FellegiSunter(object):
     @property
     def u_probs(self):
         """Probability P(x_i==1|Non-match) as described in the FS framework."""
-
         log_u = self.kernel.feature_log_prob_[self._nonmatch_class_pos()]
 
         return self._prob_inverse_transform(numpy.exp(log_u))
@@ -206,7 +199,6 @@ class FellegiSunter(object):
     @property
     def weights(self):
         """Weights as described in the FS framework."""
-
         m = self.kernel.feature_log_prob_[self._match_class_pos()]
         u = self.kernel.feature_log_prob_[self._nonmatch_class_pos()]
 

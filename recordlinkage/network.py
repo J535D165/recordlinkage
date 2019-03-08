@@ -1,7 +1,7 @@
 import pandas as pd
 
-from recordlinkage.types import (is_pandas_multiindex,
-                                 is_pandas_2d_multiindex)
+from recordlinkage.types import is_pandas_2d_multiindex
+from recordlinkage.types import is_pandas_multiindex
 
 
 class OneToOneLinking(object):

@@ -1,14 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import pandas
 import numpy
+
+import pandas
+
+import pytest
 
 from recordlinkage.datasets import (load_febrl1, load_febrl2, load_febrl3,
                                     load_febrl4, load_krebsregister,
                                     binary_vectors)
-
-import pytest
 
 
 FEBRL_DEDUP = [

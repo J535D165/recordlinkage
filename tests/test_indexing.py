@@ -17,6 +17,7 @@ import recordlinkage
 from recordlinkage.index import Full, Block, SortedNeighbourhood, Random
 from recordlinkage.contrib.index import NeighbourhoodBlock
 
+
 def get_test_algorithms():
     """Return list of algorithms"""
     return [

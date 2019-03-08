@@ -8,11 +8,16 @@ import time
 import warnings
 from abc import ABCMeta, abstractmethod
 
-import six
-import pandas
-import numpy as np
 from joblib import Parallel, delayed
 
+import numpy as np
+
+import pandas
+
+import six
+
+from recordlinkage import rl_logging as logging
+import recordlinkage.config as cf
 from recordlinkage.utils import (listify,
                                  unique,
                                  is_label_dataframe,
@@ -23,21 +28,17 @@ from recordlinkage.utils import (listify,
 from recordlinkage.types import (is_numpy_like,
                                  is_pandas_2d_multiindex)
 from recordlinkage.measures import max_pairs
-from recordlinkage import rl_logging as logging
 
-from recordlinkage.utils import LearningError, DeprecationHelper
-import recordlinkage.config as cf
+from recordlinkage.utils import DeprecationHelper, LearningError
 
 
 def _parallel_compare_helper(class_obj, pairs, x, x_link=None):
     """Internal function to overcome pickling problem in python2."""
-
     return class_obj._compute(pairs, x, x_link)
 
 
 def chunk_pandas(frame_or_series, chunksize=None):
     """Chunk a frame into smaller, equal parts."""
-
     if not isinstance(chunksize, int):
         raise ValueError('argument chunksize needs to be integer type')
 
@@ -208,7 +209,6 @@ class BaseIndexAlgorithm(object):
         custom_index.index()
 
     """
-
     name = None
     description = None
 
@@ -261,7 +261,6 @@ class BaseIndexAlgorithm(object):
             contains the index values of two records.
 
         """
-
         raise NotImplementedError(
             "Not possible to call index for the BaseEstimator"
         )
@@ -280,9 +279,7 @@ class BaseIndexAlgorithm(object):
             A pandas.MultiIndex with record pairs. Each record pair
             contains the index values of two records. The records are
             sampled from the lower triangular part of the matrix.
-
         """
-
         pairs = self._link_index(df_a, df_a)
 
         # Remove all pairs not in the lower triangular part of the matrix.
@@ -327,7 +324,6 @@ class BaseIndexAlgorithm(object):
             the index labels of two records.
 
         """
-
         if x is None:  # error
             raise ValueError("provide at least one dataframe")
         elif x_link is not None:  # linking (two arg)
@@ -421,7 +417,6 @@ class BaseCompareFeature(object):
             numpy.ndarray objects.
 
         """
-
         if self._f_compare_vectorized:
             return self._f_compare_vectorized(
                 *(args + self.args), **self.kwargs)
@@ -450,7 +445,6 @@ class BaseCompareFeature(object):
             a tuple with multiple pandas.Series, pandas.DataFrame,
             numpy.ndarray objects.
         """
-
         result = self._compute_vectorized(*tuple(left_on + right_on))
 
         return result
@@ -479,7 +473,6 @@ class BaseCompareFeature(object):
             a tuple with multiple pandas.Series, pandas.DataFrame,
             numpy.ndarray objects.
         """
-
         if not is_pandas_2d_multiindex(pairs):
             raise ValueError(
                 "expected pandas.MultiIndex with record pair indices "
@@ -586,7 +579,6 @@ class BaseCompare(object):
             A (list of) compare feature(s) from
             :mod:`recordlinkage.compare`.
         """
-
         self.features.append(model)
 
     def compare_vectorized(self, comp_func, labels_left, labels_right,
@@ -624,7 +616,6 @@ class BaseCompare(object):
             This argument is a keyword argument and can not be part of the
             arguments of comp_func.
         """
-
         label = kwargs.pop('label', None)
 
         if isinstance(labels_left, tuple):
@@ -763,9 +754,7 @@ class BaseCompare(object):
         """Make a union of the features.
 
         The term 'union' is based on the terminology of scikit-learn.
-
         """
-
         feat_conc = []
 
         for feat, label in objs:
@@ -852,7 +841,6 @@ class BaseCompare(object):
             A pandas DataFrame with feature vectors, i.e. the result of
             comparing each record pair.
         """
-
         if not isinstance(pairs, pandas.MultiIndex):
             raise ValueError(
                 "expected pandas.MultiIndex with record pair indices "
@@ -892,9 +880,7 @@ class BaseClassifier(six.with_metaclass(ABCMeta)):
     This class contains methods for training the classifier.
     Distinguish different types of training, such as supervised and
     unsupervised learning.
-
     """
-
     def __init__(self):
         pass
 
@@ -903,7 +889,7 @@ class BaseClassifier(six.with_metaclass(ABCMeta)):
         """
 
         warnings.warn("learn is deprecated, {}.fit_predict "
-                         "instead".format(self.__class__.__name__))
+                      "instead".format(self.__class__.__name__))
         return self.fit_predict(*args, **kwargs)
 
     def _initialise_classifier(self, comparison_vectors):
@@ -940,7 +926,6 @@ class BaseClassifier(six.with_metaclass(ABCMeta)):
         here: link.
 
         """
-
         logging.info("Classification - start training {}".format(
             self.__class__.__name__)
         )
@@ -1003,7 +988,6 @@ class BaseClassifier(six.with_metaclass(ABCMeta)):
             non-matches).
 
         """
-
         self.fit(comparison_vectors, match_index)
         result = self.predict(comparison_vectors)
 
@@ -1037,7 +1021,6 @@ class BaseClassifier(six.with_metaclass(ABCMeta)):
             non-matches).
 
         """
-
         logging.info("Classification - predict matches and non-matches")
 
         # make the predicition
@@ -1079,11 +1062,9 @@ class BaseClassifier(six.with_metaclass(ABCMeta)):
             The probability of being a match for each record pair.
 
         """
-
-        # deprecation
         if return_type is not None:
             warnings.warn("The argument 'return_type' is removed. "
-                          "Default value is now 'series'.", 
+                          "Default value is now 'series'.",
                           VisibleDeprecationWarning, stacklevel=2)
 
         logging.info("Classification - compute probabilities")
@@ -1095,7 +1076,6 @@ class BaseClassifier(six.with_metaclass(ABCMeta)):
         """Return different formatted classification results.
 
         """
-
         return_type = cf.get_option('classification.return_type')
 
         if type(result) != np.ndarray:

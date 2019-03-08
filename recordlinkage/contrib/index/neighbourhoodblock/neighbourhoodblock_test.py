@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from operator import eq, gt, ge
-import pytest
+from operator import eq, ge, gt
+
 import numpy as np
+import pytest
 
 from recordlinkage.index import Full, Block, SortedNeighbourhood
 from recordlinkage.contrib.index import NeighbourhoodBlock
@@ -44,21 +45,21 @@ class TestNeighbourhoodBlock(TestData):
                 len(pairs2) == len(index2)) and pairwise_comparison(
                     pairs1, pairs2)
 
-    def test_dedup_vs_Full(self):
+    def test_dedup_vs_full(self):
         indexers = [
             NeighbourhoodBlock(max_non_matches=len(self.a.columns)),
             Full(),
         ]
         self.assert_index_comparisons(eq, indexers, self.a)
 
-    def test_link_vs_Full(self):
+    def test_link_vs_full(self):
         indexers = [
             NeighbourhoodBlock(max_non_matches=len(self.a.columns)),
             Full(),
         ]
         self.assert_index_comparisons(eq, indexers, self.a, self.b)
 
-    def test_dedup_single_blocking_key_vs_Block(self):
+    def test_dedup_single_blocking_key_vs_block(self):
         indexers = [
             NeighbourhoodBlock('var_block10', max_nulls=1),
             NeighbourhoodBlock(
@@ -68,7 +69,7 @@ class TestNeighbourhoodBlock(TestData):
         self.assert_index_comparisons(eq, indexers, self.a)
         self.assert_index_comparisons(gt, indexers[-2:], self.incomplete_a)
 
-    def test_link_single_blocking_key_vs_Block(self):
+    def test_link_single_blocking_key_vs_block(self):
         indexers = [
             NeighbourhoodBlock('var_arange', max_nulls=1),
             NeighbourhoodBlock(
@@ -79,7 +80,7 @@ class TestNeighbourhoodBlock(TestData):
         self.assert_index_comparisons(gt, indexers[-2:], self.incomplete_a,
                                       self.incomplete_b)
 
-    def test_dedup_multiple_blocking_keys_vs_Block(self):
+    def test_dedup_multiple_blocking_keys_vs_block(self):
         indexers = [
             NeighbourhoodBlock(['var_single', 'var_block10'], max_nulls=1),
             NeighbourhoodBlock(
@@ -91,7 +92,7 @@ class TestNeighbourhoodBlock(TestData):
         self.assert_index_comparisons(eq, indexers, self.a)
         self.assert_index_comparisons(gt, indexers[-2:], self.incomplete_a)
 
-    def test_link_multiple_blocking_keys_vs_Block(self):
+    def test_link_multiple_blocking_keys_vs_block(self):
         indexers = [
             NeighbourhoodBlock(['var_arange', 'var_block10'], max_nulls=1),
             NeighbourhoodBlock(
@@ -105,7 +106,7 @@ class TestNeighbourhoodBlock(TestData):
                                       self.incomplete_b)
 
     @pytest.mark.parametrize("window", [3, 5, 7, 9, 11])
-    def test_dedup_single_sorting_key_vs_SortedNeighbourhood(self, window):
+    def test_dedup_single_sorting_key_vs_sortedneighbourhood(self, window):
         indexers = [
             NeighbourhoodBlock('var_arange', max_nulls=1, windows=window),
             NeighbourhoodBlock(
@@ -119,7 +120,7 @@ class TestNeighbourhoodBlock(TestData):
         self.assert_index_comparisons(gt, indexers[-2:], self.incomplete_a)
 
     @pytest.mark.parametrize("window", [3, 5, 7, 9, 11])
-    def test_link_single_sorting_key_vs_SortedNeighbourhood(self, window):
+    def test_link_single_sorting_key_vs_sortedneighbourhood(self, window):
         indexers = [
             NeighbourhoodBlock('var_arange', max_nulls=1, windows=window),
             NeighbourhoodBlock(
@@ -134,7 +135,7 @@ class TestNeighbourhoodBlock(TestData):
                                       self.incomplete_b)
 
     @pytest.mark.parametrize("window", [3, 5, 7, 9, 11])
-    def test_dedup_with_blocking_vs_SortedNeighbourhood(self, window):
+    def test_dedup_with_blocking_vs_sortedneighbourhood(self, window):
         indexers = [
             NeighbourhoodBlock(
                 ['var_arange', 'var_block10'],
@@ -152,7 +153,7 @@ class TestNeighbourhoodBlock(TestData):
         self.assert_index_comparisons(gt, indexers[-2:], self.incomplete_a)
 
     @pytest.mark.parametrize("window", [3, 5, 7, 9, 11])
-    def test_link_with_blocking_vs_SortedNeighbourhood(self, window):
+    def test_link_with_blocking_vs_sortedneighbourhood(self, window):
         indexers = [
             NeighbourhoodBlock(
                 ['var_arange', 'var_block10'],

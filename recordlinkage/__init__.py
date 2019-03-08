@@ -1,10 +1,12 @@
 
 # register the configuration
-import recordlinkage.config_init
+import recordlinkage.config_init  # noqa
 
-from recordlinkage.api import *
-from recordlinkage.index import (FullIndex, BlockIndex,
-                                 SortedNeighbourhoodIndex, RandomIndex)
+from recordlinkage.api import Compare, Index
+from recordlinkage.index import FullIndex
+from recordlinkage.index import BlockIndex
+from recordlinkage.index import SortedNeighbourhoodIndex
+from recordlinkage.index import RandomIndex
 from recordlinkage.classifiers import *
 from recordlinkage.measures import *
 from recordlinkage.network import *
