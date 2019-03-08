@@ -31,4 +31,6 @@ install:
  - python setup.py bdist_wheel
  - pip install ./dist/recordlinkage-*.whl
 script: tox --installpkg ./dist/recordlinkage-*.whl
-after_success: coverage combine && codecov
+after_success: 
+  - rm -r .coverage.*
+  - codecov
