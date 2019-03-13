@@ -1185,8 +1185,8 @@ class TestCompareStrings(TestData):
 
     def test_threshold(self):
 
-        A = DataFrame({'col': ["gretzky", "gretzky99", "gretzky", "gretzky"]})
-        B = DataFrame({'col': ["gretzky", "gretzky", nan, "wayne"]})
+        A = DataFrame({'col': [u"gretzky", u"gretzky99", u"gretzky", u"gretzky"]})
+        B = DataFrame({'col': [u"gretzky", u"gretzky", nan, u"wayne"]})
         ix = MultiIndex.from_arrays([A.index.values, B.index.values])
 
         comp = recordlinkage.Compare()
