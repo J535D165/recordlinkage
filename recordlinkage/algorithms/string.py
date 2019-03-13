@@ -112,7 +112,12 @@ def qgram_similarity(s1, s2, include_wb=True, ngram=(2, 2)):
 
         # division by zero is not possible in our case, but 0/0 is possible.
         # Numpy raises a warning in that case.
-        return np.true_divide(match_ngrams, total_ngrams).A1
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            m = np.true_divide(match_ngrams, total_ngrams).A1
+
+        return m
 
     return _metric_sparse_euclidean(vec_fit[:len(s1)], vec_fit[len(s1):])
 
@@ -143,7 +148,11 @@ def cosine_similarity(s1, s2, include_wb=True, ngram=(2, 2)):
 
         ab = v.multiply(u).sum(axis=1)
 
-        return np.divide(ab, np.multiply(a, b)).A1
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            m = np.divide(ab, np.multiply(a, b)).A1
+
+        return m
 
     return _metric_sparse_cosine(vec_fit[:len(s1)], vec_fit[len(s1):])
 
