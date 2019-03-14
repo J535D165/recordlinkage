@@ -1183,6 +1183,48 @@ class TestCompareStrings(TestData):
         assert (result[result.notnull()] >= 0).all(1).all(0)
         assert (result[result.notnull()] <= 1).all(1).all(0)
 
+    def test_threshold(self):
+
+        A = DataFrame({'col': [u"gretzky", u"gretzky99", u"gretzky", u"gretzky"]})
+        B = DataFrame({'col': [u"gretzky", u"gretzky", nan, u"wayne"]})
+        ix = MultiIndex.from_arrays([A.index.values, B.index.values])
+
+        comp = recordlinkage.Compare()
+        comp.string(
+            'col',
+            'col',
+            method="levenshtein",
+            threshold=0.5,
+            missing_value=2.0,
+            label="x_col1"
+        )
+        comp.string(
+            'col',
+            'col',
+            method="levenshtein",
+            threshold=1.0,
+            missing_value=0.5,
+            label="x_col2"
+        )
+        comp.string(
+            'col',
+            'col',
+            method="levenshtein",
+            threshold=0.0,
+            missing_value=nan,
+            label="x_col3"
+        )
+        result = comp.compute(ix, A, B)
+
+        expected = Series([1.0, 1.0, 2.0, 0.0], index=ix, name="x_col1")
+        pdt.assert_series_equal(result["x_col1"], expected)
+
+        expected = Series([1.0, 0.0, 0.5, 0.0], index=ix, name="x_col2")
+        pdt.assert_series_equal(result["x_col2"], expected)
+
+        expected = Series([1.0, 1.0, nan, 1.0], index=ix, name="x_col3")
+        pdt.assert_series_equal(result["x_col3"], expected)
+
     @pytest.mark.parametrize("alg", STRING_SIM_ALGORITHMS)
     def test_incorrect_input(self, alg):
 

@@ -151,13 +151,14 @@ class String(BaseCompareFeature):
                 self.method))
 
         c = str_sim_alg(s_left, s_right)
-        c = _fillna(c, self.missing_value)
 
         if self.threshold is not None:
-            return (c >= self.threshold).astype(numpy.float64)
-        else:
-            return c
+            c = c.where((c < self.threshold) | (pandas.isnull(c)), other=1.0)
+            c = c.where((c >= self.threshold) | (pandas.isnull(c)), other=0.0)
 
+        c = _fillna(c, self.missing_value)
+
+        return c
 
 class Numeric(BaseCompareFeature):
     """Compute the (partial) similarity between numeric values.
