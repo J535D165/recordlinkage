@@ -316,7 +316,8 @@ autodoc_mock_imports = [
   'pandas',
   'sklearn',
   'jellyfish',
-  'six'
+  'six',
+  'joblib'
 ]
 
 # -- Napoleon options ---------------------------------------------------
