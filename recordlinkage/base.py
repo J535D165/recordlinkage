@@ -14,8 +14,6 @@ import numpy as np
 
 import pandas
 
-import six
-
 from recordlinkage import rl_logging as logging
 import recordlinkage.config as cf
 from recordlinkage.utils import (listify,
@@ -28,7 +26,6 @@ from recordlinkage.utils import (listify,
 from recordlinkage.types import (is_numpy_like,
                                  is_pandas_2d_multiindex)
 from recordlinkage.measures import max_pairs
-
 from recordlinkage.utils import DeprecationHelper, LearningError
 
 
@@ -874,7 +871,7 @@ class BaseCompare(object):
         raise AttributeError("this method was removed in version 0.12.0")
 
 
-class BaseClassifier(six.with_metaclass(ABCMeta)):
+class BaseClassifier(metaclass=ABCMeta):
     """Base class for classification of records pairs.
 
     This class contains methods for training the classifier.

@@ -1,10 +1,10 @@
+from io import BytesIO
 import os
+from urllib.request import urlopen
 import zipfile
 
 import pandas
 
-from six import BytesIO
-from six.moves.urllib.request import urlopen
 
 
 def load_krebsregister(block=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
