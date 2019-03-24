@@ -1,7 +1,5 @@
 # measures.py
 
-from __future__ import division
-
 import numpy
 
 import pandas
