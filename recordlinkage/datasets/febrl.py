@@ -1,5 +1,3 @@
-import os
-
 import pandas
 import numpy
 
@@ -7,7 +5,11 @@ import numpy
 def _febrl_load_data(filename):
     # Internal function for loading febrl data
 
-    filepath = os.path.join(os.path.dirname(__file__), 'febrl', filename)
+    filepath = Path(
+        Path(__file__).parent,
+        'febrl', 
+        filename
+    )
 
     febrl_data = pandas.read_csv(filepath,
                                  index_col="rec_id",
