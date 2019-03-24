@@ -1,6 +1,24 @@
 Python Record Linkage Toolkit
 =============================
 
+|pypi| |travis| |codecov| |docs|
+
+.. |travis| image:: https://travis-ci.org/J535D165/recordlinkage.svg?branch=master
+  :target: https://travis-ci.org/J535D165/recordlinkage
+  :alt: TravisCI Status
+
+.. |pypi| image:: https://badge.fury.io/py/recordlinkage.svg
+  :target: https://pypi.python.org/pypi/recordlinkage/
+  :alt: Pypi Version
+    
+.. |codecov| image:: https://codecov.io/gh/J535D165/recordlinkage/branch/master/graph/badge.svg
+  :target: https://codecov.io/gh/J535D165/recordlinkage
+  :alt: Code Coverage
+
+.. |docs| image:: https://readthedocs.org/projects/recordlinkage/badge/?version=latest
+  :target: https://recordlinkage.readthedocs.io/en/latest/?badge=latest
+  :alt: Documentation Status
+
 The **Python Record Linkage Toolkit** is a library to link records in or
 between data sources. The toolkit provides most of the tools needed for
 record linkage and deduplication. The package contains indexing methods,
@@ -117,17 +135,6 @@ share, let us know.
 
 Dependencies, installation and license
 --------------------------------------
-
-|pypi| |travis| |codecov|
-
-.. |travis| image:: https://travis-ci.org/J535D165/recordlinkage.svg?branch=master
-    :target: https://travis-ci.org/J535D165/recordlinkage
-
-.. |pypi| image:: https://badge.fury.io/py/recordlinkage.svg
-    :target: https://pypi.python.org/pypi/recordlinkage/
-    
-.. |codecov| image:: https://codecov.io/gh/J535D165/recordlinkage/branch/master/graph/badge.svg
-  :target: https://codecov.io/gh/J535D165/recordlinkage
 
 Install the Python Record Linkage Toolkit easily with pip
 
