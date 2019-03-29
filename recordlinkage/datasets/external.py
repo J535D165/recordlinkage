@@ -52,7 +52,7 @@ def clear_data_home(data_home=None):
         The path to recordlinkage data folder.
     """
     data_home = get_data_home(data_home)
-    shutil.rmtree(data_home)
+    shutil.rmtree(str(data_home))
 
 
 def load_krebsregister(block=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10],

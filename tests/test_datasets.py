@@ -13,7 +13,7 @@ import pytest
 from recordlinkage.datasets import (load_febrl1, load_febrl2, load_febrl3,
                                     load_febrl4, load_krebsregister,
                                     binary_vectors)
-from recordlinkage.datasets.external import get_data_home, clear_data_home
+from recordlinkage.datasets import get_data_home, clear_data_home
 
 
 FEBRL_DEDUP = [
@@ -85,9 +85,15 @@ def test_krebs_dataset_download():
             "block_{}.zip".format(i)
         ).is_file()
 
+    # count the number of recordss
+    assert type(krebs_data), pandas.DataFrame
+    assert type(krebs_matches), pandas.MultiIndex
+    assert len(krebs_data) == 5749132
+    assert len(krebs_matches) == 20931
+
 def test_krebs_dataset_environ(tmpdir):
 
-    path = Path(tmpdir).expanduser()
+    path = Path(str(tmpdir)).expanduser()
     environ['RL_DATA'] = str(path)
 
     krebs_data, krebs_matches = load_krebsregister()
@@ -102,12 +108,6 @@ def test_krebs_dataset_environ(tmpdir):
 def test_krebs_dataset():
     krebs_data_block1, krebs_matches_block1 = load_krebsregister(1)
     krebs_data_block10, krebs_matches_block10 = load_krebsregister(10)
-
-    # count the number of recordss
-    assert type(krebs_data), pandas.DataFrame
-    assert type(krebs_matches), pandas.MultiIndex
-    assert len(krebs_data) == 5749132
-    assert len(krebs_matches) == 20931
 
     assert len(krebs_data_block1) > 0
     assert len(krebs_data_block10) > 0
