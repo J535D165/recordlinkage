@@ -192,5 +192,3 @@ def _krebsregister_block(block):
     data_block.index.names = ['id1', 'id2']
 
     return data_block
-
-        z.extractall(str(Path(Path(__file__).parent, 'krebsregister')))
