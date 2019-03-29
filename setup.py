@@ -10,7 +10,7 @@ import versioneer
 def read(fname):
     """Read a file."""
     fp = Path(Path(__file__).parent, fname)
-    return open(fp).read()
+    return fp.read_text()
 
 
 setup(
