@@ -158,7 +158,7 @@ def _download_krebsregister():
 
         # unzip the content and put it in the krebsregister folder
         z = zipfile.ZipFile(BytesIO(r))
-        z.extractall(Path(Path(__file__).parent, 'krebsregister'))
+        z.extractall(str(folder))
 
         print("Data download succesfull.")
 
