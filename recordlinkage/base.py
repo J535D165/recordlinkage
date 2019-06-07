@@ -8,7 +8,7 @@ import time
 import warnings
 from abc import ABCMeta, abstractmethod
 
-from joblib import Parallel, delayed
+from joblib import Parallel, delayed, cpu_count
 
 import numpy as np
 
@@ -538,7 +538,10 @@ class BaseCompare(object):
         self.add(features)
 
         # public
-        self.n_jobs = n_jobs
+        if n_jobs == -1:
+            self.n_jobs = cpu_count()
+        else:
+            self.n_jobs = n_jobs
         self.indexing_type = indexing_type  # label of position
         self.features = []
 
