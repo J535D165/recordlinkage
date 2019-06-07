@@ -188,8 +188,31 @@ class BaseNB(BaseEstimator, ClassifierMixin):
         """
         return np.exp(self.predict_log_proba(X))
 
+
+    def _remove_non_binary(self, X):
+        """Binarize each column seperately and remove columns with only ones or zeros.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+
+        Returns
+        -------
+        X_binary : array-like
+            Returns the data where each columns has binary labels and non binary columns are removed.
+
+        """
+
+        if self.binarize is not None:
+            X = binarize(X, threshold=self.binarize)
+
+        # remove columns with only a single value, i.e. non binary columns
+        X = X[:, ~(X == X[0,:]).all(0)]
+
+        return X
+
     def _fit_data(self, X):
-        """Binarize the data for each column separately.
+        """Trains LabelBinarizers for each column seperately.
 
         Parameters
         ----------
@@ -203,8 +226,7 @@ class BaseNB(BaseEstimator, ClassifierMixin):
 
         """
 
-        if self.binarize is not None:
-            X = binarize(X, threshold=self.binarize)
+        X = self._remove_non_binary(X)
 
         for i in range(X.shape[1]):
 
@@ -220,11 +242,10 @@ class BaseNB(BaseEstimator, ClassifierMixin):
     def _transform_data(self, X):
         """Binarize the data for each column separately."""
 
+        X = self._remove_non_binary(X)
+
         if self._binarizers == []:
             raise NotFittedError()
-
-        if self.binarize is not None:
-            X = binarize(X, threshold=self.binarize)
 
         if len(self._binarizers) != X.shape[1]:
             raise ValueError(
@@ -529,6 +550,7 @@ class ECM(BaseNB):
         self : object
             Returns self.
         """
+
         X = check_array(X, accept_sparse='csr')
 
         # count frequencies of elements in vector space
