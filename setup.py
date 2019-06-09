@@ -1,6 +1,6 @@
 """Setup file for the Python Record Linkage Toolkit."""
 
-from pathlib import Path
+import os
 
 from setuptools import find_packages, setup
 
@@ -9,8 +9,7 @@ import versioneer
 
 def read(fname):
     """Read a file."""
-    fp = Path(Path(__file__).parent, fname)
-    return fp.read_text()
+    return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
 
 setup(
@@ -29,7 +28,7 @@ setup(
     # Github
     url="https://github.com/J535D165/recordlinkage",
 
-    python_requires=">3.4",
+    python_requires=">=3.5",
     install_requires=[
         "jellyfish>=0.5.4",
         "numpy>=1.13.0",
