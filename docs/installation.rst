@@ -14,12 +14,15 @@ documentation_.
 Installation
 ============
 
-The easiest way of installing the Python Record Linkage Toolkit is using
-``pip``. It is as easy as typing:
+The Python Record linkage Toolkit requires Python 3.5 or higher (since version
+>= 0.14). Install the package easily with pip
 
 .. code:: sh
 
-	pip install --user recordlinkage
+    pip install recordlinkage
+
+Python 2.7 users can use version <= 0.13, but it is advised to use Python >=
+3.5.
 
 You can also clone the project on Github. The license of this record linkage
 package is BSD-3-Clause.
