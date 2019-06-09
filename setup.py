@@ -1,6 +1,6 @@
 """Setup file for the Python Record Linkage Toolkit."""
 
-from pathlib import Path
+import os
 
 from setuptools import find_packages, setup
 
@@ -9,8 +9,7 @@ import versioneer
 
 def read(fname):
     """Read a file."""
-    fp = Path(Path(__file__).parent, fname)
-    return fp.read_text()
+    return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
 
 setup(
