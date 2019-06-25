@@ -11,6 +11,7 @@ module is based on scikit-learn's subdule :mod:`sklearn.naive_bayes`.
 # This module is based on sklearn's NB implementation. The license of sklearn
 # is BSD 3 clause. Modifications copyright Jonathan de Bruin.
 
+import sys
 import warnings
 
 import numpy as np
@@ -99,6 +100,24 @@ def safe_sparse_dot(a, b, dense_output=False):
         return ret
     else:
         return np.dot(a, b)
+
+
+def safe_log(x, offset=sys.float_info.min):
+    """Logarithm that handles small numbers by proving the smallest
+    offset possible. This maps log(0) from -inf to -708.39642.
+
+    Parameters
+    ----------
+    x : array or float
+    offset : float
+
+    Returns
+    -------
+    safe_log : logarithm base 10 that can handle small floats
+
+    """
+
+    return np.log(x + offset)
 
 
 def unique_rows_counts(a):
@@ -594,8 +613,8 @@ class ECM(BaseNB):
 
             # maximisation step
             class_log_prior_ = np.log(g_freq_sum) - np.log(X.shape[0])  # p
-            feature_log_prob_ = np.log(safe_sparse_dot(g_freq.T, X_unique_bin))
-            feature_log_prob_ -= np.log(np.atleast_2d(g_freq_sum).T)
+            feature_log_prob_ = safe_log(safe_sparse_dot(g_freq.T, X_unique_bin))
+            feature_log_prob_ -= safe_log(np.atleast_2d(g_freq_sum).T)
 
             # Stop iterating when the class prior and feature probs are close
             # to the values in the to previous iteration (parameters starting
