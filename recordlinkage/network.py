@@ -109,7 +109,7 @@ class OneToOneLinking(object):
                 raise ValueError(
                     "pandas.MultiIndex has incorrect number of "
                     "levels (expected 2 levels)")
-        if data and (not is_pandas_like(data)):
+        if (data is not None) and (not is_pandas_like(data)):
             raise TypeError("expected pandas.DataFrame")
 
         if self.method == "greedy":
@@ -257,7 +257,7 @@ class OneToManyLinking(OneToOneLinking):
         source_dupl_bool = self._bool_duplicated(links, self.level)
         return links[~source_dupl_bool]
 
-    def compute(self, links):
+    def compute(self, links, data=None):
         """Compute the one-to-many matching.
 
         Parameters
@@ -272,7 +272,7 @@ class OneToManyLinking(OneToOneLinking):
 
         """
 
-        return self._compute(links)
+        return self._compute(links, data)
 
 
 class ConnectedComponents(object):
