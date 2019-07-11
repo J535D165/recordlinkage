@@ -61,6 +61,7 @@ class TestMeasures(object):
 
         assert rl.accuracy(LINKS_TRUE, LINKS_PRED, len(FULL_INDEX)) == 4 / 9
         assert rl.accuracy(cm) == 4 / 9
+        assert rl.accuracy(LINKS_TRUE, LINKS_PRED, FULL_INDEX) == 4 / 9
 
     def test_specificity(self):
 

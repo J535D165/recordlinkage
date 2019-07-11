@@ -384,6 +384,9 @@ def accuracy(links_true, links_pred=None, total=None):
         The accuracy
     """
 
+    if isinstance(total, pandas.MultiIndex):
+        total = len(total)
+
     if _isconfusionmatrix(links_true):
 
         confusion_matrix = links_true
