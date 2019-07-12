@@ -1,5 +1,6 @@
 import warnings
 from functools import wraps
+from packaging import version
 
 import numpy
 
@@ -76,6 +77,10 @@ def return_type_deprecator(func):
 
 
 # Checks and conversions
+
+def is_min_pandas_version(min_version):
+    """Check if pandas version is larger or equal the version passed."""
+    return version.parse(pandas.__version__) >= version.parse(min_version)
 
 
 def is_label_dataframe(label, df):

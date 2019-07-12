@@ -10,6 +10,7 @@ import pytest
 
 import recordlinkage as rl
 from recordlinkage import index_split
+from recordlinkage.utils import is_min_pandas_version
 
 
 def test_multiindex_split():
@@ -24,7 +25,10 @@ def test_multiindex_split():
         ptm.assert_index_equal(result_index_chunk, expected_index_chunk)
 
         assert len(result_index_chunk.levels) == 2
-        assert len(result_index_chunk.labels) == 2
+        if is_min_pandas_version("0.24.0"):
+            assert len(result_index_chunk.codes) == 2
+        else:
+            assert len(result_index_chunk.labels) == 2
 
 
 def test_options():
