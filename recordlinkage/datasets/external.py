@@ -1,10 +1,10 @@
-import os
+from io import BytesIO
+from pathlib import Path
+from urllib.request import urlopen
 import zipfile
 
 import pandas
 
-from six import BytesIO
-from six.moves.urllib.request import urlopen
 
 
 def load_krebsregister(block=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
@@ -68,10 +68,13 @@ def load_krebsregister(block=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
     # If the data is not found, download it.
     for i in range(1, 11):
 
-        filepath = os.path.join(os.path.dirname(__file__),
-                                'krebsregister', 'block_{}.zip'.format(i))
+        filepath = Path(
+            Path(__file__).parent,
+            'krebsregister', 
+            'block_{}.zip'.format(i)
+        )
 
-        if not os.path.exists(filepath):
+        if not filepath.is_file():
             _download_krebsregister()
             break
 
@@ -105,7 +108,7 @@ def _download_krebsregister():
 
         # unzip the content and put it in the krebsregister folder
         z = zipfile.ZipFile(BytesIO(r))
-        z.extractall(os.path.join(os.path.dirname(__file__), 'krebsregister'))
+        z.extractall(str(Path(Path(__file__).parent, 'krebsregister')))
 
         print("Data download succesfull.")
 
@@ -120,8 +123,11 @@ def _krebsregister_block(block):
             "Argument 'block' has to be integer in "
             "[1, 2, 3, 4, 5, 6, 7, 8, 9, 10] or list of integers.")
 
-    fp_i = os.path.join(os.path.dirname(__file__),
-                        'krebsregister', 'block_{}.zip'.format(block))
+    fp_i = Path(
+        Path(__file__).parent,
+        'krebsregister', 
+        'block_{}.zip'.format(block)
+    )
 
     data_block = pandas.read_csv(
         fp_i,

@@ -28,8 +28,8 @@ setup(
     # Github
     url="https://github.com/J535D165/recordlinkage",
 
+    python_requires=">=3.5",
     install_requires=[
-        "six>=1.10.0",
         "jellyfish>=0.5.4",
         "numpy>=1.13.0",
         "pandas>=0.18.0",
