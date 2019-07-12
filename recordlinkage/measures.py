@@ -286,6 +286,9 @@ def confusion_matrix(links_true, links_pred, total=None):
     if total is None:
         tn = numpy.nan
     else:
+        
+        if isinstance(total, pandas.MultiIndex):
+            total = len(total)
         tn = true_negatives(links_true, links_pred, total)
 
     return numpy.array([[tp, fn], [fp, tn]])
@@ -436,6 +439,9 @@ def specificity(links_true, links_pred=None, total=None):
     else:
 
         fp = false_positives(links_true, links_pred)
+
+        if isinstance(total, pandas.MultiIndex):
+            total = len(total)
         tn = true_negatives(links_true, links_pred, total)
         v = tn / (fp + tn)
 
