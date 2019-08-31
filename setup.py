@@ -27,7 +27,16 @@ setup(
 
     # Github
     url="https://github.com/J535D165/recordlinkage",
-
+    classifiers=[
+        "Development Status :: 4 - Beta",
+        "License :: OSI Approved :: BSD License",
+        "Programming Language :: Python",
+        "Programming Language :: Python :: 3.5",
+        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3 :: Only"
+    ],
     python_requires=">=3.5",
     install_requires=[
         "jellyfish>=0.5.4",
