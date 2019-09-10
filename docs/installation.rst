@@ -30,7 +30,7 @@ package is BSD-3-Clause.
 Dependencies
 ============
 
-The following packages are required. You probably have most of it already ;)
+The following packages are required. You probably have most of them already ;)
 
 -  `numpy <http://www.numpy.org>`__
 -  `pandas (>=0.18.0) <https://github.com/pydata/pandas>`__
