@@ -1,7 +1,9 @@
 import pandas as pd
+import networkx as nx
 
 from recordlinkage.types import is_pandas_2d_multiindex
 from recordlinkage.types import is_pandas_multiindex
+from recordlinkage.types import is_pandas_like
 
 
 class OneToOneLinking(object):
@@ -16,8 +18,7 @@ class OneToOneLinking(object):
     Parameters
     ----------
     method : str
-        The method to solve the problem. Only 'greedy' is supported at
-        the moment.
+        The method to solve the problem. The options are 'greedy' and 'max_weighted'.
 
     Note
     ----
@@ -30,6 +31,21 @@ class OneToOneLinking(object):
         super(OneToOneLinking, self).__init__()
 
         self.method = method
+
+    def _add_similarity_weights(self, links, data):
+        """Add the similarity weights to the MultiIndex with candidate links."""
+
+        #  calculate the total weight and remove all other columns
+        initial_columns = data.columns
+        data["weight"] = data.sum(axis=1)
+
+        # slicing on a multiindex is equivalent to merging on two columns
+        data = data.drop(columns=initial_columns).reset_index()
+        links = links.to_frame(index=False).rename(columns={0: "level_0", 1: "level_1"})
+        links = links.merge(data, how="left", on=["level_0", "level_1"]).set_index(["level_0", "level_1"])
+        links.index.names = [None, None]
+
+        return links
 
     @classmethod
     def _bool_duplicated(cls, links, level):
@@ -50,7 +66,42 @@ class OneToOneLinking(object):
 
         return pd.MultiIndex.from_tuples(result)
 
-    def _compute(self, links):
+    def _compute_max_weighted(self, links, data):
+        """Compute a one to one linking by maximizing the total similarity weight."""
+
+        links = self._add_similarity_weights(links, data)
+        graph = self._to_weighted_bipartite_graph(links)
+
+        max_weighted_graph = self._max_weighted_graph(graph)
+        max_weighted_dataframe = self._to_max_weighted_dataframe(max_weighted_graph)
+
+        return max_weighted_dataframe
+
+    def _max_weighted_graph(self, graph):
+        """Calculate the maximally weighted bipartite graph."""
+
+        # max weight matching
+        max_weighted_edges = nx.algorithms.matching.max_weight_matching(graph)
+
+        # restore order after matching
+        max_weighted_edges = self._order_max_weighted_bipartite_graph(graph, max_weighted_edges)
+
+        # create maximally weighted graph
+        weights = [graph[u][v]["weight"] for u, v in max_weighted_edges]
+        max_weighted_left = [edge[0] for edge in max_weighted_edges]
+        max_weighted_right = [edge[1] for edge in max_weighted_edges]
+
+        max_weighted_graph = nx.Graph()
+
+        max_weighted_graph.add_nodes_from(max_weighted_left, bipartite=0)
+        max_weighted_graph.add_nodes_from(max_weighted_right, bipartite=1)
+        max_weighted_graph.add_weighted_edges_from(
+            list(zip(max_weighted_left, max_weighted_right, weights))
+        )
+
+        return max_weighted_graph
+
+    def _compute(self, links, data):
         if not is_pandas_2d_multiindex(links):
             if not is_pandas_multiindex(links):
                 raise TypeError("expected pandas.MultiIndex")
@@ -58,19 +109,93 @@ class OneToOneLinking(object):
                 raise ValueError(
                     "pandas.MultiIndex has incorrect number of "
                     "levels (expected 2 levels)")
+        if (data is not None) and (not is_pandas_like(data)):
+            raise TypeError("expected pandas.DataFrame")
 
-        if self.method == 'greedy':
+        if self.method == "greedy":
             return self._compute_greedy(links)
+        elif self.method == "max_weighted":
+            return self._compute_max_weighted(links, data)
         else:
             raise ValueError("unknown matching method {}".format(self.method))
 
-    def compute(self, links):
+    def _order_max_weighted_bipartite_graph(self, graph, max_weighted_edges):
+        """Swaps the order of edges that are swapped after max. weight matching."""
+
+        edges_left = list(set(edge[0] for edge in graph.edges))
+
+        max_weighted_left = [edge[0] for edge in max_weighted_edges]
+        max_weighted_right = [edge[1] for edge in max_weighted_edges]
+
+        for i, value in enumerate(max_weighted_left):
+            if value not in edges_left:
+                max_weighted_left[i], max_weighted_right[i] = (
+                    max_weighted_right[i],
+                    max_weighted_left[i],
+                )
+
+        ordered_max_weighted_edges = list(zip(max_weighted_left, max_weighted_right))
+
+        return ordered_max_weighted_edges
+
+    def _to_weighted_bipartite_graph(self, links):
+        """Convert a pandas DataFrame with MultiIndex and single column weight to a bipartite graph with weighted edges."""
+
+        # add labels to both multiindex levels to ensure no overlap of nodes in the graph
+        links = links.set_index(self._add_node_labels_to_multiindex(links.index))
+        links = links.reset_index()
+
+        # create the graph
+        graph = nx.Graph()
+
+        graph.add_nodes_from(links["level_0"], bipartite=0)
+        graph.add_nodes_from(links["level_1"], bipartite=1)
+
+        graph.add_weighted_edges_from(
+            list(zip(links["level_0"], links["level_1"], links["weight"]))
+        )
+
+        return graph
+
+    def _to_max_weighted_dataframe(self, graph):
+        """Convert a (max weighted) bipartite graph to a DataFrame."""
+
+        max_weighted_dataframe = nx.to_pandas_edgelist(graph)
+
+        # ensure output format is the same as the format of the initial candidate links
+        max_weighted_dataframe = max_weighted_dataframe.set_index(["source", "target"])
+        max_weighted_dataframe.index.names = [None, None]
+        max_weighted_dataframe = max_weighted_dataframe.set_index(
+            self._remove_node_labels_from_multiindex(max_weighted_dataframe.index)
+        ).sort_index(level=0)
+
+        return max_weighted_dataframe
+
+    def _add_node_labels_to_multiindex(self, multiindex, labels=["left_", "right_"]):
+
+        for i, (level, dataset) in enumerate(zip(multiindex.levels, labels)):
+            stringified_level = [dataset + str(value) for value in level]
+            multiindex = multiindex.set_levels(stringified_level, i)
+
+        return multiindex
+
+    def _remove_node_labels_from_multiindex(self, multiindex, labels=["left_", "right_"]):
+
+        for i, (level, label) in enumerate(zip(multiindex.levels, labels)):
+            destringified_level = [int(value.replace(label, "")) for value in level]
+            multiindex = multiindex.set_levels(destringified_level, i)
+
+        return multiindex
+
+    def compute(self, links, data=None):
         """Compute the one-to-one linking.
 
         Parameters
         ----------
         links : pandas.MultiIndex
             The pairs to apply linking to.
+        data : pandas.DataFrame
+            The similary weights computed for the entire dataset.
 
         Returns
         -------
@@ -79,7 +204,7 @@ class OneToOneLinking(object):
 
         """
 
-        return self._compute(links)
+        return self._compute(links, data)
 
 
 class OneToManyLinking(OneToOneLinking):
@@ -132,7 +257,7 @@ class OneToManyLinking(OneToOneLinking):
         source_dupl_bool = self._bool_duplicated(links, self.level)
         return links[~source_dupl_bool]
 
-    def compute(self, links):
+    def compute(self, links, data=None):
         """Compute the one-to-many matching.
 
         Parameters
@@ -147,7 +272,7 @@ class OneToManyLinking(OneToOneLinking):
 
         """
 
-        return self._compute(links)
+        return self._compute(links, data)
 
 
 class ConnectedComponents(object):
@@ -180,11 +305,6 @@ class ConnectedComponents(object):
             object represents a set of connected record pairs.
 
         """
-
-        try:
-            import networkx as nx
-        except ImportError():
-            raise Exception("'networkx' module is needed for this operation")
 
         G = nx.Graph()
         G.add_edges_from(links.values)
