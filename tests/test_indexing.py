@@ -14,6 +14,7 @@ import pytest
 import recordlinkage
 from recordlinkage.index import Full, Block, SortedNeighbourhood, Random
 from recordlinkage.contrib.index import NeighbourhoodBlock
+from recordlinkage.utils import is_min_pandas_version
 
 
 def get_test_algorithms():
@@ -334,13 +335,20 @@ class TestIndexAlgorithmApi(TestData):
 
         # expected
         levels = [df_a.index.values, df_a.index.values]
-        labels = np.tril_indices(len(df_a.index), k=-1)
+        codes = np.tril_indices(len(df_a.index), k=-1)
 
-        full_pairs = pd.MultiIndex(
-            levels=levels,
-            codes=labels,
-            verify_integrity=False
-        )
+        if is_min_pandas_version("0.24.0"):
+            full_pairs = pd.MultiIndex(
+                levels=levels,
+                codes=codes,
+                verify_integrity=False
+            )
+        else:
+            full_pairs = pd.MultiIndex(
+                levels=levels,
+                labels=codes,
+                verify_integrity=False
+            )            
 
         # all pairs are in the lower triangle of the matrix.
         assert len(pairs.difference(full_pairs)) == 0
