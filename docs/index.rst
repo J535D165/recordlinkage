@@ -26,9 +26,10 @@ All you need to start linking records.
 	ref-misc
 
 .. toctree::
-	:caption: Advanced
+	:caption: Miscellaneous
 	:maxdepth: 2
 
+	annotation
 	notebooks/classifiers.ipynb
 	performance.rst
 
