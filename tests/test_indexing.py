@@ -338,7 +338,7 @@ class TestIndexAlgorithmApi(TestData):
 
         full_pairs = pd.MultiIndex(
             levels=levels,
-            labels=labels,
+            codes=labels,
             verify_integrity=False
         )
 

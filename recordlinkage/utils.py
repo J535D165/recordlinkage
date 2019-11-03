@@ -1,6 +1,5 @@
 import warnings
 from functools import wraps
-from packaging import version
 
 import numpy
 
@@ -80,7 +79,7 @@ def return_type_deprecator(func):
 
 def is_min_pandas_version(min_version):
     """Check if pandas version is larger or equal the version passed."""
-    return version.parse(pandas.__version__) >= version.parse(min_version)
+    return pandas.__version__ >= min_version
 
 
 def is_label_dataframe(label, df):
@@ -216,6 +215,12 @@ def frame_indexing(frame, multi_index, level_i, indexing_type='label'):
 
     return data
 
+def construct_multiindex(levels, codes, *args, **kwargs):
+
+    if is_min_pandas_version("0.24.0"):
+        return pandas.MultiIndex(levels=levels, codes=codes, *args, **kwargs)
+    else:
+        return pandas.MultiIndex(levels=levels, labels=codes, *args, **kwargs)
 
 def fillna(series_or_arr, missing_value=0.0):
     """Fill missing values in pandas objects and numpy arrays.
