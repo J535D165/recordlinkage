@@ -101,6 +101,7 @@ class Block(BaseIndexAlgorithm):
             warnings.warn(
                 "The argument 'on' is deprecated. Use 'left_on=...' and "
                 "'right_on=None' to simulate the behaviour of 'on'.",
+                DeprecationWarning,
                 stacklevel=2)
             self.left_on, self.right_on = on, on
 
@@ -232,6 +233,7 @@ class SortedNeighbourhood(BaseIndexAlgorithm):
             warnings.warn(
                 "The argument 'on' is deprecated. Use 'left_on=...' and "
                 "'right_on=None' to simulate the behaviour of 'on'.",
+                DeprecationWarning,
                 stacklevel=2)
             self.left_on, self.right_on = on, on
 

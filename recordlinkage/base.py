@@ -19,7 +19,6 @@ import recordlinkage.config as cf
 from recordlinkage.utils import (listify,
                                  unique,
                                  is_label_dataframe,
-                                 VisibleDeprecationWarning,
                                  return_type_deprecator,
                                  index_split,
                                  frame_indexing)
@@ -562,7 +561,7 @@ class BaseCompare(object):
                 "see the documentation about how to update to the new API. "
                 "http://recordlinkage.readthedocs.io/"
                 "en/latest/ref-compare.html",
-                VisibleDeprecationWarning
+                DeprecationWarning
             )
 
     def __repr__(self):
@@ -1069,7 +1068,7 @@ class BaseClassifier(metaclass=ABCMeta):
         if return_type is not None:
             warnings.warn("The argument 'return_type' is removed. "
                           "Default value is now 'series'.",
-                          VisibleDeprecationWarning, stacklevel=2)
+                          DeprecationWarning, stacklevel=2)
 
         logging.info("Classification - compute probabilities")
 

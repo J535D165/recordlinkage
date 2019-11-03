@@ -477,8 +477,9 @@ class TestBlocking(TestData):
         index_cl_new = Block('var_arange')
         pairs_new = index_cl_new.index(self.a)
 
-        index_cl_old = Block(on='var_arange')
-        pairs_old = index_cl_old.index(self.a)
+        with pytest.deprecated_call():
+            index_cl_old = Block(on='var_arange')
+            pairs_old = index_cl_old.index(self.a)
 
         ptm.assert_index_equal(pairs_new, pairs_old)
 
@@ -587,8 +588,9 @@ class TestSortedNeighbourhoodIndexing(TestData):
         index_cl_new = SortedNeighbourhood('var_arange')
         pairs_new = index_cl_new.index(self.a)
 
-        index_cl_old = SortedNeighbourhood(on='var_arange')
-        pairs_old = index_cl_old.index(self.a)
+        with pytest.deprecated_call():
+            index_cl_old = SortedNeighbourhood(on='var_arange')
+            pairs_old = index_cl_old.index(self.a)
 
         ptm.assert_index_equal(pairs_new, pairs_old)
 
