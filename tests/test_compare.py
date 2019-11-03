@@ -526,7 +526,7 @@ class TestCompareApi(TestData):
         if sys.version.startswith("3"):
 
             # import joblib dependencies
-            from sklearn.externals.joblib import Parallel, delayed
+            from joblib import Parallel, delayed
 
             # split the data into smaller parts
             len_index = int(len(self.index_AB) / 2)
