@@ -40,7 +40,7 @@ class Full(BaseIndexAlgorithm):
     def __init__(self, **kwargs):
         super(Full, self).__init__(**kwargs)
 
-        logging.warn(
+        logging.warning(
             "indexing - performance warning "
             "- A full index can result in large number of record pairs.")
 
