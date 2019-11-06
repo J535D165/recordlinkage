@@ -15,7 +15,6 @@ from recordlinkage.datasets import (load_febrl1, load_febrl2, load_febrl3,
                                     binary_vectors)
 from recordlinkage.datasets import get_data_home, clear_data_home
 
-
 FEBRL_DEDUP = [
     # nlinks = 500
     (load_febrl1, 1000, 500),
@@ -33,6 +32,7 @@ def test_febrl_dedup(dataset, nrows, nlinks):
     assert isinstance(df, pandas.DataFrame)
     assert len(df) == nrows
 
+
 @pytest.mark.parametrize("dataset,nrows,nlinks", FEBRL_DEDUP)
 def test_febrl_dedup_links(dataset, nrows, nlinks):
 
@@ -41,6 +41,7 @@ def test_febrl_dedup_links(dataset, nrows, nlinks):
     assert len(df) == nrows
     assert len(links) == nlinks
     assert isinstance(links, pandas.MultiIndex)
+
 
 @pytest.mark.parametrize("dataset,nrows,nlinks", FEBRL_DEDUP)
 def test_febrl_dedup_tril(dataset, nrows, nlinks):
@@ -55,6 +56,7 @@ def test_febrl_dedup_tril(dataset, nrows, nlinks):
 
     assert numpy.all(x1.values > x2.values)
 
+
 def test_febrl4():
 
     dfa, dfb = load_febrl4()
@@ -62,6 +64,7 @@ def test_febrl4():
     assert isinstance(dfb, pandas.DataFrame)
     assert len(dfa) == 5000
     assert len(dfb) == 5000
+
 
 def test_febrl_links():
     dfa, dfb, links = load_febrl4(return_links=True)
@@ -71,6 +74,7 @@ def test_febrl_links():
     assert len(dfb) == 5000
     assert isinstance(links, pandas.MultiIndex)
 
+
 def test_krebs_dataset_download():
 
     # remove downloaded datasets
@@ -79,17 +83,15 @@ def test_krebs_dataset_download():
     krebs_data, krebs_matches = load_krebsregister()
 
     for i in range(1, 11):
-        assert Path(
-            get_data_home(), 
-            "krebsregister", 
-            "block_{}.zip".format(i)
-        ).is_file()
+        assert Path(get_data_home(), "krebsregister",
+                    "block_{}.zip".format(i)).is_file()
 
     # count the number of recordss
     assert type(krebs_data), pandas.DataFrame
     assert type(krebs_matches), pandas.MultiIndex
     assert len(krebs_data) == 5749132
     assert len(krebs_matches) == 20931
+
 
 def test_krebs_dataset_environ(tmpdir):
 
@@ -99,11 +101,8 @@ def test_krebs_dataset_environ(tmpdir):
     krebs_data, krebs_matches = load_krebsregister()
 
     for i in range(1, 11):
-        assert Path(
-            path, 
-            "krebsregister", 
-            "block_{}.zip".format(i)
-        ).is_file()
+        assert Path(path, "krebsregister", "block_{}.zip".format(i)).is_file()
+
 
 def test_krebs_dataset():
     krebs_data_block1, krebs_matches_block1 = load_krebsregister(1)
@@ -120,16 +119,19 @@ def test_krebs_dataset():
     krebs_block10, matches = load_krebsregister(10, missing_values=0)
     assert krebs_block10.isnull().sum().sum() == 0
 
+
 def test_krebs_missings():
 
     # missing values
     krebs_block10, matches = load_krebsregister(10, missing_values=0)
     assert krebs_block10.isnull().sum().sum() == 0
 
+
 def test_krebs_shuffle():
 
     # missing values
     krebs_block10, matches = load_krebsregister(10, shuffle=False)
+
 
 def test_random_comparison_vectors():
     # Test the generation of a random dataset
@@ -138,11 +140,7 @@ def test_random_comparison_vectors():
     n_matches = 500
 
     df = binary_vectors(
-        n_record_pairs,
-        n_matches,
-        m=[0.8] * 8,
-        u=[0.2] * 8,
-        random_state=535)
+        n_record_pairs, n_matches, m=[0.8] * 8, u=[0.2] * 8, random_state=535)
 
     # Check the result is a DataFrame with MultiIndex
     assert isinstance(df, pandas.DataFrame)
@@ -150,3 +148,22 @@ def test_random_comparison_vectors():
 
     # Test the length of the dataframe
     assert len(df) == n_record_pairs
+
+
+def test_random_comparison_vectors_1value_col():
+
+    m = numpy.array([1, .81, .85, 0])
+    u = numpy.array([1, .23, .50, 0])
+
+    # Create the train dataset.
+    X_train, y_train = binary_vectors(
+        1000, 500, m=m, u=u, random_state=535, return_links=True)
+
+    assert len(X_train.iloc[:, 0].unique()) == 1
+    assert X_train.iloc[:, 0].unique()[0] == 1
+
+    assert len(X_train.iloc[:, 3].unique()) == 1
+    assert X_train.iloc[:, 3].unique()[0] == 0
+
+    assert len(X_train.iloc[:, 1].unique()) == 2
+    assert len(X_train.iloc[:, 2].unique()) == 2
