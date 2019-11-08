@@ -106,7 +106,7 @@ Examples
     indexer = rl.Index()
     indexer.add(Block('given_name', 'given_name'))
     indexer.add(Block('surname', 'surname'))
-    index.index(df_a, df_b)
+    indexer.index(df_a, df_b)
 
 Equivalent code:
 
