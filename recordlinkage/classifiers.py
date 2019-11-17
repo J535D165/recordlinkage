@@ -32,10 +32,10 @@ class FellegiSunter(object):
         Log match probability as described in the FS framework.
 
     log_m_probs : np.ndarray
-        Log probability P(x_i==1|Match) as described in the FS framework.
+        Log probability P(x_i=1|Match) as described in the FS framework.
 
     log_u_probs : np.ndarray
-        Log probability P(x_i==1|Non-match) as described in the FS framework.
+        Log probability P(x_i=1|Non-match) as described in the FS framework.
 
     log_weights : np.ndarray
         Log weights as described in the FS framework.
@@ -44,10 +44,10 @@ class FellegiSunter(object):
         Match probability as described in the FS framework.
 
     m_probs : np.ndarray
-        Probability P(x_i==1|Match) as described in the FS framework.
+        Probability P(x_i=1|Match) as described in the FS framework.
 
     u_probs : np.ndarray
-        Probability P(x_i==1|Non-match) as described in the FS framework.
+        Probability P(x_i=1|Non-match) as described in the FS framework.
 
     weights : np.ndarray
         Weights as described in the FS framework.
@@ -71,7 +71,7 @@ class FellegiSunter(object):
         return (probabilities >= threshold).astype(int)
 
     def _match_class_pos(self):
-        """Return the position of the match class."""
+        """Return the position of the match class"""
         # TODO: add notfitted warnings
         if self.kernel.classes_.shape[0] != 2:
             raise ValueError("Number of classes is {}, expected 2.".format(
@@ -84,7 +84,7 @@ class FellegiSunter(object):
         return 1
 
     def _nonmatch_class_pos(self):
-        """Return the position of the non-match class."""
+        """Return the position of the non-match class"""
         # TODO: add notfitted warnings
         if self.kernel.classes_.shape[0] != 2:
             raise ValueError("Number of classes is {}, expected 2.".format(
@@ -98,7 +98,7 @@ class FellegiSunter(object):
 
     @property
     def log_p(self):
-        """Log match probability as described in the FS framework."""
+        """Log match probability as described in the FS framework"""
         return self.kernel.class_log_prior_[self._match_class_pos()]
 
     # @log_p.setter
@@ -110,16 +110,17 @@ class FellegiSunter(object):
         result = {}
         counter = 0
 
+        # check if number of binarizers equals the number of columns
+        if len(self.kernel._binarizers) != len(self._column_labels):
+            raise IndexError(
+                "shape of column labels doesn't match"
+            )
+
         for i, b in enumerate(self.kernel._binarizers):
             keys = b.classes_
 
             if self.use_col_names:
-                try:
-                    column_label_i = self._column_labels[i]
-                except IndexError:
-                    raise IndexError(
-                        "shape of column labels doesn't match"
-                    )
+                column_label_i = self._column_labels[i]
             else:
                 column_label_i = i
 
@@ -132,7 +133,7 @@ class FellegiSunter(object):
 
     @property
     def log_m_probs(self):
-        """Log probability P(x_i==1|Match) as described in the FS framework."""
+        """Log probability P(x_i=1|Match) as described in the FS framework"""
         m = self.kernel.feature_log_prob_[self._match_class_pos()]
         return self._prob_inverse_transform(m)
 
@@ -142,7 +143,7 @@ class FellegiSunter(object):
 
     @property
     def log_u_probs(self):
-        """Log probability P(x_i==1|Non-match) as described in the FS framework.
+        """Log probability P(x_i=1|Non-match) as described in the FS framework
         """
         u = self.kernel.feature_log_prob_[self._nonmatch_class_pos()]
         return self._prob_inverse_transform(u)
@@ -153,7 +154,7 @@ class FellegiSunter(object):
 
     @property
     def log_weights(self):
-        """Log weights as described in the FS framework."""
+        """Log weights as described in the FS framework"""
         m = self.kernel.feature_log_prob_[self._match_class_pos()]
         u = self.kernel.feature_log_prob_[self._nonmatch_class_pos()]
 
@@ -167,7 +168,7 @@ class FellegiSunter(object):
 
     @property
     def p(self):
-        """Match probability as described in the FS framework."""
+        """Match probability as described in the FS framework"""
         return numpy.exp(self.log_p)
 
     # @p.setter
@@ -176,7 +177,7 @@ class FellegiSunter(object):
 
     @property
     def m_probs(self):
-        """Probability P(x_i==1|Match) as described in the FS framework."""
+        """Probability P(x_i=1|Match) as described in the FS framework"""
         log_m = self.kernel.feature_log_prob_[self._match_class_pos()]
 
         return self._prob_inverse_transform(numpy.exp(log_m))
@@ -187,7 +188,7 @@ class FellegiSunter(object):
 
     @property
     def u_probs(self):
-        """Probability P(x_i==1|Non-match) as described in the FS framework."""
+        """Probability P(x_i=1|Non-match) as described in the FS framework"""
         log_u = self.kernel.feature_log_prob_[self._nonmatch_class_pos()]
 
         return self._prob_inverse_transform(numpy.exp(log_u))
@@ -198,7 +199,7 @@ class FellegiSunter(object):
 
     @property
     def weights(self):
-        """Weights as described in the FS framework."""
+        """Weights as described in the FS framework"""
         m = self.kernel.feature_log_prob_[self._match_class_pos()]
         u = self.kernel.feature_log_prob_[self._nonmatch_class_pos()]
 
@@ -279,7 +280,7 @@ class KMeansClassifier(SKLearnAdapter, Classifier):
         self.nonmatch_cluster_center = nonmatch_cluster_center
 
     def _initialise_classifier(self, comparison_vectors):
-        """Set the centers of the clusters."""
+        """Set the centers of the clusters"""
 
         # Set the start point of the classifier.
         self.kernel.init = numpy.array(
@@ -465,10 +466,10 @@ class NaiveBayesClassifier(FellegiSunter, SKLearnAdapter, Classifier):
         Log match probability as described in the FS framework.
 
     log_m_probs : np.ndarray
-        Log probability P(x_i==1|Match) as described in the FS framework.
+        Log probability P(x_i=1|Match) as described in the FS framework.
 
     log_u_probs : np.ndarray
-        Log probability P(x_i==1|Non-match) as described in the FS framework.
+        Log probability P(x_i=1|Non-match) as described in the FS framework.
 
     log_weights : np.ndarray
         Log weights as described in the FS framework.
@@ -477,10 +478,10 @@ class NaiveBayesClassifier(FellegiSunter, SKLearnAdapter, Classifier):
         Match probability as described in the FS framework.
 
     m_probs : np.ndarray
-        Probability P(x_i==1|Match) as described in the FS framework.
+        Probability P(x_i=1|Match) as described in the FS framework.
 
     u_probs : np.ndarray
-        Probability P(x_i==1|Non-match) as described in the FS framework.
+        Probability P(x_i=1|Non-match) as described in the FS framework.
 
     weights : np.ndarray
         Weights as described in the FS framework.
@@ -589,10 +590,10 @@ class ECMClassifier(FellegiSunter, SKLearnAdapter, Classifier):
         Log match probability as described in the FS framework.
 
     log_m_probs : np.ndarray
-        Log probability P(x_i==1|Match) as described in the FS framework.
+        Log probability P(x_i=1|Match) as described in the FS framework.
 
     log_u_probs : np.ndarray
-        Log probability P(x_i==1|Non-match) as described in the FS framework.
+        Log probability P(x_i=1|Non-match) as described in the FS framework.
 
     log_weights : np.ndarray
         Log weights as described in the FS framework.
@@ -601,10 +602,10 @@ class ECMClassifier(FellegiSunter, SKLearnAdapter, Classifier):
         Match probability as described in the FS framework.
 
     m_probs : np.ndarray
-        Probability P(x_i==1|Match) as described in the FS framework.
+        Probability P(x_i=1|Match) as described in the FS framework.
 
     u_probs : np.ndarray
-        Probability P(x_i==1|Non-match) as described in the FS framework.
+        Probability P(x_i=1|Non-match) as described in the FS framework.
 
     weights : np.ndarray
         Weights as described in the FS framework.
