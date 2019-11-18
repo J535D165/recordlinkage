@@ -1,19 +1,19 @@
 sudo: false
 language: python
-python:
-  - "3.6"
-dist: xenial
 
 python:
   - "3.5"
   - "3.6"
+  - "3.7"
+  - "3.8"
 
 env:
-  - PANDAS="0.18"
-  - PANDAS="0.19"
   - PANDAS="0.20"
   - PANDAS="0.21"
   - PANDAS="0.22"
+  - PANDAS="0.23"
+  - PANDAS="0.24"
+  - PANDAS="0.25"
   - PANDAS="latest"
 
 matrix:
