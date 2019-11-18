@@ -175,7 +175,7 @@ class AnnotationWrapper(object):
         fp: str
             The path to store the annotation file.
         """
-        with open(fp, "w") as f:
+        with open(str(fp), "w") as f:
             json.dump(self._create_annotation(), f, indent=2)
 
 
@@ -278,7 +278,7 @@ class AnnotationResult(object):
         -------
         AnnotationResult
             An AnnotationResult object."""
-        with open(fp, "r") as f:
+        with open(str(fp), "r") as f:
             content = json.load(f)
 
         return cls.from_dict(content)
