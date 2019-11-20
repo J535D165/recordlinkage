@@ -572,6 +572,9 @@ class ECM(BaseNB):
 
         while iteration < self.max_iter and not stop_iteration:
 
+            # Increment counter
+            iteration += 1
+
             # expectation step
             g = self.predict_proba(X_unique)
             g_freq = g * X_freq.T
@@ -593,10 +596,16 @@ class ECM(BaseNB):
 
             if (class_log_prior_close and feature_log_prob_close):
                 stop_iteration = True
-                logging.info("Stop ECM: algorithm converged")
+                logging.info(
+                    "ECM algorithm converged after {} iterations".format(
+                    iteration)
+                )
             if np.all(np.isnan(feature_log_prob_)):
-                stop_iteration = True
-                logging.info("Stop ECM: algorithm results in nan")
+                logging.warning(
+                    "ECM algorithm might not converged correctly after "
+                    "{} iterations".format(iteration)
+                )
+                break
 
             # Update the class prior and feature probs.
             self.class_log_prior_ = class_log_prior_
@@ -611,11 +620,6 @@ class ECM(BaseNB):
                 [self._logging_feature_log_prob,
                  np.atleast_3d(self.feature_log_prob_)], axis=2
             )
-            # Increment counter
-            iteration += 1
-
-        logging.info("ECM algorithm converged after {} iterations".format(
-            iteration))
 
         return self
 
