@@ -212,7 +212,7 @@ class BaseNB(BaseEstimator, ClassifierMixin):
             binarizer = LabelBinarizer()
 
             if self.binarize:
-                binarizer.classes_ = numpy.array([0, 1])
+                binarizer.classes_ = np.array([0, 1])
 
             # fit the data to the binarizer
             binarizer.fit(X[:, i])

@@ -509,6 +509,24 @@ class TestECM(TestClassifyData):
         ecm.fit(X_train)
         ecm.predict(X_test)
 
+    def test_binarize_input(self):
+        m = np.array([1, .81, .85, .81, .85, .81])
+        u = np.array([1, .23, .50, .23, .30, 0.13])
+
+        # Create the train dataset.
+        X_train, true_links = binary_vectors(
+            1000, 500, m=m, u=u, random_state=535, return_links=True)
+        X_train = X_train*np.random.rand(*X_train.shape)
+
+        # Create the train dataset.
+        X_test, true_links = binary_vectors(
+            1000, 500, m=m, u=u, random_state=535, return_links=True)
+        X_test = X_test*np.random.rand(*X_test.shape)
+
+        ecm = rl.ECMClassifier(binarize=True)
+        ecm.fit(X_train)
+        ecm.predict(X_test)
+
 
 class TestFellegiSunter(TestClassifyData):
 
