@@ -590,15 +590,21 @@ class ECM(BaseNB):
             # to the values in the to previous iteration (parameters starting
             # with 'self').
             class_log_prior_close = np.allclose(
-                class_log_prior_, self.class_log_prior_, atol=self.atol)
+                np.exp(class_log_prior_),
+                np.exp(self.class_log_prior_),
+                atol=self.atol
+            )
             feature_log_prob_close = np.allclose(
-                feature_log_prob_, self.feature_log_prob_, atol=self.atol)
+                np.exp(feature_log_prob_),
+                np.exp(self.feature_log_prob_),
+                atol=self.atol
+            )
 
             if (class_log_prior_close and feature_log_prob_close):
                 stop_iteration = True
                 logging.info(
                     "ECM algorithm converged after {} iterations".format(
-                    iteration)
+                        iteration)
                 )
             if np.all(np.isnan(feature_log_prob_)):
                 logging.warning(
@@ -620,6 +626,12 @@ class ECM(BaseNB):
                 [self._logging_feature_log_prob,
                  np.atleast_3d(self.feature_log_prob_)], axis=2
             )
+        else:
+            if iteration == self.max_iter:
+                logging.info(
+                    "ECM algorithm stopped at {} (=max_iter) iterations"
+                    .format(iteration)
+                )
 
         return self
 

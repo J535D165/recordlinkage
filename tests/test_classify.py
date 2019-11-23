@@ -480,7 +480,7 @@ class TestECM(TestClassifyData):
 
         # Create the train dataset.
         X_train, true_links = binary_vectors(
-            1000, 500, m=m, u=u, random_state=535, return_links=True)
+            10000, 500, m=m, u=u, random_state=535, return_links=True)
 
         # Create the train dataset.
         X_test, true_links = binary_vectors(
@@ -490,8 +490,8 @@ class TestECM(TestClassifyData):
         ecm.fit(X_train)
         ecm.predict(X_test)
 
-        assert math.isclose(ecm.u_probs['c_1'][1], 0.0, abs_tol=1e-4)
-        assert math.isclose(ecm.u_probs['c_1'][0], 1.0, abs_tol=1e-4)
+        assert math.isclose(ecm.u_probs['c_1'][1], 0.0, abs_tol=1e-3)
+        assert math.isclose(ecm.u_probs['c_1'][0], 1.0, abs_tol=1e-3)
 
     def test_binary_input(self):
         m = np.array([1, .81, .85, .81, .85, .81])
@@ -499,7 +499,7 @@ class TestECM(TestClassifyData):
 
         # Create the train dataset.
         X_train, true_links = binary_vectors(
-            1000, 500, m=m, u=u, random_state=535, return_links=True)
+            5000, 500, m=m, u=u, random_state=535, return_links=True)
 
         # Create the train dataset.
         X_test, true_links = binary_vectors(
@@ -516,12 +516,12 @@ class TestECM(TestClassifyData):
         # Create the train dataset.
         X_train, true_links = binary_vectors(
             1000, 500, m=m, u=u, random_state=535, return_links=True)
-        X_train = X_train*np.random.rand(*X_train.shape)
+        X_train = X_train * np.random.rand(*X_train.shape)
 
         # Create the train dataset.
         X_test, true_links = binary_vectors(
             1000, 500, m=m, u=u, random_state=535, return_links=True)
-        X_test = X_test*np.random.rand(*X_test.shape)
+        X_test = X_test * np.random.rand(*X_test.shape)
 
         ecm = rl.ECMClassifier(binarize=True)
         ecm.fit(X_train)
