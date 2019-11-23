@@ -585,10 +585,10 @@ class TestFellegiSunter(TestClassifyData):
         else:
             cl.fit(X_train, true_links)
 
-        assert [*cl.m_probs] == list(X_train)
-        assert [*cl.u_probs] == list(X_train)
-        assert [*cl.log_m_probs] == list(X_train)
-        assert [*cl.log_m_probs] == list(X_train)
+        assert set([*cl.m_probs]) == set(list(X_train))
+        assert set([*cl.u_probs]) == set(list(X_train))
+        assert set([*cl.log_m_probs]) == set(list(X_train))
+        assert set([*cl.log_m_probs]) == set(list(X_train))
 
     # @pytest.mark.parametrize('classifier', [
     #     rl.NaiveBayesClassifier,
