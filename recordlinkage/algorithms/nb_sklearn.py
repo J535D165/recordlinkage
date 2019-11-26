@@ -589,23 +589,25 @@ class ECM(BaseNB):
             # Stop iterating when the class prior and feature probs are close
             # to the values in the to previous iteration (parameters starting
             # with 'self').
-            class_log_prior_close = np.allclose(
-                np.exp(class_log_prior_),
-                np.exp(self.class_log_prior_),
-                atol=self.atol
-            )
-            feature_log_prob_close = np.allclose(
-                np.exp(feature_log_prob_),
-                np.exp(self.feature_log_prob_),
-                atol=self.atol
-            )
-
-            if (class_log_prior_close and feature_log_prob_close):
-                stop_iteration = True
-                logging.info(
-                    "ECM algorithm converged after {} iterations".format(
-                        iteration)
+            if self.atol is not None:
+                class_log_prior_close = np.allclose(
+                    np.exp(class_log_prior_),
+                    np.exp(self.class_log_prior_),
+                    atol=self.atol
                 )
+                feature_log_prob_close = np.allclose(
+                    np.exp(feature_log_prob_),
+                    np.exp(self.feature_log_prob_),
+                    atol=self.atol
+                )
+
+                if (class_log_prior_close and feature_log_prob_close):
+                    stop_iteration = True
+                    logging.info(
+                        "ECM algorithm converged after {} iterations".format(
+                            iteration)
+                    )
+
             if np.all(np.isnan(feature_log_prob_)):
                 logging.warning(
                     "ECM algorithm might not converged correctly after "

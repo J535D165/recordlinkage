@@ -527,6 +527,25 @@ class TestECM(TestClassifyData):
         ecm.fit(X_train)
         ecm.predict(X_test)
 
+    def test_ecm_atol_none(self):
+        m = np.array([0.95, .81, .85, .81, .85, .81])
+        u = np.array([0, .23, .50, .23, .30, 0.13])
+
+        # Create the train dataset.
+        X_train, true_links = binary_vectors(
+            10000, 500, m=m, u=u, random_state=535, return_links=True)
+
+        # Create the train dataset.
+        X_test, true_links = binary_vectors(
+            1000, 500, m=m, u=u, random_state=535, return_links=True)
+
+        ecm = rl.ECMClassifier(atol=None)
+        ecm.fit(X_train)
+        ecm.predict(X_test)
+
+        assert math.isclose(ecm.u_probs['c_1'][1], 0.0, abs_tol=1e-3)
+        assert math.isclose(ecm.u_probs['c_1'][0], 1.0, abs_tol=1e-3)
+
 
 class TestFellegiSunter(TestClassifyData):
 
