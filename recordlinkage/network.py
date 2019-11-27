@@ -379,19 +379,13 @@ class ConnectedComponents(object):
 
         """
 
-        try:
-            import networkx as nx
-        except ImportError():
-            raise Exception("'networkx' module is needed for this operation")
-
-        graph_pairs = nx.Graph()
-        graph_pairs.add_edges_from(links.values)
-        connected_pairs = (
-            graph_pairs.subgraph(c).copy() for c in nx.connected_components(graph_pairs)
-        )
+        G = nx.Graph()
+        G.add_edges_from(links.values)
+        connected_components = nx.connected_component_subgraphs(G)
 
         links_result = [
-            pd.MultiIndex.from_tuples(subgraph.edges()) for subgraph in connected_pairs
+            pd.MultiIndex.from_tuples(subgraph.edges())
+            for subgraph in connected_components
         ]
 
         return links_result
