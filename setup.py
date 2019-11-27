@@ -31,6 +31,7 @@ setup(
     install_requires=[
         "six>=1.10.0",
         "jellyfish>=0.5.4",
+        "networkx>=2.0",
         "numpy>=1.13.0",
         "pandas>=0.18.0",
         "scipy>=0.17.1",
