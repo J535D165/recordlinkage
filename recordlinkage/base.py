@@ -285,7 +285,7 @@ class BaseIndexAlgorithm(object):
             pairs = pairs[pairs.codes[0] > pairs.codes[1]]
         except AttributeError:
             # backwards compat pandas <24
-            pairs = pairs[pairs.labels[0] > pairs.labels[1]] 
+            pairs = pairs[pairs.labels[0] > pairs.labels[1]]
 
         return pairs
 
@@ -543,7 +543,6 @@ class BaseCompare(object):
         else:
             self.n_jobs = n_jobs
         self.indexing_type = indexing_type  # label of position
-        self.features = []
 
         # logging
         self._i = 1
@@ -582,7 +581,10 @@ class BaseCompare(object):
             A (list of) compare feature(s) from
             :mod:`recordlinkage.compare`.
         """
-        self.features.append(model)
+        if isinstance(list, model):
+            self.features.extend(model)
+        else:
+            self.features.append(model)
 
     def compare_vectorized(self, comp_func, labels_left, labels_right,
                            *args, **kwargs):
