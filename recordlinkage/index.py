@@ -1,5 +1,3 @@
-from __future__ import division
-
 import warnings
 
 import numpy
@@ -13,7 +11,7 @@ from recordlinkage.algorithms.indexing import (
     random_pairs_without_replacement_small_frames)
 from recordlinkage.base import BaseIndexAlgorithm
 from recordlinkage.measures import full_index_size
-from recordlinkage.utils import DeprecationHelper, listify
+from recordlinkage.utils import DeprecationHelper, listify, construct_multiindex
 
 
 class Full(BaseIndexAlgorithm):
@@ -42,7 +40,7 @@ class Full(BaseIndexAlgorithm):
     def __init__(self, **kwargs):
         super(Full, self).__init__(**kwargs)
 
-        logging.warn(
+        logging.warning(
             "indexing - performance warning "
             "- A full index can result in large number of record pairs.")
 
@@ -54,10 +52,10 @@ class Full(BaseIndexAlgorithm):
     def _dedup_index(self, df_a):
 
         levels = [df_a.index.values, df_a.index.values]
-        labels = numpy.tril_indices(len(df_a.index), k=-1)
+        codes = numpy.tril_indices(len(df_a.index), k=-1)
 
-        return pandas.MultiIndex(
-            levels=levels, labels=labels, verify_integrity=False)
+        return construct_multiindex(
+            levels=levels, codes=codes, verify_integrity=False)
 
 
 class Block(BaseIndexAlgorithm):
@@ -103,6 +101,7 @@ class Block(BaseIndexAlgorithm):
             warnings.warn(
                 "The argument 'on' is deprecated. Use 'left_on=...' and "
                 "'right_on=None' to simulate the behaviour of 'on'.",
+                DeprecationWarning,
                 stacklevel=2)
             self.left_on, self.right_on = on, on
 
@@ -149,9 +148,9 @@ class Block(BaseIndexAlgorithm):
         # merge the dataframes
         pairs_df = data_left.merge(data_right, how='inner', on=blocking_keys)
 
-        return pandas.MultiIndex(
+        return construct_multiindex(
             levels=[df_a.index.values, df_b.index.values],
-            labels=[pairs_df['index_x'].values, pairs_df['index_y'].values],
+            codes=[pairs_df['index_x'].values, pairs_df['index_y'].values],
             verify_integrity=False)
 
 
@@ -234,6 +233,7 @@ class SortedNeighbourhood(BaseIndexAlgorithm):
             warnings.warn(
                 "The argument 'on' is deprecated. Use 'left_on=...' and "
                 "'right_on=None' to simulate the behaviour of 'on'.",
+                DeprecationWarning,
                 stacklevel=2)
             self.left_on, self.right_on = on, on
 
@@ -342,9 +342,9 @@ class SortedNeighbourhood(BaseIndexAlgorithm):
 
         pairs_df = pandas.concat(pairs_concat, axis=0)
 
-        return pandas.MultiIndex(
+        return construct_multiindex(
             levels=[df_a.index.values, df_b.index.values],
-            labels=[pairs_df['index_x'].values, pairs_df['index_y'].values],
+            codes=[pairs_df['index_x'].values, pairs_df['index_y'].values],
             verify_integrity=False)
 
 
@@ -422,10 +422,10 @@ class Random(BaseIndexAlgorithm):
                     self.n, shape, self.random_state)
 
         levels = [df_a.index.values, df_b.index.values]
-        labels = pairs
+        codes = pairs
 
-        return pandas.MultiIndex(
-            levels=levels, labels=labels, verify_integrity=False)
+        return construct_multiindex(
+            levels=levels, codes=codes, verify_integrity=False)
 
     def _dedup_index(self, df_a):
 
@@ -457,8 +457,8 @@ class Random(BaseIndexAlgorithm):
         levels = [df_a.index.values, df_a.index.values]
         labels = pairs
 
-        return pandas.MultiIndex(
-            levels=levels, labels=labels, verify_integrity=False)
+        return construct_multiindex(
+            levels=levels, codes=labels, verify_integrity=False)
 
 
 FullIndex = DeprecationHelper(

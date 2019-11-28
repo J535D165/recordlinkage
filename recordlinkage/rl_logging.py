@@ -58,7 +58,6 @@ debug = _logger.debug
 error = _logger.error
 fatal = _logger.fatal
 info = _logger.info
-warn = _logger.warn
 warning = _logger.warning
 
 

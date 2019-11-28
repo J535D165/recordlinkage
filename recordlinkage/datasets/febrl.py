@@ -1,13 +1,19 @@
-import os
+from pathlib import Path
 
 import pandas
 import numpy
+
+from recordlinkage.utils import construct_multiindex
 
 
 def _febrl_load_data(filename):
     # Internal function for loading febrl data
 
-    filepath = os.path.join(os.path.dirname(__file__), 'febrl', filename)
+    filepath = Path(
+        Path(__file__).parent,
+        'febrl', 
+        filename
+    )
 
     febrl_data = pandas.read_csv(filepath,
                                  index_col="rec_id",
@@ -44,9 +50,9 @@ def _febrl_links(df):
     )[['index_x', 'index_y']]
     pairs_df = pairs_df[pairs_df['index_x'] > pairs_df['index_y']]
 
-    return pandas.MultiIndex(
+    return construct_multiindex(
         levels=[df.index.values, df.index.values],
-        labels=[pairs_df['index_x'].values, pairs_df['index_y'].values],
+        codes=[pairs_df['index_x'].values, pairs_df['index_y'].values],
         names=[None, None],
         verify_integrity=False
     )

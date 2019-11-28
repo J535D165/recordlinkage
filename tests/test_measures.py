@@ -22,10 +22,12 @@ LINKS_PRED = pandas.MultiIndex.from_tuples(
 class TestMeasures(object):
     def test_confusion_matrix(self):
 
-        result = rl.confusion_matrix(LINKS_TRUE, LINKS_PRED, len(FULL_INDEX))
+        result_len = rl.confusion_matrix(LINKS_TRUE, LINKS_PRED, len(FULL_INDEX))
+        result_full_index = rl.confusion_matrix(LINKS_TRUE, LINKS_PRED, FULL_INDEX)
         expected = numpy.array([[1, 2], [3, 3]])
 
-        numpy.testing.assert_array_equal(result, expected)
+        numpy.testing.assert_array_equal(result_len, expected)
+        numpy.testing.assert_array_equal(result_full_index, expected)
 
     def test_tp_fp_tn_fn(self):
 
@@ -61,6 +63,7 @@ class TestMeasures(object):
 
         assert rl.accuracy(LINKS_TRUE, LINKS_PRED, len(FULL_INDEX)) == 4 / 9
         assert rl.accuracy(cm) == 4 / 9
+        assert rl.accuracy(LINKS_TRUE, LINKS_PRED, FULL_INDEX) == 4 / 9
 
     def test_specificity(self):
 
@@ -69,6 +72,7 @@ class TestMeasures(object):
 
         assert rl.specificity(LINKS_TRUE, LINKS_PRED, len(FULL_INDEX)) == 1 / 2
         assert rl.specificity(cm) == 1 / 2
+        assert rl.specificity(LINKS_TRUE, LINKS_PRED, FULL_INDEX) == 1 / 2
 
     def test_fscore(self):
 

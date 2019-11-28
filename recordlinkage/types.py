@@ -14,9 +14,7 @@ import numpy
 
 import pandas
 
-from six import binary_type, string_types, text_type
-
-string_and_binary_types = (string_types,) + (binary_type,)
+string_and_binary_types = (str, bytes)
 
 
 def is_number(obj):
@@ -24,17 +22,16 @@ def is_number(obj):
 
 
 def is_string_like(obj):
-    return isinstance(obj, (text_type, string_types))
+    return isinstance(obj, str)
 
 
 def _iterable_not_string(x):
     return (isinstance(x, collections.Iterable) and
-            not isinstance(x, string_types))
+            not isinstance(x, str))
 
 
 def is_iterator(obj):
-    # python 3 generators have __next__ instead of next
-    return hasattr(obj, 'next') or hasattr(obj, '__next__')
+    return hasattr(obj, '__next__')
 
 
 def is_re(obj):

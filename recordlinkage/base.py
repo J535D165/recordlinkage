@@ -8,27 +8,23 @@ import time
 import warnings
 from abc import ABCMeta, abstractmethod
 
-from joblib import Parallel, delayed
+from joblib import Parallel, delayed, cpu_count
 
 import numpy as np
 
 import pandas
-
-import six
 
 from recordlinkage import rl_logging as logging
 import recordlinkage.config as cf
 from recordlinkage.utils import (listify,
                                  unique,
                                  is_label_dataframe,
-                                 VisibleDeprecationWarning,
                                  return_type_deprecator,
                                  index_split,
                                  frame_indexing)
 from recordlinkage.types import (is_numpy_like,
                                  is_pandas_2d_multiindex)
 from recordlinkage.measures import max_pairs
-
 from recordlinkage.utils import DeprecationHelper, LearningError
 
 
@@ -285,7 +281,11 @@ class BaseIndexAlgorithm(object):
         # Remove all pairs not in the lower triangular part of the matrix.
         # This part can be inproved by not comparing the level values, but the
         # level itself.
-        pairs = pairs[pairs.labels[0] > pairs.labels[1]]
+        try:
+            pairs = pairs[pairs.codes[0] > pairs.codes[1]]
+        except AttributeError:
+            # backwards compat pandas <24
+            pairs = pairs[pairs.labels[0] > pairs.labels[1]] 
 
         return pairs
 
@@ -538,7 +538,10 @@ class BaseCompare(object):
         self.add(features)
 
         # public
-        self.n_jobs = n_jobs
+        if n_jobs == -1:
+            self.n_jobs = cpu_count()
+        else:
+            self.n_jobs = n_jobs
         self.indexing_type = indexing_type  # label of position
         self.features = []
 
@@ -558,7 +561,7 @@ class BaseCompare(object):
                 "see the documentation about how to update to the new API. "
                 "http://recordlinkage.readthedocs.io/"
                 "en/latest/ref-compare.html",
-                VisibleDeprecationWarning
+                DeprecationWarning
             )
 
     def __repr__(self):
@@ -874,7 +877,7 @@ class BaseCompare(object):
         raise AttributeError("this method was removed in version 0.12.0")
 
 
-class BaseClassifier(six.with_metaclass(ABCMeta)):
+class BaseClassifier(metaclass=ABCMeta):
     """Base class for classification of records pairs.
 
     This class contains methods for training the classifier.
@@ -1065,7 +1068,7 @@ class BaseClassifier(six.with_metaclass(ABCMeta)):
         if return_type is not None:
             warnings.warn("The argument 'return_type' is removed. "
                           "Default value is now 'series'.",
-                          VisibleDeprecationWarning, stacklevel=2)
+                          DeprecationWarning, stacklevel=2)
 
         logging.info("Classification - compute probabilities")
 

@@ -125,23 +125,27 @@ class TestClassifyAPI(TestClassifyData):
         prediction_default = cl.predict(self.X_test)
         assert isinstance(prediction_default, pd.MultiIndex)
 
-        prediction_multiindex = cl.predict(
-            comparison_vectors=self.X_train, return_type='index')
-        assert isinstance(prediction_multiindex, pd.MultiIndex)
+        with pytest.deprecated_call():
+            prediction_multiindex = cl.predict(
+                comparison_vectors=self.X_train, return_type='index')
+            assert isinstance(prediction_multiindex, pd.MultiIndex)
 
-        prediction_ndarray = cl.predict(
-            comparison_vectors=self.X_train, return_type='array')
-        assert isinstance(prediction_ndarray, np.ndarray)
+        with pytest.deprecated_call():
+            prediction_ndarray = cl.predict(
+                comparison_vectors=self.X_train, return_type='array')
+            assert isinstance(prediction_ndarray, np.ndarray)
 
-        prediction_series = cl.predict(
-            comparison_vectors=self.X_train,
-            return_type='series')
-        assert isinstance(prediction_series, pd.Series)
-
-        with pytest.raises(ValueError):
-            cl.predict(
+        with pytest.deprecated_call():
+            prediction_series = cl.predict(
                 comparison_vectors=self.X_train,
-                return_type='unknown_return_type'
+                return_type='series')
+            assert isinstance(prediction_series, pd.Series)
+
+        with pytest.deprecated_call():
+            with pytest.raises(ValueError):
+                cl.predict(
+                    comparison_vectors=self.X_train,
+                    return_type='unknown_return_type'
             )
 
     @pytest.mark.parametrize('classifier', CLASSIFIERS_WITH_PROBS)

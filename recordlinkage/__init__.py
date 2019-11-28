@@ -13,6 +13,7 @@ from recordlinkage.network import *
 from recordlinkage.utils import split_index, index_split
 from recordlinkage.config import (get_option, set_option, reset_option,
                                   describe_option, option_context, options)
+from recordlinkage.annotation import read_annotation_file, write_annotation_file
 from recordlinkage import rl_logging as logging
 
 from recordlinkage.deprecated import *

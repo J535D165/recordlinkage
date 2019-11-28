@@ -8,15 +8,13 @@ from recordlinkage.preprocessing import phonenumbers as _phonenumbers
 from recordlinkage.preprocessing import value_occurence as _value_occurence
 from recordlinkage.preprocessing import phonetic as _phonetic
 
-from recordlinkage.utils import VisibleDeprecationWarning
-
 
 def _depr_warn():
 
     warnings.warn(
         "module recordlinkage.standardise is deprecated, use "
         "recordlinkage.preprocessing instead",
-        VisibleDeprecationWarning, stacklevel=2
+        DeprecationWarning, stacklevel=2
     )
 
 

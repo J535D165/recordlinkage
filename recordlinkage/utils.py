@@ -18,13 +18,6 @@ class LearningError(Exception):
     """Learning error"""
 
 
-class VisibleDeprecationWarning(UserWarning):
-    """Visible deprecation warning.
-    Based on numpy's VisibleDeprecationWarning.
-    """
-    pass
-
-
 class DeprecationHelper(object):
     """Deprecation helper for classes and functions.
 
@@ -44,7 +37,7 @@ class DeprecationHelper(object):
         else:
             msg = self.msg
 
-        warn(msg, VisibleDeprecationWarning, stacklevel=1)
+        warn(msg, DeprecationWarning, stacklevel=1)
 
     def __call__(self, *args, **kwargs):
         self._warn()
@@ -65,7 +58,7 @@ def return_type_deprecator(func):
                 "The argument 'return_type' is deprecated in the next "
                 "version. Use recordlinkage.set_option('classification."
                 "return_type', '{}') instead.".format(return_type),
-                VisibleDeprecationWarning,
+                DeprecationWarning,
                 stacklevel=2)
             with cf.option_context('classification.return_type', return_type):
                 return func(*args, **kwargs)
@@ -76,6 +69,10 @@ def return_type_deprecator(func):
 
 
 # Checks and conversions
+
+def is_min_pandas_version(min_version):
+    """Check if pandas version is larger or equal the version passed."""
+    return pandas.__version__ >= min_version
 
 
 def is_label_dataframe(label, df):
@@ -177,7 +174,7 @@ def index_split(index, chunks):
 def split_index(*args, **kwargs):
 
     warnings.warn("Function will be removed in the future. Use index_split.",
-                  VisibleDeprecationWarning)
+                  DeprecationWarning)
 
     return index_split(*args, **kwargs)
 
@@ -211,6 +208,12 @@ def frame_indexing(frame, multi_index, level_i, indexing_type='label'):
 
     return data
 
+def construct_multiindex(levels, codes, *args, **kwargs):
+
+    if is_min_pandas_version("0.24.0"):
+        return pandas.MultiIndex(levels=levels, codes=codes, *args, **kwargs)
+    else:
+        return pandas.MultiIndex(levels=levels, labels=codes, *args, **kwargs)
 
 def fillna(series_or_arr, missing_value=0.0):
     """Fill missing values in pandas objects and numpy arrays.

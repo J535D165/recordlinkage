@@ -136,11 +136,15 @@ share, let us know.
 Dependencies, installation and license
 --------------------------------------
 
-Install the Python Record Linkage Toolkit easily with pip
+The Python Record linkage Toolkit requires Python 3.5 or higher (since version
+>= 0.14). Install the package easily with pip
 
 .. code:: sh
 
     pip install recordlinkage
+
+Python 2.7 users can use version <= 0.13, but it is advised to use Python >=
+3.5.
 
 The toolkit depends on Pandas_ (>=18.0), Numpy_, `Scikit-learn`_, Scipy_ and
 Jellyfish_. You probably have most of them already installed. The package

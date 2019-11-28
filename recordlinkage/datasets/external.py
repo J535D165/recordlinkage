@@ -1,10 +1,58 @@
-import os
+
+
+# The function get_data_home() and clear_data_home() are based on 
+# SciKit-Learn https://git.io/fjT70. See the 3-clause BSD license. 
+
+from io import BytesIO
+from os import environ
+import shutil
+from pathlib import Path
+from urllib.request import urlopen
 import zipfile
 
 import pandas
 
-from six import BytesIO
-from six.moves.urllib.request import urlopen
+
+def get_data_home(data_home=None):
+    """Return the path of the Record Linkage data folder.
+
+    This folder is used by some large dataset loaders to avoid
+    downloading the data several times. By default the data dir
+    is set to a folder named 'rl_data' in the user
+    home folder.
+    Alternatively, it can be set by the 'RL_DATA' environment
+    variable or programmatically by giving an explicit folder
+    path. The '~' symbol is expanded to the user home folder.
+
+    If the folder does not already exist, it is automatically
+    created.
+
+    Parameters
+    ----------
+    data_home : str | None
+        The path to recordlinkage data folder.
+    """
+    if data_home is None:
+        data_home = environ.get('RL_DATA',
+                                Path('~', 'rl_data'))
+    data_home = Path(data_home).expanduser()
+
+    if not data_home.exists():
+        data_home.mkdir(parents=True, exist_ok=True)
+
+    return data_home
+
+
+def clear_data_home(data_home=None):
+    """Delete all the content of the data home cache.
+
+    Parameters
+    ----------
+    data_home : str | None
+        The path to recordlinkage data folder.
+    """
+    data_home = get_data_home(data_home)
+    shutil.rmtree(str(data_home))
 
 
 def load_krebsregister(block=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
@@ -68,10 +116,13 @@ def load_krebsregister(block=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
     # If the data is not found, download it.
     for i in range(1, 11):
 
-        filepath = os.path.join(os.path.dirname(__file__),
-                                'krebsregister', 'block_{}.zip'.format(i))
+        filepath = Path(
+            get_data_home(),
+            'krebsregister', 
+            'block_{}.zip'.format(i)
+        )
 
-        if not os.path.exists(filepath):
+        if not filepath.is_file():
             _download_krebsregister()
             break
 
@@ -99,13 +150,15 @@ def _download_krebsregister():
     zip_file_url = "http://archive.ics.uci.edu/ml/" \
         "machine-learning-databases/00210/donation.zip"
 
+    folder = Path(get_data_home(), 'krebsregister')
+
     try:
-        print("Start downloading the data.")
+        print("Downloading data to {}.".format(folder))
         r = urlopen(zip_file_url).read()
 
         # unzip the content and put it in the krebsregister folder
         z = zipfile.ZipFile(BytesIO(r))
-        z.extractall(os.path.join(os.path.dirname(__file__), 'krebsregister'))
+        z.extractall(str(folder))
 
         print("Data download succesfull.")
 
@@ -120,8 +173,11 @@ def _krebsregister_block(block):
             "Argument 'block' has to be integer in "
             "[1, 2, 3, 4, 5, 6, 7, 8, 9, 10] or list of integers.")
 
-    fp_i = os.path.join(os.path.dirname(__file__),
-                        'krebsregister', 'block_{}.zip'.format(block))
+    fp_i = Path(
+        get_data_home(),
+        'krebsregister', 
+        'block_{}.zip'.format(block)
+    )
 
     data_block = pandas.read_csv(
         fp_i,
