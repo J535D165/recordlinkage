@@ -3,4 +3,9 @@ sphinx-rtd-theme
 ipykernel
 nbconvert>=5.0.0
 nbsphinx
+numpy
+scipy
+pandas
+joblib
+scikit-learn
 

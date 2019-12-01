@@ -311,13 +311,7 @@ intersphinx_mapping = {
 nbsphinx_execute = 'never'
 
 autodoc_mock_imports = [
-  'numpy',
-  'scipy',
-  'pandas',
-  'sklearn',
-  'jellyfish',
-  'six',
-  'joblib'
+  'jellyfish'
 ]
 
 # -- Napoleon options ---------------------------------------------------
