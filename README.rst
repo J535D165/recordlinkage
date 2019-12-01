@@ -146,7 +146,7 @@ The Python Record linkage Toolkit requires Python 3.5 or higher (since version
 Python 2.7 users can use version <= 0.13, but it is advised to use Python >=
 3.5.
 
-The toolkit depends on Pandas_ (>=18.0), Numpy_, `Scikit-learn`_, Scipy_ and
+The toolkit depends on Pandas_ (>=23.0), Numpy_, `Scikit-learn`_, Scipy_ and
 Jellyfish_. You probably have most of them already installed. The package
 ``jellyfish`` is used for approximate string comparing and string encoding.
 The package Numexpr_ is an optional dependency to speed up numerical
