@@ -566,6 +566,26 @@ class TestCompareApi(TestData):
 
         pdt.assert_frame_equal(result_label, result_position)
 
+    def test_pass_list_of_features(self):
+
+        from recordlinkage.compare import FrequencyA, VariableA, VariableB
+
+        # setup datasets and record pairs
+        A = DataFrame({'col': ['abc', 'abc', 'abc', 'abc', 'abc']})
+        B = DataFrame({'col': ['abc', 'abc', 'abc', 'abc', 'abc']})
+        ix = MultiIndex.from_arrays([np.arange(5), np.arange(5)])
+
+        # test with label indexing type
+
+        features = [
+            VariableA('col', label='y1'),
+            VariableB('col', label='y2'),
+            FrequencyA('col', label='y3')
+        ]
+        comp_label = recordlinkage.Compare(features=features)
+        result_label = comp_label.compute(ix, A, B)
+
+        assert list(result_label) == ["y1", "y2", "y3"]
 
 class TestCompareFeatures(TestData):
     def test_feature(self):
