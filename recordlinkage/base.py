@@ -23,6 +23,7 @@ from recordlinkage.utils import (listify,
                                  index_split,
                                  frame_indexing)
 from recordlinkage.types import (is_numpy_like,
+                                 is_list_like,
                                  is_pandas_2d_multiindex)
 from recordlinkage.measures import max_pairs
 from recordlinkage.utils import DeprecationHelper, LearningError
@@ -768,6 +769,8 @@ class BaseCompare(object):
             if isinstance(feat, tuple):
                 if label is None:
                     label = [None] * len(feat)
+                if not is_list_like(label):
+                    label = (label,)
 
                 partial_result = self._union(
                     zip(feat, label), column_i=column_i)
