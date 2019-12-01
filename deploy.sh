@@ -26,7 +26,7 @@ python setup.py sdist bdist_wheel
 # wheel example: recordlinkage-0.6.0+0.g9c83c85.dirty-py2.py3-none-any.whl
 # sdist example: recordlinkage-0.11.0+1.gf2bd314.dirty.tar.gz
 base_path="dist/recordlinkage-"
-whl_ext="-py2.py3-none-any.whl"
+whl_ext="-py3-none-any.whl"
 sdist_ext=".tar.gz"
 whl_full_path=$base_path$version_tag$whl_ext
 sdist_full_path=$base_path$version_tag$sdist_ext
