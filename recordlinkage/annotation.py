@@ -1,8 +1,8 @@
-"""Module for rendering and reading annotation files. 
+"""Module for rendering and reading annotation files.
 
-The annotation module provides functions and class for rendering 
-annotation files. Annotation files can be used in the browser-based 
-annotator application to label record pairs. The labelled dataset 
+The annotation module provides functions and class for rendering
+annotation files. Annotation files can be used in the browser-based
+annotator application to label record pairs. The labelled dataset
 can be used for training and validation of the record linkage process.
 """
 
@@ -10,6 +10,8 @@ import json
 
 import pandas as pd
 import numpy as np
+
+SCHEMA_VERSION_LATEST = 1
 
 
 def write_annotation_file(fp,
@@ -21,11 +23,11 @@ def write_annotation_file(fp,
                           *args,
                           **kwargs):
     """Render and export annotation file.
-    
+
     This function renders and annotation object and stores it in a
     json file. The function is a wrapper around the `AnnotationWrapper`
-    class. 
-    
+    class.
+
     Parameters
     ----------
     fp: str
@@ -36,14 +38,14 @@ def write_annotation_file(fp,
         The data frame with full record information for the
         pairs.
     df_b: pandas.DataFrame
-        In case of data linkage, this is the second data frame. 
-        Default None. 
-    dataset_a_name: str
-        The name of the first data frame. 
-    dataset_b_name: str
-        In case of data linkage, the name of the second data frame. 
+        In case of data linkage, this is the second data frame.
         Default None.
-    
+    dataset_a_name: str
+        The name of the first data frame.
+    dataset_b_name: str
+        In case of data linkage, the name of the second data frame.
+        Default None.
+
     """
 
     annotation_obj = AnnotationWrapper(pairs, df_a, df_b, dataset_a_name,
@@ -53,7 +55,7 @@ def write_annotation_file(fp,
 
 def read_annotation_file(fp):
     """Read annotation file.
-    
+
     This function can be used to read the annotation file
     and extract the results like the linked pairs and distinct
     pairs.
@@ -67,7 +69,7 @@ def read_annotation_file(fp):
     -------
     AnnotationResult
         An AnnotationResult object.
-    
+
     Example
     -------
     Read the links from an annotation file::
@@ -109,7 +111,7 @@ class AnnotationWrapper(object):
 
     def _create_annotation(self):
 
-        result = {"version": 1, "pairs": []}
+        result = {"version": SCHEMA_VERSION_LATEST, "pairs": []}
 
         # transform multiindex into frame
         df_pairs = self.pairs.to_frame()
@@ -169,7 +171,7 @@ class AnnotationWrapper(object):
 
     def to_file(self, fp):
         """Write annotation object to file.
-        
+
         Parameters
         ----------
         fp: str
@@ -181,17 +183,17 @@ class AnnotationWrapper(object):
 
 class AnnotationResult(object):
     """Result of (manual) annotation.
-    
+
     Parameters
     ----------
     pairs: list
         Raw data of each record pair in the annotation file.
     version: str
-        The version number corresponding to the file structure. 
-    
+        The version number corresponding to the file structure.
+
     """
 
-    def __init__(self, pairs=[], version="0.1"):
+    def __init__(self, pairs=[], version=SCHEMA_VERSION_LATEST):
 
         self.version = version
         self.pairs = pairs
@@ -216,7 +218,7 @@ class AnnotationResult(object):
     @property
     def links(self):
         """Return the links.
-        
+
         Returns
         -------
         pandas.MultiIndex
@@ -227,7 +229,7 @@ class AnnotationResult(object):
     @property
     def distinct(self):
         """Return the distinct pairs.
-        
+
         Returns
         -------
         pandas.MultiIndex
@@ -238,7 +240,7 @@ class AnnotationResult(object):
     @property
     def unknown(self):
         """Return the unknown or unlaballed pairs.
-        
+
         Returns
         -------
         pandas.MultiIndex
@@ -253,12 +255,12 @@ class AnnotationResult(object):
     @classmethod
     def from_dict(cls, d):
         """Create AnnotationResult from dict
-        
+
         Parameters
         ----------
         d: dict
             The annotation file as a dict.
-            
+
         Returns
         -------
         AnnotationResult
@@ -268,12 +270,12 @@ class AnnotationResult(object):
     @classmethod
     def from_file(cls, fp):
         """Create AnnotationResult from file
-        
+
         Parameters
         ----------
         fp: str
             The path to the annotation file.
-            
+
         Returns
         -------
         AnnotationResult
