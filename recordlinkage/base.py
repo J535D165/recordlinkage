@@ -23,6 +23,7 @@ from recordlinkage.utils import (listify,
                                  index_split,
                                  frame_indexing)
 from recordlinkage.types import (is_numpy_like,
+                                 is_list_like,
                                  is_pandas_2d_multiindex)
 from recordlinkage.measures import max_pairs
 from recordlinkage.utils import DeprecationHelper, LearningError
@@ -285,7 +286,7 @@ class BaseIndexAlgorithm(object):
             pairs = pairs[pairs.codes[0] > pairs.codes[1]]
         except AttributeError:
             # backwards compat pandas <24
-            pairs = pairs[pairs.labels[0] > pairs.labels[1]] 
+            pairs = pairs[pairs.labels[0] > pairs.labels[1]]
 
         return pairs
 
@@ -543,7 +544,6 @@ class BaseCompare(object):
         else:
             self.n_jobs = n_jobs
         self.indexing_type = indexing_type  # label of position
-        self.features = []
 
         # logging
         self._i = 1
@@ -582,7 +582,10 @@ class BaseCompare(object):
             A (list of) compare feature(s) from
             :mod:`recordlinkage.compare`.
         """
-        self.features.append(model)
+        if isinstance(model, list):
+            self.features.extend(model)
+        else:
+            self.features.append(model)
 
     def compare_vectorized(self, comp_func, labels_left, labels_right,
                            *args, **kwargs):
@@ -766,6 +769,8 @@ class BaseCompare(object):
             if isinstance(feat, tuple):
                 if label is None:
                     label = [None] * len(feat)
+                if not is_list_like(label):
+                    label = (label,)
 
                 partial_result = self._union(
                     zip(feat, label), column_i=column_i)
