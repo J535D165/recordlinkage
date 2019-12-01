@@ -581,7 +581,7 @@ class BaseCompare(object):
             A (list of) compare feature(s) from
             :mod:`recordlinkage.compare`.
         """
-        if isinstance(list, model):
+        if isinstance(model, list):
             self.features.extend(model)
         else:
             self.features.append(model)
