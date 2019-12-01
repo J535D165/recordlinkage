@@ -1,7 +1,7 @@
 Python Record Linkage Toolkit
 =============================
 
-|pypi| |travis| |codecov| |docs|
+|pypi| |travis| |codecov| |docs| |zenodo|
 
 .. |travis| image:: https://travis-ci.org/J535D165/recordlinkage.svg?branch=master
   :target: https://travis-ci.org/J535D165/recordlinkage
@@ -18,6 +18,11 @@ Python Record Linkage Toolkit
 .. |docs| image:: https://readthedocs.org/projects/recordlinkage/badge/?version=latest
   :target: https://recordlinkage.readthedocs.io/en/latest/?badge=latest
   :alt: Documentation Status
+  
+.. |zenodo| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.3559042.svg
+  :target: https://doi.org/10.5281/zenodo.3559042
+  :alt: Zenodo DOI
+
 
 The **Python Record Linkage Toolkit** is a library to link records in or
 between data sources. The toolkit provides most of the tools needed for
@@ -133,8 +138,8 @@ share, let us know.
 .. _deduplication: http://recordlinkage.readthedocs.io/en/latest/notebooks/data_deduplication.html
 .. _linking: http://recordlinkage.readthedocs.io/en/latest/notebooks/link_two_dataframes.html
 
-Dependencies, installation and license
---------------------------------------
+Dependencies, installation
+--------------------------
 
 The Python Record linkage Toolkit requires Python 3.5 or higher (since version
 >= 0.14). Install the package easily with pip
@@ -159,7 +164,33 @@ comparisons.
 .. _Jellyfish: https://github.com/jamesturk/jellyfish
 .. _Numexpr: https://github.com/pydata/numexpr
 
+License
+-------
+
 The license for this record linkage tool is BSD-3-Clause.
+
+Citation
+--------
+
+Please cite this package when being used in an academic context. Unsure that the DOI
+and version match the installed version. Citatation styles can be found 
+on the publishers website 
+`10.5281/zenodo.3559042 <https://doi.org/10.5281/zenodo.3559042>`__.
+
+.. code:: text
+
+  @software{de_bruin_j_2019_3559043,
+    author       = {De Bruin, J},
+    title        = {{Python Record Linkage Toolkit: A toolkit for 
+                     record linkage and duplicate detection in Python}},
+    month        = dec,
+    year         = 2019,
+    publisher    = {Zenodo},
+    version      = {v0.14},
+    doi          = {10.5281/zenodo.3559043},
+    url          = {https://doi.org/10.5281/zenodo.3559043}
+  }
+
 
 Need help?
 ----------
