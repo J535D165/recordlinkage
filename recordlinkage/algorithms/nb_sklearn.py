@@ -11,6 +11,7 @@ module is based on scikit-learn's subdule :mod:`sklearn.naive_bayes`.
 # This module is based on sklearn's NB implementation. The license of sklearn
 # is BSD 3 clause. Modifications copyright Jonathan de Bruin.
 
+import logging
 import warnings
 
 import numpy as np
@@ -127,7 +128,6 @@ class BaseNB(BaseEstimator, ClassifierMixin):
 
         # see chapter 4.1 of http://www.cs.columbia.edu/~mcollins/em.pdf
         # implementation as in Formula 4.
-
         jll = safe_sparse_dot(X_bin, self.feature_log_prob_.T)
         jll += self.class_log_prior_
 
@@ -211,8 +211,12 @@ class BaseNB(BaseEstimator, ClassifierMixin):
             # initialise binarizer and save
             binarizer = LabelBinarizer()
 
+            if self.binarize:
+                binarizer.classes_ = np.array([0, 1])
+
             # fit the data to the binarizer
             binarizer.fit(X[:, i])
+
             self._binarizers.append(binarizer)
 
         return self._transform_data(X)
@@ -238,10 +242,13 @@ class BaseNB(BaseEstimator, ClassifierMixin):
             X_i = self._binarizers[i].transform(X[:, i])
 
             # sklearn returns ndarray with shape (samples, 1) on binary input.
-            if self._binarizers[i].classes_.shape[0] == 2:
+            if self._binarizers[i].classes_.shape[0] == 1:
                 X_parts.append(1 - X_i)
-
-            X_parts.append(X_i)
+            elif self._binarizers[i].classes_.shape[0] == 2:
+                X_parts.append(1 - X_i)
+                X_parts.append(X_i)
+            else:
+                X_parts.append(X_i)
 
         return np.concatenate(X_parts, axis=1)
 
@@ -497,23 +504,23 @@ class ECM(BaseNB):
         _, n_features = X_bin.shape
 
         class_prior = [.9, .1]
-        feature_prob = np.zeros((2, n_features))
+        feature_prob = []
 
         for i, bin in enumerate(self._binarizers):
 
-            if bin.classes_.shape[0] != 2:
+            if bin.classes_.shape[0] > 2:
                 raise ValueError("Only binary labels are allowed for "
                                  "'jaro'method. "
                                  "Column {} has {} different labels.".format(
                                      i, bin.classes_.shape[0]))
 
-            # TODO: ensure classes are [0, 1] (not [1, 0])
-            # TODO: check with bin.y_type_
+            for binclass in bin.classes_:
+                if binclass == 1:
+                    feature_prob.append([.1, .9])
+                if binclass == 0:
+                    feature_prob.append([.9, .1])
 
-            feature_prob[0, :] = np.tile([.9, .1], int(n_features / 2))
-            feature_prob[1, :] = np.tile([.1, .9], int(n_features / 2))
-
-        return np.log(class_prior), np.log(feature_prob)
+        return np.log(class_prior), np.log(feature_prob).T
 
     def fit(self, X):
         """Fit ECM classifier according to X
@@ -560,10 +567,13 @@ class ECM(BaseNB):
         iteration = 0
         stop_iteration = False
 
-        self._log_class_log_prior = np.atleast_2d(self.class_log_prior_)
-        self._log_feature_log_prob = np.atleast_3d(self.feature_log_prob_)
+        self._logging_class_log_prior = np.atleast_2d(self.class_log_prior_)
+        self._logging_feature_log_prob = np.atleast_3d(self.feature_log_prob_)
 
         while iteration < self.max_iter and not stop_iteration:
+
+            # Increment counter
+            iteration += 1
 
             # expectation step
             g = self.predict_proba(X_unique)
@@ -572,36 +582,58 @@ class ECM(BaseNB):
 
             # maximisation step
             class_log_prior_ = np.log(g_freq_sum) - np.log(X.shape[0])  # p
-            feature_log_prob_ = np.log(safe_sparse_dot(g_freq.T, X_unique_bin))
+            feature_prob_ = safe_sparse_dot(g_freq.T, X_unique_bin)
+            feature_log_prob_ = np.log(feature_prob_)
             feature_log_prob_ -= np.log(np.atleast_2d(g_freq_sum).T)
 
             # Stop iterating when the class prior and feature probs are close
             # to the values in the to previous iteration (parameters starting
             # with 'self').
-            class_log_prior_close = np.allclose(
-                class_log_prior_, self.class_log_prior_, atol=self.atol)
-            feature_log_prob_close = np.allclose(
-                feature_log_prob_, self.feature_log_prob_, atol=self.atol)
-            if (class_log_prior_close and feature_log_prob_close):
-                stop_iteration = True
+            if self.atol is not None:
+                class_log_prior_close = np.allclose(
+                    np.exp(class_log_prior_),
+                    np.exp(self.class_log_prior_),
+                    atol=self.atol
+                )
+                feature_log_prob_close = np.allclose(
+                    np.exp(feature_log_prob_),
+                    np.exp(self.feature_log_prob_),
+                    atol=self.atol
+                )
+
+                if (class_log_prior_close and feature_log_prob_close):
+                    stop_iteration = True
+                    logging.info(
+                        "ECM algorithm converged after {} iterations".format(
+                            iteration)
+                    )
+
             if np.all(np.isnan(feature_log_prob_)):
-                stop_iteration = True
+                logging.warning(
+                    "ECM algorithm might not converged correctly after "
+                    "{} iterations".format(iteration)
+                )
+                break
 
             # Update the class prior and feature probs.
             self.class_log_prior_ = class_log_prior_
             self.feature_log_prob_ = feature_log_prob_
 
             # create logs
-            self._log_class_log_prior = np.concatenate(
-                [self._log_class_log_prior,
+            self._logging_class_log_prior = np.concatenate(
+                [self._logging_class_log_prior,
                  np.atleast_2d(self.class_log_prior_)]
             )
-            self._log_feature_log_prob = np.concatenate(
-                [self._log_feature_log_prob,
+            self._logging_feature_log_prob = np.concatenate(
+                [self._logging_feature_log_prob,
                  np.atleast_3d(self.feature_log_prob_)], axis=2
             )
-            # Increment counter
-            iteration += 1
+        else:
+            if iteration == self.max_iter:
+                logging.info(
+                    "ECM algorithm stopped at {} (=max_iter) iterations"
+                    .format(iteration)
+                )
 
         return self
 

@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import math
+
 import numpy as np
 from numpy.testing.utils import assert_almost_equal
 
@@ -10,6 +12,7 @@ import pandas.util.testing as ptm
 import pytest
 
 from sklearn.exceptions import NotFittedError
+from sklearn.preprocessing import LabelBinarizer
 
 import recordlinkage as rl
 from recordlinkage.datasets import binary_vectors
@@ -146,7 +149,7 @@ class TestClassifyAPI(TestClassifyData):
                 cl.predict(
                     comparison_vectors=self.X_train,
                     return_type='unknown_return_type'
-            )
+                )
 
     @pytest.mark.parametrize('classifier', CLASSIFIERS_WITH_PROBS)
     def test_probs(self, classifier):
@@ -342,6 +345,41 @@ class TestSVM(TestClassifyData):
 
 
 class TestECM(TestClassifyData):
+    """Test ECM Classifier"""
+
+    def test_sklearn_labelbin(self):
+
+        m = np.array([1.0, .81, .85, .81, .85, .81])
+        u = np.array([1.0, .23, .50, .23, .30, 0.13])
+
+        # Create the train dataset.
+        X_train, true_links = binary_vectors(
+            1000, 500, m=m, u=u, random_state=535, return_links=True)
+
+        binarizer = LabelBinarizer()
+        binarizer.fit(X_train.iloc[:, 0])
+        assert len(binarizer.classes_) == 1
+
+        binarizer.classes_ = np.array([0, 1])
+        assert len(binarizer.classes_) == 2
+
+        binarizer.transform(X_train.iloc[:, 1])
+        assert len(binarizer.classes_) == 2
+
+    def test_sklearn_preinit(self):
+
+        m = np.array([1.0, .81, .85, .81, .85, .81])
+        u = np.array([1.0, .23, .50, .23, .30, 0.13])
+
+        # Create the train dataset.
+        X_train, true_links = binary_vectors(
+            1000, 500, m=m, u=u, random_state=535, return_links=True)
+
+        binarizer = LabelBinarizer()
+        binarizer.classes_ = np.array([0, 1])
+
+        binarizer.transform(X_train.iloc[:, 1])
+        assert len(binarizer.classes_) == 2
 
     def test_ecm_probs(self):
 
@@ -355,6 +393,158 @@ class TestECM(TestClassifyData):
         ecm = rl.ECMClassifier()
         ecm.fit(self.X_train.round())
         ecm.predict(self.X_test)
+
+    def test_ecm_init(self):
+
+        m = np.array([0.23, .81, .85, .81, .85, .81])
+        u = np.array([0.34, .23, .50, .23, .30, 0.13])
+
+        # Create the train dataset.
+        X_train, true_links = binary_vectors(
+            1000, 500, m=m, u=u, random_state=535, return_links=True)
+
+        ecm = rl.ECMClassifier(init='random')
+        ecm.fit(X_train)
+        ecm.predict(X_train)
+
+        print(ecm.m_probs)
+        print(ecm.log_m_probs)
+        print(ecm.u_probs)
+        print(ecm.log_u_probs)
+
+        assert math.isclose(ecm.m_probs['c_2'][1], 0.85, abs_tol=0.08)
+
+    def test_ecm_init_random_1value(self):
+
+        m = np.array([1.0, .81, .85, .81, .85, .81])
+        u = np.array([1.0, .23, .50, .23, .30, 0.13])
+
+        # Create the train dataset.
+        X_train, true_links = binary_vectors(
+            1000, 500, m=m, u=u, random_state=536, return_links=True)
+
+        ecm = rl.ECMClassifier(init='random')
+        ecm.fit(X_train)
+        ecm.predict(X_train)
+
+        with pytest.raises(KeyError):
+            ecm.m_probs['c_1'][0]
+
+        assert math.isclose(ecm.m_probs['c_2'][1], 0.85, abs_tol=0.08)
+        assert math.isclose(ecm.p, 0.5, abs_tol=0.05)
+
+    def test_ecm_init_jaro_1value(self):
+
+        m = np.array([1.0, 0.85, .85, .81, .85, .81])
+        u = np.array([1.0, .10, .50, .23, .30, 0.13])
+
+        # Create the train dataset.
+        X_train, true_links = binary_vectors(
+            1000, 500, m=m, u=u, random_state=535, return_links=True)
+
+        ecm = rl.ECMClassifier(init='jaro')
+        ecm.fit(X_train)
+        ecm.predict(X_train)
+
+        with pytest.raises(KeyError):
+            ecm.m_probs['c_1'][0]
+
+        assert math.isclose(ecm.m_probs['c_1'][1], 1.0, abs_tol=0.01)
+        assert math.isclose(ecm.m_probs['c_2'][1], 0.85, abs_tol=0.08)
+        assert math.isclose(ecm.u_probs['c_1'][1], 1.0, abs_tol=0.01)
+        assert math.isclose(ecm.u_probs['c_2'][1], 0.1, abs_tol=0.05)
+        assert math.isclose(ecm.p, 0.5, abs_tol=0.05)
+
+    def test_ecm_init_jaro_skewed(self):
+
+        m = np.array([1.0, 0.85, .85, .81, .85, .81])
+        u = np.array([0.0, .10, .50, .23, .30, 0.13])
+
+        # Create the train dataset.
+        X_train, true_links = binary_vectors(
+            1000, 500, m=m, u=u, random_state=535, return_links=True)
+
+        ecm = rl.ECMClassifier(init='jaro')
+        ecm.fit(X_train)
+        ecm.predict(X_train)
+
+        assert math.isclose(ecm.m_probs['c_1'][1], 1.0, abs_tol=0.01)
+        assert math.isclose(ecm.m_probs['c_2'][1], 0.85, abs_tol=0.08)
+        assert math.isclose(ecm.u_probs['c_1'][1], 0.0, abs_tol=0.01)
+        assert math.isclose(ecm.u_probs['c_2'][1], 0.1, abs_tol=0.05)
+        assert math.isclose(ecm.p, 0.5, abs_tol=0.05)
+
+    def test_ecm_init_jaro_inf(self):
+        m = np.array([0.95, .81, .85, .81, .85, .81])
+        u = np.array([0, .23, .50, .23, .30, 0.13])
+
+        # Create the train dataset.
+        X_train, true_links = binary_vectors(
+            10000, 500, m=m, u=u, random_state=535, return_links=True)
+
+        # Create the train dataset.
+        X_test, true_links = binary_vectors(
+            1000, 500, m=m, u=u, random_state=535, return_links=True)
+
+        ecm = rl.ECMClassifier()
+        ecm.fit(X_train)
+        ecm.predict(X_test)
+
+        assert math.isclose(ecm.u_probs['c_1'][1], 0.0, abs_tol=1e-3)
+        assert math.isclose(ecm.u_probs['c_1'][0], 1.0, abs_tol=1e-3)
+
+    def test_binary_input(self):
+        m = np.array([1, .81, .85, .81, .85, .81])
+        u = np.array([1, .23, .50, .23, .30, 0.13])
+
+        # Create the train dataset.
+        X_train, true_links = binary_vectors(
+            5000, 500, m=m, u=u, random_state=535, return_links=True)
+
+        # Create the train dataset.
+        X_test, true_links = binary_vectors(
+            1000, 500, m=m, u=u, random_state=535, return_links=True)
+
+        ecm = rl.ECMClassifier()
+        ecm.fit(X_train)
+        ecm.predict(X_test)
+
+    def test_binarize_input(self):
+        m = np.array([1, .81, .85, .81, .85, .81])
+        u = np.array([1, .23, .50, .23, .30, 0.13])
+
+        # Create the train dataset.
+        X_train, true_links = binary_vectors(
+            1000, 500, m=m, u=u, random_state=535, return_links=True)
+        X_train = X_train * np.random.rand(*X_train.shape)
+
+        # Create the train dataset.
+        X_test, true_links = binary_vectors(
+            1000, 500, m=m, u=u, random_state=535, return_links=True)
+        X_test = X_test * np.random.rand(*X_test.shape)
+
+        ecm = rl.ECMClassifier(binarize=True)
+        ecm.fit(X_train)
+        ecm.predict(X_test)
+
+    def test_ecm_atol_none(self):
+        m = np.array([0.95, .81, .85, .81, .85, .81])
+        u = np.array([0, .23, .50, .23, .30, 0.13])
+
+        # Create the train dataset.
+        X_train, true_links = binary_vectors(
+            10000, 500, m=m, u=u, random_state=535, return_links=True)
+
+        # Create the train dataset.
+        X_test, true_links = binary_vectors(
+            1000, 500, m=m, u=u, random_state=535, return_links=True)
+
+        ecm = rl.ECMClassifier(atol=None)
+        ecm.fit(X_train)
+        ecm.predict(X_test)
+
+        assert math.isclose(ecm.u_probs['c_1'][1], 0.0, abs_tol=1e-3)
+        assert math.isclose(ecm.u_probs['c_1'][0], 1.0, abs_tol=1e-3)
 
 
 class TestFellegiSunter(TestClassifyData):
@@ -394,6 +584,31 @@ class TestFellegiSunter(TestClassifyData):
                     np.exp(cl.log_u_probs[col][key]),
                     cl.u_probs[col][key]
                 )
+
+    @pytest.mark.parametrize('classifier', [
+        rl.NaiveBayesClassifier,
+        rl.ECMClassifier
+    ])
+    def test_fs_column_labels(self, classifier):
+
+        m = np.array([0.95, .81, .85, .81, .85, .81])
+        u = np.array([0, .23, .50, .23, .30, 0.13])
+
+        # Create the train dataset.
+        X_train, true_links = binary_vectors(
+            1000, 500, m=m, u=u, random_state=535, return_links=True)
+
+        cl = classifier()
+        if isinstance(cl, tuple(UNSUPERVISED_CLASSIFIERS)):
+            cl.fit(X_train)
+        else:
+            cl.fit(X_train, true_links)
+
+        assert set([*cl.m_probs]) == set(list(X_train))
+        assert set([*cl.u_probs]) == set(list(X_train))
+        assert set([*cl.log_m_probs]) == set(list(X_train))
+        assert set([*cl.log_m_probs]) == set(list(X_train))
+
     # @pytest.mark.parametrize('classifier', [
     #     rl.NaiveBayesClassifier,
     #     rl.ECMClassifier
