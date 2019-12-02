@@ -13,6 +13,16 @@ references for background information about indexation.
 .. [christen2008] Christen, P. (2008). Febrl - A Freely Available Record
         Linkage System with a Graphical User Interface.
 
+The indexing module can be used for both linking and duplicate detection. In
+case of duplicate detection, only pairs in the upper triangular part of the
+matrix are returned. This means that the first record in each record pair is
+the largest identifier. For example, `("A2", "A1")`, `(5, 2)` and  `("acb",
+"abc")`. The following image shows the record pairs for a complete set of
+record pairs.
+
+.. figure:: /images/indexing_basic.png
+    :width: 100%
+
 :class:`recordlinkage.Index` object
 ===================================
 
