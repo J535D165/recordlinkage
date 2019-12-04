@@ -190,13 +190,13 @@ class BaseIndexAlgorithm(object):
 
             def _link_index(self, df_a, df_b):
 
-                # Custom link index.
+                # Custom index for linking.
 
                 return ...
 
             def _dedup_index(self, df_a):
 
-                # Custom deduplication index, optional.
+                # Custom index for duplicate detection, optional.
 
                 return ...
 
@@ -263,7 +263,12 @@ class BaseIndexAlgorithm(object):
         )
 
     def _dedup_index(self, df_a):
-        """Build an index for deduplicating a dataset.
+        """Build an index for duplicate detection in a dataset.
+
+        This method can be used to implement an algorithm for
+        duplicate detection. This method is optional if method
+        :func:`~recordlinkage.base.BaseIndexAlgorithm._link_index`
+        is implemented.
 
         Parameters
         ----------
@@ -369,7 +374,7 @@ class BaseCompareFeature(object):
         dataframe.
     labels_right : list, str, int
         The labels to use for comparing record pairs in the right
-        dataframe (linking) or left dataframe (deduplication).
+        dataframe (linking) or left dataframe (duplicate detection).
     args : tuple
         Additional arguments to pass to the `_compare_vectorized`
         method.
@@ -463,7 +468,7 @@ class BaseCompareFeature(object):
         x : pandas.DataFrame
             The DataFrame to link. If `x_link` is given, the comparing is a
             linking problem. If `x_link` is not given, the problem is one of
-            deduplication.
+            duplicate detection.
         x_link : pandas.DataFrame, optional
             The second DataFrame.
 
@@ -839,7 +844,7 @@ class BaseCompare(object):
         x : pandas.DataFrame
             The DataFrame to link. If `x_link` is given, the comparing is a
             linking problem. If `x_link` is not given, the problem is one of
-            deduplication.
+            duplicate detection.
         x_link : pandas.DataFrame, optional
             The second DataFrame.
 
@@ -929,7 +934,7 @@ class BaseClassifier(metaclass=ABCMeta):
         ----
 
         A note in case of finding links within a single dataset (for example
-        deduplication). Unsure that the training record pairs are from the
+        duplicate detection). Unsure that the training record pairs are from the
         lower triangular part of the dataset/matrix. See detailed information
         here: link.
 
