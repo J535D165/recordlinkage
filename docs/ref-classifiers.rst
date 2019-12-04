@@ -127,12 +127,16 @@ algorithms. ScitKit-learn based models may want
 :class:`recordlinkage.adapters.SKLearnAdapter` as subclass as well.
 
 .. autoclass:: recordlinkage.base.BaseClassifier
+    :members:
+    :inherited-members:
 
 Probabilistic models can use the Fellegi and Sunter base class. This class is
 used for the :class:`recordlinkage.ECMClassifier` and the
 :class:`recordlinkage.NaiveBayesClassifier`.
 
 .. autoclass:: recordlinkage.classifiers.FellegiSunter
+    :members:
+    :inherited-members:
 
 Examples
 ========
@@ -149,6 +153,14 @@ provides the functionality for one-to-one linking and one-to-many linking. It
 is also possible to detect all connected components which is useful in  data
 deduplication.
 
-.. autoclass:: recordlinkage.OneToOneLinking 
+.. autoclass:: recordlinkage.OneToOneLinking
+    :members:
+    :inherited-members:
+
 .. autoclass:: recordlinkage.OneToManyLinking
+    :members:
+    :inherited-members:
+
 .. autoclass:: recordlinkage.ConnectedComponents
+    :members:
+    :inherited-members:
