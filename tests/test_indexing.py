@@ -8,7 +8,7 @@ import pickle
 
 import numpy as np
 import pandas as pd
-import pandas.util.testing as ptm
+import pandas.testing as pdt
 import pytest
 
 import recordlinkage
@@ -78,7 +78,7 @@ class TestIndexApi(TestData):
 
         expected = Full().index(self.a, self.b)
 
-        ptm.assert_index_equal(result, expected)
+        pdt.assert_index_equal(result, expected)
 
     def test_add_linking(self):
 
@@ -94,7 +94,7 @@ class TestIndexApi(TestData):
 
         result = indexer.index(self.a, self.b)
 
-        ptm.assert_index_equal(result, expected)
+        pdt.assert_index_equal(result, expected)
 
     def test_add_dedup(self):
 
@@ -109,7 +109,7 @@ class TestIndexApi(TestData):
 
         result = indexer.index(self.a)
 
-        ptm.assert_index_equal(result, expected)
+        pdt.assert_index_equal(result, expected)
 
 
 class TestIndexAlgorithmApi(TestData):
@@ -155,7 +155,7 @@ class TestIndexAlgorithmApi(TestData):
         pairs_split = pairs1.append(pairs2)
         pairs_split = pd.DataFrame(index=pairs_split).sort_index()
 
-        ptm.assert_frame_equal(pairs, pairs_split)
+        pdt.assert_frame_equal(pairs, pairs_split)
         # note possible to sort MultiIndex, so made a frame out of it.
 
     @pytest.mark.parametrize("index_class", get_test_algorithms())
@@ -413,10 +413,10 @@ class TestBlocking(TestData):
         pairs5 = index_cl5.index((self.a, self.b))
 
         # test
-        ptm.assert_index_equal(pairs1, pairs2)
-        ptm.assert_index_equal(pairs1, pairs3)
-        ptm.assert_index_equal(pairs1, pairs4)
-        ptm.assert_index_equal(pairs1, pairs5)
+        pdt.assert_index_equal(pairs1, pairs2)
+        pdt.assert_index_equal(pairs1, pairs3)
+        pdt.assert_index_equal(pairs1, pairs4)
+        pdt.assert_index_equal(pairs1, pairs5)
 
     def test_multiple_blocking_keys(self):
         """BLOCKING: test multiple blocking keys"""
@@ -434,7 +434,7 @@ class TestBlocking(TestData):
         pairs2 = index_cl2.index((self.a, self.b))
 
         # test
-        ptm.assert_index_equal(pairs1, pairs2)
+        pdt.assert_index_equal(pairs1, pairs2)
 
     def test_blocking_algorithm_link(self):
         """BLOCKING: test blocking algorithm for linking"""
@@ -489,7 +489,7 @@ class TestBlocking(TestData):
             index_cl_old = Block(on='var_arange')
             pairs_old = index_cl_old.index(self.a)
 
-        ptm.assert_index_equal(pairs_new, pairs_old)
+        pdt.assert_index_equal(pairs_new, pairs_old)
 
 
 class TestSortedNeighbourhoodIndexing(TestData):
@@ -523,10 +523,10 @@ class TestSortedNeighbourhoodIndexing(TestData):
         pairs5 = index_cl5.index((self.a, self.b))
 
         # test
-        ptm.assert_index_equal(pairs1, pairs2)
-        ptm.assert_index_equal(pairs1, pairs3)
-        ptm.assert_index_equal(pairs1, pairs4)
-        ptm.assert_index_equal(pairs1, pairs5)
+        pdt.assert_index_equal(pairs1, pairs2)
+        pdt.assert_index_equal(pairs1, pairs3)
+        pdt.assert_index_equal(pairs1, pairs4)
+        pdt.assert_index_equal(pairs1, pairs5)
 
     @pytest.mark.parametrize("window", [3, 5, 7, 9, 11])
     def test_sni_algorithm_link(self, window):
@@ -600,7 +600,7 @@ class TestSortedNeighbourhoodIndexing(TestData):
             index_cl_old = SortedNeighbourhood(on='var_arange')
             pairs_old = index_cl_old.index(self.a)
 
-        ptm.assert_index_equal(pairs_new, pairs_old)
+        pdt.assert_index_equal(pairs_new, pairs_old)
 
 
 class TestRandomIndexing(TestData):
@@ -619,7 +619,7 @@ class TestRandomIndexing(TestData):
         pairs3 = index_cl3.index((self.a, self.b))
 
         # are pairs1 and pairs2 indentical?
-        ptm.assert_index_equal(pairs1, pairs2)
+        pdt.assert_index_equal(pairs1, pairs2)
 
         # are pairs1 and pairs3 not indentical? # numpy workaround
         assert not np.array_equal(pairs1.values, pairs3.values)

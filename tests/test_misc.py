@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 
 # testing utils from pandas
-import pandas.util.testing as ptm
+import pandas.testing as pdt
 import pytest
 
 import recordlinkage as rl
@@ -22,7 +22,7 @@ def test_multiindex_split():
 
     for i, result_index_chunk in enumerate(result):
         expected_index_chunk = index[i * 10:(i + 1) * 10]
-        ptm.assert_index_equal(result_index_chunk, expected_index_chunk)
+        pdt.assert_index_equal(result_index_chunk, expected_index_chunk)
 
         assert len(result_index_chunk.levels) == 2
         if is_min_pandas_version("0.24.0"):

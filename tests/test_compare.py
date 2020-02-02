@@ -10,7 +10,7 @@ import tempfile
 import numpy as np
 from numpy import arange, nan
 
-import pandas.util.testing as pdt
+import pandas.testing as pdt
 from pandas import DataFrame, MultiIndex, Series, to_datetime
 
 # dependencies testing specific

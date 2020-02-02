@@ -4,7 +4,7 @@
 import pandas as pd
 
 # testing utils from pandas
-import pandas.util.testing as ptm
+import pandas.testing as pdt
 
 from recordlinkage import (OneToOneLinking, OneToManyLinking,
                            ConnectedComponents)
@@ -20,7 +20,7 @@ def test_one_to_one_linking():
 
     expected = pd.MultiIndex.from_tuples([(1, 1), (2, 2), (3, 3), (4, 4),
                                           (5, 5), (6, 5), (7, 7)])
-    ptm.assert_index_equal(sample_one_to_many, expected)
+    pdt.assert_index_equal(sample_one_to_many, expected)
 
 
 def test_one_to_many_linking():
@@ -35,7 +35,7 @@ def test_one_to_many_linking():
 
     expected = pd.MultiIndex.from_tuples([(1, 1), (2, 2), (3, 3), (4, 4),
                                           (5, 5), (7, 7)])
-    ptm.assert_index_equal(sample_one_to_one, expected)
+    pdt.assert_index_equal(sample_one_to_one, expected)
 
 
 def test_connected_components():
@@ -54,4 +54,4 @@ def test_connected_components():
     ]
 
     for i, mi in enumerate(expected):
-        ptm.assert_index_equal(sample_connected[i], expected[i])
+        pdt.assert_index_equal(sample_connected[i], expected[i])

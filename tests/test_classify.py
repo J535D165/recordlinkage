@@ -7,7 +7,7 @@ import numpy as np
 from numpy.testing.utils import assert_almost_equal
 
 import pandas as pd
-import pandas.util.testing as ptm
+import pandas.testing as pdt
 
 import pytest
 
@@ -184,7 +184,7 @@ class TestClassifyAPI(TestClassifyData):
         assert isinstance(expected, pd.MultiIndex)
         assert result.values.shape == expected.values.shape
 
-        ptm.assert_index_equal(result, expected)
+        pdt.assert_index_equal(result, expected)
 
     @pytest.mark.parametrize('classifier', SUPERVISED_CLASSIFIERS)
     def test_fit_predict_supervised(self, classifier):
@@ -201,7 +201,7 @@ class TestClassifyAPI(TestClassifyData):
         assert isinstance(expected, pd.MultiIndex)
         assert result.values.shape == expected.values.shape
 
-        ptm.assert_index_equal(result, expected)
+        pdt.assert_index_equal(result, expected)
 
     @pytest.mark.parametrize('classifier', CLASSIFIERS)
     def test_predict_but_not_trained(self, classifier):
@@ -643,8 +643,8 @@ class TestFellegiSunter(TestClassifyData):
     #     probs_after = cl.prob(Y_TRAIN)
     #     predict_after = cl.predict(Y_TRAIN)
 
-    #     ptm.assert_series_equal(probs_before, probs_after)
-    #     ptm.assert_index_equal(predict_before, predict_after)
+    #     pdt.assert_series_equal(probs_before, probs_after)
+    #     pdt.assert_index_equal(predict_before, predict_after)
 
     # def test_FS_supervised_binarize(self):
 
