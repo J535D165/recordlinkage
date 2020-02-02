@@ -25,6 +25,12 @@ def get_min_pandas_version():
 
     return "0.23"
 
+# Optional dependencies for the recordlinkage package
+OPTIONAL_DEPS = [
+    "networkx>=2",  # clustering and hard matching
+    "bottleneck",  # performance
+    "numexpr"  # performance
+]
 
 setup(
     name="recordlinkage",
@@ -60,6 +66,10 @@ setup(
         "scikit-learn>=0.19.0",
         "joblib"
     ],
+    extras_require={
+        "all": OPTIONAL_DEPS,
+        "test": ["pytest"] + OPTIONAL_DEPS
+    },
     packages=find_packages(
         exclude=["benchmarks", "docs",
                  "*.tests", "*.tests.*", "tests.*", "tests"]

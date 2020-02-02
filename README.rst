@@ -138,8 +138,8 @@ share, let us know.
 .. _deduplication: http://recordlinkage.readthedocs.io/en/latest/notebooks/data_deduplication.html
 .. _linking: http://recordlinkage.readthedocs.io/en/latest/notebooks/link_two_dataframes.html
 
-Dependencies, installation
---------------------------
+Installation
+------------
 
 The Python Record linkage Toolkit requires Python 3.5 or higher (since version
 >= 0.14). Install the package easily with pip
@@ -151,18 +151,15 @@ The Python Record linkage Toolkit requires Python 3.5 or higher (since version
 Python 2.7 users can use version <= 0.13, but it is advised to use Python >=
 3.5.
 
-The toolkit depends on Pandas_ (>=23.0), Numpy_, `Scikit-learn`_, Scipy_ and
-Jellyfish_. You probably have most of them already installed. The package
-``jellyfish`` is used for approximate string comparing and string encoding.
-The package Numexpr_ is an optional dependency to speed up numerical
-comparisons.
+The toolkit depends on popular packages like Pandas_, Numpy_, Scipy_
+and, `Scikit-learn`_. A complete list of dependencies 
+can be found in the `installation manual <https://recordlinkage.readthedocs.io/en/latest/installation.html>`__
+as well as recommended and optional dependencies.
 
 .. _Numpy: http://www.numpy.org
 .. _Pandas: https://github.com/pydata/pandas
 .. _Scipy: https://www.scipy.org/
 .. _Scikit-learn: http://scikit-learn.org/
-.. _Jellyfish: https://github.com/jamesturk/jellyfish
-.. _Numexpr: https://github.com/pydata/numexpr
 
 License
 -------
