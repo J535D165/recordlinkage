@@ -11,7 +11,7 @@ from recordlinkage.algorithms.indexing import (
     random_pairs_without_replacement)
 from recordlinkage.base import BaseIndexAlgorithm
 from recordlinkage.measures import full_index_size
-from recordlinkage.utils import DeprecationHelper, listify, construct_multiindex
+from recordlinkage.utils import DeprecationHelper, listify
 
 
 class Full(BaseIndexAlgorithm):
@@ -54,7 +54,7 @@ class Full(BaseIndexAlgorithm):
         levels = [df_a.index.values, df_a.index.values]
         codes = numpy.tril_indices(len(df_a.index), k=-1)
 
-        return construct_multiindex(
+        return pandas.MultiIndex(
             levels=levels, codes=codes, verify_integrity=False)
 
 
@@ -148,7 +148,7 @@ class Block(BaseIndexAlgorithm):
         # merge the dataframes
         pairs_df = data_left.merge(data_right, how='inner', on=blocking_keys)
 
-        return construct_multiindex(
+        return pandas.MultiIndex(
             levels=[df_a.index.values, df_b.index.values],
             codes=[pairs_df['index_x'].values, pairs_df['index_y'].values],
             verify_integrity=False)
@@ -342,7 +342,7 @@ class SortedNeighbourhood(BaseIndexAlgorithm):
 
         pairs_df = pandas.concat(pairs_concat, axis=0)
 
-        return construct_multiindex(
+        return pandas.MultiIndex(
             levels=[df_a.index.values, df_b.index.values],
             codes=[pairs_df['index_x'].values, pairs_df['index_y'].values],
             verify_integrity=False)
@@ -427,7 +427,7 @@ class Random(BaseIndexAlgorithm):
         levels = [df_a.index.values, df_b.index.values]
         codes = pairs
 
-        return construct_multiindex(
+        return pandas.MultiIndex(
             levels=levels, codes=codes, verify_integrity=False)
 
     def _dedup_index(self, df_a):
@@ -460,7 +460,7 @@ class Random(BaseIndexAlgorithm):
         levels = [df_a.index.values, df_a.index.values]
         labels = pairs
 
-        return construct_multiindex(
+        return pandas.MultiIndex(
             levels=levels, codes=labels, verify_integrity=False)
 
 

@@ -416,7 +416,7 @@ class TestCompareApi(TestData):
     def test_compare_custom_vectorized_dedup(self):
 
         A = DataFrame({'col': ['abc', 'abc', 'abc', 'abc', 'abc']})
-        ix = MultiIndex.from_arrays([[1, 2, 3, 4, 5], [2, 3, 4, 5, 1]])
+        ix = MultiIndex.from_arrays([[0, 1, 2, 3, 4], [1, 2, 3, 4, 0]])
 
         # test without label
         comp = recordlinkage.Compare()
@@ -440,7 +440,7 @@ class TestCompareApi(TestData):
     def test_compare_custom_vectorized_arguments_dedup(self):
 
         A = DataFrame({'col': ['abc', 'abc', 'abc', 'abc', 'abc']})
-        ix = MultiIndex.from_arrays([[1, 2, 3, 4, 5], [2, 3, 4, 5, 1]])
+        ix = MultiIndex.from_arrays([[0, 1, 2, 3, 4], [1, 2, 3, 4, 0]])
 
         # test without label
         comp = recordlinkage.Compare()

@@ -2,7 +2,6 @@ import numpy
 import pandas
 from recordlinkage.utils import listify
 from recordlinkage.index import Block
-from recordlinkage.utils import construct_multiindex
 
 
 class NeighbourhoodBlock(Block):
@@ -231,7 +230,7 @@ class NeighbourhoodBlock(Block):
                                                rank_distance_limits)
         if df_b is None:  # dedup index
             rownum_pairs = rownum_pairs[rownum_pairs.T[0] > rownum_pairs.T[1]]
-        index = construct_multiindex(
+        index = pandas.MultiIndex(
             levels=[df.index.values for df in dfs],
             codes=rownum_pairs.T,
             names=['index_a', 'index_b'])

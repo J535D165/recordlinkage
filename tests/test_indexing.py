@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
 import os
 import tempfile
 import shutil
@@ -14,12 +11,10 @@ import pytest
 import recordlinkage
 from recordlinkage.algorithms.indexing import (
     random_pairs_without_replacement,
-    random_pairs_without_replacement_low_memory
-)
+    random_pairs_without_replacement_low_memory)
 from recordlinkage.index import Full, Block, SortedNeighbourhood, Random
 from recordlinkage.contrib.index import NeighbourhoodBlock
 from recordlinkage.types import is_pandas_2d_multiindex
-from recordlinkage.utils import is_min_pandas_version
 
 
 def get_test_algorithms():
@@ -340,14 +335,9 @@ class TestIndexAlgorithmApi(TestData):
         levels = [df_a.index.values, df_a.index.values]
         codes = np.tril_indices(len(df_a.index), k=-1)
 
-        if is_min_pandas_version("0.24.0"):
-            full_pairs = pd.MultiIndex(levels=levels,
-                                       codes=codes,
-                                       verify_integrity=False)
-        else:
-            full_pairs = pd.MultiIndex(levels=levels,
-                                       labels=codes,
-                                       verify_integrity=False)
+        full_pairs = pd.MultiIndex(levels=levels,
+                                   codes=codes,
+                                   verify_integrity=False)
 
         # all pairs are in the lower triangle of the matrix.
         assert len(pairs.difference(full_pairs)) == 0
@@ -671,8 +661,7 @@ def test_random_without_replace_large(n, shape):
 
 
 @pytest.mark.parametrize("n,shape", [(10, (3, 4)), (100, (50, 50)),
-                                     (1000, (50, 50)),
-                                     (10000, (1000, 1000))])
+                                     (1000, (50, 50)), (10000, (1000, 1000))])
 def test_random_without_replace_small(n, shape):
     """Random: test random indexing without replacement"""
 
@@ -685,9 +674,8 @@ def test_random_without_replace_small(n, shape):
     assert pairs.shape[0] == 2
 
 
-@pytest.mark.parametrize("n,shape", [(10, (8,)), (100, (50,)),
-                                     (1000, (50,)),
-                                     (10000, (100000,))])
+@pytest.mark.parametrize("n,shape", [(10, (8, )), (100, (50, )),
+                                     (1000, (50, )), (10000, (100000, ))])
 def test_random_without_replace_large_dedup(n, shape):
     """Random: test random indexing without replacement"""
 
@@ -700,9 +688,8 @@ def test_random_without_replace_large_dedup(n, shape):
     assert pairs.shape[0] == 2
 
 
-@pytest.mark.parametrize("n,shape", [(10, (8,)), (100, (50,)),
-                                     (1000, (50,)),
-                                     (10000, (1000,))])
+@pytest.mark.parametrize("n,shape", [(10, (8, )), (100, (50, )),
+                                     (1000, (50, )), (10000, (1000, ))])
 def test_random_without_replace_small_dedup(n, shape):
     """Random: test random indexing without replacement"""
 
@@ -714,18 +701,13 @@ def test_random_without_replace_small_dedup(n, shape):
     assert len(pairs.shape) == 2
     assert pairs.shape[0] == 2
 
+
 def test_low_memory():
 
     df_a = pd.DataFrame(np.random.rand(1000000, 2))
     df_b = pd.DataFrame(np.random.rand(1000000, 2))
 
-    pairs = Random(
-        10, 
-        random_state=100, 
-        replace=False
-    ).index(
-        df_a, df_b
-    )
+    pairs = Random(10, random_state=100, replace=False).index(df_a, df_b)
 
     assert is_pandas_2d_multiindex(pairs)
     assert len(pairs) == 10
@@ -736,20 +718,8 @@ def test_low_memory_seed():
     df_a = pd.DataFrame(np.random.rand(1000000, 2))
     df_b = pd.DataFrame(np.random.rand(1000000, 2))
 
-    pairs1 = Random(
-        10, 
-        random_state=100, 
-        replace=False
-    ).index(
-        df_a, df_b
-    )
+    pairs1 = Random(10, random_state=100, replace=False).index(df_a, df_b)
 
-    pairs2 = Random(
-        10, 
-        random_state=100, 
-        replace=False
-    ).index(
-        df_a, df_b
-    )
+    pairs2 = Random(10, random_state=100, replace=False).index(df_a, df_b)
 
-    ptm.assert_index_equal(pairs1, pairs2)
+    pdt.assert_index_equal(pairs1, pairs2)

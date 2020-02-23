@@ -3,8 +3,6 @@ from pathlib import Path
 import pandas
 import numpy
 
-from recordlinkage.utils import construct_multiindex
-
 
 def _febrl_load_data(filename):
     # Internal function for loading febrl data
@@ -50,7 +48,7 @@ def _febrl_links(df):
     )[['index_x', 'index_y']]
     pairs_df = pairs_df[pairs_df['index_x'] > pairs_df['index_y']]
 
-    return construct_multiindex(
+    return pandas.MultiIndex(
         levels=[df.index.values, df.index.values],
         codes=[pairs_df['index_x'].values, pairs_df['index_y'].values],
         names=[None, None],
