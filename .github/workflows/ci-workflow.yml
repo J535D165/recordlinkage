@@ -20,7 +20,7 @@ jobs:
     - name: Package recordlinkage
       run: |
         python -m pip install --upgrade pip
-        python -m install wheel
+        python -m pip install wheel
         python setup.py bdist_wheel sdist
     - name: Install recordlinkage
       run: |
