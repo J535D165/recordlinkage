@@ -19,11 +19,12 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Package recordlinkage
       run: |
-        python -m pip install --upgrade pip
-        python -m pip install wheel
+        pip install --upgrade pip
+        pip install wheel
         python setup.py bdist_wheel sdist
     - name: Install recordlinkage
       run: |
+        pip install networkx>=2
         pip install ./dist/recordlinkage-*.whl
     - name: Lint with flake8
       run: |
@@ -36,5 +37,6 @@ jobs:
       run: |
         pip install pytest
         # remove recordlinkage to prevent relative imports (use installed package)
+        # this is like wrapping stuff in a src folder
         rm -r recordlinkage/
         pytest
