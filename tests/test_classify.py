@@ -4,7 +4,7 @@
 import math
 
 import numpy as np
-from numpy.testing.utils import assert_almost_equal
+from numpy.testing import assert_almost_equal
 
 import pandas as pd
 import pandas.testing as pdt
