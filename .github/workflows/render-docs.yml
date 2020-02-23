@@ -8,8 +8,7 @@ jobs:
     - uses: actions/checkout@v1
     - name: Install pandoc
       run: |
-        wget https://github.com/jgm/pandoc/releases/download/2.2.3.2/pandoc-2.2.3.2-1-amd64.deb
-        sudo dpkg -i pandoc-2.2.3.2-1-amd64.deb
+        sudo apt install pandoc
     - uses: ammaraskar/sphinx-action@master
       with:
         docs-folder: "docs/"
