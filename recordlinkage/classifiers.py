@@ -373,7 +373,6 @@ class LogisticRegressionClassifier(SKLearnAdapter, Classifier):
         super(LogisticRegressionClassifier, self).__init__()
 
         self.kernel = linear_model.LogisticRegression(**kwargs)
-        self.kernel.classes_ = numpy.array([0, 1])
 
         self.coefficients = coefficients
         self.intercept = intercept
@@ -423,6 +422,44 @@ class LogisticRegressionClassifier(SKLearnAdapter, Classifier):
                 del self.kernel.intercept_
             except AttributeError:
                 pass
+
+    def _predict(self, features):
+        """Predict matches and non-matches.
+
+        Parameters
+        ----------
+        features : numpy.ndarray
+            The data to predict the class of.
+
+        Returns
+        -------
+        numpy.ndarray
+            The predicted classes.
+        """
+
+        from sklearn.exceptions import NotFittedError
+
+        try:
+
+            fit_bool = hasattr(self.kernel, "intercept_") and \
+                hasattr(self.kernel, "coef_")
+
+            if fit_bool and not hasattr(self.kernel, "classes_"):
+                self.kernel.classes_ = numpy.array([0, 1])
+
+            if not fit_bool:
+                raise NotFittedError
+
+            prediction = self.kernel.predict(features)
+        except NotFittedError:
+            raise NotFittedError(
+                "{} is not fitted yet. Call 'fit' with appropriate "
+                "arguments before using this method.".format(
+                    type(self).__name__
+                )
+            )
+
+        return prediction
 
 
 class NaiveBayesClassifier(FellegiSunter, SKLearnAdapter, Classifier):
