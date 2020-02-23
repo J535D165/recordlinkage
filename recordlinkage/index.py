@@ -7,8 +7,8 @@ import pandas
 from recordlinkage import rl_logging as logging
 from recordlinkage.algorithms.indexing import (
     random_pairs_with_replacement,
-    random_pairs_without_replacement_large_frames,
-    random_pairs_without_replacement_small_frames)
+    random_pairs_without_replacement_low_memory,
+    random_pairs_without_replacement)
 from recordlinkage.base import BaseIndexAlgorithm
 from recordlinkage.measures import full_index_size
 from recordlinkage.utils import DeprecationHelper, listify, construct_multiindex
@@ -412,13 +412,16 @@ class Random(BaseIndexAlgorithm):
                 raise ValueError(
                     "n must be a integer satisfying 0<n<=%s" % n_max)
 
+            # the fraction of pairs in the sample
+            frac = self.n / n_max
+
             # large dataframes
-            if n_max < 1e6:
-                pairs = random_pairs_without_replacement_small_frames(
+            if n_max < 1e6 or frac > 0.5:
+                pairs = random_pairs_without_replacement(
                     self.n, shape, self.random_state)
             # small dataframes
             else:
-                pairs = random_pairs_without_replacement_large_frames(
+                pairs = random_pairs_without_replacement_low_memory(
                     self.n, shape, self.random_state)
 
         levels = [df_a.index.values, df_b.index.values]
@@ -447,11 +450,11 @@ class Random(BaseIndexAlgorithm):
 
             # large dataframes
             if n_max < 1e6:
-                pairs = random_pairs_without_replacement_small_frames(
+                pairs = random_pairs_without_replacement(
                     self.n, shape, self.random_state)
             # small dataframes
             else:
-                pairs = random_pairs_without_replacement_large_frames(
+                pairs = random_pairs_without_replacement_low_memory(
                     self.n, shape, self.random_state)
 
         levels = [df_a.index.values, df_a.index.values]
