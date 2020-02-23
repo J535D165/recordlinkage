@@ -24,7 +24,7 @@ jobs:
         python setup.py bdist_wheel sdist
     - name: Install recordlinkage
       run: |
-        pip install ./dist/recordlinkage-*.whl[all]
+        pip install ./dist/recordlinkage-*.whl
     - name: Lint with flake8
       run: |
         pip install flake8
