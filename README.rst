@@ -1,11 +1,11 @@
 Python Record Linkage Toolkit
 =============================
 
-|pypi| |travis| |codecov| |docs| |zenodo|
+|pypi| |actions| |codecov| |docs| |zenodo|
 
-.. |travis| image:: https://travis-ci.org/J535D165/recordlinkage.svg?branch=master
-  :target: https://travis-ci.org/J535D165/recordlinkage
-  :alt: TravisCI Status
+.. |actions| image:: https://github.com/J535D165/recordlinkage/workflows/tests/badge.svg?branch=master
+  :target: https://github.com/J535D165/recordlinkage/actions
+  :alt: Github Actions CI Status
 
 .. |pypi| image:: https://badge.fury.io/py/recordlinkage.svg
   :target: https://pypi.python.org/pypi/recordlinkage/
