@@ -1,8 +1,6 @@
 sphinx>=1.7.6
 sphinx-rtd-theme
 ipykernel
-nbconvert>=5.0.0
-nbsphinx
 numpy
 scipy
 pandas
