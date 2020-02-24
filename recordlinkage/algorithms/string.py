@@ -1,6 +1,5 @@
 import warnings
 
-import jellyfish
 import numpy as np
 import pandas
 from sklearn.feature_extraction.text import CountVectorizer
@@ -17,10 +16,12 @@ def jaro_similarity(s1, s2):
 
     conc = pandas.Series(list(zip(s1, s2)))
 
+    from jellyfish import jaro_distance
+
     def jaro_apply(x):
 
         try:
-            return jellyfish.jaro_distance(x[0], x[1])
+            return jaro_distance(x[0], x[1])
         except Exception as err:
             if pandas.isnull(x[0]) or pandas.isnull(x[1]):
                 return np.nan
@@ -34,9 +35,12 @@ def jarowinkler_similarity(s1, s2):
 
     conc = pandas.Series(list(zip(s1, s2)))
 
+    from jellyfish import jaro_winkler
+
     def jaro_winkler_apply(x):
+
         try:
-            return jellyfish.jaro_winkler(x[0], x[1])
+            return jaro_winkler(x[0], x[1])
         except Exception as err:
             if pandas.isnull(x[0]) or pandas.isnull(x[1]):
                 return np.nan
@@ -50,10 +54,12 @@ def levenshtein_similarity(s1, s2):
 
     conc = pandas.Series(list(zip(s1, s2)))
 
+    from jellyfish import levenshtein_distance
+
     def levenshtein_apply(x):
 
         try:
-            return 1 - jellyfish.levenshtein_distance(x[0], x[1]) \
+            return 1 - levenshtein_distance(x[0], x[1]) \
                 / np.max([len(x[0]), len(x[1])])
         except Exception as err:
             if pandas.isnull(x[0]) or pandas.isnull(x[1]):
@@ -68,10 +74,12 @@ def damerau_levenshtein_similarity(s1, s2):
 
     conc = pandas.Series(list(zip(s1, s2)))
 
+    from jellyfish import damerau_levenshtein_distance
+
     def damerau_levenshtein_apply(x):
 
         try:
-            return 1 - jellyfish.damerau_levenshtein_distance(x[0], x[1]) \
+            return 1 - damerau_levenshtein_distance(x[0], x[1]) \
                 / np.max([len(x[0]), len(x[1])])
         except Exception as err:
             if pandas.isnull(x[0]) or pandas.isnull(x[1]):
