@@ -1,4 +1,4 @@
-sphinx>=1.7.6
+sphinx
 sphinx-rtd-theme
 ipykernel
 numpy
@@ -6,4 +6,5 @@ scipy
 pandas
 joblib
 scikit-learn
+jellyfish
 
