@@ -14,5 +14,4 @@ omit =
     tests/*
     docs/*
     recordlinkage/_version.py
-    recordlinkage/compat/six.py
     recordlinkage/types.py

@@ -719,7 +719,6 @@ def test_low_memory_seed():
     df_b = pd.DataFrame(np.random.rand(1000000, 2))
 
     pairs1 = Random(10, random_state=100, replace=False).index(df_a, df_b)
-
     pairs2 = Random(10, random_state=100, replace=False).index(df_a, df_b)
 
     pdt.assert_index_equal(pairs1, pairs2)

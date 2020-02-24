@@ -37,7 +37,7 @@ Make record pairs
 It is very intuitive to compare each record in DataFrame ``dfA`` with
 all records of DataFrame ``dfB``. In fact, we want to make record pairs.
 Each record pair should contain one record of ``dfA`` and one record of
-``dfB``. This process of making record pairs is also called 'indexing'.
+``dfB``. This process of making record pairs is also called "indexing".
 With the ``recordlinkage`` module, indexing is easy. First, load the
 ``index.Index`` class and call the ``.full`` method. This object
 generates a full index on a ``.index(...)`` call. In case of
@@ -77,12 +77,12 @@ method can be used in the ``recordlinkage`` module.
 .. ipython::
 
     In [0]: indexer = recordlinkage.Index()
-       ...: indexer.block('given_name')
+       ...: indexer.block("given_name")
        ...: candidate_links = indexer.index(dfA, dfB)
        ...: len(candidate_links)
 
 
-The argument 'given\_name' is the blocking variable. This variable has
+The argument "given\_name" is the blocking variable. This variable has
 to be the name of a column in ``dfA`` and ``dfB``. It is possible to
 parse a list of columns names to block on multiple variables. Blocking
 on multiple variables will reduce the number of record pairs even
@@ -107,12 +107,12 @@ The following code shows how to compare attributes.
 .. ipython::
 
     In [0]: compare_cl = recordlinkage.Compare()
-       ...: compare_cl.exact('given_name', 'given_name', label='given_name')
-       ...: compare_cl.string('surname', 'surname', method='jarowinkler', threshold=0.85, label='surname')
-       ...: compare_cl.exact('date_of_birth', 'date_of_birth', label='date_of_birth')
-       ...: compare_cl.exact('suburb', 'suburb', label='suburb')
-       ...: compare_cl.exact('state', 'state', label='state')
-       ...: compare_cl.string('address_1', 'address_1', threshold=0.85, label='address_1')
+       ...: compare_cl.exact("given_name", "given_name", label="given_name")
+       ...: compare_cl.string("surname", "surname", method="jarowinkler", threshold=0.85, label="surname")
+       ...: compare_cl.exact("date_of_birth", "date_of_birth", label="date_of_birth")
+       ...: compare_cl.exact("suburb", "suburb", label="suburb")
+       ...: compare_cl.exact("state", "state", label="state")
+       ...: compare_cl.string("address_1", "address_1", threshold=0.85, label="address_1")
        ...: features = compare_cl.compute(candidate_links, dfA, dfB)
 
 The comparing of record pairs starts when the ``compute`` method is
@@ -151,18 +151,18 @@ Full code
     
     # Indexation step
     indexer = recordlinkage.Index()
-    indexer.block('given_name')
+    indexer.block("given_name")
     candidate_links = indexer.index(dfA, dfB)
     
     # Comparison step
     compare_cl = recordlinkage.Compare()
     
-    compare_cl.exact('given_name', 'given_name', label='given_name')
-    compare_cl.string('surname', 'surname', method='jarowinkler', threshold=0.85, label='surname')
-    compare_cl.exact('date_of_birth', 'date_of_birth', label='date_of_birth')
-    compare_cl.exact('suburb', 'suburb', label='suburb')
-    compare_cl.exact('state', 'state', label='state')
-    compare_cl.string('address_1', 'address_1', threshold=0.85, label='address_1')
+    compare_cl.exact("given_name", "given_name", label="given_name")
+    compare_cl.string("surname", "surname", method="jarowinkler", threshold=0.85, label="surname")
+    compare_cl.exact("date_of_birth", "date_of_birth", label="date_of_birth")
+    compare_cl.exact("suburb", "suburb", label="suburb")
+    compare_cl.exact("state", "state", label="state")
+    compare_cl.string("address_1", "address_1", threshold=0.85, label="address_1")
     
     features = compare_cl.compute(candidate_links, dfA, dfB)
     
