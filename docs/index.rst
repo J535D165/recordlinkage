@@ -10,8 +10,8 @@ All you need to start linking records.
 
 	about
 	installation
-	notebooks/link_two_dataframes.ipynb
-	notebooks/data_deduplication.ipynb
+	guides/link_two_dataframes.rst
+	guides/data_deduplication.rst
 
 .. toctree::
 	:caption: Record linkage
@@ -30,7 +30,7 @@ All you need to start linking records.
 	:maxdepth: 2
 
 	annotation
-	notebooks/classifiers.ipynb
+	guides/classifiers.rst
 	performance.rst
 
 .. toctree::
