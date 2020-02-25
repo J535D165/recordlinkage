@@ -91,18 +91,24 @@ comparison or similarity algorithms in the Compare class.
     # The comparison vectors
     feature_vectors = c.compute(candidate_links, df_a, df_b)
 
-This Python Record Linkage Toolkit contains multiple classification algorithms.
-Plenty of the algorithms do need training data (supervised learning) while
-others are unsupervised. An example of supervised learning:
+Classify the candidate links into matching or distinct pairs based on their 
+comparison result with one of the `classification algorithms`_. The following 
+code classifies candidate pairs with a Logistic Regression classifier. 
+This (supervised machine learning) algorithm requires training data.
+
+.. _`classification algorithms`: https://recordlinkage.readthedocs.io/en/latest/ref-classifiers.html
 
 .. code:: python
 
     logrg = recordlinkage.LogisticRegressionClassifier()
-    logrg.fit(TRAINING_COMPARISON_VECTORS, TRAINING_CLASSES)
+    logrg.fit(TRAINING_COMPARISON_VECTORS, TRAINING_PAIRS)
 
     logrg.predict(feature_vectors)
 
-and an example of unsupervised learning (the well known ECM-algorithm):
+The following code shows the classification of candidate pairs with the 
+Expectation-Conditional Maximisation (ECM) algorithm. This variant of the 
+Expectation-Maximisation algorithm doesn't require training data 
+(unsupervised machine learning).
 
 .. code:: python
 
