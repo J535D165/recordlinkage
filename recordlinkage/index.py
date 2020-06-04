@@ -256,9 +256,7 @@ class SortedNeighbourhood(BaseIndexAlgorithm):
         """return the sorting key values as a series"""
 
         concat_arrays = numpy.concatenate([array1, array2])
-        unique_values = numpy.unique(concat_arrays)
-
-        return numpy.sort(unique_values)
+        return numpy.unique(concat_arrays)  # numpy.unique returns sorted list
 
     def _link_index(self, df_a, df_b):
 
