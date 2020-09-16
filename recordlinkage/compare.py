@@ -18,7 +18,6 @@ from recordlinkage.algorithms.string import jarowinkler_similarity
 from recordlinkage.algorithms.string import levenshtein_similarity
 from recordlinkage.algorithms.string import longest_common_substring_similarity
 from recordlinkage.algorithms.string import qgram_similarity
-from recordlinkage.algorithms.string import jaccard_similarity
 from recordlinkage.algorithms.string import smith_waterman_similarity
 from recordlinkage.base import BaseCompareFeature
 from recordlinkage.utils import fillna as _fillna
@@ -138,8 +137,6 @@ class String(BaseCompareFeature):
             str_sim_alg = damerau_levenshtein_similarity
         elif self.method in ['q_gram', 'qgram']:
             str_sim_alg = qgram_similarity
-        elif self.method in ['jaccard', 'jaccard_index']:
-            str_sim_alg = jaccard_similarity
         elif self.method == 'cosine':
             str_sim_alg = cosine_similarity
         elif self.method in ['smith_waterman', 'smithwaterman', 'sw']:
