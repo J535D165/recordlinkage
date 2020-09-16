@@ -49,6 +49,26 @@ def jarowinkler_similarity(s1, s2):
 
     return conc.apply(jaro_winkler_apply)
 
+def jaccard_similarity(s1, s2):
+    
+    if len(s1) == len(s2) == 0:
+        return []
+    
+    else:
+        conc = pandas.Series(list(zip(s1, s2)))
+
+        def jaccard_apply(x):
+            try:
+                s1, s2 = set(x[0]), set(x[1])
+                return len(s1 & s2)/len(s1 | s2)
+            except Exception as err:
+                if pandas.isnull(x[0]) or pandas.isnull(x[1]):
+                    return np.nan
+                else:
+                    raise err
+
+        return conc.apply(jaccard_apply)
+
 
 def levenshtein_similarity(s1, s2):
 
