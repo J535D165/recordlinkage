@@ -934,7 +934,7 @@ class BaseClassifier(metaclass=ABCMeta):
         ----
 
         A note in case of finding links within a single dataset (for example
-        duplicate detection). Unsure that the training record pairs are from the
+        duplicate detection). Ensure that the training record pairs are from the
         lower triangular part of the dataset/matrix. See detailed information
         here: link.
 
