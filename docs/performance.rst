@@ -100,7 +100,7 @@ to make an index without running out of memory in the indexing step or
 in the comparing step. ``recordlinkage`` has a method to deal with large
 files. It is fast, although is not primary developed to be fast. SQL
 databases may outperform this method. It is especially developed for the
-useability. The idea was to spllit the input files into small blocks.
+useability. The idea was to split the input files into small blocks.
 For each block the record pairs are computed. Then iterate over the
 blocks. Consider full indexing:
 
