@@ -56,8 +56,7 @@ input argument.
 
 With the method ``index``, all possible (and unique) record pairs are
 made. The method returns a ``pandas.MultiIndex``. The number of pairs is
-equal to the number of records in ``dfA`` times the number of records in
-``dfB``.
+equal to the number of records in ``dfA`` choose ``2``.
 
 .. ipython::
 
