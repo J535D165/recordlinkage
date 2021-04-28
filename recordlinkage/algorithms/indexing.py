@@ -29,7 +29,7 @@ def random_pairs_with_replacement(n, shape, random_state=None):
         raise ValueError('n_max must be larger than 0')
 
     # make random pairs
-    indices = random_state.randint(0, n_max, n)
+    indices = random_state.randint(0, n_max, n, dtype=np.int64)
 
     if len(shape) == 1:
         return _map_tril_1d_on_2d(indices, shape[0])
