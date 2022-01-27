@@ -47,7 +47,7 @@ setup(
     ],
     python_requires=">=3.5",
     install_requires=[
-        "jellyfish>=0.5.4",
+        "jellyfish>=0.8.0",
         "numpy>=1.13.0",
         "pandas>=1,<2",
         "scipy>=1",

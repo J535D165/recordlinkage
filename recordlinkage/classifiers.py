@@ -297,6 +297,9 @@ class KMeansClassifier(SKLearnAdapter, Classifier):
         if value is None:
             return
 
+        # this attribute is filled in KMeans.fit and is required for predict
+        self.kernel._n_threads = 1
+
         if not hasattr(self.kernel, 'cluster_centers_'):
             self.kernel.cluster_centers_ = numpy.empty((2, len(value)))
             self.kernel.cluster_centers_[:] = numpy.nan

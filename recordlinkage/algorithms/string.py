@@ -16,12 +16,12 @@ def jaro_similarity(s1, s2):
 
     conc = pandas.Series(list(zip(s1, s2)))
 
-    from jellyfish import jaro_distance
+    from jellyfish import jaro_similarity
 
     def jaro_apply(x):
 
         try:
-            return jaro_distance(x[0], x[1])
+            return jaro_similarity(x[0], x[1])
         except Exception as err:
             if pandas.isnull(x[0]) or pandas.isnull(x[1]):
                 return np.nan
@@ -35,12 +35,12 @@ def jarowinkler_similarity(s1, s2):
 
     conc = pandas.Series(list(zip(s1, s2)))
 
-    from jellyfish import jaro_winkler
+    from jellyfish import jaro_winkler_similarity
 
     def jaro_winkler_apply(x):
 
         try:
-            return jaro_winkler(x[0], x[1])
+            return jaro_winkler_similarity(x[0], x[1])
         except Exception as err:
             if pandas.isnull(x[0]) or pandas.isnull(x[1]):
                 return np.nan

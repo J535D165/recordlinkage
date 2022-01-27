@@ -77,7 +77,7 @@ def phonetic(s, method, concat=True, encoding='utf-8', decode_error='strict'):
             if type(x) == bytes else x)
 
     if concat:
-        s = s.str.replace(r"[\-\_\s]", "")
+        s = s.str.replace(r"[\-\_\s]", "", regex=True)
 
     for alg in _phonetic_algorithms:
         if method in alg['argument_names']:

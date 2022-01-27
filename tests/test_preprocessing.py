@@ -210,8 +210,9 @@ class TestEncodingStandardise(object):
             np.nan, u'John', u'Mary Ann', u'billy', u'Jonathan', u'Gretha',
             u'Micheal', u'Sjors'
         ])
+        # in jellyfish.match_rating_codex version 0.8.0 results have changed
         expected = pd.Series([
-            np.nan, u'JHN', u'MRYNN', u'BLLY', u'JNTHN', u'GRTH', u'MCHL',
+            np.nan, u'JHN', u'MRYN', u'BLY', u'JNTHN', u'GRTH', u'MCHL',
             u'SJRS'
         ])
 
