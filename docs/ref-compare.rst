@@ -141,7 +141,7 @@ first two numbers are identical, then the algorithm returns 0.5.
             """Compare zipcodes.
 
             If the zipcodes in both records are identical, the similarity 
-            is 0. If the first two values agree and the last two don't, then 
+            is 1. If the first two values agree and the last two don't, then 
             the similarity is 0.5. Otherwise, the similarity is 0.
             """
             
