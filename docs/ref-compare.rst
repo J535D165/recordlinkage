@@ -221,7 +221,7 @@ additional (keyword) arguments to the custom function.
     comparer.extact('given_name', 'given_name', 'y_name')
     comparer.string('surname', 'surname', 'y_surname')
     comparer.add(CompareZipCodes('postcode', 'postcode', 
-                                 'partial_sim_value'=0.2, label='y_postcode'))
+                                 'partial_sim_value'=0.5, label='y_postcode'))
     comparer.compute(pairs, dfA, dfB)
 
 
