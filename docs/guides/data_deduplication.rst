@@ -56,8 +56,7 @@ input argument.
 
 With the method ``index``, all possible (and unique) record pairs are
 made. The method returns a ``pandas.MultiIndex``. The number of pairs is
-equal to the number of records in ``dfA`` times the number of records in
-``dfB``.
+equal to the number of records in ``dfA`` choose ``2``.
 
 .. ipython::
 
@@ -83,7 +82,7 @@ method can be used in the ``recordlinkage`` module.
        ...: len(candidate_links)
 
 The argument "given\_name" is the blocking variable. This variable has
-to be the name of a column in ``dfA`` and ``dfB``. It is possible to
+to be the name of a column in ``dfA``. It is possible to
 parse a list of columns names to block on multiple variables. Blocking
 on multiple variables will reduce the number of record pairs even
 further.
