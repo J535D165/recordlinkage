@@ -175,7 +175,7 @@ The license for this record linkage tool is BSD-3-Clause.
 Citation
 --------
 
-Please cite this package when being used in an academic context. Unsure that the DOI
+Please cite this package when being used in an academic context. Ensure that the DOI
 and version match the installed version. Citatation styles can be found 
 on the publishers website 
 `10.5281/zenodo.3559042 <https://doi.org/10.5281/zenodo.3559042>`__.
