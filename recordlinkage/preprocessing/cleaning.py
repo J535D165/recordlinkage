@@ -111,17 +111,17 @@ def clean(s, lowercase=True, replace_by_none=r'[^ \-\_A-Za-z0-9]+',
 
     # Remove all content between brackets
     if remove_brackets is True:
-        s = s.str.replace(r'(\[.*?\]|\(.*?\)|\{.*?\})', '')
+        s = s.str.replace(r'(\[.*?\]|\(.*?\)|\{.*?\})', '', regex=True)
 
     # Remove the special characters
     if replace_by_none:
-        s = s.str.replace(replace_by_none, '')
+        s = s.str.replace(replace_by_none, '', regex=True)
 
     if replace_by_whitespace:
-        s = s.str.replace(replace_by_whitespace, ' ')
+        s = s.str.replace(replace_by_whitespace, ' ', regex=True)
 
     # Remove multiple whitespaces
-    s = s.str.replace(r'\s\s+', ' ')
+    s = s.str.replace(r'\s\s+', ' ', regex=True)
 
     # Strip s
     s = s.str.lstrip().str.rstrip()
@@ -145,7 +145,7 @@ def phonenumbers(s):
     """
 
     # Remove all special tokens
-    s = s.astype(object).str.replace('[^0-9+]+', '')
+    s = s.astype(object).str.replace('[^0-9+]+', '', regex=True)
 
     return s
 
