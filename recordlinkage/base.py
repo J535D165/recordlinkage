@@ -952,11 +952,11 @@ class BaseClassifier(metaclass=ABCMeta):
 
             try:
                 y = pandas.Series(0, index=comparison_vectors.index)
-                y.loc[match_index & comparison_vectors.index] = 1
+                y.loc[match_index.intersection(comparison_vectors.index)] = 1
             except pandas.IndexError as err:
 
                 # The are no matches. So training is not possible.
-                if len(match_index & comparison_vectors.index) == 0:
+                if len(match_index.intersection(comparison_vectors.index)) == 0:
                     raise LearningError(
                         "both matches and non-matches needed in the" +
                         "trainingsdata, only non-matches found"
