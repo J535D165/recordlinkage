@@ -1,7 +1,6 @@
 from functools import partial
 
 import numpy
-
 import pandas
 
 from recordlinkage.algorithms.distance import _1d_distance

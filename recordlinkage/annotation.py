@@ -8,8 +8,8 @@ can be used for training and validation of the record linkage process.
 
 import json
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 SCHEMA_VERSION_LATEST = 1
 
@@ -124,7 +124,6 @@ class AnnotationWrapper(object):
             dataset_b_name = self.dataset_b_name
 
         columns_a = list(self.df_a)
-        columns_b = list(df_b)
 
         for index, pair in df_pairs.iterrows():
 

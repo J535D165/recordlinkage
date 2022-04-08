@@ -7,7 +7,7 @@ import tensorflow as tf
 
 try:
     from tensorflow.keras import layers
-except ModuleNotFoundError as err:
+except ModuleNotFoundError:
     raise ModuleNotFoundError("Please upgrade tensorflow.")
 
 import recordlinkage as rl

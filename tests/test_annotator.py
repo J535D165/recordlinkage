@@ -1,9 +1,6 @@
 import recordlinkage as rl
 from recordlinkage.index import Block
 from recordlinkage.datasets import load_febrl1, load_febrl4
-from recordlinkage.types import is_pandas_2d_multiindex
-
-import pandas as pd
 
 
 def test_annotation_link(tmp_path):

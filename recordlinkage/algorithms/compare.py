@@ -1,5 +1,5 @@
-import pandas
 import numpy as np
+import pandas
 
 
 def _compare_exact(s1, s2, agree_value=1, disagree_value=0, missing_value=0):

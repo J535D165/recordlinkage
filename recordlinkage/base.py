@@ -5,23 +5,29 @@ from __future__ import division
 
 import time
 import warnings
-from abc import ABCMeta, abstractmethod
-
-from joblib import Parallel, delayed, cpu_count
+from abc import ABCMeta
+from abc import abstractmethod
 
 import numpy as np
-
 import pandas
+from joblib import Parallel
+from joblib import cpu_count
+from joblib import delayed
 
-from recordlinkage import rl_logging as logging
 import recordlinkage.config as cf
-from recordlinkage.utils import (listify, unique, is_label_dataframe,
-                                 return_type_deprecator, index_split,
-                                 frame_indexing)
-from recordlinkage.types import (is_numpy_like, is_list_like,
-                                 is_pandas_2d_multiindex)
+from recordlinkage import rl_logging as logging
 from recordlinkage.measures import max_pairs
-from recordlinkage.utils import DeprecationHelper, LearningError
+from recordlinkage.types import is_list_like
+from recordlinkage.types import is_numpy_like
+from recordlinkage.types import is_pandas_2d_multiindex
+from recordlinkage.utils import DeprecationHelper
+from recordlinkage.utils import LearningError
+from recordlinkage.utils import frame_indexing
+from recordlinkage.utils import index_split
+from recordlinkage.utils import is_label_dataframe
+from recordlinkage.utils import listify
+from recordlinkage.utils import return_type_deprecator
+from recordlinkage.utils import unique
 
 
 def _parallel_compare_helper(class_obj, pairs, x, x_link=None):
@@ -928,10 +934,10 @@ class BaseClassifier(metaclass=ABCMeta):
         Note
         ----
 
-        A note in case of finding links within a single dataset (for example
-        duplicate detection). Ensure that the training record pairs are from the
-        lower triangular part of the dataset/matrix. See detailed information
-        here: link.
+        A note in case of finding links within a single dataset (for
+        example duplicate detection). Ensure that the training record
+        pairs are from the lower triangular part of the dataset/matrix.
+        See detailed information here: link.
 
         """
         logging.info("Classification - start training {}".format(

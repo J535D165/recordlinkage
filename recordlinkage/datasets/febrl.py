@@ -1,7 +1,7 @@
 from pathlib import Path
 
-import pandas
 import numpy
+import pandas
 
 
 def _febrl_load_data(filename):

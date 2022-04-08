@@ -26,8 +26,9 @@
 """Random compare strategy to test model behaviour."""
 
 import numpy as np
-from numpy.random import random_sample, choice
 import pandas as pd
+from numpy.random import choice
+from numpy.random import random_sample
 
 from recordlinkage.base import BaseCompareFeature
 

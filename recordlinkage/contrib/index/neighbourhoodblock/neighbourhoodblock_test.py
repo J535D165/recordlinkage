@@ -1,14 +1,16 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from operator import eq, ge, gt
+from operator import eq
+from operator import gt
 
 import numpy as np
 import pytest
 
-from recordlinkage.index import Full, Block, SortedNeighbourhood
 from recordlinkage.contrib.index import NeighbourhoodBlock
-
+from recordlinkage.index import Block
+from recordlinkage.index import Full
+from recordlinkage.index import SortedNeighbourhood
 from tests.test_indexing import TestData
 
 

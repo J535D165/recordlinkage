@@ -2,12 +2,14 @@
 
 import numpy
 import pandas
-
-from sklearn import cluster, linear_model, svm
+from sklearn import cluster
+from sklearn import linear_model
+from sklearn import svm
 
 from recordlinkage.adapters import SKLearnAdapter
+from recordlinkage.algorithms.nb_sklearn import ECM
+from recordlinkage.algorithms.nb_sklearn import NaiveBayes
 from recordlinkage.base import BaseClassifier as Classifier
-from recordlinkage.algorithms.nb_sklearn import ECM, NaiveBayes
 
 
 class FellegiSunter(object):

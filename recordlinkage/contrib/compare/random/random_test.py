@@ -27,8 +27,9 @@
 import pandas as pd
 
 import recordlinkage
+from recordlinkage.contrib.compare import RandomContinuous
+from recordlinkage.contrib.compare import RandomDiscrete
 from recordlinkage.index import Full
-from recordlinkage.contrib.compare import (RandomContinuous, RandomDiscrete)
 
 
 class TestRandomContinuous(object):

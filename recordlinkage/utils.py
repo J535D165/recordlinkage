@@ -2,7 +2,6 @@ import warnings
 from functools import wraps
 
 import numpy
-
 import pandas
 
 import recordlinkage.config as cf

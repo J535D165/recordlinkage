@@ -481,8 +481,8 @@ def register_option(key, defval, doc='', validator=None, cb=None):
     ValueError if `validator` is specified and `defval` is not a valid value.
 
     """
-    import tokenize
     import keyword
+    import tokenize
     key = key.lower()
 
     if key in _registered_options:
@@ -712,8 +712,8 @@ def _build_option_description(k):
 def pp_options_list(keys, width=80, _print=False):
     """ Builds a concise listing of available options, grouped by prefix """
 
-    from textwrap import wrap
     from itertools import groupby
+    from textwrap import wrap
 
     def pp(name, ks):
         pfx = ('- ' + name + '.[' if name else '')

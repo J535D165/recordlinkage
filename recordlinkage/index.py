@@ -1,16 +1,16 @@
 import warnings
 
 import numpy
-
 import pandas
 
 from recordlinkage import rl_logging as logging
-from recordlinkage.algorithms.indexing import (
-    random_pairs_with_replacement, random_pairs_without_replacement_low_memory,
-    random_pairs_without_replacement)
+from recordlinkage.algorithms.indexing import random_pairs_with_replacement
+from recordlinkage.algorithms.indexing import random_pairs_without_replacement
+from recordlinkage.algorithms.indexing import random_pairs_without_replacement_low_memory  # NOQA
 from recordlinkage.base import BaseIndexAlgorithm
 from recordlinkage.measures import full_index_size
-from recordlinkage.utils import DeprecationHelper, listify
+from recordlinkage.utils import DeprecationHelper
+from recordlinkage.utils import listify
 
 
 class Full(BaseIndexAlgorithm):
@@ -318,8 +318,7 @@ class SortedNeighbourhood(BaseIndexAlgorithm):
                 data_right['sorting_key'].values)
 
         sorting_key_factors = pandas.Series(numpy.arange(
-            len(self.sorting_key_values)),
-                                            index=self.sorting_key_values)
+            len(self.sorting_key_values)), index=self.sorting_key_values)
 
         data_left['sorting_key'] = data_left['sorting_key'].map(
             sorting_key_factors)

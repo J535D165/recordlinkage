@@ -11,7 +11,6 @@ import re
 from numbers import Number
 
 import numpy
-
 import pandas
 
 string_and_binary_types = (str, bytes)

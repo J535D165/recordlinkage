@@ -1,9 +1,7 @@
 import sys
 
 import jellyfish
-
 import numpy as np
-
 import pandas
 
 _phonetic_algorithms = [{

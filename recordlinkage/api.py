@@ -1,6 +1,14 @@
-from recordlinkage.base import BaseCompare, BaseIndex
-from recordlinkage.compare import Date, Exact, Geographic, Numeric, String
-from recordlinkage.index import Block, Full, Random, SortedNeighbourhood
+from recordlinkage.base import BaseCompare
+from recordlinkage.base import BaseIndex
+from recordlinkage.compare import Date
+from recordlinkage.compare import Exact
+from recordlinkage.compare import Geographic
+from recordlinkage.compare import Numeric
+from recordlinkage.compare import String
+from recordlinkage.index import Block
+from recordlinkage.index import Full
+from recordlinkage.index import Random
+from recordlinkage.index import SortedNeighbourhood
 
 
 class Index(BaseIndex):

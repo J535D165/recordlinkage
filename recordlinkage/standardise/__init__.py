@@ -5,8 +5,8 @@ import warnings
 
 from recordlinkage.preprocessing import clean as _clean
 from recordlinkage.preprocessing import phonenumbers as _phonenumbers
-from recordlinkage.preprocessing import value_occurence as _value_occurence
 from recordlinkage.preprocessing import phonetic as _phonetic
+from recordlinkage.preprocessing import value_occurence as _value_occurence
 
 
 def _depr_warn():

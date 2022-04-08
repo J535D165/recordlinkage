@@ -1,7 +1,8 @@
 import numpy
 import pandas
-from recordlinkage.utils import listify
+
 from recordlinkage.index import Block
+from recordlinkage.utils import listify
 
 
 class NeighbourhoodBlock(Block):
@@ -165,9 +166,8 @@ class NeighbourhoodBlock(Block):
                         '{side}_ndx'.format(**locals()): numpy.arange(
                             len(values))
                     },
-                    index=values),
-                                     how='inner',
-                                     on='{side}_key'.format(**locals()))
+                    index=values), how='inner',
+                    on='{side}_key'.format(**locals()))
             return joined[['left_ndx', 'right_ndx']].values
 
         def chain_indices(*index_groups):

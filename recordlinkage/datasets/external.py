@@ -1,12 +1,12 @@
 # The function get_data_home() and clear_data_home() are based on
 # SciKit-Learn https://git.io/fjT70. See the 3-clause BSD license.
 
+import shutil
+import zipfile
 from io import BytesIO
 from os import environ
-import shutil
 from pathlib import Path
 from urllib.request import urlopen
-import zipfile
 
 import pandas
 

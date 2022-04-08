@@ -1,7 +1,7 @@
 import sys
 
-from sklearn.feature_extraction.text import strip_accents_ascii, \
-    strip_accents_unicode
+from sklearn.feature_extraction.text import strip_accents_ascii
+from sklearn.feature_extraction.text import strip_accents_unicode
 
 
 def clean(s,
