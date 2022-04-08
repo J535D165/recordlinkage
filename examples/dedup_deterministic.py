@@ -42,15 +42,19 @@ candidate_links = indexer.index(dfA)
 print('Start comparing...')
 comparer = rl.Compare()
 comparer.add(Exact('given_name', 'given_name', label='given_name'))
-comparer.add(String('surname', 'surname', method='jarowinkler',
-                    threshold=0.85, label='surname'))
+comparer.add(
+    String('surname',
+           'surname',
+           method='jarowinkler',
+           threshold=0.85,
+           label='surname'))
 comparer.add(Exact('date_of_birth', 'date_of_birth', label='date_of_birth'))
 comparer.add(Exact('suburb', 'suburb', label='suburb'))
 comparer.add(Exact('state', 'state', label='state'))
-comparer.add(String('address_1', 'address_1', threshold=0.85,
-                    label='address_1'))
-comparer.add(String('address_2', 'address_2', threshold=0.85,
-                    label='address_2'))
+comparer.add(
+    String('address_1', 'address_1', threshold=0.85, label='address_1'))
+comparer.add(
+    String('address_2', 'address_2', threshold=0.85, label='address_2'))
 features = comparer.compute(candidate_links, dfA)
 
 print('feature shape', features.shape)
@@ -64,8 +68,8 @@ print('Deterministic classifier')
 print('intercept', intercept)
 print('coefficients', coefficients)
 
-logreg = rl.LogisticRegressionClassifier(
-    coefficients=coefficients, intercept=intercept)
+logreg = rl.LogisticRegressionClassifier(coefficients=coefficients,
+                                         intercept=intercept)
 links = logreg.predict(features)
 
 print(len(links), 'links/matches')

@@ -14,8 +14,8 @@ def _depr_warn():
     warnings.warn(
         "module recordlinkage.standardise is deprecated, use "
         "recordlinkage.preprocessing instead",
-        DeprecationWarning, stacklevel=2
-    )
+        DeprecationWarning,
+        stacklevel=2)
 
 
 def clean(*args, **kwargs):

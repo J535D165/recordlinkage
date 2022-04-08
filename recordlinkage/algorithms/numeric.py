@@ -1,8 +1,8 @@
 import numpy as np
 import pandas
 
-
 # Numerical comparison algorithms
+
 
 def _step_sim(d, offset=0, origin=0):
     # scale is not an argument

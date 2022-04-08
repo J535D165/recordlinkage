@@ -14,6 +14,7 @@ from recordlinkage.preprocessing import value_occurence
 
 
 class TestCleaningStandardise(object):
+
     def test_clean(self):
 
         values = pd.Series([
@@ -29,13 +30,12 @@ class TestCleaningStandardise(object):
         # Check if series are identical.
         pdt.assert_series_equal(clean_series, expected)
 
-        clean_series_nothing = clean(
-            values,
-            lowercase=False,
-            replace_by_none=False,
-            replace_by_whitespace=False,
-            strip_accents=False,
-            remove_brackets=False)
+        clean_series_nothing = clean(values,
+                                     lowercase=False,
+                                     replace_by_none=False,
+                                     replace_by_whitespace=False,
+                                     strip_accents=False,
+                                     remove_brackets=False)
 
         # Check if ntohing happend.
         pdt.assert_series_equal(clean_series_nothing, values)
@@ -44,10 +44,8 @@ class TestCleaningStandardise(object):
         """ Test the cleaning of an empty Series"""
 
         # Check empty series
-        pdt.assert_series_equal(
-            clean(pd.Series(dtype=object)),
-            pd.Series(dtype=object)
-        )
+        pdt.assert_series_equal(clean(pd.Series(dtype=object)),
+                                pd.Series(dtype=object))
 
     def test_clean_unicode(self):
 
@@ -76,12 +74,11 @@ class TestCleaningStandardise(object):
             u'mary ann', u'bob', u'angel', u'bob', u'mary ann', u'john', np.nan
         ])
 
-        clean_series = clean(
-            values,
-            lowercase=True,
-            replace_by_none=r'[^ \-\_A-Za-z0-9]+',
-            replace_by_whitespace=r'[\-\_]',
-            remove_brackets=True)
+        clean_series = clean(values,
+                             lowercase=True,
+                             replace_by_none=r'[^ \-\_A-Za-z0-9]+',
+                             replace_by_whitespace=r'[\-\_]',
+                             remove_brackets=True)
 
         # Check if series are identical.
         pdt.assert_series_equal(clean_series, expected)
@@ -123,19 +120,19 @@ class TestCleaningStandardise(object):
         #     expected_callable)
 
         # Check if series are identical.
-        pdt.assert_series_equal(
-            clean(values, strip_accents='unicode'), expected)
+        pdt.assert_series_equal(clean(values, strip_accents='unicode'),
+                                expected)
 
         # Check if series are identical.
         pdt.assert_series_equal(clean(values, strip_accents='ascii'), expected)
 
         # Check if series are identical.
-        pdt.assert_series_equal(
-            clean(values_unicode, strip_accents='unicode'), expected_unicode)
+        pdt.assert_series_equal(clean(values_unicode, strip_accents='unicode'),
+                                expected_unicode)
 
         # Check if series are identical.
-        pdt.assert_series_equal(
-            clean(values_unicode, strip_accents='ascii'), expected_unicode)
+        pdt.assert_series_equal(clean(values_unicode, strip_accents='ascii'),
+                                expected_unicode)
 
         with pytest.raises(ValueError):
             clean(values, strip_accents='unknown_algorithm')
@@ -164,6 +161,7 @@ class TestCleaningStandardise(object):
 
 
 class TestEncodingStandardise(object):
+
     def test_encode_soundex(self):
 
         values = pd.Series([

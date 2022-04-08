@@ -1,7 +1,5 @@
-
-
-# The function get_data_home() and clear_data_home() are based on 
-# SciKit-Learn https://git.io/fjT70. See the 3-clause BSD license. 
+# The function get_data_home() and clear_data_home() are based on
+# SciKit-Learn https://git.io/fjT70. See the 3-clause BSD license.
 
 from io import BytesIO
 from os import environ
@@ -33,8 +31,7 @@ def get_data_home(data_home=None):
         The path to recordlinkage data folder.
     """
     if data_home is None:
-        data_home = environ.get('RL_DATA',
-                                Path('~', 'rl_data'))
+        data_home = environ.get('RL_DATA', Path('~', 'rl_data'))
     data_home = Path(data_home).expanduser()
 
     if not data_home.exists():
@@ -56,7 +53,8 @@ def clear_data_home(data_home=None):
 
 
 def load_krebsregister(block=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-                       missing_values=None, shuffle=True):
+                       missing_values=None,
+                       shuffle=True):
     """Load the Krebsregister dataset.
 
     This dataset of comparison patterns was obtained in a
@@ -116,11 +114,8 @@ def load_krebsregister(block=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
     # If the data is not found, download it.
     for i in range(1, 11):
 
-        filepath = Path(
-            get_data_home(),
-            'krebsregister', 
-            'block_{}.zip'.format(i)
-        )
+        filepath = Path(get_data_home(), 'krebsregister',
+                        'block_{}.zip'.format(i))
 
         if not filepath.is_file():
             _download_krebsregister()
@@ -173,22 +168,18 @@ def _krebsregister_block(block):
             "Argument 'block' has to be integer in "
             "[1, 2, 3, 4, 5, 6, 7, 8, 9, 10] or list of integers.")
 
-    fp_i = Path(
-        get_data_home(),
-        'krebsregister', 
-        'block_{}.zip'.format(block)
-    )
+    fp_i = Path(get_data_home(), 'krebsregister', 'block_{}.zip'.format(block))
 
-    data_block = pandas.read_csv(
-        fp_i,
-        index_col=['id_1', 'id_2'],
-        na_values='?',
-        compression='zip')
+    data_block = pandas.read_csv(fp_i,
+                                 index_col=['id_1', 'id_2'],
+                                 na_values='?',
+                                 compression='zip')
 
     data_block.columns = [
         'cmp_firstname1', 'cmp_firstname2', 'cmp_lastname1', 'cmp_lastname2',
         'cmp_sex', 'cmp_birthday', 'cmp_birthmonth', 'cmp_birthyear',
-        'cmp_zipcode', 'is_match']
+        'cmp_zipcode', 'is_match'
+    ]
     data_block.index.names = ['id1', 'id2']
 
     return data_block

@@ -6,7 +6,6 @@ import numpy as np
 
 import pandas
 
-
 _phonetic_algorithms = [{
     'name': 'Soundex',
     'callback': jellyfish.soundex,
@@ -20,12 +19,15 @@ _phonetic_algorithms = [{
     'callback': jellyfish.metaphone,
     'argument_names': ['metaphone']
 }, {
-    'name': 'Match Rating',
-    'callback': jellyfish.match_rating_codex,
-    'argument_names': ['match_rating', 'match rating', 'matchrating',
-                       'match_rating_codex', 'matchratingcodex']
-}
-]
+    'name':
+    'Match Rating',
+    'callback':
+    jellyfish.match_rating_codex,
+    'argument_names': [
+        'match_rating', 'match rating', 'matchrating', 'match_rating_codex',
+        'matchratingcodex'
+    ]
+}]
 
 
 def _list_phonetic_algorithms():
@@ -72,9 +74,8 @@ def phonetic(s, method, concat=True, encoding='utf-8', decode_error='strict'):
 
     # encoding
     if sys.version_info[0] == 2:
-        s = s.apply(
-            lambda x: x.decode(encoding, decode_error)
-            if type(x) == bytes else x)
+        s = s.apply(lambda x: x.decode(encoding, decode_error)
+                    if type(x) == bytes else x)
 
     if concat:
         s = s.str.replace(r"[\-\_\s]", "", regex=True)
@@ -86,6 +87,5 @@ def phonetic(s, method, concat=True, encoding='utf-8', decode_error='strict'):
     else:
         raise ValueError("The algorithm '{}' is not known.".format(method))
 
-    return s.str.upper().apply(
-        lambda x: phonetic_callback(x) if pandas.notnull(x) else np.nan
-    )
+    return s.str.upper().apply(lambda x: phonetic_callback(x)
+                               if pandas.notnull(x) else np.nan)

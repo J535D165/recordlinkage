@@ -26,8 +26,9 @@ class TestNeighbourhoodBlock(TestData):
 
             def with_nulls(vals):
                 vals = vals.copy()
-                vals.iloc[np.random.choice(
-                    len(df), size=nan_count, replace=False)] = np.nan
+                vals.iloc[np.random.choice(len(df),
+                                           size=nan_count,
+                                           replace=False)] = np.nan
                 return vals
 
             return df.copy() if nan_count <= 0 else df.apply(with_nulls)
@@ -62,8 +63,9 @@ class TestNeighbourhoodBlock(TestData):
     def test_dedup_single_blocking_key_vs_block(self):
         indexers = [
             NeighbourhoodBlock('var_block10', max_nulls=1),
-            NeighbourhoodBlock(
-                left_on='var_block10', right_on='var_block10', max_nulls=1),
+            NeighbourhoodBlock(left_on='var_block10',
+                               right_on='var_block10',
+                               max_nulls=1),
             Block('var_block10'),
         ]
         self.assert_index_comparisons(eq, indexers, self.a)
@@ -72,8 +74,9 @@ class TestNeighbourhoodBlock(TestData):
     def test_link_single_blocking_key_vs_block(self):
         indexers = [
             NeighbourhoodBlock('var_arange', max_nulls=1),
-            NeighbourhoodBlock(
-                left_on='var_arange', right_on='var_arange', max_nulls=1),
+            NeighbourhoodBlock(left_on='var_arange',
+                               right_on='var_arange',
+                               max_nulls=1),
             Block('var_arange'),
         ]
         self.assert_index_comparisons(eq, indexers, self.a, self.b)
@@ -83,10 +86,9 @@ class TestNeighbourhoodBlock(TestData):
     def test_dedup_multiple_blocking_keys_vs_block(self):
         indexers = [
             NeighbourhoodBlock(['var_single', 'var_block10'], max_nulls=1),
-            NeighbourhoodBlock(
-                left_on=['var_single', 'var_block10'],
-                right_on=['var_single', 'var_block10'],
-                max_nulls=1),
+            NeighbourhoodBlock(left_on=['var_single', 'var_block10'],
+                               right_on=['var_single', 'var_block10'],
+                               max_nulls=1),
             Block(['var_single', 'var_block10']),
         ]
         self.assert_index_comparisons(eq, indexers, self.a)
@@ -95,10 +97,9 @@ class TestNeighbourhoodBlock(TestData):
     def test_link_multiple_blocking_keys_vs_block(self):
         indexers = [
             NeighbourhoodBlock(['var_arange', 'var_block10'], max_nulls=1),
-            NeighbourhoodBlock(
-                left_on=['var_arange', 'var_block10'],
-                right_on=['var_arange', 'var_block10'],
-                max_nulls=1),
+            NeighbourhoodBlock(left_on=['var_arange', 'var_block10'],
+                               right_on=['var_arange', 'var_block10'],
+                               max_nulls=1),
             Block(['var_arange', 'var_block10']),
         ]
         self.assert_index_comparisons(eq, indexers, self.a, self.b)
@@ -109,11 +110,10 @@ class TestNeighbourhoodBlock(TestData):
     def test_dedup_single_sorting_key_vs_sortedneighbourhood(self, window):
         indexers = [
             NeighbourhoodBlock('var_arange', max_nulls=1, windows=window),
-            NeighbourhoodBlock(
-                left_on='var_arange',
-                right_on='var_arange',
-                max_nulls=1,
-                windows=window),
+            NeighbourhoodBlock(left_on='var_arange',
+                               right_on='var_arange',
+                               max_nulls=1,
+                               windows=window),
             SortedNeighbourhood('var_arange', window=window),
         ]
         self.assert_index_comparisons(eq, indexers, self.a)
@@ -123,11 +123,10 @@ class TestNeighbourhoodBlock(TestData):
     def test_link_single_sorting_key_vs_sortedneighbourhood(self, window):
         indexers = [
             NeighbourhoodBlock('var_arange', max_nulls=1, windows=window),
-            NeighbourhoodBlock(
-                left_on='var_arange',
-                right_on='var_arange',
-                max_nulls=1,
-                windows=window),
+            NeighbourhoodBlock(left_on='var_arange',
+                               right_on='var_arange',
+                               max_nulls=1,
+                               windows=window),
             SortedNeighbourhood('var_arange', window=window),
         ]
         self.assert_index_comparisons(eq, indexers, self.a, self.b)
@@ -137,17 +136,16 @@ class TestNeighbourhoodBlock(TestData):
     @pytest.mark.parametrize("window", [3, 5, 7, 9, 11])
     def test_dedup_with_blocking_vs_sortedneighbourhood(self, window):
         indexers = [
-            NeighbourhoodBlock(
-                ['var_arange', 'var_block10'],
-                max_nulls=1,
-                windows=[window, 1]),
-            NeighbourhoodBlock(
-                left_on=['var_arange', 'var_block10'],
-                right_on=['var_arange', 'var_block10'],
-                max_nulls=1,
-                windows=[window, 1]),
-            SortedNeighbourhood(
-                'var_arange', block_on='var_block10', window=window),
+            NeighbourhoodBlock(['var_arange', 'var_block10'],
+                               max_nulls=1,
+                               windows=[window, 1]),
+            NeighbourhoodBlock(left_on=['var_arange', 'var_block10'],
+                               right_on=['var_arange', 'var_block10'],
+                               max_nulls=1,
+                               windows=[window, 1]),
+            SortedNeighbourhood('var_arange',
+                                block_on='var_block10',
+                                window=window),
         ]
         self.assert_index_comparisons(eq, indexers, self.a)
         self.assert_index_comparisons(gt, indexers[-2:], self.incomplete_a)
@@ -155,17 +153,16 @@ class TestNeighbourhoodBlock(TestData):
     @pytest.mark.parametrize("window", [3, 5, 7, 9, 11])
     def test_link_with_blocking_vs_sortedneighbourhood(self, window):
         indexers = [
-            NeighbourhoodBlock(
-                ['var_arange', 'var_block10'],
-                max_nulls=1,
-                windows=[window, 1]),
-            NeighbourhoodBlock(
-                left_on=['var_arange', 'var_block10'],
-                right_on=['var_arange', 'var_block10'],
-                max_nulls=1,
-                windows=[window, 1]),
-            SortedNeighbourhood(
-                'var_arange', block_on='var_block10', window=window),
+            NeighbourhoodBlock(['var_arange', 'var_block10'],
+                               max_nulls=1,
+                               windows=[window, 1]),
+            NeighbourhoodBlock(left_on=['var_arange', 'var_block10'],
+                               right_on=['var_arange', 'var_block10'],
+                               max_nulls=1,
+                               windows=[window, 1]),
+            SortedNeighbourhood('var_arange',
+                                block_on='var_block10',
+                                window=window),
         ]
         self.assert_index_comparisons(eq, indexers, self.a, self.b)
         self.assert_index_comparisons(gt, indexers[-2:], self.incomplete_a,

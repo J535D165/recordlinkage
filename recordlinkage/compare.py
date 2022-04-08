@@ -159,6 +159,7 @@ class String(BaseCompareFeature):
 
         return c
 
+
 class Numeric(BaseCompareFeature):
     """Compute the (partial) similarity between numeric values.
 
@@ -298,9 +299,9 @@ class Geographic(BaseCompareFeature):
                  origin=0.0,
                  missing_value=0.0,
                  label=None):
-        super(Geographic, self).__init__(
-            (left_on_lat, left_on_lng), (right_on_lat, right_on_lng),
-            label=label)
+        super(Geographic, self).__init__((left_on_lat, left_on_lng),
+                                         (right_on_lat, right_on_lng),
+                                         label=label)
 
         self.method = method
         self.offset = offset
@@ -389,8 +390,8 @@ class Date(BaseCompareFeature):
         # The case is which there is a swap_month_day value given.
         if (self.swap_month_day and self.swap_month_day != 0):
 
-            c[(s_left.dt.year == s_right.dt.year) &
-              (s_left.dt.month == s_right.dt.day) &
+            c[(s_left.dt.year == s_right.dt.year)
+              & (s_left.dt.month == s_right.dt.day) &
               (s_left.dt.day == s_right.dt.month) &
               (c != 1)] = self.swap_month_day
 
@@ -410,10 +411,9 @@ class Date(BaseCompareFeature):
 
             for month1, month2, value in self.swap_months:
 
-                c[(s_left.dt.year == s_right.dt.year) &
-                  (s_left.dt.month == month1) &
-                  (s_right.dt.month == month2) &
-                  (s_left.dt.day == s_right.dt.day) & (c != 1)] = value
+                c[(s_left.dt.year == s_right.dt.year)
+                  & (s_left.dt.month == month1) & (s_right.dt.month == month2)
+                  & (s_left.dt.day == s_right.dt.day) & (c != 1)] = value
 
         c = pandas.Series(c)
         c[s_left.isnull() | s_right.isnull()] = self.missing_value
@@ -480,8 +480,10 @@ class VariableA(Variable):
     description = "Add a variable of the left dataframe to the features."
 
     def __init__(self, on=None, missing_value=0.0, label=None):
-        super(VariableA, self).__init__(
-            on, None, missing_value=missing_value, label=label)
+        super(VariableA, self).__init__(on,
+                                        None,
+                                        missing_value=missing_value,
+                                        label=label)
 
 
 class VariableB(Variable):
@@ -503,8 +505,10 @@ class VariableB(Variable):
     description = "Add a variable of the right dataframe to the features."
 
     def __init__(self, on=None, missing_value=0.0, label=None):
-        super(VariableB, self).__init__(
-            None, on, missing_value=missing_value, label=label)
+        super(VariableB, self).__init__(None,
+                                        on,
+                                        missing_value=missing_value,
+                                        label=label)
 
 
 class Frequency(BaseCompareFeature):
@@ -589,12 +593,11 @@ class FrequencyA(Frequency):
     description = "Compute the frequency."
 
     def __init__(self, on=None, normalise=True, missing_value=0.0, label=None):
-        super(FrequencyA, self).__init__(
-            on,
-            None,
-            normalise=normalise,
-            missing_value=missing_value,
-            label=label)
+        super(FrequencyA, self).__init__(on,
+                                         None,
+                                         normalise=normalise,
+                                         missing_value=missing_value,
+                                         label=label)
 
 
 class FrequencyB(Frequency):
@@ -616,9 +619,8 @@ class FrequencyB(Frequency):
     description = "Compute the frequency."
 
     def __init__(self, on=None, normalise=True, missing_value=0.0, label=None):
-        super(FrequencyB, self).__init__(
-            None,
-            on,
-            normalise=normalise,
-            missing_value=missing_value,
-            label=label)
+        super(FrequencyB, self).__init__(None,
+                                         on,
+                                         normalise=normalise,
+                                         missing_value=missing_value,
+                                         label=label)

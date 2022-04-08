@@ -2,8 +2,13 @@ import pandas as pd
 import numpy as np
 
 
-def binary_vectors(n, n_match, m=[0.9] * 8, u=[0.1] * 8,
-                   random_state=None, return_links=False, dtype=np.int8):
+def binary_vectors(n,
+                   n_match,
+                   m=[0.9] * 8,
+                   u=[0.1] * 8,
+                   random_state=None,
+                   return_links=False,
+                   dtype=np.int8):
     """Generate random binary comparison vectors.
 
     This function is used to generate random comparison vectors. The

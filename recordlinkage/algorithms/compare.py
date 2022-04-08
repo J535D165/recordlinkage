@@ -31,8 +31,13 @@ def _compare_exact(s1, s2, agree_value=1, disagree_value=0, missing_value=0):
     return compare
 
 
-def _compare_dates(s1, s2, swap_month_day=0.5, swap_months='default',
-                   errors='coerce', *args, **kwargs):
+def _compare_dates(s1,
+                   s2,
+                   swap_month_day=0.5,
+                   swap_months='default',
+                   errors='coerce',
+                   *args,
+                   **kwargs):
 
     # validate datatypes
     if str(s1.dtype) != 'datetime64[ns]':
@@ -46,25 +51,20 @@ def _compare_dates(s1, s2, swap_month_day=0.5, swap_months='default',
     # The case is which there is a swap_month_day value given.
     if (swap_month_day and swap_month_day != 0):
 
-        c[(s1.dt.year == s2.dt.year) &
-          (s1.dt.month == s2.dt.day) &
-          (s1.dt.day == s2.dt.month) &
-          (c != 1)] = swap_month_day
+        c[(s1.dt.year == s2.dt.year) & (s1.dt.month == s2.dt.day) &
+          (s1.dt.day == s2.dt.month) & (c != 1)] = swap_month_day
 
     if (swap_months and swap_months != 0):
 
         if swap_months == 'default':
-            swap_months = [(6, 7, 0.5),
-                           (7, 6, 0.5),
-                           (9, 10, 0.5),
+            swap_months = [(6, 7, 0.5), (7, 6, 0.5), (9, 10, 0.5),
                            (10, 9, 0.5)]
         else:
             try:
                 if not all([len(x) == 3 for x in swap_months]):
                     raise Exception
             except Exception:
-                raise ValueError(
-                    'swap_months must be a list of (first month, \
+                raise ValueError('swap_months must be a list of (first month, \
                     second month, value) tuples or lists. ')
 
         for month1, month2, value in swap_months:
@@ -76,9 +76,8 @@ def _compare_dates(s1, s2, swap_month_day=0.5, swap_months='default',
             # else:
             #     c = c.astype(object)
 
-            c[(s1.dt.year == s2.dt.year) &
-              (s1.dt.month == month1) & (s2.dt.month == month2) &
-              (s1.dt.day == s2.dt.day) &
+            c[(s1.dt.year == s2.dt.year) & (s1.dt.month == month1) &
+              (s2.dt.month == month2) & (s1.dt.day == s2.dt.day) &
               (c != 1)] = value
 
     c = pandas.Series(c)

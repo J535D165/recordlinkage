@@ -1,6 +1,5 @@
 '''Example: Supervised learning with Neural Networks.'''
 
-
 from __future__ import print_function
 
 import numpy as np

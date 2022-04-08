@@ -20,10 +20,13 @@ LINKS_PRED = pandas.MultiIndex.from_tuples(
 
 
 class TestMeasures(object):
+
     def test_confusion_matrix(self):
 
-        result_len = rl.confusion_matrix(LINKS_TRUE, LINKS_PRED, len(FULL_INDEX))
-        result_full_index = rl.confusion_matrix(LINKS_TRUE, LINKS_PRED, FULL_INDEX)
+        result_len = rl.confusion_matrix(LINKS_TRUE, LINKS_PRED,
+                                         len(FULL_INDEX))
+        result_full_index = rl.confusion_matrix(LINKS_TRUE, LINKS_PRED,
+                                                FULL_INDEX)
         expected = numpy.array([[1, 2], [3, 3]])
 
         numpy.testing.assert_array_equal(result_len, expected)
@@ -104,10 +107,12 @@ class TestMeasures(object):
 
         df_a = pandas.DataFrame(numpy.arange(10))
         df_b = pandas.DataFrame(numpy.arange(10))
-        candidate_pairs_link = pandas.MultiIndex.from_product(
-            [[1, 2, 3, 4, 5], [1, 2, 3, 4, 5]])
-        candidate_pairs_dedup = pandas.MultiIndex.from_arrays(
-            [[1, 2, 3, 4, 5], [1, 2, 3, 4, 5]])
+        candidate_pairs_link = pandas.MultiIndex.from_product([[1, 2, 3, 4, 5],
+                                                               [1, 2, 3, 4,
+                                                                5]])
+        candidate_pairs_dedup = pandas.MultiIndex.from_arrays([[1, 2, 3, 4, 5],
+                                                               [1, 2, 3, 4,
+                                                                5]])
 
         assert rl.reduction_ratio(candidate_pairs_dedup, df_a) == 8 / 9
         assert rl.reduction_ratio(candidate_pairs_dedup, (df_a)) == 8 / 9

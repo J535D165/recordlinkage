@@ -85,9 +85,7 @@ class FellegiSunter(object):
 
         # check if number of binarizers equals the number of columns
         if len(self.kernel._binarizers) != len(self._column_labels):
-            raise IndexError(
-                "shape of column labels doesn't match"
-            )
+            raise IndexError("shape of column labels doesn't match")
 
         for i, b in enumerate(self.kernel._binarizers):
             keys = b.classes_
@@ -256,9 +254,9 @@ class KMeansClassifier(SKLearnAdapter, Classifier):
         """Set the centers of the clusters"""
 
         # Set the start point of the classifier.
-        self.kernel.init = numpy.array(
-            [[0.05] * len(list(comparison_vectors)),
-             [0.95] * len(list(comparison_vectors))])
+        self.kernel.init = numpy.array([[0.05] * len(list(comparison_vectors)),
+                                        [0.95] * len(list(comparison_vectors))
+                                        ])
 
     @property
     def match_cluster_center(self):
@@ -342,10 +340,7 @@ class LogisticRegressionClassifier(SKLearnAdapter, Classifier):
 
     """
 
-    def __init__(self,
-                 coefficients=None,
-                 intercept=None,
-                 **kwargs):
+    def __init__(self, coefficients=None, intercept=None, **kwargs):
         super(LogisticRegressionClassifier, self).__init__()
 
         self.kernel = linear_model.LogisticRegression(**kwargs)
@@ -431,9 +426,7 @@ class LogisticRegressionClassifier(SKLearnAdapter, Classifier):
             raise NotFittedError(
                 "{} is not fitted yet. Call 'fit' with appropriate "
                 "arguments before using this method.".format(
-                    type(self).__name__
-                )
-            )
+                    type(self).__name__))
 
         return prediction
 
@@ -475,15 +468,9 @@ class NaiveBayesClassifier(FellegiSunter, SKLearnAdapter, Classifier):
                  alpha=1e-4,
                  use_col_names=True,
                  **kwargs):
-        super(NaiveBayesClassifier, self).__init__(
-            use_col_names=use_col_names
-        )
+        super(NaiveBayesClassifier, self).__init__(use_col_names=use_col_names)
 
-        self.kernel = NaiveBayes(
-            alpha=alpha,
-            binarize=binarize,
-            **kwargs
-        )
+        self.kernel = NaiveBayes(alpha=alpha, binarize=binarize, **kwargs)
 
     def fit(self, X, *args, **kwargs):
         __doc__ = Classifier.__doc__  # noqa
@@ -583,17 +570,16 @@ class ECMClassifier(FellegiSunter, SKLearnAdapter, Classifier):
                  max_iter=100,
                  atol=10e-5,
                  use_col_names=True,
-                 *args, **kwargs):
-        super(ECMClassifier, self).__init__(
-            use_col_names=use_col_names
-        )
+                 *args,
+                 **kwargs):
+        super(ECMClassifier, self).__init__(use_col_names=use_col_names)
 
-        self.kernel = ECM(
-            init=init,
-            binarize=binarize,
-            max_iter=max_iter,
-            atol=atol, *args, **kwargs
-        )
+        self.kernel = ECM(init=init,
+                          binarize=binarize,
+                          max_iter=max_iter,
+                          atol=atol,
+                          *args,
+                          **kwargs)
 
     def fit(self, X, *args, **kwargs):
         __doc__ = Classifier.__doc__  # noqa

@@ -23,7 +23,6 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-
 """Random compare strategy to test model behaviour."""
 
 import numpy as np
@@ -31,7 +30,6 @@ from numpy.random import random_sample, choice
 import pandas as pd
 
 from recordlinkage.base import BaseCompareFeature
-
 
 __all__ = ['RandomContinuous', 'RandomDiscrete']
 
@@ -59,10 +57,7 @@ class RandomContinuous(BaseCompareFeature):
     name = "random_cont"
     description = "Feature for continuous random values."
 
-    def __init__(self,
-                 a=0.0,
-                 b=1.0,
-                 label=None):
+    def __init__(self, a=0.0, b=1.0, label=None):
         super(RandomContinuous, self).__init__([], [], label=label)
 
         self.a = a
@@ -101,10 +96,7 @@ class RandomContinuous(BaseCompareFeature):
         """
 
         df_empty = pd.DataFrame(index=pairs)
-        return self._compute(
-            tuple([df_empty]),
-            tuple([df_empty])
-        )
+        return self._compute(tuple([df_empty]), tuple([df_empty]))
 
 
 class RandomDiscrete(BaseCompareFeature):
@@ -130,10 +122,7 @@ class RandomDiscrete(BaseCompareFeature):
     name = "random_desc"
     description = "Feature for discrete random values."
 
-    def __init__(self,
-                 a=[0, 1],
-                 dtype=np.int64,
-                 label=None):
+    def __init__(self, a=[0, 1], dtype=np.int64, label=None):
         super(RandomDiscrete, self).__init__([], [], label=label)
 
         self.a = a
@@ -170,7 +159,4 @@ class RandomDiscrete(BaseCompareFeature):
         """
 
         df_empty = pd.DataFrame(index=pairs)
-        return self._compute(
-            tuple([df_empty]),
-            tuple([df_empty])
-        )
+        return self._compute(tuple([df_empty]), tuple([df_empty]))

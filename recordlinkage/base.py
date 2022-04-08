@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 """Base module for record linkage."""
 
 from __future__ import division
@@ -16,14 +15,10 @@ import pandas
 
 from recordlinkage import rl_logging as logging
 import recordlinkage.config as cf
-from recordlinkage.utils import (listify,
-                                 unique,
-                                 is_label_dataframe,
-                                 return_type_deprecator,
-                                 index_split,
+from recordlinkage.utils import (listify, unique, is_label_dataframe,
+                                 return_type_deprecator, index_split,
                                  frame_indexing)
-from recordlinkage.types import (is_numpy_like,
-                                 is_list_like,
+from recordlinkage.types import (is_numpy_like, is_list_like,
                                  is_pandas_2d_multiindex)
 from recordlinkage.measures import max_pairs
 from recordlinkage.utils import DeprecationHelper, LearningError
@@ -56,8 +51,7 @@ class BaseIndex(object):
     def __init__(self, algorithms=[]):
 
         logging.info("indexing - initialize {} class".format(
-            self.__class__.__name__)
-        )
+            self.__class__.__name__))
 
         self.algorithms = []
         self.add(algorithms)
@@ -157,8 +151,8 @@ class BaseIndex(object):
 
             logging.info("indexing [{:d}/{}] - time: {:.2f}s - "
                          "pairs_total: {:d}/{:d} - rr_total: {:0.5f}".format(
-                             self._i, i_max, eta_total,
-                             n_total, n_max_total, rr_avg))
+                             self._i, i_max, eta_total, n_total, n_max_total,
+                             rr_avg))
 
         self._i += 1
 
@@ -238,8 +232,7 @@ class BaseIndexAlgorithm(object):
 
         elif isinstance(x.index, pandas.MultiIndex):
             raise ValueError(
-                'expected pandas.Index instead of pandas.MultiIndex'
-            )
+                'expected pandas.Index instead of pandas.MultiIndex')
 
     def _link_index(self, df_a, df_b):
         """Build an index for linking two datasets.
@@ -259,8 +252,7 @@ class BaseIndexAlgorithm(object):
 
         """
         raise NotImplementedError(
-            "Not possible to call index for the BaseEstimator"
-        )
+            "Not possible to call index for the BaseEstimator")
 
     def _dedup_index(self, df_a):
         """Build an index for duplicate detection in a dataset.
@@ -299,8 +291,10 @@ class BaseIndexAlgorithm(object):
 
         if pandas.notnull(name1) and pandas.notnull(name2) and \
                 (name1 == name2):
-            return ["{}{}".format(name1, self.suffixes[0]),
-                    "{}{}".format(name1, self.suffixes[1])]
+            return [
+                "{}{}".format(name1, self.suffixes[0]),
+                "{}{}".format(name1, self.suffixes[1])
+            ]
         else:
             return [name1, name2]
 
@@ -337,7 +331,7 @@ class BaseIndexAlgorithm(object):
         elif isinstance(x, (list, tuple)):  # dedup or linking (single arg)
             x = tuple(x)
         else:  # dedup (single arg)
-            x = (x,)
+            x = (x, )
 
         if self.verify_integrity:
 
@@ -388,7 +382,11 @@ class BaseCompareFeature(object):
     name = None
     description = None
 
-    def __init__(self, labels_left, labels_right, args=(), kwargs={},
+    def __init__(self,
+                 labels_left,
+                 labels_right,
+                 args=(),
+                 kwargs={},
                  label=None):
 
         self.labels_left = labels_left
@@ -424,8 +422,8 @@ class BaseCompareFeature(object):
 
         """
         if self._f_compare_vectorized:
-            return self._f_compare_vectorized(
-                *(args + self.args), **self.kwargs)
+            return self._f_compare_vectorized(*(args + self.args),
+                                              **self.kwargs)
         else:
             raise NotImplementedError()
 
@@ -482,8 +480,7 @@ class BaseCompareFeature(object):
         if not is_pandas_2d_multiindex(pairs):
             raise ValueError(
                 "expected pandas.MultiIndex with record pair indices "
-                "as first argument"
-            )
+                "as first argument")
 
         if not isinstance(x, pandas.DataFrame):
             raise ValueError("expected pandas.DataFrame as second argument")
@@ -533,12 +530,10 @@ class BaseCompare(object):
 
     """
 
-    def __init__(self, features=[], n_jobs=1, indexing_type='label',
-                 **kwargs):
+    def __init__(self, features=[], n_jobs=1, indexing_type='label', **kwargs):
 
         logging.info("comparing - initialize {} class".format(
-            self.__class__.__name__)
-        )
+            self.__class__.__name__))
 
         self.features = []
         self.add(features)
@@ -565,9 +560,7 @@ class BaseCompare(object):
                 "It seems you are using the older version of the Compare API, "
                 "see the documentation about how to update to the new API. "
                 "http://recordlinkage.readthedocs.io/"
-                "en/latest/ref-compare.html",
-                DeprecationWarning
-            )
+                "en/latest/ref-compare.html", DeprecationWarning)
 
     def __repr__(self):
         class_name = self.__class__.__name__
@@ -592,8 +585,8 @@ class BaseCompare(object):
         else:
             self.features.append(model)
 
-    def compare_vectorized(self, comp_func, labels_left, labels_right,
-                           *args, **kwargs):
+    def compare_vectorized(self, comp_func, labels_left, labels_right, *args,
+                           **kwargs):
         """Compute the similarity between values with a callable.
 
         This method initialises the comparing of values with a custom
@@ -635,8 +628,11 @@ class BaseCompare(object):
         if isinstance(labels_right, tuple):
             labels_right = list(labels_right)
 
-        feature = BaseCompareFeature(
-            labels_left, labels_right, args, kwargs, label=label)
+        feature = BaseCompareFeature(labels_left,
+                                     labels_right,
+                                     args,
+                                     kwargs,
+                                     label=label)
         feature._f_compare_vectorized = comp_func
 
         self.add(feature)
@@ -677,8 +673,7 @@ class BaseCompare(object):
         df_chunks = index_split(pairs, n_jobs)
         result_chunks = Parallel(n_jobs=n_jobs)(
             delayed(_parallel_compare_helper)(self, chunk, x, x_link)
-            for chunk in df_chunks
-        )
+            for chunk in df_chunks)
 
         result = pandas.concat(result_chunks)
         return result
@@ -711,12 +706,11 @@ class BaseCompare(object):
                 data1 = tuple()
             # empty array: empty df with index passed to func
             elif feat.labels_left == []:
-                data1 = (df_a_indexed[[]],)
+                data1 = (df_a_indexed[[]], )
             # else: subset columns and pass tuple of series
             else:
                 data1 = tuple(
-                    [df_a_indexed[lbl] for lbl in listify(feat.labels_left)]
-                )
+                    [df_a_indexed[lbl] for lbl in listify(feat.labels_left)])
 
             # --- DATA2
             # None: no data passed to func
@@ -724,12 +718,11 @@ class BaseCompare(object):
                 data2 = tuple()
             # empty array: empty df with index passed to func
             elif feat.labels_right == []:
-                data2 = (df_b_indexed[[]],)
+                data2 = (df_b_indexed[[]], )
             # else: subset columns and pass tuple of series
             else:
                 data2 = tuple(
-                    [df_b_indexed[lbl] for lbl in listify(feat.labels_right)]
-                )
+                    [df_b_indexed[lbl] for lbl in listify(feat.labels_right)])
 
             result = feat._compute(data1, data2)
             features.append((result, feat.label))
@@ -775,10 +768,10 @@ class BaseCompare(object):
                 if label is None:
                     label = [None] * len(feat)
                 if not is_list_like(label):
-                    label = (label,)
+                    label = (label, )
 
-                partial_result = self._union(
-                    zip(feat, label), column_i=column_i)
+                partial_result = self._union(zip(feat, label),
+                                             column_i=column_i)
                 feat_conc.append(partial_result)
                 column_i = column_i + partial_result.shape[1]
 
@@ -857,8 +850,7 @@ class BaseCompare(object):
         if not isinstance(pairs, pandas.MultiIndex):
             raise ValueError(
                 "expected pandas.MultiIndex with record pair indices "
-                "as first argument"
-            )
+                "as first argument")
 
         if not isinstance(x, pandas.DataFrame):
             raise ValueError("expected pandas.DataFrame as second argument")
@@ -869,8 +861,10 @@ class BaseCompare(object):
         if self.n_jobs == 1:
             results = self._compute(pairs, x, x_link)
         elif self.n_jobs > 1:
-            results = self._compute_parallel(
-                pairs, x, x_link, n_jobs=self.n_jobs)
+            results = self._compute_parallel(pairs,
+                                             x,
+                                             x_link,
+                                             n_jobs=self.n_jobs)
         else:
             raise ValueError("number of jobs should be positive integer")
 
@@ -894,6 +888,7 @@ class BaseClassifier(metaclass=ABCMeta):
     Distinguish different types of training, such as supervised and
     unsupervised learning.
     """
+
     def __init__(self):
         pass
 
@@ -940,8 +935,7 @@ class BaseClassifier(metaclass=ABCMeta):
 
         """
         logging.info("Classification - start training {}".format(
-            self.__class__.__name__)
-        )
+            self.__class__.__name__))
 
         self._initialise_classifier(comparison_vectors)
 
@@ -956,11 +950,11 @@ class BaseClassifier(metaclass=ABCMeta):
             except pandas.IndexError as err:
 
                 # The are no matches. So training is not possible.
-                if len(match_index.intersection(comparison_vectors.index)) == 0:
+                if len(match_index.intersection(
+                        comparison_vectors.index)) == 0:
                     raise LearningError(
                         "both matches and non-matches needed in the" +
-                        "trainingsdata, only non-matches found"
-                    )
+                        "trainingsdata, only non-matches found")
                 else:
                     raise err
 
@@ -969,11 +963,8 @@ class BaseClassifier(metaclass=ABCMeta):
         elif match_index is None:
             self._fit(comparison_vectors.values)
         else:
-            raise ValueError(
-                "'match_index' has incorrect type '{}'".format(
-                    type(match_index)
-                )
-            )
+            raise ValueError("'match_index' has incorrect type '{}'".format(
+                type(match_index)))
 
         # log timing
         logf_time = "Classification - training computation time: ~{:.2f}s"
@@ -1076,9 +1067,11 @@ class BaseClassifier(metaclass=ABCMeta):
 
         """
         if return_type is not None:
-            warnings.warn("The argument 'return_type' is removed. "
-                          "Default value is now 'series'.",
-                          DeprecationWarning, stacklevel=2)
+            warnings.warn(
+                "The argument 'return_type' is removed. "
+                "Default value is now 'series'.",
+                DeprecationWarning,
+                stacklevel=2)
 
         logging.info("Classification - compute probabilities")
 
@@ -1100,10 +1093,9 @@ class BaseClassifier(metaclass=ABCMeta):
 
         # return a pandas.Series
         elif return_type == 'series':
-            return pandas.Series(
-                result,
-                index=comparison_vectors.index,
-                name='classification')
+            return pandas.Series(result,
+                                 index=comparison_vectors.index,
+                                 name='classification')
 
         # return a numpy.ndarray
         elif return_type == 'array':

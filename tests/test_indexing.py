@@ -31,6 +31,7 @@ def get_test_algorithms():
 
 class TestData(object):
     """Unittest object to setup test data."""
+
     @classmethod
     def setup_class(cls):
 
@@ -69,6 +70,7 @@ class TestData(object):
 
 
 class TestIndexApi(TestData):
+
     def test_init(self):
 
         algorithms = Full()
@@ -113,6 +115,7 @@ class TestIndexApi(TestData):
 
 class TestIndexAlgorithmApi(TestData):
     """General unittest for the indexing API."""
+
     @pytest.mark.parametrize("index_class", get_test_algorithms())
     def test_repr(self, index_class):
 
@@ -345,6 +348,7 @@ class TestIndexAlgorithmApi(TestData):
 
 class TestFullIndexing(TestData):
     """General unittest for the full indexing class."""
+
     def test_basic_dedup(self):
         """FULL: Test basic characteristics of full indexing (dedup)."""
 
@@ -374,6 +378,7 @@ class TestFullIndexing(TestData):
 
 class TestBlocking(TestData):
     """General unittest for the block indexing class."""
+
     def test_single_blocking_key(self):
         """BLOCKING: Test class arguments."""
 
@@ -480,6 +485,7 @@ class TestBlocking(TestData):
 
 class TestSortedNeighbourhoodIndexing(TestData):
     """General unittest for the sorted neighbourhood indexing class."""
+
     def test_single_sorting_key(self):
         """SNI: Test class arguments."""
 
@@ -600,6 +606,7 @@ class TestSortedNeighbourhoodIndexing(TestData):
 
 class TestRandomIndexing(TestData):
     """General unittest for the random indexing class."""
+
     def test_random_seed(self):
         """Random: test seeding random algorithm"""
 

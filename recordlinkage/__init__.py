@@ -1,4 +1,3 @@
-
 # register the configuration
 import recordlinkage.config_init  # noqa
 
@@ -19,6 +18,7 @@ from recordlinkage import rl_logging as logging
 from recordlinkage.deprecated import *
 
 from recordlinkage._version import get_versions
+
 __version__ = get_versions()['version']
 del get_versions
 

@@ -37,8 +37,7 @@ def random_pairs_with_replacement(n, shape, random_state=None):
         return np.array(np.unravel_index(indices, shape))
 
 
-def random_pairs_without_replacement(
-        n, shape, random_state=None):
+def random_pairs_without_replacement(n, shape, random_state=None):
     """Return record pairs for dense sample.
 
     Sample random record pairs without replacement bounded by the
@@ -55,8 +54,7 @@ def random_pairs_without_replacement(
         raise ValueError("n must be a integer satisfying 0<n<=%s" % n_max)
 
     # make a sample without replacement
-    sample = random_state.choice(
-        np.arange(n_max), n, replace=False)
+    sample = random_state.choice(np.arange(n_max), n, replace=False)
 
     # return 2d indices
     if len(shape) == 1:
@@ -65,8 +63,7 @@ def random_pairs_without_replacement(
         return np.array(np.unravel_index(sample, shape))
 
 
-def random_pairs_without_replacement_low_memory(
-        n, shape, random_state=None):
+def random_pairs_without_replacement_low_memory(n, shape, random_state=None):
     """Make a sample of random pairs with replacement.
 
     Sample random record pairs without replacement bounded by the
@@ -91,10 +88,7 @@ def random_pairs_without_replacement_low_memory(
         # The number of pairs to sample (sample twice as much record pairs
         # because the duplicates are dropped).
         n_sample_size = (n - len(sample)) * 2
-        sample_sub = random_state.randint(
-            n_max, 
-            size=n_sample_size
-        )
+        sample_sub = random_state.randint(n_max, size=n_sample_size)
 
         # concatenate pairs and deduplicate
         pairs_non_unique = np.append(sample, sample_sub)

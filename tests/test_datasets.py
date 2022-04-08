@@ -144,8 +144,11 @@ def test_random_comparison_vectors():
     n_record_pairs = 10000
     n_matches = 500
 
-    df = binary_vectors(
-        n_record_pairs, n_matches, m=[0.8] * 8, u=[0.2] * 8, random_state=535)
+    df = binary_vectors(n_record_pairs,
+                        n_matches,
+                        m=[0.8] * 8,
+                        u=[0.2] * 8,
+                        random_state=535)
 
     # Check the result is a DataFrame with MultiIndex
     assert isinstance(df, pandas.DataFrame)
@@ -161,8 +164,12 @@ def test_random_comparison_vectors_1value_col():
     u = numpy.array([1, .23, .50, 0])
 
     # Create the train dataset.
-    X_train, y_train = binary_vectors(
-        1000, 500, m=m, u=u, random_state=535, return_links=True)
+    X_train, y_train = binary_vectors(1000,
+                                      500,
+                                      m=m,
+                                      u=u,
+                                      random_state=535,
+                                      return_links=True)
 
     assert len(X_train.iloc[:, 0].unique()) == 1
     assert X_train.iloc[:, 0].unique()[0] == 1

@@ -6,8 +6,7 @@ import pandas
 
 from recordlinkage import rl_logging as logging
 from recordlinkage.algorithms.indexing import (
-    random_pairs_with_replacement,
-    random_pairs_without_replacement_low_memory,
+    random_pairs_with_replacement, random_pairs_without_replacement_low_memory,
     random_pairs_without_replacement)
 from recordlinkage.base import BaseIndexAlgorithm
 from recordlinkage.measures import full_index_size
@@ -54,8 +53,9 @@ class Full(BaseIndexAlgorithm):
         levels = [df_a.index.values, df_a.index.values]
         codes = numpy.tril_indices(len(df_a.index), k=-1)
 
-        return pandas.MultiIndex(
-            levels=levels, codes=codes, verify_integrity=False)
+        return pandas.MultiIndex(levels=levels,
+                                 codes=codes,
+                                 verify_integrity=False)
 
 
 class Block(BaseIndexAlgorithm):
@@ -142,8 +142,10 @@ class Block(BaseIndexAlgorithm):
         data_right = pandas.DataFrame(df_b[right_on], copy=False)
         data_right.columns = blocking_keys
         data_right['index_y'] = numpy.arange(len(df_b))
-        data_right.dropna(
-            axis=0, how='any', subset=blocking_keys, inplace=True)
+        data_right.dropna(axis=0,
+                          how='any',
+                          subset=blocking_keys,
+                          inplace=True)
 
         # merge the dataframes
         pairs_df = data_left.merge(data_right, how='inner', on=blocking_keys)
@@ -292,18 +294,20 @@ class SortedNeighbourhood(BaseIndexAlgorithm):
         # 2. rename columns
         # 3. add index col
         # 4. drop na (last step to presever index)
-        data_left = pandas.DataFrame(
-            df_a[listify(left_on) + block_left_on], copy=False)
+        data_left = pandas.DataFrame(df_a[listify(left_on) + block_left_on],
+                                     copy=False)
         data_left.columns = blocking_keys
         data_left['index_x'] = numpy.arange(len(df_a))
         data_left.dropna(axis=0, how='any', subset=blocking_keys, inplace=True)
 
-        data_right = pandas.DataFrame(
-            df_b[listify(right_on) + block_right_on], copy=False)
+        data_right = pandas.DataFrame(df_b[listify(right_on) + block_right_on],
+                                      copy=False)
         data_right.columns = blocking_keys
         data_right['index_y'] = numpy.arange(len(df_b))
-        data_right.dropna(
-            axis=0, how='any', subset=blocking_keys, inplace=True)
+        data_right.dropna(axis=0,
+                          how='any',
+                          subset=blocking_keys,
+                          inplace=True)
 
         # sorting_key_values is the terminology in Data Matching [Christen,
         # 2012]
@@ -313,9 +317,9 @@ class SortedNeighbourhood(BaseIndexAlgorithm):
                 data_left['sorting_key'].values,
                 data_right['sorting_key'].values)
 
-        sorting_key_factors = pandas.Series(
-            numpy.arange(len(self.sorting_key_values)),
-            index=self.sorting_key_values)
+        sorting_key_factors = pandas.Series(numpy.arange(
+            len(self.sorting_key_values)),
+                                            index=self.sorting_key_values)
 
         data_left['sorting_key'] = data_left['sorting_key'].map(
             sorting_key_factors)
@@ -407,8 +411,8 @@ class Random(BaseIndexAlgorithm):
         else:
 
             if self.n <= 0 or self.n > n_max:
-                raise ValueError(
-                    "n must be a integer satisfying 0<n<=%s" % n_max)
+                raise ValueError("n must be a integer satisfying 0<n<=%s" %
+                                 n_max)
 
             # the fraction of pairs in the sample
             frac = self.n / n_max
@@ -425,8 +429,9 @@ class Random(BaseIndexAlgorithm):
         levels = [df_a.index.values, df_b.index.values]
         codes = pairs
 
-        return pandas.MultiIndex(
-            levels=levels, codes=codes, verify_integrity=False)
+        return pandas.MultiIndex(levels=levels,
+                                 codes=codes,
+                                 verify_integrity=False)
 
     def _dedup_index(self, df_a):
 
@@ -443,8 +448,8 @@ class Random(BaseIndexAlgorithm):
             n_max = full_index_size(shape)
 
             if not isinstance(self.n, int) or self.n <= 0 or self.n > n_max:
-                raise ValueError(
-                    "n must be a integer satisfying 0<n<=%s" % n_max)
+                raise ValueError("n must be a integer satisfying 0<n<=%s" %
+                                 n_max)
 
             # large dataframes
             if n_max < 1e6:
@@ -458,8 +463,9 @@ class Random(BaseIndexAlgorithm):
         levels = [df_a.index.values, df_a.index.values]
         labels = pairs
 
-        return pandas.MultiIndex(
-            levels=levels, codes=labels, verify_integrity=False)
+        return pandas.MultiIndex(levels=levels,
+                                 codes=labels,
+                                 verify_integrity=False)
 
 
 FullIndex = DeprecationHelper(

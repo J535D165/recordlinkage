@@ -18,70 +18,59 @@ import recordlinkage as rl
 from recordlinkage.datasets import binary_vectors
 
 SUPERVISED_CLASSIFIERS = [
-    rl.LogisticRegressionClassifier,
-    rl.NaiveBayesClassifier,
-    rl.SVMClassifier
+    rl.LogisticRegressionClassifier, rl.NaiveBayesClassifier, rl.SVMClassifier
 ]
 
-UNSUPERVISED_CLASSIFIERS = [
-    rl.KMeansClassifier,
-    rl.ECMClassifier
-]
+UNSUPERVISED_CLASSIFIERS = [rl.KMeansClassifier, rl.ECMClassifier]
 
 CLASSIFIERS_WITH_PROBS = [
-    rl.LogisticRegressionClassifier,
-    rl.NaiveBayesClassifier,
-    rl.ECMClassifier
+    rl.LogisticRegressionClassifier, rl.NaiveBayesClassifier, rl.ECMClassifier
 ]
 
 CLASSIFIERS = SUPERVISED_CLASSIFIERS + UNSUPERVISED_CLASSIFIERS
-
 
 N = 10000
 
 
 class TestClassifyData(object):
+
     @classmethod
     def setup_class(cls):
 
         cls.render_bin_test_data()
 
     @classmethod
-    def render_bin_test_data(cls, n_pairs_train=5000, n_matches_train=1000,
-                             n_pairs_test=50000, n_matches_test=10000):
+    def render_bin_test_data(cls,
+                             n_pairs_train=5000,
+                             n_matches_train=1000,
+                             n_pairs_test=50000,
+                             n_matches_test=10000):
 
         cls.m = np.array([.92, .81, .85, .90, .99, .70, .56])
         cls.u = np.array([.19, .23, .50, .11, .20, .14, .50])
 
         cls.labels = [
-            'name',
-            'second_name',
-            'surname',
-            'dob',
-            'street',
-            'state',
+            'name', 'second_name', 'surname', 'dob', 'street', 'state',
             'zipcode'
         ]
 
         # Create the train dataset.
-        cls.X_train, cls.y_train = binary_vectors(
-            n_pairs_train,
-            n_matches_train,
-            m=cls.m,
-            u=cls.u,
-            random_state=535,
-            return_links=True)
+        cls.X_train, cls.y_train = binary_vectors(n_pairs_train,
+                                                  n_matches_train,
+                                                  m=cls.m,
+                                                  u=cls.u,
+                                                  random_state=535,
+                                                  return_links=True)
 
         cls.X_train.columns = cls.labels
 
         # Create the test dataset.
-        cls.X_test, cls.y_test = binary_vectors(
-            n_pairs_test,
-            n_matches_test,
-            m=cls.m,
-            u=cls.u,
-            random_state=535,
-            return_links=True)
+        cls.X_test, cls.y_test = binary_vectors(n_pairs_test,
+                                                n_matches_test,
+                                                m=cls.m,
+                                                u=cls.u,
+                                                random_state=535,
+                                                return_links=True)
 
         cls.y_test.columns = cls.labels
 
@@ -115,9 +104,7 @@ class TestClassifyAPI(TestClassifyData):
         with pytest.raises(ValueError):
             with rl.option_context('classification.return_type',
                                    'unknown_return_type'):
-                cl.predict(
-                    comparison_vectors=self.X_train
-                )
+                cl.predict(comparison_vectors=self.X_train)
 
     @pytest.mark.parametrize('classifier', SUPERVISED_CLASSIFIERS)
     def test_return_result_options_depr(self, classifier):
@@ -129,27 +116,24 @@ class TestClassifyAPI(TestClassifyData):
         assert isinstance(prediction_default, pd.MultiIndex)
 
         with pytest.deprecated_call():
-            prediction_multiindex = cl.predict(
-                comparison_vectors=self.X_train, return_type='index')
+            prediction_multiindex = cl.predict(comparison_vectors=self.X_train,
+                                               return_type='index')
             assert isinstance(prediction_multiindex, pd.MultiIndex)
 
         with pytest.deprecated_call():
-            prediction_ndarray = cl.predict(
-                comparison_vectors=self.X_train, return_type='array')
+            prediction_ndarray = cl.predict(comparison_vectors=self.X_train,
+                                            return_type='array')
             assert isinstance(prediction_ndarray, np.ndarray)
 
         with pytest.deprecated_call():
-            prediction_series = cl.predict(
-                comparison_vectors=self.X_train,
-                return_type='series')
+            prediction_series = cl.predict(comparison_vectors=self.X_train,
+                                           return_type='series')
             assert isinstance(prediction_series, pd.Series)
 
         with pytest.deprecated_call():
             with pytest.raises(ValueError):
-                cl.predict(
-                    comparison_vectors=self.X_train,
-                    return_type='unknown_return_type'
-                )
+                cl.predict(comparison_vectors=self.X_train,
+                           return_type='unknown_return_type')
 
     @pytest.mark.parametrize('classifier', CLASSIFIERS_WITH_PROBS)
     def test_probs(self, classifier):
@@ -217,10 +201,7 @@ class TestClassifyAPI(TestClassifyData):
         cl = classifier()
 
         with pytest.raises(ValueError):
-            cl.fit(
-                pd.DataFrame(columns=self.X_train.columns),
-                self.y_train
-            )
+            cl.fit(pd.DataFrame(columns=self.X_train.columns), self.y_train)
 
     @pytest.mark.parametrize('classifier', UNSUPERVISED_CLASSIFIERS)
     def test_fit_empty_frame_unsupervised(self, classifier):
@@ -250,10 +231,10 @@ class TestKMeans(TestClassifyData):
         _, n_features = self.X_train.shape
 
         assert isinstance(kmeans.match_cluster_center, np.ndarray)
-        assert kmeans.match_cluster_center.shape == (n_features,)
+        assert kmeans.match_cluster_center.shape == (n_features, )
 
         assert isinstance(kmeans.nonmatch_cluster_center, np.ndarray)
-        assert kmeans.nonmatch_cluster_center.shape == (n_features,)
+        assert kmeans.nonmatch_cluster_center.shape == (n_features, )
 
     def test_kmeans_error(self):
 
@@ -294,6 +275,7 @@ class TestKMeans(TestClassifyData):
 
 
 class TestLogistic(TestClassifyData):
+
     def test_logistic_regression_basic(self):
 
         logis = rl.LogisticRegressionClassifier()
@@ -353,8 +335,12 @@ class TestECM(TestClassifyData):
         u = np.array([1.0, .23, .50, .23, .30, 0.13])
 
         # Create the train dataset.
-        X_train, true_links = binary_vectors(
-            1000, 500, m=m, u=u, random_state=535, return_links=True)
+        X_train, true_links = binary_vectors(1000,
+                                             500,
+                                             m=m,
+                                             u=u,
+                                             random_state=535,
+                                             return_links=True)
 
         binarizer = LabelBinarizer()
         binarizer.fit(X_train.iloc[:, 0])
@@ -372,8 +358,12 @@ class TestECM(TestClassifyData):
         u = np.array([1.0, .23, .50, .23, .30, 0.13])
 
         # Create the train dataset.
-        X_train, true_links = binary_vectors(
-            1000, 500, m=m, u=u, random_state=535, return_links=True)
+        X_train, true_links = binary_vectors(1000,
+                                             500,
+                                             m=m,
+                                             u=u,
+                                             random_state=535,
+                                             return_links=True)
 
         binarizer = LabelBinarizer()
         binarizer.classes_ = np.array([0, 1])
@@ -400,8 +390,12 @@ class TestECM(TestClassifyData):
         u = np.array([0.34, .23, .50, .23, .30, 0.13])
 
         # Create the train dataset.
-        X_train, true_links = binary_vectors(
-            1000, 500, m=m, u=u, random_state=535, return_links=True)
+        X_train, true_links = binary_vectors(1000,
+                                             500,
+                                             m=m,
+                                             u=u,
+                                             random_state=535,
+                                             return_links=True)
 
         ecm = rl.ECMClassifier(init='random')
         ecm.fit(X_train)
@@ -420,8 +414,12 @@ class TestECM(TestClassifyData):
         u = np.array([1.0, .23, .50, .23, .30, 0.13])
 
         # Create the train dataset.
-        X_train, true_links = binary_vectors(
-            1000, 500, m=m, u=u, random_state=536, return_links=True)
+        X_train, true_links = binary_vectors(1000,
+                                             500,
+                                             m=m,
+                                             u=u,
+                                             random_state=536,
+                                             return_links=True)
 
         ecm = rl.ECMClassifier(init='random')
         ecm.fit(X_train)
@@ -439,8 +437,12 @@ class TestECM(TestClassifyData):
         u = np.array([1.0, .10, .50, .23, .30, 0.13])
 
         # Create the train dataset.
-        X_train, true_links = binary_vectors(
-            1000, 500, m=m, u=u, random_state=535, return_links=True)
+        X_train, true_links = binary_vectors(1000,
+                                             500,
+                                             m=m,
+                                             u=u,
+                                             random_state=535,
+                                             return_links=True)
 
         ecm = rl.ECMClassifier(init='jaro')
         ecm.fit(X_train)
@@ -461,8 +463,12 @@ class TestECM(TestClassifyData):
         u = np.array([0.0, .10, .50, .23, .30, 0.13])
 
         # Create the train dataset.
-        X_train, true_links = binary_vectors(
-            1000, 500, m=m, u=u, random_state=535, return_links=True)
+        X_train, true_links = binary_vectors(1000,
+                                             500,
+                                             m=m,
+                                             u=u,
+                                             random_state=535,
+                                             return_links=True)
 
         ecm = rl.ECMClassifier(init='jaro')
         ecm.fit(X_train)
@@ -479,12 +485,20 @@ class TestECM(TestClassifyData):
         u = np.array([0, .23, .50, .23, .30, 0.13])
 
         # Create the train dataset.
-        X_train, true_links = binary_vectors(
-            10000, 500, m=m, u=u, random_state=535, return_links=True)
+        X_train, true_links = binary_vectors(10000,
+                                             500,
+                                             m=m,
+                                             u=u,
+                                             random_state=535,
+                                             return_links=True)
 
         # Create the train dataset.
-        X_test, true_links = binary_vectors(
-            1000, 500, m=m, u=u, random_state=535, return_links=True)
+        X_test, true_links = binary_vectors(1000,
+                                            500,
+                                            m=m,
+                                            u=u,
+                                            random_state=535,
+                                            return_links=True)
 
         ecm = rl.ECMClassifier()
         ecm.fit(X_train)
@@ -498,12 +512,20 @@ class TestECM(TestClassifyData):
         u = np.array([1, .23, .50, .23, .30, 0.13])
 
         # Create the train dataset.
-        X_train, true_links = binary_vectors(
-            5000, 500, m=m, u=u, random_state=535, return_links=True)
+        X_train, true_links = binary_vectors(5000,
+                                             500,
+                                             m=m,
+                                             u=u,
+                                             random_state=535,
+                                             return_links=True)
 
         # Create the train dataset.
-        X_test, true_links = binary_vectors(
-            1000, 500, m=m, u=u, random_state=535, return_links=True)
+        X_test, true_links = binary_vectors(1000,
+                                            500,
+                                            m=m,
+                                            u=u,
+                                            random_state=535,
+                                            return_links=True)
 
         ecm = rl.ECMClassifier()
         ecm.fit(X_train)
@@ -514,13 +536,21 @@ class TestECM(TestClassifyData):
         u = np.array([1, .23, .50, .23, .30, 0.13])
 
         # Create the train dataset.
-        X_train, true_links = binary_vectors(
-            1000, 500, m=m, u=u, random_state=535, return_links=True)
+        X_train, true_links = binary_vectors(1000,
+                                             500,
+                                             m=m,
+                                             u=u,
+                                             random_state=535,
+                                             return_links=True)
         X_train = X_train * np.random.rand(*X_train.shape)
 
         # Create the train dataset.
-        X_test, true_links = binary_vectors(
-            1000, 500, m=m, u=u, random_state=535, return_links=True)
+        X_test, true_links = binary_vectors(1000,
+                                            500,
+                                            m=m,
+                                            u=u,
+                                            random_state=535,
+                                            return_links=True)
         X_test = X_test * np.random.rand(*X_test.shape)
 
         ecm = rl.ECMClassifier(binarize=True)
@@ -532,12 +562,20 @@ class TestECM(TestClassifyData):
         u = np.array([0, .23, .50, .23, .30, 0.13])
 
         # Create the train dataset.
-        X_train, true_links = binary_vectors(
-            10000, 500, m=m, u=u, random_state=535, return_links=True)
+        X_train, true_links = binary_vectors(10000,
+                                             500,
+                                             m=m,
+                                             u=u,
+                                             random_state=535,
+                                             return_links=True)
 
         # Create the train dataset.
-        X_test, true_links = binary_vectors(
-            1000, 500, m=m, u=u, random_state=535, return_links=True)
+        X_test, true_links = binary_vectors(1000,
+                                            500,
+                                            m=m,
+                                            u=u,
+                                            random_state=535,
+                                            return_links=True)
 
         ecm = rl.ECMClassifier(atol=None)
         ecm.fit(X_train)
@@ -549,10 +587,8 @@ class TestECM(TestClassifyData):
 
 class TestFellegiSunter(TestClassifyData):
 
-    @pytest.mark.parametrize('classifier', [
-        rl.NaiveBayesClassifier,
-        rl.ECMClassifier
-    ])
+    @pytest.mark.parametrize('classifier',
+                             [rl.NaiveBayesClassifier, rl.ECMClassifier])
     def test_fs_parameters(self, classifier):
 
         cl = classifier()
@@ -570,33 +606,31 @@ class TestFellegiSunter(TestClassifyData):
         assert len(cl.m_probs.keys()) == self.X_train.shape[1]
         for col, value in cl.m_probs.items():
             for key, out in value.items():
-                assert_almost_equal(
-                    np.exp(cl.log_m_probs[col][key]),
-                    cl.m_probs[col][key]
-                )
+                assert_almost_equal(np.exp(cl.log_m_probs[col][key]),
+                                    cl.m_probs[col][key])
 
         # u
         assert isinstance(cl.u_probs, dict)
         assert len(cl.u_probs.keys()) == self.X_train.shape[1]
         for col, value in cl.u_probs.items():
             for key, out in value.items():
-                assert_almost_equal(
-                    np.exp(cl.log_u_probs[col][key]),
-                    cl.u_probs[col][key]
-                )
+                assert_almost_equal(np.exp(cl.log_u_probs[col][key]),
+                                    cl.u_probs[col][key])
 
-    @pytest.mark.parametrize('classifier', [
-        rl.NaiveBayesClassifier,
-        rl.ECMClassifier
-    ])
+    @pytest.mark.parametrize('classifier',
+                             [rl.NaiveBayesClassifier, rl.ECMClassifier])
     def test_fs_column_labels(self, classifier):
 
         m = np.array([0.95, .81, .85, .81, .85, .81])
         u = np.array([0, .23, .50, .23, .30, 0.13])
 
         # Create the train dataset.
-        X_train, true_links = binary_vectors(
-            1000, 500, m=m, u=u, random_state=535, return_links=True)
+        X_train, true_links = binary_vectors(1000,
+                                             500,
+                                             m=m,
+                                             u=u,
+                                             random_state=535,
+                                             return_links=True)
 
         cl = classifier()
         if isinstance(cl, tuple(UNSUPERVISED_CLASSIFIERS)):

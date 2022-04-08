@@ -26,8 +26,7 @@ def is_string_like(obj):
 
 
 def _iterable_not_string(x):
-    return (isinstance(x, collections.Iterable) and
-            not isinstance(x, str))
+    return (isinstance(x, collections.Iterable) and not isinstance(x, str))
 
 
 def is_iterator(obj):
@@ -48,8 +47,8 @@ def is_re_compilable(obj):
 
 
 def is_list_like(arg):
-    return (hasattr(arg, '__iter__') and
-            not isinstance(arg, string_and_binary_types))
+    return (hasattr(arg, '__iter__')
+            and not isinstance(arg, string_and_binary_types))
 
 
 def is_dict_like(arg):

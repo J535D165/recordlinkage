@@ -291,7 +291,10 @@ class NaiveBayes(BaseNB):
 
     """
 
-    def __init__(self, alpha=1.0, binarize=0.0, fit_prior=True,
+    def __init__(self,
+                 alpha=1.0,
+                 binarize=0.0,
+                 fit_prior=True,
                  class_prior=None):
 
         self.alpha = alpha
@@ -590,29 +593,25 @@ class ECM(BaseNB):
             # to the values in the to previous iteration (parameters starting
             # with 'self').
             if self.atol is not None:
-                class_log_prior_close = np.allclose(
-                    np.exp(class_log_prior_),
-                    np.exp(self.class_log_prior_),
-                    atol=self.atol
-                )
+                class_log_prior_close = np.allclose(np.exp(class_log_prior_),
+                                                    np.exp(
+                                                        self.class_log_prior_),
+                                                    atol=self.atol)
                 feature_log_prob_close = np.allclose(
                     np.exp(feature_log_prob_),
                     np.exp(self.feature_log_prob_),
-                    atol=self.atol
-                )
+                    atol=self.atol)
 
                 if (class_log_prior_close and feature_log_prob_close):
                     stop_iteration = True
                     logging.info(
                         "ECM algorithm converged after {} iterations".format(
-                            iteration)
-                    )
+                            iteration))
 
             if np.all(np.isnan(feature_log_prob_)):
                 logging.warning(
                     "ECM algorithm might not converged correctly after "
-                    "{} iterations".format(iteration)
-                )
+                    "{} iterations".format(iteration))
                 break
 
             # Update the class prior and feature probs.
@@ -620,20 +619,20 @@ class ECM(BaseNB):
             self.feature_log_prob_ = feature_log_prob_
 
             # create logs
-            self._logging_class_log_prior = np.concatenate(
-                [self._logging_class_log_prior,
-                 np.atleast_2d(self.class_log_prior_)]
-            )
-            self._logging_feature_log_prob = np.concatenate(
-                [self._logging_feature_log_prob,
-                 np.atleast_3d(self.feature_log_prob_)], axis=2
-            )
+            self._logging_class_log_prior = np.concatenate([
+                self._logging_class_log_prior,
+                np.atleast_2d(self.class_log_prior_)
+            ])
+            self._logging_feature_log_prob = np.concatenate([
+                self._logging_feature_log_prob,
+                np.atleast_3d(self.feature_log_prob_)
+            ],
+                                                            axis=2)
         else:
             if iteration == self.max_iter:
                 logging.info(
-                    "ECM algorithm stopped at {} (=max_iter) iterations"
-                    .format(iteration)
-                )
+                    "ECM algorithm stopped at {} (=max_iter) iterations".
+                    format(iteration))
 
         return self
 

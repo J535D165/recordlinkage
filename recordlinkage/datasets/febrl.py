@@ -7,11 +7,7 @@ import numpy
 def _febrl_load_data(filename):
     # Internal function for loading febrl data
 
-    filepath = Path(
-        Path(__file__).parent,
-        'febrl', 
-        filename
-    )
+    filepath = Path(Path(__file__).parent, 'febrl', filename)
 
     febrl_data = pandas.read_csv(filepath,
                                  index_col="rec_id",
@@ -37,23 +33,17 @@ def _febrl_links(df):
 
     index_int = numpy.arange(len(df))
 
-    df_helper = pandas.DataFrame({
-        'key': keys,
-        'index': index_int
-    })
+    df_helper = pandas.DataFrame({'key': keys, 'index': index_int})
 
     # merge the two frame and make MultiIndex.
-    pairs_df = df_helper.merge(
-        df_helper, on='key'
-    )[['index_x', 'index_y']]
+    pairs_df = df_helper.merge(df_helper, on='key')[['index_x', 'index_y']]
     pairs_df = pairs_df[pairs_df['index_x'] > pairs_df['index_y']]
 
     return pandas.MultiIndex(
         levels=[df.index.values, df.index.values],
         codes=[pairs_df['index_x'].values, pairs_df['index_y'].values],
         names=[None, None],
-        verify_integrity=False
-    )
+        verify_integrity=False)
 
 
 def load_febrl1(return_links=False):
@@ -212,10 +202,9 @@ def load_febrl4(return_links=False):
     df_b = _febrl_load_data('dataset4b.csv')
 
     if return_links:
-        links = pandas.MultiIndex.from_arrays([
-            ["rec-{}-org".format(i) for i in range(0, 5000)],
-            ["rec-{}-dup-0".format(i) for i in range(0, 5000)]]
-        )
+        links = pandas.MultiIndex.from_arrays(
+            [["rec-{}-org".format(i) for i in range(0, 5000)],
+             ["rec-{}-dup-0".format(i) for i in range(0, 5000)]])
         return df_a, df_b, links
     else:
         return df_a, df_b

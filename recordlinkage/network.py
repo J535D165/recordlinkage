@@ -55,9 +55,8 @@ class OneToOneLinking(object):
             if not is_pandas_multiindex(links):
                 raise TypeError("expected pandas.MultiIndex")
             elif not is_pandas_2d_multiindex(links):
-                raise ValueError(
-                    "pandas.MultiIndex has incorrect number of "
-                    "levels (expected 2 levels)")
+                raise ValueError("pandas.MultiIndex has incorrect number of "
+                                 "levels (expected 2 levels)")
 
         if self.method == 'greedy':
             return self._compute_greedy(links)
@@ -188,11 +187,12 @@ class ConnectedComponents(object):
 
         graph_pairs = nx.Graph()
         graph_pairs.add_edges_from(links.values)
-        connected_pairs = (
-            graph_pairs.subgraph(c).copy() for c in nx.connected_components(graph_pairs)
-        )
+        connected_pairs = (graph_pairs.subgraph(c).copy()
+                           for c in nx.connected_components(graph_pairs))
 
-        links_result = [pd.MultiIndex.from_tuples(subgraph.edges())
-                        for subgraph in connected_pairs]
+        links_result = [
+            pd.MultiIndex.from_tuples(subgraph.edges())
+            for subgraph in connected_pairs
+        ]
 
         return links_result

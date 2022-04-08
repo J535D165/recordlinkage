@@ -35,7 +35,6 @@
 # CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-
 """
 The config module holds package-wide configurables and provides
 a uniform API for working with them.
@@ -86,7 +85,6 @@ Implementation
 
 """
 
-
 import itertools
 import re
 import sys
@@ -109,9 +107,9 @@ class OptionError(AttributeError, KeyError):
     checks
     """
 
+
 #
 # Compat
-
 
 try:
     import __builtin__ as builtins
@@ -274,6 +272,7 @@ class DictWrapper(object):
 
     def __dir__(self):
         return list(self.d.keys())
+
 
 # For user convenience,  we'd like to have the available options described
 # in the docstring. For dev convenience we'd like to generate the docstrings
@@ -521,8 +520,10 @@ def register_option(key, defval, doc='', validator=None, cb=None):
     cursor[path[-1]] = defval  # initialize
 
     # save the option metadata
-    _registered_options[key] = RegisteredOption(key=key, defval=defval,
-                                                doc=doc, validator=validator,
+    _registered_options[key] = RegisteredOption(key=key,
+                                                defval=defval,
+                                                doc=doc,
+                                                validator=validator,
                                                 cb=cb)
 
 
@@ -572,6 +573,7 @@ def deprecate_option(key, msg=None, rkey=None, removal_ver=None):
         raise OptionError(msg.format(key=key))
 
     _deprecated_options[key] = DeprecatedOption(key, msg, rkey, removal_ver)
+
 
 #
 # functions internal to the module
@@ -668,8 +670,8 @@ def _warn_if_deprecated(key):
         else:
             msg = "'{key}' is deprecated".format(key=key)
             if d.removal_ver:
-                msg += (' and will be removed in {version}'
-                        .format(version=d.removal_ver))
+                msg += (' and will be removed in {version}'.format(
+                    version=d.removal_ver))
             if d.rkey:
                 msg += ", please use '{rkey}' instead.".format(rkey=d.rkey)
             else:
@@ -694,13 +696,13 @@ def _build_option_description(k):
         s += 'No description available.'
 
     if o:
-        s += (u('\n    [default: {default}] [currently: {current}]')
-              .format(default=o.defval, current=_get_option(k, True)))
+        s += (u('\n    [default: {default}] [currently: {current}]').format(
+            default=o.defval, current=_get_option(k, True)))
 
     if d:
         s += u('\n    (Deprecated')
-        s += (u(', use `{rkey}` instead.')
-              .format(rkey=d.rkey if d.rkey else ''))
+        s += (u(', use `{rkey}` instead.').format(
+            rkey=d.rkey if d.rkey else ''))
         s += u(')')
 
     s += '\n\n'
@@ -715,8 +717,11 @@ def pp_options_list(keys, width=80, _print=False):
 
     def pp(name, ks):
         pfx = ('- ' + name + '.[' if name else '')
-        ls = wrap(', '.join(ks), width, initial_indent=pfx,
-                  subsequent_indent='  ', break_long_words=False)
+        ls = wrap(', '.join(ks),
+                  width,
+                  initial_indent=pfx,
+                  subsequent_indent='  ',
+                  break_long_words=False)
         if ls and ls[-1] and name:
             ls[-1] = ls[-1] + ']'
         return ls
@@ -735,6 +740,7 @@ def pp_options_list(keys, width=80, _print=False):
         print(s)
     else:
         return s
+
 
 #
 # helpers
@@ -771,6 +777,7 @@ def config_prefix(prefix):
     global register_option, get_option, set_option, reset_option
 
     def wrap(func):
+
         def inner(key, *args, **kwds):
             pkey = '{prefix}.{key}'.format(prefix=prefix, key=key)
             return func(pkey, *args, **kwds)
@@ -787,6 +794,7 @@ def config_prefix(prefix):
     set_option = _set_option
     get_option = _get_option
     register_option = _register_option
+
 
 # These factories and methods are handy for use as the validator
 # arg in register_option

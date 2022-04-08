@@ -41,9 +41,7 @@ class SKLearnAdapter(object):
             raise NotFittedError(
                 "{} is not fitted yet. Call 'fit' with appropriate "
                 "arguments before using this method.".format(
-                    type(self).__name__
-                )
-            )
+                    type(self).__name__))
 
         return prediction
 
@@ -115,9 +113,7 @@ class KerasAdapter(object):
             raise NotFittedError(
                 "{} is not fitted yet. Call 'fit' with appropriate "
                 "arguments before using this method.".format(
-                    type(self).__name__
-                )
-            )
+                    type(self).__name__))
 
         return prediction
 

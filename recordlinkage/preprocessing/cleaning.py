@@ -4,9 +4,14 @@ from sklearn.feature_extraction.text import strip_accents_ascii, \
     strip_accents_unicode
 
 
-def clean(s, lowercase=True, replace_by_none=r'[^ \-\_A-Za-z0-9]+',
-          replace_by_whitespace=r'[\-\_]', strip_accents=None,
-          remove_brackets=True, encoding='utf-8', decode_error='strict'):
+def clean(s,
+          lowercase=True,
+          replace_by_none=r'[^ \-\_A-Za-z0-9]+',
+          replace_by_whitespace=r'[\-\_]',
+          strip_accents=None,
+          remove_brackets=True,
+          encoding='utf-8',
+          decode_error='strict'):
     """Clean string variables.
 
     Clean strings in the Series by removing unwanted tokens,
@@ -86,11 +91,11 @@ def clean(s, lowercase=True, replace_by_none=r'[^ \-\_A-Za-z0-9]+',
         strip_accents_fn = strip_accents_unicode
     else:
         raise ValueError(
-            "Invalid value for 'strip_accents': {}".format(strip_accents)
-        )
+            "Invalid value for 'strip_accents': {}".format(strip_accents))
 
     # Remove accents etc
     if strip_accents:
+
         def strip_accents_fn_wrapper(x):
             if sys.version_info[0] >= 3:
                 if isinstance(x, str):
@@ -104,9 +109,8 @@ def clean(s, lowercase=True, replace_by_none=r'[^ \-\_A-Za-z0-9]+',
                     return x
 
         # encoding
-        s = s.apply(
-            lambda x: x.decode(encoding, decode_error) if
-            type(x) == bytes else x)
+        s = s.apply(lambda x: x.decode(encoding, decode_error)
+                    if type(x) == bytes else x)
         s = s.map(lambda x: strip_accents_fn_wrapper(x))
 
     # Remove all content between brackets
