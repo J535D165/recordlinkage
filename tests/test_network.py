@@ -1,10 +1,19 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import sys
+
 import pandas as pd
 
 # testing utils from pandas
 import pandas.testing as pdt
+
+import pytest
+
+try:
+    import networkx  # noqa
+except ImportError:
+    pass
 
 from recordlinkage import (OneToOneLinking, OneToManyLinking,
                            ConnectedComponents)
@@ -38,6 +47,8 @@ def test_one_to_many_linking():
     pdt.assert_index_equal(sample_one_to_one, expected)
 
 
+@pytest.mark.skipif('networkx' not in sys.modules,
+                    reason="Requires the Networkx library")
 def test_connected_components():
 
     sample = pd.MultiIndex.from_tuples([(1, 2), (2, 3), (3, 4), (5, 6), (5, 7),

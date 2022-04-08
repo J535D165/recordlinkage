@@ -285,7 +285,7 @@ def confusion_matrix(links_true, links_pred, total=None):
     if total is None:
         tn = numpy.nan
     else:
-        
+
         if isinstance(total, pandas.MultiIndex):
             total = len(total)
         tn = true_negatives(links_true, links_pred, total)

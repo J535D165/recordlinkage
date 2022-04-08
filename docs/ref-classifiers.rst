@@ -6,21 +6,21 @@ Classifiers
 ===========
 
 Classification is the step in the record linkage process were record pairs are
-classified into matches, non-matches and possible matches [Christen2012_].
+classified into matches, non-matches and possible matches [Christen2012]_.
 Classification algorithms can be supervised or unsupervised (with or without
 training data).
 
 
 .. seealso::
 
-    .. [Christen2012] Christen, Peter. 2012. Data matching: concepts and 
-        techniques for record linkage, entity resolution, and duplicate 
+    .. [Christen2012] Christen, Peter. 2012. Data matching: concepts and
+        techniques for record linkage, entity resolution, and duplicate
         detection. Springer Science & Business Media.
 
 Supervised
 ----------
 
-.. autoclass:: recordlinkage.LogisticRegressionClassifier 
+.. autoclass:: recordlinkage.LogisticRegressionClassifier
     :members:
     :inherited-members:
 
@@ -55,7 +55,7 @@ record pairs with an neural network developed in Keras.
 
 
 .. code:: python
-    
+
     # import ScitKit-Learn classifier
     from sklearn.ensemble import RandomForestClassifier
 
@@ -86,7 +86,7 @@ record pairs with an neural network developed in Keras.
 
 .. autoclass:: recordlinkage.adapters.KerasAdapter
 
-Example of a Keras model used for classification. 
+Example of a Keras model used for classification.
 
 .. code:: python
 

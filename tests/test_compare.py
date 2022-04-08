@@ -150,7 +150,7 @@ class TestCompareApi(TestData):
 
         comp = recordlinkage.Compare()
         comp.compare_vectorized(
-            lambda s1, s2: np.ones(len(s1), dtype=np.int),
+            lambda s1, s2: np.ones(len(s1), dtype=int),
             'given_name',
             'given_name',
             label='my_feature_label')
@@ -162,7 +162,7 @@ class TestCompareApi(TestData):
 
         comp = recordlinkage.Compare()
         comp.compare_vectorized(
-            lambda s1, s2: np.ones(len(s1), dtype=np.int),
+            lambda s1, s2: np.ones(len(s1), dtype=int),
             'given_name',
             'given_name',
             label='my_feature_label')
@@ -278,7 +278,7 @@ class TestCompareApi(TestData):
 
         comp = recordlinkage.Compare()
         comp.string('given_name', 'given_name', method='jaro')
-        comp.compare_vectorized(lambda s1, s2: np.ones(len(s1), dtype=np.int),
+        comp.compare_vectorized(lambda s1, s2: np.ones(len(s1), dtype=int),
                                 "given_name", "not_existing_label")
 
         with pytest.raises(KeyError):
@@ -287,7 +287,7 @@ class TestCompareApi(TestData):
     def test_incorrect_collabels_dedup(self):
 
         comp = recordlinkage.Compare()
-        comp.compare_vectorized(lambda s1, s2: np.ones(len(s1), dtype=np.int),
+        comp.compare_vectorized(lambda s1, s2: np.ones(len(s1), dtype=int),
                                 "given_name", "not_existing_label")
 
         with pytest.raises(KeyError):
@@ -301,7 +301,7 @@ class TestCompareApi(TestData):
 
         # test without label
         comp = recordlinkage.Compare()
-        comp.compare_vectorized(lambda s1, s2: np.ones(len(s1), dtype=np.int),
+        comp.compare_vectorized(lambda s1, s2: np.ones(len(s1), dtype=int),
                                 'col', 'col')
         result = comp.compute(ix, A, B)
         expected = DataFrame([1, 1, 1, 1, 1], index=ix)
@@ -310,7 +310,7 @@ class TestCompareApi(TestData):
         # test with label
         comp = recordlinkage.Compare()
         comp.compare_vectorized(
-            lambda s1, s2: np.ones(len(s1), dtype=np.int),
+            lambda s1, s2: np.ones(len(s1), dtype=int),
             'col',
             'col',
             label='my_feature_label')
@@ -365,10 +365,10 @@ class TestCompareApi(TestData):
             assert isinstance(s1, np.ndarray)
             assert isinstance(s2, np.ndarray)
 
-            return np.ones(len(s1), dtype=np.int)
+            return np.ones(len(s1), dtype=int)
 
         comp = recordlinkage.Compare()
-        comp.compare_vectorized(lambda s1, s2: np.ones(len(s1), dtype=np.int),
+        comp.compare_vectorized(lambda s1, s2: np.ones(len(s1), dtype=int),
                                 'col', 'col')
         result = comp.compute(ix, A, B)
         expected = DataFrame([1, 1, 1, 1, 1], index=ix)
@@ -383,7 +383,7 @@ class TestCompareApi(TestData):
         # test without label
         comp = recordlinkage.Compare()
         comp.compare_vectorized(
-            lambda s1, s2, x: np.ones(len(s1), dtype=np.int) * x, 'col', 'col',
+            lambda s1, s2, x: np.ones(len(s1), dtype=int) * x, 'col', 'col',
             5)
         result = comp.compute(ix, A, B)
         expected = DataFrame([5, 5, 5, 5, 5], index=ix)
@@ -392,7 +392,7 @@ class TestCompareApi(TestData):
         # test with label
         comp = recordlinkage.Compare()
         comp.compare_vectorized(
-            lambda s1, s2, x: np.ones(len(s1), dtype=np.int) * x,
+            lambda s1, s2, x: np.ones(len(s1), dtype=int) * x,
             'col',
             'col',
             5,
@@ -404,7 +404,7 @@ class TestCompareApi(TestData):
         # test with kwarg
         comp = recordlinkage.Compare()
         comp.compare_vectorized(
-            lambda s1, s2, x: np.ones(len(s1), dtype=np.int) * x,
+            lambda s1, s2, x: np.ones(len(s1), dtype=int) * x,
             'col',
             'col',
             x=5,
@@ -420,7 +420,7 @@ class TestCompareApi(TestData):
 
         # test without label
         comp = recordlinkage.Compare()
-        comp.compare_vectorized(lambda s1, s2: np.ones(len(s1), dtype=np.int),
+        comp.compare_vectorized(lambda s1, s2: np.ones(len(s1), dtype=int),
                                 'col', 'col')
         result = comp.compute(ix, A)
         expected = DataFrame([1, 1, 1, 1, 1], index=ix)
@@ -429,7 +429,7 @@ class TestCompareApi(TestData):
         # test with label
         comp = recordlinkage.Compare()
         comp.compare_vectorized(
-            lambda s1, s2: np.ones(len(s1), dtype=np.int),
+            lambda s1, s2: np.ones(len(s1), dtype=int),
             'col',
             'col',
             label='test')
@@ -445,7 +445,7 @@ class TestCompareApi(TestData):
         # test without label
         comp = recordlinkage.Compare()
         comp.compare_vectorized(
-            lambda s1, s2, x: np.ones(len(s1), dtype=np.int) * x, 'col', 'col',
+            lambda s1, s2, x: np.ones(len(s1), dtype=int) * x, 'col', 'col',
             5)
         result = comp.compute(ix, A)
         expected = DataFrame([5, 5, 5, 5, 5], index=ix)
@@ -454,7 +454,7 @@ class TestCompareApi(TestData):
         # test with label
         comp = recordlinkage.Compare()
         comp.compare_vectorized(
-            lambda s1, s2, x: np.ones(len(s1), dtype=np.int) * x,
+            lambda s1, s2, x: np.ones(len(s1), dtype=int) * x,
             'col',
             'col',
             5,

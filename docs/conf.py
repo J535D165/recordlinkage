@@ -299,13 +299,13 @@ texinfo_domain_indices = False
 
 # -- Additional options ---------------------------------------------------
 
-autodoc_member_order = 'bysource' 
+autodoc_member_order = 'bysource'
 
 intersphinx_mapping = {
-  'python': ('http://docs.python.org/3/', None),
-  'pandas': ('http://pandas.pydata.org/pandas-docs/stable', None),
-  'numpy': ('https://docs.scipy.org/doc/numpy/', None),
-  'sklearn': ('http://scikit-learn.org/stable/', None)
+  'python': ('https://docs.python.org/3/', None),
+  'pandas': ('https://pandas.pydata.org/pandas-docs/stable/', None),
+  'numpy': ('https://numpy.org/doc/stable/', None),
+  'sklearn': ('https://scikit-learn.org/stable/', None)
 }
 
 nbsphinx_execute = 'never'

@@ -44,7 +44,10 @@ class TestCleaningStandardise(object):
         """ Test the cleaning of an empty Series"""
 
         # Check empty series
-        pdt.assert_series_equal(clean(pd.Series()), pd.Series())
+        pdt.assert_series_equal(
+            clean(pd.Series(dtype=object)),
+            pd.Series(dtype=object)
+        )
 
     def test_clean_unicode(self):
 
