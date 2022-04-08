@@ -589,6 +589,14 @@ class TestSortedNeighbourhoodIndexing(TestData):
 
         pdt.assert_index_equal(pairs_new, pairs_old)
 
+    def test_get_sorting_key_values(self):
+        index_class = SortedNeighbourhood()
+        array1 = [10, 1, 2, 1, 2, 1, 9, 8]
+        array2 = [5, 5, 5, 3, 1, 4, 7, 10]
+        res = index_class._get_sorting_key_values(array1, array2)
+        res_sorted = np.sort(res)
+        np.testing.assert_array_equal(res, res_sorted)
+
 
 class TestRandomIndexing(TestData):
     """General unittest for the random indexing class."""
