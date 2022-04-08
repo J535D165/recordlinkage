@@ -66,7 +66,7 @@ register data is known.
 
     In [0]: golden_pairs = krebs_X[0:5000]
        ...: # 2093 matching pairs
-       ...: golden_matches_index = golden_pairs.index & krebs_true_links 
+       ...: golden_matches_index = golden_pairs.index.intersection(krebs_true_links)
        ...: golden_matches_index
 
 Logistic regression
