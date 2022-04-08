@@ -45,7 +45,10 @@ setup(
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3 :: Only"
     ],
-    python_requires=">=3.5",
+
+    # Python version in line with pandas' python version support
+    # https://pandas.pydata.org/docs/getting_started/install.html
+    python_requires=">=3.6",
     install_requires=[
         "jellyfish>=0.8.0",
         "numpy>=1.13.0",
