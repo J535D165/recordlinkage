@@ -82,7 +82,7 @@ class Index(BaseIndex):
             indexer.add(Random())
 
         """
-        indexer = Random()
+        indexer = Random(*args, **kwargs)
         self.add(indexer)
 
         return self
