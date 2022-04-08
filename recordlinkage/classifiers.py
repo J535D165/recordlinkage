@@ -25,33 +25,6 @@ class FellegiSunter(object):
         parameters. If False, the column index of the feature is used.
         Default True.
 
-    Attributes
-    ----------
-
-    log_p : float
-        Log match probability as described in the FS framework.
-
-    log_m_probs : np.ndarray
-        Log probability P(x_i=1|Match) as described in the FS framework.
-
-    log_u_probs : np.ndarray
-        Log probability P(x_i=1|Non-match) as described in the FS framework.
-
-    log_weights : np.ndarray
-        Log weights as described in the FS framework.
-
-    p : float
-        Match probability as described in the FS framework.
-
-    m_probs : np.ndarray
-        Probability P(x_i=1|Match) as described in the FS framework.
-
-    u_probs : np.ndarray
-        Probability P(x_i=1|Non-match) as described in the FS framework.
-
-    weights : np.ndarray
-        Weights as described in the FS framework.
-
     References
     ----------
 
@@ -495,37 +468,6 @@ class NaiveBayesClassifier(FellegiSunter, SKLearnAdapter, Classifier):
         parameters. If False, the column index of the feature is used.
         Default True.
 
-    Attributes
-    ----------
-
-    kernel: sklearn.naive_bayes.BernoulliNB
-        The kernel of the classifier. The kernel is
-        :class:`sklearn.naive_bayes.BernoulliNB` from SciKit-learn.
-
-    log_p : float
-        Log match probability as described in the FS framework.
-
-    log_m_probs : np.ndarray
-        Log probability P(x_i=1|Match) as described in the FS framework.
-
-    log_u_probs : np.ndarray
-        Log probability P(x_i=1|Non-match) as described in the FS framework.
-
-    log_weights : np.ndarray
-        Log weights as described in the FS framework.
-
-    p : float
-        Match probability as described in the FS framework.
-
-    m_probs : np.ndarray
-        Probability P(x_i=1|Match) as described in the FS framework.
-
-    u_probs : np.ndarray
-        Probability P(x_i=1|Non-match) as described in the FS framework.
-
-    weights : np.ndarray
-        Weights as described in the FS framework.
-
     """
 
     def __init__(self,
@@ -619,36 +561,6 @@ class ECMClassifier(FellegiSunter, SKLearnAdapter, Classifier):
         Use the column names of the pandas.DataFrame to identify the
         parameters. If False, the column index of the feature is used.
         Default True.
-
-    Attributes
-    ----------
-
-    kernel: recordlinkage.algorithms.em_sklearn.ECM
-        The kernel of the classifier.
-
-    log_p : float
-        Log match probability as described in the FS framework.
-
-    log_m_probs : np.ndarray
-        Log probability P(x_i=1|Match) as described in the FS framework.
-
-    log_u_probs : np.ndarray
-        Log probability P(x_i=1|Non-match) as described in the FS framework.
-
-    log_weights : np.ndarray
-        Log weights as described in the FS framework.
-
-    p : float
-        Match probability as described in the FS framework.
-
-    m_probs : np.ndarray
-        Probability P(x_i=1|Match) as described in the FS framework.
-
-    u_probs : np.ndarray
-        Probability P(x_i=1|Non-match) as described in the FS framework.
-
-    weights : np.ndarray
-        Weights as described in the FS framework.
 
     References
     ----------

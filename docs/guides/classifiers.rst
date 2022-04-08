@@ -36,7 +36,7 @@ month, birth year and zip code. The Krebs register contains
     In [0]: import pandas
        ...: import recordlinkage as rl
        ...: from recordlinkage.datasets import load_krebsregister
-    
+
 .. ipython::
 
     In [0]: krebs_X, krebs_true_links = load_krebsregister(missing_values=0)
@@ -66,7 +66,7 @@ register data is known.
 
     In [0]: golden_pairs = krebs_X[0:5000]
        ...: # 2093 matching pairs
-       ...: golden_matches_index = golden_pairs.index & krebs_true_links 
+       ...: golden_matches_index = golden_pairs.index.intersection(krebs_true_links)
        ...: golden_matches_index
 
 Logistic regression
@@ -82,7 +82,7 @@ relatively good results.
 
     In [0]: # Initialize the classifier
        ...: logreg = rl.LogisticRegressionClassifier()
-    
+
     In [0]: # Train the classifier
        ...: logreg.fit(golden_pairs, golden_matches_index)
        ...: print ("Intercept: ", logreg.intercept)
@@ -124,7 +124,7 @@ match.
 
     In [0]: intercept = -9
        ...: coefficients = [2.0, 1.0, 3.0, 1.0, 1.0, 1.0, 1.0, 2.0, 3.0]
-    
+
     In [0]: logreg = rl.LogisticRegressionClassifier(coefficients, intercept)
        ...: result_logreg_pretrained = logreg.predict(krebs_X)
        ...: len(result_logreg_pretrained)
@@ -160,7 +160,7 @@ comparison variables.
     In [0]: # Train the classifier
        ...: nb = rl.NaiveBayesClassifier(binarize=0.3)
        ...: nb.fit(golden_pairs, golden_matches_index)
-    
+
 .. ipython::
 
     In [0]: # Predict the match status for all record pairs
@@ -193,7 +193,7 @@ Linkage Toolkit is a linear SVM algorithm.
     In [0]: # Train the classifier
        ...: svm = rl.SVMClassifier()
        ...: svm.fit(golden_pairs, golden_matches_index)
-    
+
 .. ipython::
 
     In [0]: # Predict the match status for all record pairs
