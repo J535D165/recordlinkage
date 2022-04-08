@@ -150,7 +150,7 @@ class String(BaseCompareFeature):
         c = str_sim_alg(s_left, s_right)
 
         if self.threshold is not None:
-            if isinstance(c, pandas.Series) is False:
+            if not isinstance(c, pandas.Series):
                 c = pandas.Series(c)
             c = c.where((c < self.threshold) | (pandas.isnull(c)), other=1.0)
             c = c.where((c >= self.threshold) | (pandas.isnull(c)), other=0.0)
