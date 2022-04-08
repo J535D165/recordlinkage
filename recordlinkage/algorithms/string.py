@@ -102,7 +102,7 @@ def qgram_similarity(s1, s2, include_wb=True, ngram=(2, 2)):
     analyzer = 'char_wb' if include_wb is True else 'char'
 
     # prepare data
-    data = s1.append(s2).fillna('')
+    data = pandas.concat([s1, s2]).fillna('')
 
     # The vectorizer
     vectorizer = CountVectorizer(
@@ -142,7 +142,7 @@ def cosine_similarity(s1, s2, include_wb=True, ngram=(2, 2)):
     vectorizer = CountVectorizer(
         analyzer=analyzer, strip_accents='unicode', ngram_range=ngram)
 
-    data = s1.append(s2).fillna('')
+    data = pandas.concat([s1, s2]).fillna('')
 
     vec_fit = vectorizer.fit_transform(data)
 
