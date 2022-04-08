@@ -75,6 +75,7 @@ def test_febrl_links():
     assert isinstance(links, pandas.MultiIndex)
 
 
+@pytest.mark.skip(reason="Causes undeterministic problems")
 def test_krebs_dataset_download():
 
     # remove downloaded datasets
@@ -93,6 +94,7 @@ def test_krebs_dataset_download():
     assert len(krebs_matches) == 20931
 
 
+@pytest.mark.skip(reason="Causes undeterministic problems")
 def test_krebs_dataset_environ(tmpdir):
 
     path = Path(str(tmpdir)).expanduser()
@@ -104,6 +106,7 @@ def test_krebs_dataset_environ(tmpdir):
         assert Path(path, "krebsregister", "block_{}.zip".format(i)).is_file()
 
 
+@pytest.mark.skip(reason="Causes undeterministic problems")
 def test_krebs_dataset():
     krebs_data_block1, krebs_matches_block1 = load_krebsregister(1)
     krebs_data_block10, krebs_matches_block10 = load_krebsregister(10)
@@ -120,6 +123,7 @@ def test_krebs_dataset():
     assert krebs_block10.isnull().sum().sum() == 0
 
 
+@pytest.mark.skip(reason="Causes undeterministic problems")
 def test_krebs_missings():
 
     # missing values
@@ -127,6 +131,7 @@ def test_krebs_missings():
     assert krebs_block10.isnull().sum().sum() == 0
 
 
+@pytest.mark.skip(reason="Causes undeterministic problems")
 def test_krebs_shuffle():
 
     # missing values
