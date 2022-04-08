@@ -1234,6 +1234,22 @@ class TestCompareStrings(TestData):
             missing_value=nan,
             label="x_col3"
         )
+        comp.string(
+            'col',
+            'col',
+            method="cosine",
+            threshold=0.5,
+            missing_value=nan,
+            label="x_col4"
+        )
+        comp.string(
+            'col',
+            'col',
+            method="q_gram",
+            threshold=0.5,
+            missing_value=nan,
+            label="x_col5"
+        )
         result = comp.compute(ix, A, B)
 
         expected = Series([1.0, 1.0, 2.0, 0.0], index=ix, name="x_col1")
@@ -1244,6 +1260,12 @@ class TestCompareStrings(TestData):
 
         expected = Series([1.0, 1.0, nan, 1.0], index=ix, name="x_col3")
         pdt.assert_series_equal(result["x_col3"], expected)
+
+        expected = Series([1.0, 1.0, nan, 0.0], index=ix, name="x_col4")
+        pdt.assert_series_equal(result["x_col4"], expected)
+
+        expected = Series([1.0, 1.0, 0.0, 0.0], index=ix, name="x_col5")
+        pdt.assert_series_equal(result["x_col5"], expected)
 
     @pytest.mark.parametrize("alg", STRING_SIM_ALGORITHMS)
     def test_incorrect_input(self, alg):
