@@ -1,15 +1,15 @@
 """Setup file for the Python Record Linkage Toolkit."""
 
-import os
+from pathlib import Path
 
 from setuptools import find_packages, setup
 
 import versioneer
 
 
-def read(fname):
-    """Read a file."""
-    return open(os.path.join(os.path.dirname(__file__), fname)).read()
+# read the contents of your README file
+this_directory = Path(__file__).parent
+long_description = (this_directory / "README.md").read_text()
 
 
 # Optional dependencies for the recordlinkage package
@@ -30,7 +30,8 @@ setup(
 
     # Description
     description="A record linkage toolkit for linking and deduplication",
-    long_description=read('README.rst'),
+    long_description=long_description,
+    long_description_content_type='text/markdown',
 
     # Github
     url="https://github.com/J535D165/recordlinkage",
