@@ -10,7 +10,7 @@ All you need to start linking records.
 
 	about
 	installation
-	guides/link_two_dataframes.rst
+	guides/link_two_dataframes.ipynb
 	guides/data_deduplication.rst
 
 .. toctree::
