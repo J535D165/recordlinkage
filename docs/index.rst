@@ -11,7 +11,7 @@ All you need to start linking records.
 	about
 	installation
 	guides/link_two_dataframes.ipynb
-	guides/data_deduplication.rst
+	guides/data_deduplication.ipynb
 
 .. toctree::
 	:caption: Record linkage
