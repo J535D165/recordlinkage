@@ -2,6 +2,9 @@
 Python Record Linkage Toolkit Documentation
 *******************************************
 
+.. figure:: /images/recordlinkage-banner-transparent.svg
+    :width: 100%
+
 All you need to start linking records.
 
 .. toctree::
@@ -30,7 +33,6 @@ All you need to start linking records.
 	:maxdepth: 2
 
 	annotation
-	guides/classifiers.rst
 	performance.rst
 
 .. toctree::
