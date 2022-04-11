@@ -23,4 +23,4 @@ jobs:
         python -m pip install -r docs/requirements.txt
     - name: Build HTML
       run: |
-        python -m sphinx -W --keep-going --color doc/ _build/html/
+        python -m sphinx -W --keep-going --color docs/ _build/html/
