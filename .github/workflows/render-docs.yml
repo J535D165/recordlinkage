@@ -1,19 +1,26 @@
-name: build-docs
+name: Build HTML on macOS
 on: [push, pull_request]
-
 jobs:
-  docs:
-    runs-on: ubuntu-latest
+  html-macos:
+    runs-on: macos-latest
     steps:
-    - uses: actions/checkout@v1
+    - name: Clone repo
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - name: Install pandoc
+      run: |
+        brew install pandoc
     - name: Set up Python
-      uses: actions/setup-python@v1
+      uses: actions/setup-python@v2
       with:
         python-version: '3.8'
     - name: Install recordlinkage
       run: |
-        pip install .[all]
-    - uses: ammaraskar/sphinx-action@master
-      with:
-        docs-folder: "docs/"
-        repo-token: "${{ secrets.GITHUB_TOKEN }}"
+        python -m pip install .[all]
+    - name: Install docs dependencies
+      run: |
+        python -m pip install -r docs/requirements.txt
+    - name: Build HTML
+      run: |
+        python -m sphinx -W --keep-going --color doc/ _build/html/
