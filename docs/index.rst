@@ -2,6 +2,9 @@
 Python Record Linkage Toolkit Documentation
 *******************************************
 
+.. figure:: /images/recordlinkage-banner-transparent.svg
+    :width: 100%
+
 All you need to start linking records.
 
 .. toctree::
@@ -10,8 +13,8 @@ All you need to start linking records.
 
 	about
 	installation
-	guides/link_two_dataframes.rst
-	guides/data_deduplication.rst
+	guides/link_two_dataframes.ipynb
+	guides/data_deduplication.ipynb
 
 .. toctree::
 	:caption: Record linkage

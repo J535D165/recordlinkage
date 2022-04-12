@@ -39,7 +39,8 @@ extensions = [
     'sphinx.ext.napoleon',
     'sphinx.ext.intersphinx',
     'IPython.sphinxext.ipython_console_highlighting',
-    'IPython.sphinxext.ipython_directive'
+    'IPython.sphinxext.ipython_directive',
+    'nbsphinx',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -302,8 +303,6 @@ intersphinx_mapping = {
     'sklearn': ('https://scikit-learn.org/stable/', None)
 }
 
-nbsphinx_execute = 'never'
-
 autodoc_mock_imports = ['jellyfish']
 
 # -- Napoleon options ---------------------------------------------------
@@ -318,3 +317,24 @@ napoleon_use_admonition_for_references = True
 napoleon_use_ivar = False
 napoleon_use_param = True
 napoleon_use_rtype = False
+
+# -- NBSphinx options ----------------------------------------------------
+
+# nbsphinx_execute = 'never'
+
+# This is processed by Jinja2 and inserted before each notebook
+nbsphinx_prolog = r"""
+{% set docname = 'docs/' + env.doc2path(env.docname, base=None) %}
+
+.. note::
+
+    This page was generated from `{{ docname|e }} <https://github.com/J535D165/recordlinkage/blob/{{ env.config.release|e }}/{{ docname|e }}>`_.
+    Run an online interactive version of this page with |binder| or |colab|.
+
+.. |binder| image:: https://mybinder.org/badge_logo.svg
+    :target: https://mybinder.org/v2/gh/J535D165/recordlinkage/v{{ env.config.release|e }}?filepath={{ docname|e }}
+
+.. |colab| image:: https://colab.research.google.com/assets/colab-badge.svg
+    :target: https://githubtocolab.com/J535D165/recordlinkage/blob/v{{ env.config.release|e }}/{{ docname|e }}
+
+"""

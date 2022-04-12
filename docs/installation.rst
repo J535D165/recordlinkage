@@ -1,6 +1,6 @@
-******************
-Installation guide
-******************
+************
+Installation
+************
 
 Python version support
 ======================
