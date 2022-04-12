@@ -13,11 +13,6 @@ from recordlinkage.config import option_context
 from recordlinkage.config import options
 from recordlinkage.config import reset_option
 from recordlinkage.config import set_option
-from recordlinkage.deprecated import *
-from recordlinkage.index import BlockIndex
-from recordlinkage.index import FullIndex
-from recordlinkage.index import RandomIndex
-from recordlinkage.index import SortedNeighbourhoodIndex
 from recordlinkage.measures import *
 from recordlinkage.network import *
 from recordlinkage.utils import index_split

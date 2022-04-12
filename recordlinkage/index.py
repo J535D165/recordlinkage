@@ -465,17 +465,3 @@ class Random(BaseIndexAlgorithm):
         return pandas.MultiIndex(levels=levels,
                                  codes=labels,
                                  verify_integrity=False)
-
-
-FullIndex = DeprecationHelper(
-    Full, "class recordlinkage.FullIndex is renamed and moved, "
-    "use recordlinkage.index.Full")
-BlockIndex = DeprecationHelper(
-    Block, "class recordlinkage.BlockIndex is renamed and moved, "
-    "use recordlinkage.index.Block")
-SortedNeighbourhoodIndex = DeprecationHelper(
-    SortedNeighbourhood, "class recordlinkage.SortedNeighbourhoodIndex "
-    "is renamed and moved, use recordlinkage.index.SortedNeighbourhood")
-RandomIndex = DeprecationHelper(
-    Random, "class recordlinkage.RandomIndex is renamed and moved, "
-    "use recordlinkage.index.Random")

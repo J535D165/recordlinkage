@@ -285,13 +285,7 @@ class BaseIndexAlgorithm(object):
         # Remove all pairs not in the lower triangular part of the matrix.
         # This part can be inproved by not comparing the level values, but the
         # level itself.
-        try:
-            pairs = pairs[pairs.codes[0] > pairs.codes[1]]
-        except AttributeError:
-            # backwards compat pandas <24
-            pairs = pairs[pairs.labels[0] > pairs.labels[1]]
-
-        return pairs
+        return pairs[pairs.codes[0] > pairs.codes[1]]
 
     def _make_index_names(self, name1, name2):
 
