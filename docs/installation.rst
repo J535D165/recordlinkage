@@ -9,24 +9,19 @@ The Python Record Linkage Toolkit supports the versions of Python that Pandas
 supports as well. You can find the supported Python versions in the Pandas
 documentation_.
 
-Python 2.7 users can use version <= 0.13, but it is advised to use Python >=
-3.5.
-
-.. _documentation: http://pandas.pydata.org/pandas-docs/stable/install.html#python-version-support
-
 Installation
 ============
 
-The Python Record linkage Toolkit requires Python 3.5 or higher (since version
->= 0.14). Install the package easily with pip
+The Python Record linkage Toolkit requires Python 3.6 or higher. Install the
+package easily with pip
 
 .. code:: sh
 
     pip install recordlinkage
 
-You can also clone the project on Github. 
+You can also clone the project on Github.
 
-To install all recommended and optional dependencies, run 
+To install all recommended and optional dependencies, run
 
 .. code:: sh
 
