@@ -133,7 +133,7 @@ some others are unsupervised. An example of supervised learning:
 
     logrg.predict(compare_vectors)
 
-and an example of unsupervised learning (the well known ECM-algorithm):
+and an example of unsupervised learning (the well known ECM-algorithm): 
 
 .. code:: python
 
