@@ -95,7 +95,7 @@ Example: High level usage
     comparer.date('dob', 'date_of_birth', label='date')
     comparer.string('str_name', 'streetname', method='damerau_levenshtein', threshold=0.7, label='streetname')
     comparer.exact('place', 'placename', label='placename')
-    comparer.numeric('income', 'income', method='gauss', offset=3, scale=3, missing_value=0.5, 'label'='income')
+    comparer.numeric('income', 'income', method='gauss', offset=3, scale=3, missing_value=0.5, label='income')
     comparer.compute(pairs, dfA, dfB)
 
 
@@ -114,7 +114,7 @@ Example: Low level usage
         Date('dob', 'date_of_birth', label='date')
         String('str_name', 'streetname', method='damerau_levenshtein', threshold=0.7, label='streetname')
         Exact('place', 'placename', label='placename')
-        Numeric('income', 'income', method='gauss', offset=3, scale=3, missing_value=0.5, 'label'='income')
+        Numeric('income', 'income', method='gauss', offset=3, scale=3, missing_value=0.5, label='income')
     ])
     comparer.compute(pairs, dfA, dfB)
 
