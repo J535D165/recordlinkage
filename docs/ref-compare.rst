@@ -95,7 +95,7 @@ Example: High level usage
     comparer.date('dob', 'date_of_birth', label='date')
     comparer.string('str_name', 'streetname', method='damerau_levenshtein', threshold=0.7, label='streetname')
     comparer.exact('place', 'placename', label='placename')
-    comparer.numeric('income', 'income', method='gauss', offset=3, scale=3, missing_value=0.5, 'label'='income')
+    comparer.numeric('income', 'income', method='gauss', offset=3, scale=3, missing_value=0.5, label='income')
     comparer.compute(pairs, dfA, dfB)
 
 
@@ -109,12 +109,12 @@ Example: Low level usage
     from recordlinkage.compare import Exact, String, Numeric, Date
 
     comparer = rl.Compare([
-        String('name_a', 'name_b', method='jarowinkler', threshold=0.85, label='name')
-        Exact('sex', 'gender', label='gender')
-        Date('dob', 'date_of_birth', label='date')
-        String('str_name', 'streetname', method='damerau_levenshtein', threshold=0.7, label='streetname')
-        Exact('place', 'placename', label='placename')
-        Numeric('income', 'income', method='gauss', offset=3, scale=3, missing_value=0.5, 'label'='income')
+        String('name_a', 'name_b', method='jarowinkler', threshold=0.85, label='name'),
+        Exact('sex', 'gender', label='gender'),
+        Date('dob', 'date_of_birth', label='date'),
+        String('str_name', 'streetname', method='damerau_levenshtein', threshold=0.7, label='streetname'),
+        Exact('place', 'placename', label='placename'),
+        Numeric('income', 'income', method='gauss', offset=3, scale=3, missing_value=0.5, label='income'),
     ])
     comparer.compute(pairs, dfA, dfB)
 
