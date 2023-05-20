@@ -99,11 +99,15 @@ class String(BaseCompareFeature):
         An approximate string comparison method. Options are ['jaro',
         'jarowinkler', 'levenshtein', 'damerau_levenshtein', 'qgram',
         'cosine', 'smith_waterman', 'lcs']. Default: 'levenshtein'
-    threshold : float, tuple of floats
+    threshold : None, float, tuple of floats
         A threshold value. All approximate string comparisons higher or
         equal than this threshold are 1. Otherwise 0.
+        If None, it returns the float string comparison value instead of 0 or 1.
+        Default None.
     missing_value : numpy.dtype
         The value for a comparison with a missing value. Default 0.
+    label : list, str, int
+        The identifying label(s) for the returned values. Default None.
     """
 
     name = "string"
