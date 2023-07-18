@@ -52,7 +52,7 @@ setup(
     install_requires=[
         "jellyfish>=0.8.0",
         "numpy>=1.13.0",
-        "pandas>=2,<3",
+        "pandas>=1,<3",
         "scipy>=1",
         "scikit-learn>=0.19.0",
         "joblib"
