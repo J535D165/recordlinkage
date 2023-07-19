@@ -64,54 +64,6 @@ html_domain_indices = False
 # Output file base name for HTML help builder.
 htmlhelp_basename = "RecordLinkageToolkitdoc"
 
-# # -- Options for manual page output ---------------------------------------
-
-# # One entry per manual page. List of tuples
-# # (source start file, name, description, authors, manual section).
-# man_pages = [
-#     (
-#         master_doc,
-#         "recordlinkagetoolkit",
-#         "Record Linkage Toolkit Documentation",
-#         [author],
-#         1,
-#     )
-# ]
-
-# # If true, show URL addresses after external links.
-# # man_show_urls = False
-
-# # -- Options for Texinfo output -------------------------------------------
-
-# # Grouping the document tree into Texinfo files. List of tuples
-# # (source start file, target name, title, author,
-# #  dir menu entry, description, category)
-# texinfo_documents = [
-#     (
-#         master_doc,
-#         "RecordLinkageToolkit",
-#         "Record Linkage Toolkit Documentation",
-#         author,
-#         "RecordLinkageToolkit",
-#         "One line description of project.",
-#         "Miscellaneous",
-#     ),
-# ]
-
-# # Documents to append as an appendix to all manuals.
-# # texinfo_appendices = []
-
-# # If false, no module index is generated.
-# texinfo_domain_indices = False
-
-# How to display URL addresses: 'footnote', 'no', or 'inline'.
-# texinfo_show_urls = 'footnote'
-
-# If true, do not generate a @detailmenu in the "Top" node's menu.
-# texinfo_no_detailmenu = False
-
-# -- Additional options ---------------------------------------------------
-
 # -- Napoleon options ---------------------------------------------------
 
 napoleon_google_docstring = False
