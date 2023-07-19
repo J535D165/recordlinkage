@@ -32,6 +32,7 @@ repository = "https://github.com/J535D165/recordlinkage"
 [project.optional-dependencies]
 all = ["networkx>=2", "bottleneck", "numexpr"]
 lint = ["ruff"]
+docs = ["sphinx", "nbsphinx", "sphinx-rtd-theme", "ipykernel"]
 test = ["pytest"]
 
 [build-system]
