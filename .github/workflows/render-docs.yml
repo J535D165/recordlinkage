@@ -6,9 +6,6 @@ jobs:
     steps:
     - name: Clone repo
       uses: actions/checkout@v2
-    - name: Install pandoc
-      run: |
-        brew install pandoc
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
