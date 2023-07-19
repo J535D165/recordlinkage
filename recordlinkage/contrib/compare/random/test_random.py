@@ -32,10 +32,8 @@ from recordlinkage.contrib.compare import RandomDiscrete
 from recordlinkage.index import Full
 
 
-class TestRandomContinuous(object):
-
+class TestRandomContinuous:
     def test_random_cont_standalone(self):
-
         arr1 = [1, 2, 3, 4, 5]
         arr2 = [1, 2, 3, 4, 5]
         pairs = pd.MultiIndex.from_product([arr1, arr2])
@@ -46,28 +44,25 @@ class TestRandomContinuous(object):
         assert r.shape[0] == len(arr1) * len(arr2)
 
     def test_random_cont(self):
-
-        df_a = pd.DataFrame({'v': list("abcde")})
-        df_b = pd.DataFrame({'v': list("abcde")})
+        df_a = pd.DataFrame({"v": list("abcde")})
+        df_b = pd.DataFrame({"v": list("abcde")})
 
         pairs = Full().index(df_a, df_b)
 
         c = recordlinkage.Compare()
         c.exact("v", "v")
-        c.add(RandomContinuous(label='random'))
+        c.add(RandomContinuous(label="random"))
         cv = c.compute(pairs, df_a, df_b)
 
         assert isinstance(cv, pd.DataFrame)
 
-        assert cv['random'].notnull().all()
-        assert cv['random'].min() >= 0.0
-        assert cv['random'].max() <= 1.0
+        assert cv["random"].notnull().all()
+        assert cv["random"].min() >= 0.0
+        assert cv["random"].max() <= 1.0
 
 
-class TestRandomDiscrete(object):
-
+class TestRandomDiscrete:
     def test_random_desc_standalone(self):
-
         arr1 = [1, 2, 3, 4, 5]
         arr2 = [1, 2, 3, 4, 5]
         pairs = pd.MultiIndex.from_product([arr1, arr2])
@@ -78,18 +73,17 @@ class TestRandomDiscrete(object):
         assert r.shape[0] == len(arr1) * len(arr2)
 
     def test_random_desc(self):
-
-        df_a = pd.DataFrame({'v': list("abcde")})
-        df_b = pd.DataFrame({'v': list("abcde")})
+        df_a = pd.DataFrame({"v": list("abcde")})
+        df_b = pd.DataFrame({"v": list("abcde")})
 
         pairs = Full().index(df_a, df_b)
 
         c = recordlinkage.Compare()
         c.exact("v", "v")
-        c.add(RandomDiscrete(label='random'))
+        c.add(RandomDiscrete(label="random"))
         cv = c.compute(pairs, df_a, df_b)
 
         assert isinstance(cv, pd.DataFrame)
 
-        assert cv['random'].notnull().all()
-        assert cv['random'].isin([0, 1]).all()
+        assert cv["random"].notnull().all()
+        assert cv["random"].isin([0, 1]).all()

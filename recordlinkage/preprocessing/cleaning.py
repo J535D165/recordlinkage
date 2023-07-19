@@ -4,14 +4,16 @@ from sklearn.feature_extraction.text import strip_accents_ascii
 from sklearn.feature_extraction.text import strip_accents_unicode
 
 
-def clean(s,
-          lowercase=True,
-          replace_by_none=r'[^ \-\_A-Za-z0-9]+',
-          replace_by_whitespace=r'[\-\_]',
-          strip_accents=None,
-          remove_brackets=True,
-          encoding='utf-8',
-          decode_error='strict'):
+def clean(
+    s,
+    lowercase=True,
+    replace_by_none=r"[^ \-\_A-Za-z0-9]+",
+    replace_by_whitespace=r"[\-\_]",
+    strip_accents=None,
+    remove_brackets=True,
+    encoding="utf-8",
+    decode_error="strict",
+):
     """Clean string variables.
 
     Clean strings in the Series by removing unwanted tokens,
@@ -85,13 +87,12 @@ def clean(s,
         pass
     elif callable(strip_accents):
         strip_accents_fn = strip_accents
-    elif strip_accents == 'ascii':
+    elif strip_accents == "ascii":
         strip_accents_fn = strip_accents_ascii
-    elif strip_accents == 'unicode':
+    elif strip_accents == "unicode":
         strip_accents_fn = strip_accents_unicode
     else:
-        raise ValueError(
-            "Invalid value for 'strip_accents': {}".format(strip_accents))
+        raise ValueError(f"Invalid value for 'strip_accents': {strip_accents}")
 
     # Remove accents etc
     if strip_accents:
@@ -109,23 +110,24 @@ def clean(s,
                     return x
 
         # encoding
-        s = s.apply(lambda x: x.decode(encoding, decode_error)
-                    if type(x) == bytes else x)
+        s = s.apply(
+            lambda x: x.decode(encoding, decode_error) if type(x) == bytes else x
+        )
         s = s.map(lambda x: strip_accents_fn_wrapper(x))
 
     # Remove all content between brackets
     if remove_brackets is True:
-        s = s.str.replace(r'(\[.*?\]|\(.*?\)|\{.*?\})', '', regex=True)
+        s = s.str.replace(r"(\[.*?\]|\(.*?\)|\{.*?\})", "", regex=True)
 
     # Remove the special characters
     if replace_by_none:
-        s = s.str.replace(replace_by_none, '', regex=True)
+        s = s.str.replace(replace_by_none, "", regex=True)
 
     if replace_by_whitespace:
-        s = s.str.replace(replace_by_whitespace, ' ', regex=True)
+        s = s.str.replace(replace_by_whitespace, " ", regex=True)
 
     # Remove multiple whitespaces
-    s = s.str.replace(r'\s\s+', ' ', regex=True)
+    s = s.str.replace(r"\s\s+", " ", regex=True)
 
     # Strip s
     s = s.str.lstrip().str.rstrip()
@@ -149,7 +151,7 @@ def phonenumbers(s):
     """
 
     # Remove all special tokens
-    s = s.astype(object).str.replace('[^0-9+]+', '', regex=True)
+    s = s.astype(object).str.replace("[^0-9+]+", "", regex=True)
 
     return s
 
@@ -169,6 +171,6 @@ def value_occurence(s):
     """
 
     # https://github.com/pydata/pandas/issues/3729
-    value_count = s.fillna('NAN')
+    value_count = s.fillna("NAN")
 
-    return value_count.groupby(by=value_count).transform('count')
+    return value_count.groupby(by=value_count).transform("count")

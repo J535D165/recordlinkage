@@ -1,11 +1,5 @@
 import recordlinkage.config as cf
-from recordlinkage.config import get_default_val
-from recordlinkage.config import is_bool
-from recordlinkage.config import is_callable
-from recordlinkage.config import is_instance_factory
-from recordlinkage.config import is_int
 from recordlinkage.config import is_one_of_factory
-from recordlinkage.config import is_text
 
 pairs_type_doc = """
 : str
@@ -26,15 +20,18 @@ classification_return_type_doc = """
 
 """
 
-with cf.config_prefix('indexing'):
-    cf.register_option('pairs',
-                       'multiindex',
-                       pairs_type_doc,
-                       validator=is_one_of_factory(['multiindex']))
+with cf.config_prefix("indexing"):
+    cf.register_option(
+        "pairs",
+        "multiindex",
+        pairs_type_doc,
+        validator=is_one_of_factory(["multiindex"]),
+    )
 
-with cf.config_prefix('classification'):
-    cf.register_option('return_type',
-                       'index',
-                       classification_return_type_doc,
-                       validator=is_one_of_factory(
-                           ['index', 'series', 'array']))
+with cf.config_prefix("classification"):
+    cf.register_option(
+        "return_type",
+        "index",
+        classification_return_type_doc,
+        validator=is_one_of_factory(["index", "series", "array"]),
+    )

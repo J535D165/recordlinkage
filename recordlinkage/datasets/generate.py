@@ -2,13 +2,15 @@ import numpy as np
 import pandas as pd
 
 
-def binary_vectors(n,
-                   n_match,
-                   m=[0.9] * 8,
-                   u=[0.1] * 8,
-                   random_state=None,
-                   return_links=False,
-                   dtype=np.int8):
+def binary_vectors(
+    n,
+    n_match,
+    m=[0.9] * 8,
+    u=[0.1] * 8,
+    random_state=None,
+    return_links=False,
+    dtype=np.int8,
+):
     """Generate random binary comparison vectors.
 
     This function is used to generate random comparison vectors. The
@@ -59,7 +61,6 @@ def binary_vectors(n,
     sample_set = np.array([0, 1], dtype=dtype)
 
     for i, _ in enumerate(m):
-
         p_mi = [1 - m[i], m[i]]
         p_ui = [1 - u[i], u[i]]
 
@@ -75,7 +76,7 @@ def binary_vectors(n,
     data_np = np.concatenate((match_block, nonmatch_block), axis=0)
     index_np = np.random.randint(1001, 1001 + n * 2, (n, 2))
 
-    data_col_names = ['c_%s' % (i + 1) for i in range(len(m))]
+    data_col_names = ["c_%s" % (i + 1) for i in range(len(m))]
     data_mi = pd.MultiIndex.from_arrays([index_np[:, 0], index_np[:, 1]])
     data_df = pd.DataFrame(data_np, index=data_mi, columns=data_col_names)
 

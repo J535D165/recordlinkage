@@ -25,11 +25,11 @@ def is_string_like(obj):
 
 
 def _iterable_not_string(x):
-    return (isinstance(x, collections.Iterable) and not isinstance(x, str))
+    return isinstance(x, collections.Iterable) and not isinstance(x, str)
 
 
 def is_iterator(obj):
-    return hasattr(obj, '__next__')
+    return hasattr(obj, "__next__")
 
 
 def is_re(obj):
@@ -46,16 +46,15 @@ def is_re_compilable(obj):
 
 
 def is_list_like(arg):
-    return (hasattr(arg, '__iter__')
-            and not isinstance(arg, string_and_binary_types))
+    return hasattr(arg, "__iter__") and not isinstance(arg, string_and_binary_types)
 
 
 def is_dict_like(arg):
-    return hasattr(arg, '__getitem__') and hasattr(arg, 'keys')
+    return hasattr(arg, "__getitem__") and hasattr(arg, "keys")
 
 
 def is_named_tuple(arg):
-    return isinstance(arg, tuple) and hasattr(arg, '_fields')
+    return isinstance(arg, tuple) and hasattr(arg, "_fields")
 
 
 def is_hashable(arg):
@@ -101,20 +100,16 @@ def is_sequence(x):
 
 
 def is_pandas_like(x):
-
     return isinstance(x, (pandas.Series, pandas.DataFrame))
 
 
 def is_pandas_multiindex(x):
-
     return isinstance(x, (pandas.MultiIndex))
 
 
 def is_pandas_2d_multiindex(x):
-
     return is_pandas_multiindex(x) and x.nlevels == 2
 
 
 def is_numpy_like(x):
-
     return isinstance(x, (numpy.ndarray))

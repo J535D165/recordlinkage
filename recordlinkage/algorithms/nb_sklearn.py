@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 
 This module implements the Naive Bayes algorithm in both a supervised and
@@ -32,7 +31,7 @@ from scipy.sparse import issparse
 
 from recordlinkage.types import is_string_like
 
-__all__ = ['NaiveBayes', 'ECM']
+__all__ = ["NaiveBayes", "ECM"]
 
 _ALPHA_MIN = 1e-10
 
@@ -66,17 +65,19 @@ def check_is_fitted(estimator, attributes, msg=None, all_or_any=all):
         If the attributes are not found.
     """
     if msg is None:
-        msg = ("This %(name)s instance is not fitted yet. Call 'fit' with "
-               "appropriate arguments before using this method.")
+        msg = (
+            "This %(name)s instance is not fitted yet. Call 'fit' with "
+            "appropriate arguments before using this method."
+        )
 
-    if not hasattr(estimator, 'fit'):
+    if not hasattr(estimator, "fit"):
         raise TypeError("%s is not an estimator instance." % (estimator))
 
     if not isinstance(attributes, (list, tuple)):
         attributes = [attributes]
 
     if not all_or_any([hasattr(estimator, attr) for attr in attributes]):
-        raise NotFittedError(msg % {'name': type(estimator).__name__})
+        raise NotFittedError(msg % {"name": type(estimator).__name__})
 
 
 def safe_sparse_dot(a, b, dense_output=False):
@@ -118,7 +119,7 @@ class BaseNB(BaseEstimator, ClassifierMixin):
         """Calculate the posterior log probability of the samples X"""
         check_is_fitted(self, "classes_")
 
-        X = check_array(X, accept_sparse='csr')
+        X = check_array(X, accept_sparse="csr")
         X_bin = self._transform_data(X)
 
         n_classes, n_features = self.feature_log_prob_.shape
@@ -126,8 +127,9 @@ class BaseNB(BaseEstimator, ClassifierMixin):
 
         if n_features_X != n_features:
             raise ValueError(
-                "Expected input with %d features, got %d instead" %
-                (n_features, n_features_X))
+                "Expected input with %d features, got %d instead"
+                % (n_features, n_features_X)
+            )
 
         # see chapter 4.1 of http://www.cs.columbia.edu/~mcollins/em.pdf
         # implementation as in Formula 4.
@@ -210,7 +212,6 @@ class BaseNB(BaseEstimator, ClassifierMixin):
             X = binarize(X, threshold=self.binarize)
 
         for i in range(X.shape[1]):
-
             # initialise binarizer and save
             binarizer = LabelBinarizer()
 
@@ -235,13 +236,13 @@ class BaseNB(BaseEstimator, ClassifierMixin):
 
         if len(self._binarizers) != X.shape[1]:
             raise ValueError(
-                "Expected input with %d features, got %d instead" %
-                (len(self._binarizers), X.shape[1]))
+                "Expected input with %d features, got %d instead"
+                % (len(self._binarizers), X.shape[1])
+            )
 
         X_parts = []
 
         for i in range(X.shape[1]):
-
             X_i = self._binarizers[i].transform(X[:, i])
 
             # sklearn returns ndarray with shape (samples, 1) on binary input.
@@ -257,9 +258,8 @@ class BaseNB(BaseEstimator, ClassifierMixin):
 
     @property
     def labels_(self):
-
         c = []
-        for i, bin in enumerate(self._binarizers):
+        for _i, bin in enumerate(self._binarizers):
             c.append(list(bin.classes_))
 
         return c
@@ -294,12 +294,7 @@ class NaiveBayes(BaseNB):
 
     """
 
-    def __init__(self,
-                 alpha=1.0,
-                 binarize=0.0,
-                 fit_prior=True,
-                 class_prior=None):
-
+    def __init__(self, alpha=1.0, binarize=0.0, fit_prior=True, class_prior=None):
         self.alpha = alpha
         self.binarize = binarize
         self.fit_prior = fit_prior
@@ -319,34 +314,42 @@ class NaiveBayes(BaseNB):
         smoothed_fc = self.feature_count_ + alpha
         smoothed_cc = self.class_count_ + alpha * 2
 
-        self.feature_log_prob_ = (np.log(smoothed_fc) -
-                                  np.log(smoothed_cc.reshape(-1, 1)))
+        self.feature_log_prob_ = np.log(smoothed_fc) - np.log(
+            smoothed_cc.reshape(-1, 1)
+        )
 
     def _update_class_log_prior(self, class_prior=None):
         n_classes = len(self.classes_)
         if class_prior is not None:
             if len(class_prior) != n_classes:
-                raise ValueError("Number of priors must match number of"
-                                 " classes.")
+                raise ValueError("Number of priors must match number of" " classes.")
             self.class_log_prior_ = np.log(class_prior)
         elif self.fit_prior:
             # empirical prior, with sample_weight taken into account
-            self.class_log_prior_ = (np.log(self.class_count_) -
-                                     np.log(self.class_count_.sum()))
+            self.class_log_prior_ = np.log(self.class_count_) - np.log(
+                self.class_count_.sum()
+            )
         else:
             self.class_log_prior_ = np.zeros(n_classes) - np.log(n_classes)
 
     def _check_alpha(self):
         if np.min(self.alpha) < 0:
-            raise ValueError('Smoothing parameter alpha = %.1e. '
-                             'alpha should be > 0.' % np.min(self.alpha))
+            raise ValueError(
+                "Smoothing parameter alpha = %.1e. "
+                "alpha should be > 0." % np.min(self.alpha)
+            )
         if isinstance(self.alpha, np.ndarray):
             if not self.alpha.shape[0] == self.feature_count_.shape[1]:
-                raise ValueError("alpha should be a scalar or a numpy array "
-                                 "with shape [n_features]")
+                raise ValueError(
+                    "alpha should be a scalar or a numpy array "
+                    "with shape [n_features]"
+                )
         if np.min(self.alpha) < _ALPHA_MIN:
-            warnings.warn('alpha too small will result in numeric errors, '
-                          'setting alpha = %.1e' % _ALPHA_MIN)
+            warnings.warn(
+                "alpha too small will result in numeric errors, "
+                "setting alpha = %.1e" % _ALPHA_MIN,
+                stacklevel=2,
+            )
             return np.maximum(self.alpha, _ALPHA_MIN)
         return self.alpha
 
@@ -367,7 +370,7 @@ class NaiveBayes(BaseNB):
         -------
         self : object
         """
-        X, y = check_X_y(X, y, 'csr')
+        X, y = check_X_y(X, y, "csr")
 
         # Transform data with a label binarizer. Each column will get
         # transformed into a N columns (for each distinct value a column). For
@@ -397,8 +400,9 @@ class NaiveBayes(BaseNB):
         # and feature log probas
         n_effective_classes = Y.shape[1]
         self.class_count_ = np.zeros(n_effective_classes, dtype=np.float64)
-        self.feature_count_ = np.zeros((n_effective_classes, n_features),
-                                       dtype=np.float64)
+        self.feature_count_ = np.zeros(
+            (n_effective_classes, n_features), dtype=np.float64
+        )
         self._count(X_bin, Y)
         alpha = self._check_alpha()
         self._update_feature_log_prob(alpha)
@@ -409,12 +413,18 @@ class NaiveBayes(BaseNB):
     # XXX The following is a stopgap measure; we need to set the dimensions
     # of class_log_prior_ and feature_log_prob_ correctly.
     def _get_coef(self):
-        return (self.feature_log_prob_[1:]
-                if len(self.classes_) == 2 else self.feature_log_prob_)
+        return (
+            self.feature_log_prob_[1:]
+            if len(self.classes_) == 2
+            else self.feature_log_prob_
+        )
 
     def _get_intercept(self):
-        return (self.class_log_prior_[1:]
-                if len(self.classes_) == 2 else self.class_log_prior_)
+        return (
+            self.class_log_prior_[1:]
+            if len(self.classes_) == 2
+            else self.class_log_prior_
+        )
 
     coef_ = property(_get_coef)
     intercept_ = property(_get_intercept)
@@ -456,11 +466,7 @@ class ECM(BaseNB):
 
     # TODO: set the init parameters by the user
 
-    def __init__(self,
-                 init='jaro',
-                 max_iter=100,
-                 binarize=binarize,
-                 atol=10e-5):
+    def __init__(self, init="jaro", max_iter=100, binarize=binarize, atol=10e-5):
         self.init = init
         self.max_iter = max_iter
         self.binarize = binarize
@@ -469,9 +475,7 @@ class ECM(BaseNB):
         self._binarizers = []
 
     def _init_parameters_random(self, X_bin):
-        """Initialise parameters for unsupervised learning.
-
-        """
+        """Initialise parameters for unsupervised learning."""
 
         _, n_features = X_bin.shape
 
@@ -486,45 +490,46 @@ class ECM(BaseNB):
 
         feat_i = 0
 
-        for i, bin in enumerate(self._binarizers):
-
+        for _i, bin in enumerate(self._binarizers):
             bin_len = bin.classes_.shape[0]
 
             rand_vals_0 = np.random.rand(bin_len)
-            feature_prob[0, feat_i:feat_i + bin_len] = \
-                rand_vals_0 / np.sum(rand_vals_0)
+            feature_prob[0, feat_i : feat_i + bin_len] = rand_vals_0 / np.sum(
+                rand_vals_0
+            )
 
             rand_vals_1 = np.random.rand(bin_len)
-            feature_prob[1, feat_i:feat_i + bin_len] = \
-                rand_vals_1 / np.sum(rand_vals_1)
+            feature_prob[1, feat_i : feat_i + bin_len] = rand_vals_1 / np.sum(
+                rand_vals_1
+            )
 
             feat_i += bin_len
 
         return np.log(class_prior), np.log(feature_prob)
 
     def _init_parameters_jaro(self, X_bin):
-        """Initialise parameters for unsupervised learning.
-
-        """
+        """Initialise parameters for unsupervised learning."""
 
         _, n_features = X_bin.shape
 
-        class_prior = [.9, .1]
+        class_prior = [0.9, 0.1]
         feature_prob = []
 
         for i, bin in enumerate(self._binarizers):
-
             if bin.classes_.shape[0] > 2:
-                raise ValueError("Only binary labels are allowed for "
-                                 "'jaro'method. "
-                                 "Column {} has {} different labels.".format(
-                                     i, bin.classes_.shape[0]))
+                raise ValueError(
+                    "Only binary labels are allowed for "
+                    "'jaro'method. "
+                    "Column {} has {} different labels.".format(
+                        i, bin.classes_.shape[0]
+                    )
+                )
 
             for binclass in bin.classes_:
                 if binclass == 1:
-                    feature_prob.append([.1, .9])
+                    feature_prob.append([0.1, 0.9])
                 if binclass == 0:
-                    feature_prob.append([.9, .1])
+                    feature_prob.append([0.9, 0.1])
 
         return np.log(class_prior), np.log(feature_prob).T
 
@@ -542,7 +547,7 @@ class ECM(BaseNB):
         self : object
             Returns self.
         """
-        X = check_array(X, accept_sparse='csr')
+        X = check_array(X, accept_sparse="csr")
 
         # count frequencies of elements in vector space
         # based on https://stackoverflow.com/a/33235665
@@ -560,15 +565,19 @@ class ECM(BaseNB):
         # initialise parameters
         self.classes_ = np.array([0, 1])
 
-        if is_string_like(self.init) and self.init == 'random':
-            self.class_log_prior_, self.feature_log_prob_ = \
-                self._init_parameters_random(X_unique_bin)
-        elif is_string_like(self.init) and self.init == 'jaro':
-            self.class_log_prior_, self.feature_log_prob_ = \
-                self._init_parameters_jaro(X_unique_bin)
+        if is_string_like(self.init) and self.init == "random":
+            (
+                self.class_log_prior_,
+                self.feature_log_prob_,
+            ) = self._init_parameters_random(X_unique_bin)
+        elif is_string_like(self.init) and self.init == "jaro":
+            self.class_log_prior_, self.feature_log_prob_ = self._init_parameters_jaro(
+                X_unique_bin
+            )
         else:
-            raise ValueError("'{}' is not a valid value for "
-                             "argument 'init'".format(self.init))
+            raise ValueError(
+                "'{}' is not a valid value for " "argument 'init'".format(self.init)
+            )
 
         iteration = 0
         stop_iteration = False
@@ -577,7 +586,6 @@ class ECM(BaseNB):
         self._logging_feature_log_prob = np.atleast_3d(self.feature_log_prob_)
 
         while iteration < self.max_iter and not stop_iteration:
-
             # Increment counter
             iteration += 1
 
@@ -596,25 +604,29 @@ class ECM(BaseNB):
             # to the values in the to previous iteration (parameters starting
             # with 'self').
             if self.atol is not None:
-                class_log_prior_close = np.allclose(np.exp(class_log_prior_),
-                                                    np.exp(
-                                                        self.class_log_prior_),
-                                                    atol=self.atol)
+                class_log_prior_close = np.allclose(
+                    np.exp(class_log_prior_),
+                    np.exp(self.class_log_prior_),
+                    atol=self.atol,
+                )
                 feature_log_prob_close = np.allclose(
                     np.exp(feature_log_prob_),
                     np.exp(self.feature_log_prob_),
-                    atol=self.atol)
+                    atol=self.atol,
+                )
 
-                if (class_log_prior_close and feature_log_prob_close):
+                if class_log_prior_close and feature_log_prob_close:
                     stop_iteration = True
                     logging.info(
-                        "ECM algorithm converged after {} iterations".format(
-                            iteration))
+                        f"ECM algorithm converged after {iteration} iterations"
+                    )
 
             if np.all(np.isnan(feature_log_prob_)):
                 logging.warning(
                     "ECM algorithm might not converged correctly after "
-                    "{} iterations".format(iteration))
+                    "{} iterations".format(iteration),
+                    stacklevel=2,
+                )
                 break
 
             # Update the class prior and feature probs.
@@ -622,31 +634,36 @@ class ECM(BaseNB):
             self.feature_log_prob_ = feature_log_prob_
 
             # create logs
-            self._logging_class_log_prior = np.concatenate([
-                self._logging_class_log_prior,
-                np.atleast_2d(self.class_log_prior_)
-            ])
-            self._logging_feature_log_prob = np.concatenate([
-                self._logging_feature_log_prob,
-                np.atleast_3d(self.feature_log_prob_)
-            ], axis=2)
+            self._logging_class_log_prior = np.concatenate(
+                [self._logging_class_log_prior, np.atleast_2d(self.class_log_prior_)]
+            )
+            self._logging_feature_log_prob = np.concatenate(
+                [self._logging_feature_log_prob, np.atleast_3d(self.feature_log_prob_)],
+                axis=2,
+            )
         else:
             if iteration == self.max_iter:
                 logging.info(
-                    "ECM algorithm stopped at {} (=max_iter) iterations".
-                    format(iteration))
+                    f"ECM algorithm stopped at {iteration} (=max_iter) iterations"
+                )
 
         return self
 
     # The following is a stopgap measure; we need to set the dimensions
     # of class_log_prior_ and feature_log_prob_ correctly.
     def _get_coef(self):
-        return (self.feature_log_prob_[1:]
-                if len(self.classes_) == 2 else self.feature_log_prob_)
+        return (
+            self.feature_log_prob_[1:]
+            if len(self.classes_) == 2
+            else self.feature_log_prob_
+        )
 
     def _get_intercept(self):
-        return (self.class_log_prior_[1:]
-                if len(self.classes_) == 2 else self.class_log_prior_)
+        return (
+            self.class_log_prior_[1:]
+            if len(self.classes_) == 2
+            else self.class_log_prior_
+        )
 
     coef_ = property(_get_coef)
     intercept_ = property(_get_intercept)

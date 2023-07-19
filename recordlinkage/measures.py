@@ -7,18 +7,17 @@ from recordlinkage.utils import get_length
 
 
 def _get_multiindex(x):
-
     if isinstance(x, (pandas.DataFrame, pandas.Series)):
         return x.index
     elif isinstance(x, pandas.MultiIndex):
         return x
     else:
-        raise ValueError("Expected one of: pandas.DataFrame, "
-                         "pandas.Series, pandas.MultiIndex")
+        raise ValueError(
+            "Expected one of: pandas.DataFrame, " "pandas.Series, pandas.MultiIndex"
+        )
 
 
 def _isconfusionmatrix(x):
-
     if isinstance(x, numpy.ndarray) and x.shape == (2, 2):
         return True
     elif isinstance(x, list) and numpy.ndarray(x).shape == (2, 2):
@@ -67,7 +66,7 @@ def max_pairs(shape):
         x = get_length(shape)
         n = int(x * (x - 1) / 2)
 
-    elif (isinstance(shape, (tuple, list)) and len(shape) == 1):
+    elif isinstance(shape, (tuple, list)) and len(shape) == 1:
         x = get_length(shape[0])
         n = int(x * (x - 1) / 2)
 
@@ -284,7 +283,6 @@ def confusion_matrix(links_true, links_pred, total=None):
     if total is None:
         tn = numpy.nan
     else:
-
         if isinstance(total, pandas.MultiIndex):
             total = len(total)
         tn = true_negatives(links_true, links_pred, total)
@@ -313,13 +311,10 @@ def precision(links_true, links_pred=None):
     """
 
     if _isconfusionmatrix(links_true):
-
         confusion_matrix = links_true
 
-        v = confusion_matrix[0, 0] \
-            / (confusion_matrix[0, 0] + confusion_matrix[1, 0])
+        v = confusion_matrix[0, 0] / (confusion_matrix[0, 0] + confusion_matrix[1, 0])
     else:
-
         tp = true_positives(links_true, links_pred)
         fp = false_positives(links_true, links_pred)
         v = tp / (tp + fp)
@@ -348,13 +343,10 @@ def recall(links_true, links_pred=None):
     """
 
     if _isconfusionmatrix(links_true):
-
         confusion_matrix = links_true
 
-        v = confusion_matrix[0, 0] \
-            / (confusion_matrix[0, 0] + confusion_matrix[0, 1])
+        v = confusion_matrix[0, 0] / (confusion_matrix[0, 0] + confusion_matrix[0, 1])
     else:
-
         tp = true_positives(links_true, links_pred)
         fn = false_negatives(links_true, links_pred)
         v = tp / (tp + fn)
@@ -389,13 +381,12 @@ def accuracy(links_true, links_pred=None, total=None):
         total = len(total)
 
     if _isconfusionmatrix(links_true):
-
         confusion_matrix = links_true
 
-        v = (confusion_matrix[0, 0] + confusion_matrix[1, 1]) \
-            / numpy.sum(confusion_matrix)
+        v = (confusion_matrix[0, 0] + confusion_matrix[1, 1]) / numpy.sum(
+            confusion_matrix
+        )
     else:
-
         tp = true_positives(links_true, links_pred)
         tn = true_negatives(links_true, links_pred, total)
 
@@ -429,13 +420,10 @@ def specificity(links_true, links_pred=None, total=None):
     """
 
     if _isconfusionmatrix(links_true):
-
         confusion_matrix = links_true
 
-        v = confusion_matrix[1, 1] / \
-            (confusion_matrix[1, 0] + confusion_matrix[1, 1])
+        v = confusion_matrix[1, 1] / (confusion_matrix[1, 0] + confusion_matrix[1, 1])
     else:
-
         fp = false_positives(links_true, links_pred)
 
         if isinstance(total, pandas.MultiIndex):
@@ -470,7 +458,7 @@ def fscore(links_true, links_pred=None):
     If there are no pairs predicted as links, this measure will raise a
     ZeroDivisionError.
 
-     """
+    """
 
     prec = precision(links_true, links_pred)
     rec = recall(links_true, links_pred)
