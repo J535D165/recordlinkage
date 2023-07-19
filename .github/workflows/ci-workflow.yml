@@ -10,7 +10,7 @@ jobs:
       fail-fast: false
       matrix:
         python-version: ["3.8", "3.9", "3.10", "3.11"]
-        pandas-version: [1, 2]
+        pandas-version: ["1.0", "2.0"]
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python ${{ matrix.python-version }}
@@ -19,7 +19,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Install pandas
       run: |
-        pip install "pandas~=${{ matrix.pandas-version }}"
+        pip install pandas~=${{ matrix.pandas-version }}
     - name: Package recordlinkage
       run: |
         pip install --upgrade pip
