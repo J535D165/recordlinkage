@@ -15,7 +15,7 @@ classifiers = [
 ]
 license = {text = "BSD-3-Clause"}
 dependencies = [
-	"jellyfish>=0.8.0",
+    "jellyfish>=0.8.0",
     "numpy>=1.13.0",
     "pandas>=1,<3",
     "scipy>=1",
@@ -32,6 +32,7 @@ repository = "https://github.com/J535D165/recordlinkage"
 [project.optional-dependencies]
 all = ["networkx>=2", "bottleneck", "numexpr"]
 lint = ["ruff"]
+docs = ["sphinx", "nbsphinx", "sphinx-rtd-theme", "ipykernel"]
 test = ["pytest"]
 
 [build-system]
