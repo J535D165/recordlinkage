@@ -48,23 +48,24 @@ class Exact(BaseCompareFeature):
     name = "exact"
     description = "Compare attributes of record pairs."
 
-    def __init__(self,
-                 left_on,
-                 right_on,
-                 agree_value=1,
-                 disagree_value=0,
-                 missing_value=0,
-                 label=None):
-        super(Exact, self).__init__(left_on, right_on, label=label)
+    def __init__(
+        self,
+        left_on,
+        right_on,
+        agree_value=1,
+        disagree_value=0,
+        missing_value=0,
+        label=None,
+    ):
+        super().__init__(left_on, right_on, label=label)
 
         self.agree_value = agree_value
         self.disagree_value = disagree_value
         self.missing_value = missing_value
 
     def _compute_vectorized(self, s_left, s_right):
-
         # Values or agree/disagree
-        if self.agree_value == 'value':
+        if self.agree_value == "value":
             compare = s_left.copy()
             compare[s_left != s_right] = self.disagree_value
 
@@ -113,42 +114,40 @@ class String(BaseCompareFeature):
     name = "string"
     description = "Compare string attributes of record pairs."
 
-    def __init__(self,
-                 left_on,
-                 right_on,
-                 method='levenshtein',
-                 threshold=None,
-                 missing_value=0.0,
-                 label=None):
-        super(String, self).__init__(left_on, right_on, label=label)
+    def __init__(
+        self,
+        left_on,
+        right_on,
+        method="levenshtein",
+        threshold=None,
+        missing_value=0.0,
+        label=None,
+    ):
+        super().__init__(left_on, right_on, label=label)
 
         self.method = method
         self.threshold = threshold
         self.missing_value = missing_value
 
     def _compute_vectorized(self, s_left, s_right):
-
-        if self.method == 'jaro':
+        if self.method == "jaro":
             str_sim_alg = jaro_similarity
-        elif self.method in ['jarowinkler', 'jaro_winkler', 'jw']:
+        elif self.method in ["jarowinkler", "jaro_winkler", "jw"]:
             str_sim_alg = jarowinkler_similarity
-        elif self.method == 'levenshtein':
+        elif self.method == "levenshtein":
             str_sim_alg = levenshtein_similarity
-        elif self.method in [
-                'dameraulevenshtein', 'damerau_levenshtein', 'dl'
-        ]:
+        elif self.method in ["dameraulevenshtein", "damerau_levenshtein", "dl"]:
             str_sim_alg = damerau_levenshtein_similarity
-        elif self.method in ['q_gram', 'qgram']:
+        elif self.method in ["q_gram", "qgram"]:
             str_sim_alg = qgram_similarity
-        elif self.method == 'cosine':
+        elif self.method == "cosine":
             str_sim_alg = cosine_similarity
-        elif self.method in ['smith_waterman', 'smithwaterman', 'sw']:
+        elif self.method in ["smith_waterman", "smithwaterman", "sw"]:
             str_sim_alg = smith_waterman_similarity
-        elif self.method in ['longest_common_substring', 'lcs']:
+        elif self.method in ["longest_common_substring", "lcs"]:
             str_sim_alg = longest_common_substring_similarity
         else:
-            raise ValueError("The algorithm '{}' is not known.".format(
-                self.method))
+            raise ValueError(f"The algorithm '{self.method}' is not known.")
 
         c = str_sim_alg(s_left, s_right)
 
@@ -209,16 +208,18 @@ class Numeric(BaseCompareFeature):
     name = "numeric"
     description = "Compare numeric attributes of record pairs."
 
-    def __init__(self,
-                 left_on,
-                 right_on,
-                 method='linear',
-                 offset=0.0,
-                 scale=1.0,
-                 origin=0.0,
-                 missing_value=0.0,
-                 label=None):
-        super(Numeric, self).__init__(left_on, right_on, label=label)
+    def __init__(
+        self,
+        left_on,
+        right_on,
+        method="linear",
+        offset=0.0,
+        scale=1.0,
+        origin=0.0,
+        missing_value=0.0,
+        label=None,
+    ):
+        super().__init__(left_on, right_on, label=label)
 
         self.method = method
         self.offset = offset
@@ -227,26 +228,20 @@ class Numeric(BaseCompareFeature):
         self.missing_value = missing_value
 
     def _compute_vectorized(self, s_left, s_right):
-
         d = _1d_distance(s_left, s_right)
 
-        if self.method == 'step':
+        if self.method == "step":
             num_sim_alg = partial(_step_sim, d, self.offset, self.origin)
-        elif self.method in ['linear', 'lin']:
-            num_sim_alg = partial(_linear_sim, d, self.scale, self.offset,
-                                  self.origin)
-        elif self.method == 'squared':
-            num_sim_alg = partial(_squared_sim, d, self.scale, self.offset,
-                                  self.origin)
-        elif self.method in ['exp', 'exponential']:
-            num_sim_alg = partial(_exp_sim, d, self.scale, self.offset,
-                                  self.origin)
-        elif self.method in ['gauss', 'gaussian']:
-            num_sim_alg = partial(_gauss_sim, d, self.scale, self.offset,
-                                  self.origin)
+        elif self.method in ["linear", "lin"]:
+            num_sim_alg = partial(_linear_sim, d, self.scale, self.offset, self.origin)
+        elif self.method == "squared":
+            num_sim_alg = partial(_squared_sim, d, self.scale, self.offset, self.origin)
+        elif self.method in ["exp", "exponential"]:
+            num_sim_alg = partial(_exp_sim, d, self.scale, self.offset, self.origin)
+        elif self.method in ["gauss", "gaussian"]:
+            num_sim_alg = partial(_gauss_sim, d, self.scale, self.offset, self.origin)
         else:
-            raise ValueError("The algorithm '{}' is not known.".format(
-                self.method))
+            raise ValueError(f"The algorithm '{self.method}' is not known.")
 
         c = num_sim_alg()
         c = _fillna(c, self.missing_value)
@@ -288,23 +283,26 @@ class Geographic(BaseCompareFeature):
     missing_value : numpy.dtype
         The value for a comparison with a missing value. Default 0.
     """
+
     name = "geographic"
     description = "Compare geographic attributes of record pairs."
 
-    def __init__(self,
-                 left_on_lat,
-                 left_on_lng,
-                 right_on_lat,
-                 right_on_lng,
-                 method=None,
-                 offset=0.0,
-                 scale=1.0,
-                 origin=0.0,
-                 missing_value=0.0,
-                 label=None):
-        super(Geographic, self).__init__((left_on_lat, left_on_lng),
-                                         (right_on_lat, right_on_lng),
-                                         label=label)
+    def __init__(
+        self,
+        left_on_lat,
+        left_on_lng,
+        right_on_lat,
+        right_on_lng,
+        method=None,
+        offset=0.0,
+        scale=1.0,
+        origin=0.0,
+        missing_value=0.0,
+        label=None,
+    ):
+        super().__init__(
+            (left_on_lat, left_on_lng), (right_on_lat, right_on_lng), label=label
+        )
 
         self.method = method
         self.offset = offset
@@ -313,26 +311,20 @@ class Geographic(BaseCompareFeature):
         self.missing_value = missing_value
 
     def _compute_vectorized(self, lat1, lng1, lat2, lng2):
-
         d = _haversine_distance(lat1, lng1, lat2, lng2)
 
-        if self.method == 'step':
+        if self.method == "step":
             num_sim_alg = partial(_step_sim, d, self.offset, self.origin)
-        elif self.method in ['linear', 'lin']:
-            num_sim_alg = partial(_linear_sim, d, self.scale, self.offset,
-                                  self.origin)
-        elif self.method == 'squared':
-            num_sim_alg = partial(_squared_sim, d, self.scale, self.offset,
-                                  self.origin)
-        elif self.method in ['exp', 'exponential']:
-            num_sim_alg = partial(_exp_sim, d, self.scale, self.offset,
-                                  self.origin)
-        elif self.method in ['gauss', 'gaussian']:
-            num_sim_alg = partial(_gauss_sim, d, self.scale, self.offset,
-                                  self.origin)
+        elif self.method in ["linear", "lin"]:
+            num_sim_alg = partial(_linear_sim, d, self.scale, self.offset, self.origin)
+        elif self.method == "squared":
+            num_sim_alg = partial(_squared_sim, d, self.scale, self.offset, self.origin)
+        elif self.method in ["exp", "exponential"]:
+            num_sim_alg = partial(_exp_sim, d, self.scale, self.offset, self.origin)
+        elif self.method in ["gauss", "gaussian"]:
+            num_sim_alg = partial(_gauss_sim, d, self.scale, self.offset, self.origin)
         else:
-            raise ValueError("The algorithm '{}' is not known.".format(
-                self.method))
+            raise ValueError(f"The algorithm '{self.method}' is not known.")
 
         c = num_sim_alg()
         c = _fillna(c, self.missing_value)
@@ -364,15 +356,17 @@ class Date(BaseCompareFeature):
     name = "date"
     description = "Compare date attributes of record pairs."
 
-    def __init__(self,
-                 left_on,
-                 right_on,
-                 swap_month_day=0.5,
-                 swap_months='default',
-                 errors='coerce',
-                 missing_value=0.0,
-                 label=None):
-        super(Date, self).__init__(left_on, right_on, label=label)
+    def __init__(
+        self,
+        left_on,
+        right_on,
+        swap_month_day=0.5,
+        swap_months="default",
+        errors="coerce",
+        missing_value=0.0,
+        label=None,
+    ):
+        super().__init__(left_on, right_on, label=label)
 
         self.missing_value = missing_value
         self.swap_months = swap_months
@@ -380,43 +374,50 @@ class Date(BaseCompareFeature):
         self.errors = errors
 
     def _compute_vectorized(self, s_left, s_right):
-
         # validate datatypes
-        if str(s_left.dtype) != 'datetime64[ns]':
-            raise ValueError('Left column is not of type datetime64[ns]')
+        if str(s_left.dtype) != "datetime64[ns]":
+            raise ValueError("Left column is not of type datetime64[ns]")
 
-        if str(s_right.dtype) != 'datetime64[ns]':
-            raise ValueError('Right column is not of type datetime64[ns]')
+        if str(s_right.dtype) != "datetime64[ns]":
+            raise ValueError("Right column is not of type datetime64[ns]")
 
         c = (s_left == s_right).astype(numpy.int64)  # start with int64
 
         # The case is which there is a swap_month_day value given.
-        if (self.swap_month_day and self.swap_month_day != 0):
+        if self.swap_month_day and self.swap_month_day != 0:
+            c[
+                (s_left.dt.year == s_right.dt.year)
+                & (s_left.dt.month == s_right.dt.day)
+                & (s_left.dt.day == s_right.dt.month)
+                & (c != 1)
+            ] = self.swap_month_day
 
-            c[(s_left.dt.year == s_right.dt.year)
-              & (s_left.dt.month == s_right.dt.day) &
-              (s_left.dt.day == s_right.dt.month) &
-              (c != 1)] = self.swap_month_day
-
-        if (self.swap_months and self.swap_months != 0):
-
-            if self.swap_months == 'default':
-                self.swap_months = [(6, 7, 0.5), (7, 6, 0.5), (9, 10, 0.5),
-                                    (10, 9, 0.5)]
+        if self.swap_months and self.swap_months != 0:
+            if self.swap_months == "default":
+                self.swap_months = [
+                    (6, 7, 0.5),
+                    (7, 6, 0.5),
+                    (9, 10, 0.5),
+                    (10, 9, 0.5),
+                ]
             else:
                 try:
                     if not all([len(x) == 3 for x in self.swap_months]):
                         raise Exception
                 except Exception:
                     raise ValueError(
-                        'swap_months must be a list of (first month, \
-                        second month, value) tuples or lists. ')
+                        "swap_months must be a list of (first month, \
+                        second month, value) tuples or lists. "
+                    )
 
             for month1, month2, value in self.swap_months:
-
-                c[(s_left.dt.year == s_right.dt.year)
-                  & (s_left.dt.month == month1) & (s_right.dt.month == month2)
-                  & (s_left.dt.day == s_right.dt.day) & (c != 1)] = value
+                c[
+                    (s_left.dt.year == s_right.dt.year)
+                    & (s_left.dt.month == month1)
+                    & (s_right.dt.month == month2)
+                    & (s_left.dt.day == s_right.dt.day)
+                    & (c != 1)
+                ] = value
 
         c = pandas.Series(c)
         c[s_left.isnull() | s_right.isnull()] = self.missing_value
@@ -440,17 +441,12 @@ class Variable(BaseCompareFeature):
     name = "variable"
     description = "Add a variable of the dataframe to the features."
 
-    def __init__(self,
-                 left_on=None,
-                 right_on=None,
-                 missing_value=0.0,
-                 label=None):
-        super(Variable, self).__init__(left_on, right_on, label=label)
+    def __init__(self, left_on=None, right_on=None, missing_value=0.0, label=None):
+        super().__init__(left_on, right_on, label=label)
 
         self.missing_value = missing_value
 
     def _compute_vectorized(self, *data):
-
         result = []
 
         if isinstance(data, tuple):
@@ -483,10 +479,7 @@ class VariableA(Variable):
     description = "Add a variable of the left dataframe to the features."
 
     def __init__(self, on=None, missing_value=0.0, label=None):
-        super(VariableA, self).__init__(on,
-                                        None,
-                                        missing_value=missing_value,
-                                        label=label)
+        super().__init__(on, None, missing_value=missing_value, label=label)
 
 
 class VariableB(Variable):
@@ -508,10 +501,7 @@ class VariableB(Variable):
     description = "Add a variable of the right dataframe to the features."
 
     def __init__(self, on=None, missing_value=0.0, label=None):
-        super(VariableB, self).__init__(None,
-                                        on,
-                                        missing_value=missing_value,
-                                        label=label)
+        super().__init__(None, on, missing_value=missing_value, label=label)
 
 
 class Frequency(BaseCompareFeature):
@@ -534,24 +524,20 @@ class Frequency(BaseCompareFeature):
     name = "frequency"
     description = "Compute the frequency."
 
-    def __init__(self,
-                 left_on=None,
-                 right_on=None,
-                 normalise=True,
-                 missing_value=0.0,
-                 label=None):
-        super(Frequency, self).__init__(left_on, right_on, label=label)
+    def __init__(
+        self, left_on=None, right_on=None, normalise=True, missing_value=0.0, label=None
+    ):
+        super().__init__(left_on, right_on, label=label)
 
         self.normalise = normalise
         self.missing_value = missing_value
 
     def _compute_frequency(self, col):
-
         # https://github.com/pydata/pandas/issues/3729
-        na_value = 'NAN'
+        na_value = "NAN"
         value_count = col.fillna(na_value)
 
-        c = value_count.groupby(by=value_count).transform('count')
+        c = value_count.groupby(by=value_count).transform("count")
         c = c.astype(numpy.float64)
 
         if self.normalise:
@@ -563,7 +549,6 @@ class Frequency(BaseCompareFeature):
         return c
 
     def _compute_vectorized(self, *data):
-
         result = []
 
         if isinstance(data, tuple):
@@ -596,11 +581,9 @@ class FrequencyA(Frequency):
     description = "Compute the frequency."
 
     def __init__(self, on=None, normalise=True, missing_value=0.0, label=None):
-        super(FrequencyA, self).__init__(on,
-                                         None,
-                                         normalise=normalise,
-                                         missing_value=missing_value,
-                                         label=label)
+        super().__init__(
+            on, None, normalise=normalise, missing_value=missing_value, label=label
+        )
 
 
 class FrequencyB(Frequency):
@@ -622,8 +605,6 @@ class FrequencyB(Frequency):
     description = "Compute the frequency."
 
     def __init__(self, on=None, normalise=True, missing_value=0.0, label=None):
-        super(FrequencyB, self).__init__(None,
-                                         on,
-                                         normalise=normalise,
-                                         missing_value=missing_value,
-                                         label=label)
+        super().__init__(
+            None, on, normalise=normalise, missing_value=missing_value, label=label
+        )

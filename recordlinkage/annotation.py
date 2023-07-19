@@ -14,14 +14,16 @@ import pandas as pd
 SCHEMA_VERSION_LATEST = 1
 
 
-def write_annotation_file(fp,
-                          pairs,
-                          df_a,
-                          df_b=None,
-                          dataset_a_name=None,
-                          dataset_b_name=None,
-                          *args,
-                          **kwargs):
+def write_annotation_file(
+    fp,
+    pairs,
+    df_a,
+    df_b=None,
+    dataset_a_name=None,
+    dataset_b_name=None,
+    *args,
+    **kwargs,
+):
     """Render and export annotation file.
 
     This function renders and annotation object and stores it in a
@@ -48,8 +50,9 @@ def write_annotation_file(fp,
 
     """
 
-    annotation_obj = AnnotationWrapper(pairs, df_a, df_b, dataset_a_name,
-                                       dataset_b_name, *args, **kwargs)
+    annotation_obj = AnnotationWrapper(
+        pairs, df_a, df_b, dataset_a_name, dataset_b_name, *args, **kwargs
+    )
     annotation_obj.to_file(fp)
 
 
@@ -80,15 +83,12 @@ def read_annotation_file(fp):
     return AnnotationResult.from_file(fp)
 
 
-class AnnotationWrapper(object):
+class AnnotationWrapper:
     """Annotation wrapper to render annotation file."""
 
-    def __init__(self,
-                 pairs,
-                 df_a,
-                 df_b=None,
-                 dataset_a_name=None,
-                 dataset_b_name=None):
+    def __init__(
+        self, pairs, df_a, df_b=None, dataset_a_name=None, dataset_b_name=None
+    ):
         self.pairs = pairs
         self.df_a = df_a
         self.df_b = df_b
@@ -96,12 +96,10 @@ class AnnotationWrapper(object):
         self.dataset_b_name = dataset_b_name
 
     def _get_value(self, df, loc_x, loc_y, *args, **kwargs):
-
         return self._cast_value(df.at[loc_x, loc_y], *args, **kwargs)
 
     @staticmethod
     def _cast_value(value, na_value=None):
-
         if pd.isnull(value):
             return na_value
         elif type(value).__module__ == np.__name__:
@@ -110,7 +108,6 @@ class AnnotationWrapper(object):
             return value
 
     def _create_annotation(self):
-
         result = {"version": SCHEMA_VERSION_LATEST, "pairs": []}
 
         # transform multiindex into frame
@@ -125,46 +122,44 @@ class AnnotationWrapper(object):
 
         columns_a = list(self.df_a)
 
-        for index, pair in df_pairs.iterrows():
-
+        for _index, pair in df_pairs.iterrows():
             result_record = {
-                'fields': [],
+                "fields": [],
                 "identifiers": {
                     "a": {
                         "dataset": self._cast_value(self.dataset_a_name),
-                        "record": self._cast_value(pair[0])
+                        "record": self._cast_value(pair[0]),
                     },
                     "b": {
                         "dataset": self._cast_value(dataset_b_name),
-                        "record": self._cast_value(pair[1])
-                    }
+                        "record": self._cast_value(pair[1]),
+                    },
                 },
             }
 
             # get the full data for this record
             for col in columns_a:
-
                 result_record_field_a = {
                     "name": self._cast_value(col),
                     "value": self._get_value(self.df_a, pair[0], col),
-                    "type": "String"
+                    "type": "String",
                 }
 
                 result_record_field_b = {
                     "name": self._cast_value(col),
                     "value": self._get_value(df_b, pair[1], col),
-                    "type": "String"
+                    "type": "String",
                 }
 
                 result_record_field = {
                     "a": self._cast_value(result_record_field_a),
                     "b": self._cast_value(result_record_field_b),
-                    "similarity": self._cast_value(None)
+                    "similarity": self._cast_value(None),
                 }
-                result_record['fields'].append(result_record_field)
+                result_record["fields"].append(result_record_field)
 
             # append the result to a file
-            result['pairs'].append(result_record)
+            result["pairs"].append(result_record)
 
         return result
 
@@ -180,7 +175,7 @@ class AnnotationWrapper(object):
             json.dump(self._create_annotation(), f, indent=2)
 
 
-class AnnotationResult(object):
+class AnnotationResult:
     """Result of (manual) annotation.
 
     Parameters
@@ -193,21 +188,22 @@ class AnnotationResult(object):
     """
 
     def __init__(self, pairs=[], version=SCHEMA_VERSION_LATEST):
-
         self.version = version
         self.pairs = pairs
 
     def _get_annotation_value(self, label, label_str=None):
-
         result_pairs = []
 
         for item in self.pairs:
-
-            label_value = item.get('label', None)
+            label_value = item.get("label", None)
 
             if label_value == label:
-                result_pairs.append((item['identifiers']['a']['record'],
-                                     item['identifiers']['b']['record']))
+                result_pairs.append(
+                    (
+                        item["identifiers"]["a"]["record"],
+                        item["identifiers"]["b"]["record"],
+                    )
+                )
 
         if len(result_pairs) == 0:
             return None
@@ -248,8 +244,7 @@ class AnnotationResult(object):
         return self._get_annotation_value(None)
 
     def __repr__(self):
-        return "<Annotator pairs, version={version}>".format(
-            version=self.version)
+        return f"<Annotator pairs, version={self.version}>"
 
     @classmethod
     def from_dict(cls, d):
@@ -264,7 +259,7 @@ class AnnotationResult(object):
         -------
         AnnotationResult
             An AnnotationResult object."""
-        return cls(pairs=d['pairs'], version=d["version"])
+        return cls(pairs=d["pairs"], version=d["version"])
 
     @classmethod
     def from_file(cls, fp):
@@ -279,7 +274,7 @@ class AnnotationResult(object):
         -------
         AnnotationResult
             An AnnotationResult object."""
-        with open(str(fp), "r") as f:
+        with open(str(fp)) as f:
             content = json.load(f)
 
         return cls.from_dict(content)

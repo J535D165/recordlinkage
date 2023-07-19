@@ -10,13 +10,12 @@ def _step_sim(d, offset=0, origin=0):
     if offset < 0:
         raise ValueError("The offset must be positive.")
 
-    expr = 'abs(d - origin) <= offset'
+    expr = "abs(d - origin) <= offset"
 
     return pandas.eval(expr).astype(np.float64)
 
 
 def _linear_sim(d, scale, offset=0, origin=0):
-
     if offset < 0:
         raise ValueError("The offset must be positive.")
 
@@ -25,13 +24,12 @@ def _linear_sim(d, scale, offset=0, origin=0):
 
     d = (abs(d - origin)).clip(offset, offset + 2 * scale)
 
-    expr = '1 - (d-offset)/(2*scale)'
+    expr = "1 - (d-offset)/(2*scale)"
 
     return pandas.eval(expr)
 
 
 def _squared_sim(d, scale, offset=0, origin=0):
-
     if offset < 0:
         raise ValueError("The offset must be positive.")
 
@@ -49,13 +47,12 @@ def _squared_sim(d, scale, offset=0, origin=0):
     # y = 1 - 1/2*(d/scale)^2
     # d = sqrt(2)*scale is the point where similarity is zero.
 
-    expr = '1 - 1/2*exp(2*log((d-offset)/scale))'
+    expr = "1 - 1/2*exp(2*log((d-offset)/scale))"
 
     return pandas.eval(expr)
 
 
 def _exp_sim(d, scale, offset=0, origin=0):
-
     if offset < 0:
         raise ValueError("The offset must be positive.")
 
@@ -65,13 +62,12 @@ def _exp_sim(d, scale, offset=0, origin=0):
     d = (abs(d - origin)).clip(offset, None)
 
     # solve y=exp(-x*a) if 1/2 = exp(-x/scale)
-    expr = '2**(-(d-offset)/scale)'
+    expr = "2**(-(d-offset)/scale)"
 
     return pandas.eval(expr)
 
 
 def _gauss_sim(d, scale, offset=0, origin=0):
-
     if offset < 0:
         raise ValueError("The offset must be positive.")
 
@@ -81,6 +77,6 @@ def _gauss_sim(d, scale, offset=0, origin=0):
     d = (abs(d - origin)).clip(offset, None)
 
     # solve y=exp(-x^2*a) if 1/2 = exp(-x^2/scale^2)
-    expr = '2**(-((d-offset)/scale)**2)'
+    expr = "2**(-((d-offset)/scale)**2)"
 
     return pandas.eval(expr)

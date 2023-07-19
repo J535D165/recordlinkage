@@ -1,13 +1,12 @@
-'''Example: Unsupervised learning with the ECM algorithm.
+"""Example: Unsupervised learning with the ECM algorithm.
 
 Train data is often hard to collect in record linkage or data matching
 problems. The Expectation-Conditional Maximisation (ECM) algorithm is the most
 well known algorithm for unsupervised data matching. The algorithm preforms
 relatively well compared to supervised methods.
 
-'''
+"""
 
-from __future__ import print_function
 
 import numpy as np
 
@@ -17,8 +16,8 @@ from recordlinkage.datasets import binary_vectors
 # create a dataset with the following settings
 n_pairs = 50000
 n_matches = 7000
-m_simulate = np.array([.94, .81, .85, .90, .99, .70, .56, .92])
-u_simulate = np.array([.19, .23, .50, .11, .20, .14, .50, .09])
+m_simulate = np.array([0.94, 0.81, 0.85, 0.90, 0.99, 0.70, 0.56, 0.92])
+u_simulate = np.array([0.19, 0.23, 0.50, 0.11, 0.20, 0.14, 0.50, 0.09])
 
 # Create the dataset and return the true links.
 X_data, links_true = binary_vectors(
@@ -27,7 +26,8 @@ X_data, links_true = binary_vectors(
     m=m_simulate,  # the m probabilities
     u=u_simulate,  # the u probabilities
     random_state=535,  # set seed
-    return_links=True)  # return true links
+    return_links=True,
+)  # return true links
 
 # Initialise the Expectation-Conditional Maximisation classifier.
 cl = rl.ECMClassifier()
@@ -52,11 +52,11 @@ print("Confusion matrix:\n", cm)
 
 # compute the F-score for this classification
 fscore = rl.fscore(cm)
-print('fscore', fscore)
+print("fscore", fscore)
 recall = rl.recall(links_true, links_pred)
-print('recall', recall)
+print("recall", recall)
 precision = rl.precision(links_true, links_pred)
-print('precision', precision)
+print("precision", precision)
 
 # Predict the match probability for each pair in the dataset.
 probs = cl.prob(X_data)

@@ -13,13 +13,11 @@ from sklearn.feature_extraction.text import CountVectorizer
 
 
 def jaro_similarity(s1, s2):
-
     conc = pandas.Series(list(zip(s1, s2)))
 
     from jellyfish import jaro_similarity
 
     def jaro_apply(x):
-
         try:
             return jaro_similarity(x[0], x[1])
         except Exception as err:
@@ -32,13 +30,11 @@ def jaro_similarity(s1, s2):
 
 
 def jarowinkler_similarity(s1, s2):
-
     conc = pandas.Series(list(zip(s1, s2)))
 
     from jellyfish import jaro_winkler_similarity
 
     def jaro_winkler_apply(x):
-
         try:
             return jaro_winkler_similarity(x[0], x[1])
         except Exception as err:
@@ -51,16 +47,13 @@ def jarowinkler_similarity(s1, s2):
 
 
 def levenshtein_similarity(s1, s2):
-
     conc = pandas.Series(list(zip(s1, s2)))
 
     from jellyfish import levenshtein_distance
 
     def levenshtein_apply(x):
-
         try:
-            return 1 - levenshtein_distance(x[0], x[1]) \
-                / np.max([len(x[0]), len(x[1])])
+            return 1 - levenshtein_distance(x[0], x[1]) / np.max([len(x[0]), len(x[1])])
         except Exception as err:
             if pandas.isnull(x[0]) or pandas.isnull(x[1]):
                 return np.nan
@@ -71,16 +64,15 @@ def levenshtein_similarity(s1, s2):
 
 
 def damerau_levenshtein_similarity(s1, s2):
-
     conc = pandas.Series(list(zip(s1, s2)))
 
     from jellyfish import damerau_levenshtein_distance
 
     def damerau_levenshtein_apply(x):
-
         try:
-            return 1 - damerau_levenshtein_distance(x[0], x[1]) \
-                / np.max([len(x[0]), len(x[1])])
+            return 1 - damerau_levenshtein_distance(x[0], x[1]) / np.max(
+                [len(x[0]), len(x[1])]
+            )
         except Exception as err:
             if pandas.isnull(x[0]) or pandas.isnull(x[1]):
                 return np.nan
@@ -91,28 +83,26 @@ def damerau_levenshtein_similarity(s1, s2):
 
 
 def qgram_similarity(s1, s2, include_wb=True, ngram=(2, 2)):
-
     if len(s1) != len(s2):
-        raise ValueError('Arrays or Series have to be same length.')
+        raise ValueError("Arrays or Series have to be same length.")
 
     if len(s1) == len(s2) == 0:
         return []
 
     # include word boundaries or not
-    analyzer = 'char_wb' if include_wb is True else 'char'
+    analyzer = "char_wb" if include_wb is True else "char"
 
     # prepare data
-    data = pandas.concat([s1, s2]).fillna('')
+    data = pandas.concat([s1, s2]).fillna("")
 
     # The vectorizer
-    vectorizer = CountVectorizer(analyzer=analyzer,
-                                 strip_accents='unicode',
-                                 ngram_range=ngram)
+    vectorizer = CountVectorizer(
+        analyzer=analyzer, strip_accents="unicode", ngram_range=ngram
+    )
 
     vec_fit = vectorizer.fit_transform(data)
 
     def _metric_sparse_euclidean(u, v):
-
         match_ngrams = u.minimum(v).sum(axis=1)
         total_ngrams = np.maximum(u.sum(axis=1), v.sum(axis=1))
 
@@ -125,31 +115,29 @@ def qgram_similarity(s1, s2, include_wb=True, ngram=(2, 2)):
 
         return m
 
-    return _metric_sparse_euclidean(vec_fit[:len(s1)], vec_fit[len(s1):])
+    return _metric_sparse_euclidean(vec_fit[: len(s1)], vec_fit[len(s1) :])
 
 
 def cosine_similarity(s1, s2, include_wb=True, ngram=(2, 2)):
-
     if len(s1) != len(s2):
-        raise ValueError('Arrays or Series have to be same length.')
+        raise ValueError("Arrays or Series have to be same length.")
 
     if len(s1) == len(s2) == 0:
         return []
 
     # include word boundaries or not
-    analyzer = 'char_wb' if include_wb is True else 'char'
+    analyzer = "char_wb" if include_wb is True else "char"
 
     # The vectorizer
-    vectorizer = CountVectorizer(analyzer=analyzer,
-                                 strip_accents='unicode',
-                                 ngram_range=ngram)
+    vectorizer = CountVectorizer(
+        analyzer=analyzer, strip_accents="unicode", ngram_range=ngram
+    )
 
-    data = pandas.concat([s1, s2]).fillna('')
+    data = pandas.concat([s1, s2]).fillna("")
 
     vec_fit = vectorizer.fit_transform(data)
 
     def _metric_sparse_cosine(u, v):
-
         a = np.sqrt(u.multiply(u).sum(axis=1))
         b = np.sqrt(v.multiply(v).sum(axis=1))
 
@@ -161,16 +149,12 @@ def cosine_similarity(s1, s2, include_wb=True, ngram=(2, 2)):
 
         return m
 
-    return _metric_sparse_cosine(vec_fit[:len(s1)], vec_fit[len(s1):])
+    return _metric_sparse_cosine(vec_fit[: len(s1)], vec_fit[len(s1) :])
 
 
-def smith_waterman_similarity(s1,
-                              s2,
-                              match=5,
-                              mismatch=-5,
-                              gap_start=-5,
-                              gap_continue=-1,
-                              norm="mean"):
+def smith_waterman_similarity(
+    s1, s2, match=5, mismatch=-5, gap_start=-5, gap_continue=-1, norm="mean"
+):
     """Smith-Waterman string comparison.
 
     An implementation of the Smith-Waterman string comparison algorithm
@@ -210,12 +194,13 @@ def smith_waterman_similarity(s1,
 
     # Assert that match is greater than or equal to mismatch, gap_start, and
     # gap_continue.
-    assert match >= max(mismatch, gap_start, gap_continue), \
-        "match must be greater than or equal to mismatch, " \
+    assert match >= max(mismatch, gap_start, gap_continue), (
+        "match must be greater than or equal to mismatch, "
         "gap_start, and gap_continue"
+    )
 
     if len(s1) != len(s2):
-        raise ValueError('Arrays or Series have to be same length.')
+        raise ValueError("Arrays or Series have to be same length.")
 
     if len(s1) == len(s2) == 0:
         return []
@@ -265,8 +250,7 @@ def smith_waterman_similarity(s1,
             m = [[0] * (1 + len(str2)) for i in range(1 + len(str1))]
 
             # Initialize the trace matrix with empty lists
-            trace = [[[] for _ in range(1 + len(str2))]
-                     for _ in range(1 + len(str1))]
+            trace = [[[] for _ in range(1 + len(str2))] for _ in range(1 + len(str1))]
 
             # Initialize the highest seen score to 0
             highest = 0
@@ -366,8 +350,9 @@ def smith_waterman_similarity(s1,
                 return 2 * score / ((len(str1) + len(str2)) * match)
             else:
                 warnings.warn(
-                    'Unrecognized longest common substring normalization. '
-                    'Defaulting to "mean" method.')
+                    "Unrecognized longest common substring normalization. "
+                    'Defaulting to "mean" method.'
+                )
                 return 2 * score / ((len(str1) + len(str2)) * match)
 
         try:
@@ -384,7 +369,7 @@ def smith_waterman_similarity(s1,
     return concat.apply(sw_apply)
 
 
-def longest_common_substring_similarity(s1, s2, norm='dice', min_len=2):
+def longest_common_substring_similarity(s1, s2, norm="dice", min_len=2):
     """
     longest_common_substring_similarity(s1, s2, norm='dice', min_len=2)
 
@@ -409,7 +394,7 @@ def longest_common_substring_similarity(s1, s2, norm='dice', min_len=2):
     """
 
     if len(s1) != len(s2):
-        raise ValueError('Arrays or Series have to be same length.')
+        raise ValueError("Arrays or Series have to be same length.")
 
     if len(s1) == len(s2) == 0:
         return []
@@ -437,8 +422,7 @@ def longest_common_substring_similarity(s1, s2, norm='dice', min_len=2):
         str1 = x[0]
         str2 = x[1]
 
-        if str1 is np.nan or str2 is np.nan or min(len(str1),
-                                                   len(str2)) < min_len:
+        if str1 is np.nan or str2 is np.nan or min(len(str1), len(str2)) < min_len:
             longest = 0
             new_str1 = None
             new_str2 = None
@@ -473,8 +457,8 @@ def longest_common_substring_similarity(s1, s2, norm='dice', min_len=2):
 
             # Copy str1 and str2, but subtract the longest common substring
             # for the next iteration.
-            new_str1 = str1[0:x_longest - longest] + str1[x_longest:]
-            new_str2 = str2[0:y_longest - longest] + str2[y_longest:]
+            new_str1 = str1[0 : x_longest - longest] + str1[x_longest:]
+            new_str2 = str2[0 : y_longest - longest] + str2[y_longest:]
 
         return (new_str1, new_str2), longest
 
@@ -553,16 +537,17 @@ def longest_common_substring_similarity(s1, s2, norm='dice', min_len=2):
             """
             if len(x[0]) == 0 or len(x[1]) == 0:
                 return 0
-            if norm == 'overlap':
+            if norm == "overlap":
                 return lcs_value / min(len(x[0]), len(x[1]))
-            elif norm == 'jaccard':
+            elif norm == "jaccard":
                 return lcs_value / (len(x[0]) + len(x[1]) - abs(lcs_value))
-            elif norm == 'dice':
+            elif norm == "dice":
                 return lcs_value * 2 / (len(x[0]) + len(x[1]))
             else:
                 warnings.warn(
-                    'Unrecognized longest common substring normalization. '
-                    'Defaulting to "dice" method.')
+                    "Unrecognized longest common substring normalization. "
+                    'Defaulting to "dice" method.'
+                )
                 return lcs_value * 2 / (len(x[0]) + len(x[1]))
 
         # Average the two orderings, since lcs may be sensitive to comparison

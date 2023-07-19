@@ -6,7 +6,7 @@ from recordlinkage.measures import full_index_size
 
 
 def _map_tril_1d_on_2d(indices, dims):
-    """Map 1d indices on lower triangular matrix in 2d. """
+    """Map 1d indices on lower triangular matrix in 2d."""
 
     N = (dims * dims - dims) / 2
 
@@ -26,7 +26,7 @@ def random_pairs_with_replacement(n, shape, random_state=None):
     n_max = full_index_size(shape)
 
     if n_max <= 0:
-        raise ValueError('n_max must be larger than 0')
+        raise ValueError("n_max must be larger than 0")
 
     # make random pairs
     indices = random_state.randint(0, n_max, n, dtype=np.int64)
@@ -84,7 +84,6 @@ def random_pairs_without_replacement_low_memory(n, shape, random_state=None):
     # Run as long as the number of pairs is less than the requested number
     # of pairs n.
     while len(sample) < n:
-
         # The number of pairs to sample (sample twice as much record pairs
         # because the duplicates are dropped).
         n_sample_size = (n - len(sample)) * 2

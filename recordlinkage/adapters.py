@@ -3,7 +3,7 @@
 __all__ = ["SKLearnAdapter", "KerasAdapter"]
 
 
-class SKLearnAdapter(object):
+class SKLearnAdapter:
     """SciKit-learn adapter for record pair classification.
 
     SciKit-learn adapter for record pair classification with SciKit-learn
@@ -40,13 +40,12 @@ class SKLearnAdapter(object):
         except NotFittedError:
             raise NotFittedError(
                 "{} is not fitted yet. Call 'fit' with appropriate "
-                "arguments before using this method.".format(
-                    type(self).__name__))
+                "arguments before using this method.".format(type(self).__name__)
+            )
 
         return prediction
 
     def _fit(self, features, y=None):
-
         if y is None:  # unsupervised
             self.kernel.fit(features)
         else:
@@ -76,7 +75,7 @@ class SKLearnAdapter(object):
         return probs[:, match_class_position]
 
 
-class KerasAdapter(object):
+class KerasAdapter:
     """Keras adapter for record pair classification.
 
     Keras adapter for record pair classification with Keras models.
@@ -112,13 +111,12 @@ class KerasAdapter(object):
         except NotFittedError:
             raise NotFittedError(
                 "{} is not fitted yet. Call 'fit' with appropriate "
-                "arguments before using this method.".format(
-                    type(self).__name__))
+                "arguments before using this method.".format(type(self).__name__)
+            )
 
         return prediction
 
     def _fit(self, features, y=None):
-
         self.kernel.fit(features, y)
 
     def _prob_match(self, features):

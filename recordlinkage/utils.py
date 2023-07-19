@@ -9,7 +9,8 @@ import recordlinkage.config as cf
 
 # Errors and Exception handlers
 class IndexError(Exception):
-    """ Error class for errors related to indexing. """
+    """Error class for errors related to indexing."""
+
     pass
 
 
@@ -17,7 +18,7 @@ class LearningError(Exception):
     """Learning error"""
 
 
-class DeprecationHelper(object):
+class DeprecationHelper:
     """Deprecation helper for classes and functions.
 
     Based on https://stackoverflow.com/a/9008509/8727928
@@ -28,7 +29,6 @@ class DeprecationHelper(object):
         self.msg = msg
 
     def _warn(self):
-
         from warnings import warn
 
         if self.msg is None:
@@ -48,18 +48,18 @@ class DeprecationHelper(object):
 
 
 def return_type_deprecator(func):
-
     @wraps(func)
     def func_wrapper(*args, **kwargs):
-        return_type = kwargs.pop('return_type', None)
+        return_type = kwargs.pop("return_type", None)
         if return_type is not None:
             warnings.warn(
                 "The argument 'return_type' is deprecated in the next "
                 "version. Use recordlinkage.set_option('classification."
                 "return_type', '{}') instead.".format(return_type),
                 DeprecationWarning,
-                stacklevel=2)
-            with cf.option_context('classification.return_type', return_type):
+                stacklevel=2,
+            )
+            with cf.option_context("classification.return_type", return_type):
                 return func(*args, **kwargs)
         else:
             return func(*args, **kwargs)
@@ -108,10 +108,10 @@ def unique(x):
 
 
 def merge_dicts(*dict_args):
-    '''
+    """
     Given any number of dicts, shallow copy and merge into a new dict,
     precedence goes to key value pairs in latter dicts.
-    '''
+    """
     result = {}
     for dictionary in dict_args:
         result.update(dictionary)
@@ -149,10 +149,11 @@ def index_split(index, chunks):
     Ntotal = index.shape[0]
     Nsections = int(chunks)
     if Nsections <= 0:
-        raise ValueError('number sections must be larger than 0.')
+        raise ValueError("number sections must be larger than 0.")
     Neach_section, extras = divmod(Ntotal, Nsections)
-    section_sizes = ([0] + extras * [Neach_section + 1] +
-                     (Nsections - extras) * [Neach_section])
+    section_sizes = (
+        [0] + extras * [Neach_section + 1] + (Nsections - extras) * [Neach_section]
+    )
     div_points = numpy.array(section_sizes).cumsum()
 
     sub_ind = []
@@ -165,14 +166,14 @@ def index_split(index, chunks):
 
 
 def split_index(*args, **kwargs):
-
-    warnings.warn("Function will be removed in the future. Use index_split.",
-                  DeprecationWarning)
+    warnings.warn(
+        "Function will be removed in the future. Use index_split.", DeprecationWarning
+    )
 
     return index_split(*args, **kwargs)
 
 
-def frame_indexing(frame, multi_index, level_i, indexing_type='label'):
+def frame_indexing(frame, multi_index, level_i, indexing_type="label"):
     """Index dataframe based on one level of MultiIndex.
 
     Arguments

@@ -38,7 +38,7 @@ except AttributeError:
     _interactive = _sys.flags.interactive
 
 # Scope the tensorflow logger to not conflict with users' loggers
-_logger = _logging.getLogger('recordlinkage')
+_logger = _logging.getLogger("recordlinkage")
 
 # If we are in an interactive environment (like jupyter), set loglevel to info
 # and pipe the output to stdout

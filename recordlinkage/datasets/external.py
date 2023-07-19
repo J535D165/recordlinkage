@@ -31,7 +31,7 @@ def get_data_home(data_home=None):
         The path to recordlinkage data folder.
     """
     if data_home is None:
-        data_home = environ.get('RL_DATA', Path('~', 'rl_data'))
+        data_home = environ.get("RL_DATA", Path("~", "rl_data"))
     data_home = Path(data_home).expanduser()
 
     if not data_home.exists():
@@ -52,9 +52,9 @@ def clear_data_home(data_home=None):
     shutil.rmtree(str(data_home))
 
 
-def load_krebsregister(block=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-                       missing_values=None,
-                       shuffle=True):
+def load_krebsregister(
+    block=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], missing_values=None, shuffle=True
+):
     """Load the Krebsregister dataset.
 
     This dataset of comparison patterns was obtained in a
@@ -113,26 +113,22 @@ def load_krebsregister(block=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
 
     # If the data is not found, download it.
     for i in range(1, 11):
-
-        filepath = Path(get_data_home(), 'krebsregister',
-                        'block_{}.zip'.format(i))
+        filepath = Path(get_data_home(), "krebsregister", f"block_{i}.zip")
 
         if not filepath.is_file():
             _download_krebsregister()
             break
 
     if isinstance(block, (list, tuple)):
-
         data = pandas.concat([_krebsregister_block(bl) for bl in block])
     else:
-
         data = _krebsregister_block(block)
 
     if shuffle:
         data = data.sample(frac=1, random_state=535)
 
-    match_index = data.index[data['is_match']]
-    del data['is_match']
+    match_index = data.index[data["is_match"]]
+    del data["is_match"]
 
     if pandas.notnull(missing_values):
         data.fillna(missing_values, inplace=True)
@@ -141,14 +137,14 @@ def load_krebsregister(block=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
 
 
 def _download_krebsregister():
+    zip_file_url = (
+        "http://archive.ics.uci.edu/ml/" "machine-learning-databases/00210/donation.zip"
+    )
 
-    zip_file_url = "http://archive.ics.uci.edu/ml/" \
-        "machine-learning-databases/00210/donation.zip"
-
-    folder = Path(get_data_home(), 'krebsregister')
+    folder = Path(get_data_home(), "krebsregister")
 
     try:
-        print("Downloading data to {}.".format(folder))
+        print(f"Downloading data to {folder}.")
         r = urlopen(zip_file_url).read()
 
         # unzip the content and put it in the krebsregister folder
@@ -162,24 +158,30 @@ def _download_krebsregister():
 
 
 def _krebsregister_block(block):
-
     if block not in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]:
         raise ValueError(
             "Argument 'block' has to be integer in "
-            "[1, 2, 3, 4, 5, 6, 7, 8, 9, 10] or list of integers.")
+            "[1, 2, 3, 4, 5, 6, 7, 8, 9, 10] or list of integers."
+        )
 
-    fp_i = Path(get_data_home(), 'krebsregister', 'block_{}.zip'.format(block))
+    fp_i = Path(get_data_home(), "krebsregister", f"block_{block}.zip")
 
-    data_block = pandas.read_csv(fp_i,
-                                 index_col=['id_1', 'id_2'],
-                                 na_values='?',
-                                 compression='zip')
+    data_block = pandas.read_csv(
+        fp_i, index_col=["id_1", "id_2"], na_values="?", compression="zip"
+    )
 
     data_block.columns = [
-        'cmp_firstname1', 'cmp_firstname2', 'cmp_lastname1', 'cmp_lastname2',
-        'cmp_sex', 'cmp_birthday', 'cmp_birthmonth', 'cmp_birthyear',
-        'cmp_zipcode', 'is_match'
+        "cmp_firstname1",
+        "cmp_firstname2",
+        "cmp_lastname1",
+        "cmp_lastname2",
+        "cmp_sex",
+        "cmp_birthday",
+        "cmp_birthmonth",
+        "cmp_birthyear",
+        "cmp_zipcode",
+        "is_match",
     ]
-    data_block.index.names = ['id1', 'id2']
+    data_block.index.names = ["id1", "id2"]
 
     return data_block

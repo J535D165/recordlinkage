@@ -32,7 +32,7 @@ from numpy.random import random_sample
 
 from recordlinkage.base import BaseCompareFeature
 
-__all__ = ['RandomContinuous', 'RandomDiscrete']
+__all__ = ["RandomContinuous", "RandomDiscrete"]
 
 
 class RandomContinuous(BaseCompareFeature):
@@ -59,13 +59,12 @@ class RandomContinuous(BaseCompareFeature):
     description = "Feature for continuous random values."
 
     def __init__(self, a=0.0, b=1.0, label=None):
-        super(RandomContinuous, self).__init__([], [], label=label)
+        super().__init__([], [], label=label)
 
         self.a = a
         self.b = b
 
     def _compute_vectorized(self, args, y):
-
         random_values = random_sample(args.index.shape[0])
 
         if self.a != 0.0 or self.b != 1.0:
@@ -124,13 +123,12 @@ class RandomDiscrete(BaseCompareFeature):
     description = "Feature for discrete random values."
 
     def __init__(self, a=[0, 1], dtype=np.int64, label=None):
-        super(RandomDiscrete, self).__init__([], [], label=label)
+        super().__init__([], [], label=label)
 
         self.a = a
         self.dtype = dtype
 
     def _compute_vectorized(self, args, y):
-
         random_values = choice(self.a, args.index.shape[0])
         random_values = random_values.astype(self.dtype)
 
