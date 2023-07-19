@@ -23,8 +23,8 @@ jobs:
     - name: Package recordlinkage
       run: |
         pip install --upgrade pip
-        pip install wheel
-        python setup.py bdist_wheel sdist
+        pip install build
+        python -m build
     - name: Install recordlinkage
       run: |
         pip install networkx>=2
