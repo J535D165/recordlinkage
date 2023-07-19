@@ -35,6 +35,24 @@ extensions = [
 templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
+autodoc_member_order = "bysource"
+
+intersphinx_mapping = {
+    "python": ("https://docs.python.org/3/", None),
+    "pandas": ("https://pandas.pydata.org/pandas-docs/stable/", None),
+    "numpy": ("https://numpy.org/doc/stable/", None),
+    "sklearn": ("https://scikit-learn.org/stable/", None),
+}
+
+autodoc_mock_imports = [
+    "numpy",
+    "scipy",
+    "pandas",
+    "joblib",
+    "scikit-learn",
+    "jellyfish"
+]
+
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
@@ -102,17 +120,6 @@ htmlhelp_basename = "RecordLinkageToolkitdoc"
 # texinfo_no_detailmenu = False
 
 # -- Additional options ---------------------------------------------------
-
-autodoc_member_order = "bysource"
-
-intersphinx_mapping = {
-    "python": ("https://docs.python.org/3/", None),
-    "pandas": ("https://pandas.pydata.org/pandas-docs/stable/", None),
-    "numpy": ("https://numpy.org/doc/stable/", None),
-    "sklearn": ("https://scikit-learn.org/stable/", None),
-}
-
-autodoc_mock_imports = ["jellyfish"]
 
 # -- Napoleon options ---------------------------------------------------
 
