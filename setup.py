@@ -24,7 +24,7 @@ setup(
     version=versioneer.get_version(),
     cmdclass=versioneer.get_cmdclass(),
     author="Jonathan de Bruin",
-    author_email="jonathandebruinhome@gmail.com",
+    author_email="jonathandebruinos@gmail.com",
 
     platforms="any",
 
@@ -39,20 +39,20 @@ setup(
         "Development Status :: 4 - Beta",
         "License :: OSI Approved :: BSD License",
         "Programming Language :: Python",
-        "Programming Language :: Python :: 3.5",
-        "Programming Language :: Python :: 3.6",
-        "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3 :: Only"
     ],
 
     # Python version in line with pandas' python version support
     # https://pandas.pydata.org/docs/getting_started/install.html
-    python_requires=">=3.6",
+    python_requires=">=3.8",
     install_requires=[
         "jellyfish>=0.8.0",
         "numpy>=1.13.0",
-        "pandas>=1,<2",
+        "pandas>=1,<3",
         "scipy>=1",
         "scikit-learn>=0.19.0",
         "joblib"
