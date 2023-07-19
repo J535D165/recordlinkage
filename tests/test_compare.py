@@ -1286,7 +1286,7 @@ class TestCompareStrings(TestData):
         B = DataFrame({"col": [1, 1, 1, nan, nan]})
         ix = MultiIndex.from_arrays([A.index.values, B.index.values])
 
-        with pytest.raises(ValueError):
+        with pytest.raises((TypeError, AttributeError)):
             comp = recordlinkage.Compare()
             comp.string("col", "col", method=alg)
             comp.compute(ix, A, B)
