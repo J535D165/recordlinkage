@@ -40,8 +40,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - name: Lint with ruff
+      uses: actions/setup-python@v1
+    - name: Install ruff
       run: |
         pip install ruff
-        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-
+    - name: Lint with ruff
+      run: |
+        ruff .
