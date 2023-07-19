@@ -44,6 +44,15 @@ intersphinx_mapping = {
     "sklearn": ("https://scikit-learn.org/stable/", None),
 }
 
+autodoc_mock_imports = [
+    "numpy",
+    "scipy",
+    "pandas",
+    "joblib",
+    "scikit-learn",
+    "jellyfish"
+]
+
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output

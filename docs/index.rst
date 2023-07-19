@@ -33,7 +33,6 @@ All you need to start linking records.
 	:maxdepth: 2
 
 	annotation
-	guides/classifiers.rst
 	performance.rst
 
 .. toctree::
