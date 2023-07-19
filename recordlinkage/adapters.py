@@ -38,10 +38,10 @@ class SKLearnAdapter:
         try:
             prediction = self.kernel.predict(features)
         except NotFittedError as err:
-            raise NotFittedError from err(
+            raise NotFittedError(
                 "{} is not fitted yet. Call 'fit' with appropriate "
                 "arguments before using this method.".format(type(self).__name__)
-            )
+            ) from err
 
         return prediction
 
@@ -109,10 +109,10 @@ class KerasAdapter:
         try:
             prediction = self.kernel.predict_classes(features)[:, 0]
         except NotFittedError as err:
-            raise NotFittedError from err(
+            raise NotFittedError(
                 "{} is not fitted yet. Call 'fit' with appropriate "
                 "arguments before using this method.".format(type(self).__name__)
-            )
+            ) from err
 
         return prediction
 

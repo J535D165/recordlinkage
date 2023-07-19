@@ -868,7 +868,6 @@ class BaseClassifier(metaclass=ABCMeta):
         )
         return self.fit_predict(*args, **kwargs)
 
-    @abstractmethod
     def _initialise_classifier(self, comparison_vectors):
         """Initialise the classifier.
 
@@ -877,7 +876,7 @@ class BaseClassifier(metaclass=ABCMeta):
         comparison_vectors : pandas.DataFrame
             The comparison vectors (or features) to fit the classifier with.
         """
-        pass
+        return
 
     @abstractmethod
     def _fit(self, *args, **kwargs):
@@ -999,7 +998,6 @@ class BaseClassifier(metaclass=ABCMeta):
         # format and return the result
         return self._return_result(prediction, comparison_vectors)
 
-    @abstractmethod
     def _post_predict(self, result):
         """Method called after prediction.
 
@@ -1008,7 +1006,7 @@ class BaseClassifier(metaclass=ABCMeta):
         result : pandas.Series
             The resulting classification.
         """
-        pass
+        return
 
     @abstractmethod
     def _prob_match(self, *args, **kwargs):

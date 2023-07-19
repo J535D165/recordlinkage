@@ -415,14 +415,14 @@ class LogisticRegressionClassifier(SKLearnAdapter, Classifier):
                 self.kernel.classes_ = numpy.array([0, 1])
 
             if not fit_bool:
-                raise NotFittedError
+                raise NotFittedError()
 
             prediction = self.kernel.predict(features)
         except NotFittedError as err:
-            raise NotFittedError from err(
+            raise NotFittedError(
                 "{} is not fitted yet. Call 'fit' with appropriate "
                 "arguments before using this method.".format(type(self).__name__)
-            )
+            ) from err
 
         return prediction
 
