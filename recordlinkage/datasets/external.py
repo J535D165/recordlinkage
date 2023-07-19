@@ -52,9 +52,7 @@ def clear_data_home(data_home=None):
     shutil.rmtree(str(data_home))
 
 
-def load_krebsregister(
-    block=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], missing_values=None, shuffle=True
-):
+def load_krebsregister(block=None, missing_values=None, shuffle=True):
     """Load the Krebsregister dataset.
 
     This dataset of comparison patterns was obtained in a
@@ -97,7 +95,8 @@ def load_krebsregister(
     ----------
     block : int, list
         An integer or a list with integers between 1 and 10. The
-        blocks are the blocks explained in the description.
+        blocks are the blocks explained in the description. Default
+        all 1 to 10.
     missing_values : object, int, float
         The value of the missing values. Default NaN.
     shuffle : bool
@@ -110,6 +109,9 @@ def load_krebsregister(
         pandas.MultiIndex with the indices of the matches.
 
     """
+
+    if block is None:
+        block = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 
     # If the data is not found, download it.
     for i in range(1, 11):
