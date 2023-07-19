@@ -539,6 +539,7 @@ class BaseCompare:
                 "http://recordlinkage.readthedocs.io/"
                 "en/latest/ref-compare.html",
                 DeprecationWarning,
+                stacklevel=2,
             )
 
     def __repr__(self):
@@ -857,18 +858,17 @@ class BaseClassifier(metaclass=ABCMeta):
     unsupervised learning.
     """
 
-    def __init__(self):
-        pass
-
     def learn(self, *args, **kwargs):
         """[DEPRECATED] Use 'fit_predict'."""
 
         warnings.warn(
             "learn is deprecated, {}.fit_predict "
-            "instead".format(self.__class__.__name__)
+            "instead".format(self.__class__.__name__),
+            stacklevel=2,
         )
         return self.fit_predict(*args, **kwargs)
 
+    @abstractmethod
     def _initialise_classifier(self, comparison_vectors):
         """Initialise the classifier.
 
@@ -920,7 +920,7 @@ class BaseClassifier(metaclass=ABCMeta):
                     raise LearningError(
                         "both matches and non-matches needed in the"
                         + "trainingsdata, only non-matches found"
-                    )
+                    ) from err
                 else:
                     raise err
 
@@ -999,6 +999,7 @@ class BaseClassifier(metaclass=ABCMeta):
         # format and return the result
         return self._return_result(prediction, comparison_vectors)
 
+    @abstractmethod
     def _post_predict(self, result):
         """Method called after prediction.
 

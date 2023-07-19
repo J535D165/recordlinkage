@@ -181,8 +181,8 @@ class ConnectedComponents:
 
         try:
             import networkx as nx
-        except ImportError():
-            raise Exception("'networkx' module is needed for this operation")
+        except ImportError as err:
+            raise Exception("'networkx' module is needed for this operation") from err
 
         graph_pairs = nx.Graph()
         graph_pairs.add_edges_from(links.values)

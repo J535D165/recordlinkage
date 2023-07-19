@@ -347,7 +347,8 @@ class NaiveBayes(BaseNB):
         if np.min(self.alpha) < _ALPHA_MIN:
             warnings.warn(
                 "alpha too small will result in numeric errors, "
-                "setting alpha = %.1e" % _ALPHA_MIN
+                "setting alpha = %.1e" % _ALPHA_MIN,
+                stacklevel=2,
             )
             return np.maximum(self.alpha, _ALPHA_MIN)
         return self.alpha
@@ -623,7 +624,8 @@ class ECM(BaseNB):
             if np.all(np.isnan(feature_log_prob_)):
                 logging.warning(
                     "ECM algorithm might not converged correctly after "
-                    "{} iterations".format(iteration)
+                    "{} iterations".format(iteration),
+                    stacklevel=2,
                 )
                 break
 

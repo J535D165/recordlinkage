@@ -404,8 +404,8 @@ class Date(BaseCompareFeature):
                 try:
                     if not all([len(x) == 3 for x in self.swap_months]):
                         raise Exception
-                except Exception:
-                    raise ValueError(
+                except Exception as err:
+                    raise ValueError from err(
                         "swap_months must be a list of (first month, \
                         second month, value) tuples or lists. "
                     )

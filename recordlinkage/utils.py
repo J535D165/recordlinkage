@@ -167,7 +167,9 @@ def index_split(index, chunks):
 
 def split_index(*args, **kwargs):
     warnings.warn(
-        "Function will be removed in the future. Use index_split.", DeprecationWarning
+        "Function will be removed in the future. Use index_split.",
+        DeprecationWarning,
+        stacklevel=2,
     )
 
     return index_split(*args, **kwargs)

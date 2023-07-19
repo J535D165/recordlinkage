@@ -6,8 +6,8 @@ import tensorflow as tf
 
 try:
     from tensorflow.keras import layers
-except ModuleNotFoundError:
-    raise ModuleNotFoundError("Please upgrade tensorflow.")
+except ModuleNotFoundError as err:
+    raise ModuleNotFoundError("Please upgrade tensorflow.") from err
 
 import recordlinkage as rl
 from recordlinkage.adapters import KerasAdapter

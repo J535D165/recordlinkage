@@ -47,9 +47,7 @@ class FellegiSunter:
         # TODO: add notfitted warnings
         if self.kernel.classes_.shape[0] != 2:
             raise ValueError(
-                "Number of classes is {}, expected 2.".format(
-                    self.kernel.classes_.shape[0]
-                )
+                f"Number of classes is {self.kernel.classes_.shape[0]}, expected 2."
             )
 
         # # get the position of match probabilities
@@ -63,9 +61,7 @@ class FellegiSunter:
         # TODO: add notfitted warnings
         if self.kernel.classes_.shape[0] != 2:
             raise ValueError(
-                "Number of classes is {}, expected 2.".format(
-                    self.kernel.classes_.shape[0]
-                )
+                f"Number of classes is {self.kernel.classes_.shape[0]}, expected 2."
             )
 
         # # get the position of match probabilities
@@ -422,8 +418,8 @@ class LogisticRegressionClassifier(SKLearnAdapter, Classifier):
                 raise NotFittedError
 
             prediction = self.kernel.predict(features)
-        except NotFittedError:
-            raise NotFittedError(
+        except NotFittedError as err:
+            raise NotFittedError from err(
                 "{} is not fitted yet. Call 'fit' with appropriate "
                 "arguments before using this method.".format(type(self).__name__)
             )
@@ -567,13 +563,12 @@ class ECMClassifier(FellegiSunter, SKLearnAdapter, Classifier):
         max_iter=100,
         atol=10e-5,
         use_col_names=True,
-        *args,
         **kwargs,
     ):
         super().__init__(use_col_names=use_col_names)
 
         self.kernel = ECM(
-            init=init, binarize=binarize, max_iter=max_iter, atol=atol, *args, **kwargs
+            init=init, binarize=binarize, max_iter=max_iter, atol=atol, **kwargs
         )
 
     def fit(self, X, *args, **kwargs):

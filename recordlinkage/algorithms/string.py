@@ -351,7 +351,8 @@ def smith_waterman_similarity(
             else:
                 warnings.warn(
                     "Unrecognized longest common substring normalization. "
-                    'Defaulting to "mean" method.'
+                    'Defaulting to "mean" method.',
+                    stacklevel=2,
                 )
                 return 2 * score / ((len(str1) + len(str2)) * match)
 
@@ -546,7 +547,8 @@ def longest_common_substring_similarity(s1, s2, norm="dice", min_len=2):
             else:
                 warnings.warn(
                     "Unrecognized longest common substring normalization. "
-                    'Defaulting to "dice" method.'
+                    'Defaulting to "dice" method.',
+                    stacklevel=2,
                 )
                 return lcs_value * 2 / (len(x[0]) + len(x[1]))
 

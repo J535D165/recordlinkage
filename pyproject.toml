@@ -49,6 +49,8 @@ write_to = "recordlinkage/_version.py"
 
 [tool.ruff]
 select = ["E", "F", "UP", "I", "B"]
+ignore = ["B006"]
+exclude = ["docs/conf.py"]
 
 [tool.ruff.isort]
 force-single-line = true

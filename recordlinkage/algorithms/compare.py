@@ -58,11 +58,11 @@ def _compare_dates(
             try:
                 if not all([len(x) == 3 for x in swap_months]):
                     raise Exception
-            except Exception:
+            except Exception as err:
                 raise ValueError(
                     "swap_months must be a list of (first month, \
                     second month, value) tuples or lists. "
-                )
+                ) from err
 
         for month1, month2, value in swap_months:
             # if isinstance(value, float):
