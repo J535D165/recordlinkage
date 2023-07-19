@@ -1,6 +1,8 @@
 
 recordlinkage/datasets/krebsregister/*
 
+recordlinkage/_version.py
+
 
 .DS_Store
 */.DS_Store
