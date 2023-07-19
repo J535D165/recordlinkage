@@ -1,11 +1,5 @@
-include versioneer.py
-include recordlinkage/_version.py
-
 recursive-include recordlinkage/datasets/febrl *.csv
 recursive-include recordlinkage/datasets/krebsregister *.csv
 
-
 global-exclude test_*.py
 global-exclude *_test.py
-
-
