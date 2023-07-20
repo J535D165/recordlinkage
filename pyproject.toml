@@ -1,0 +1,57 @@
+[project]
+name = "recordlinkage"
+description = "A record linkage toolkit for linking and deduplication"
+authors = [
+    { name = "Jonathan de Bruin", email = "jonathandebruinos@gmail.com" }
+]
+readme = "README.md"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "License :: OSI Approved :: BSD License",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11"
+]
+license = {text = "BSD-3-Clause"}
+dependencies = [
+    "jellyfish>=1",
+    "numpy>=1.13",
+    "pandas>=1,<3",
+    "scipy>=1",
+    "scikit-learn>=1",
+    "joblib"
+]
+dynamic = ["version"]
+requires-python = ">=3.8"
+
+[project.urls]
+homepage = "https://recordlinkage.readthedocs.io/"
+repository = "https://github.com/J535D165/recordlinkage"
+
+[project.optional-dependencies]
+all = ["networkx>=2", "bottleneck", "numexpr"]
+lint = ["ruff"]
+docs = ["sphinx", "nbsphinx", "sphinx-rtd-theme", "ipykernel"]
+test = ["pytest"]
+
+[build-system]
+build-backend = 'setuptools.build_meta'
+requires = ["setuptools>=45", "setuptools_scm[toml]>=6.2"]
+
+[tool.setuptools]
+packages = ["recordlinkage"]
+
+[tool.setuptools.package-data]
+"*" = ["*.csv"]
+
+[tool.setuptools_scm]
+write_to = "recordlinkage/_version.py"
+
+[tool.ruff]
+select = ["E", "F", "UP", "I", "B"]
+ignore = ["B006"]
+exclude = ["docs/conf.py"]
+
+[tool.ruff.isort]
+force-single-line = true

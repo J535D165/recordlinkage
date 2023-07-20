@@ -9,30 +9,26 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.8", "3.9", "3.10"]
-
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
+        pandas-version: ["1.0", "2.0"]
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v1
       with:
         python-version: ${{ matrix.python-version }}
+    - name: Install pandas
+      run: |
+        pip install pandas~=${{ matrix.pandas-version }}
     - name: Package recordlinkage
       run: |
         pip install --upgrade pip
-        pip install wheel
-        python setup.py bdist_wheel sdist
+        pip install build
+        python -m build
     - name: Install recordlinkage
       run: |
         pip install networkx>=2
         pip install ./dist/recordlinkage-*.whl
-    - name: Lint with flake8
-      run: |
-        pip install flake8
-        # stop the build if there are Python syntax errors or undefined names
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        # exit-zero treats all errors as warnings
-        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with pytest
       run: |
         pip install pytest
@@ -40,3 +36,14 @@ jobs:
         # this is like wrapping stuff in a src folder
         rm -r recordlinkage/
         pytest
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v1
+    - name: Install ruff
+      run: |
+        pip install ruff
+    - name: Lint with ruff
+      run: |
+        ruff .

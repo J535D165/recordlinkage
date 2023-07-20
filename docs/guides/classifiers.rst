@@ -189,6 +189,7 @@ training data available. The implementation of SVM in the Python Record
 Linkage Toolkit is a linear SVM algorithm.
 
 .. ipython::
+    :okwarning:
 
     In [0]: # Train the classifier
        ...: svm = rl.SVMClassifier()

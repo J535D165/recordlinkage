@@ -128,15 +128,12 @@ examples to share, let us know.
 
 ## Installation
 
-The Python Record linkage Toolkit requires Python 3.6 or higher. Install the
+The Python Record linkage Toolkit requires Python 3.8 or higher. Install the
 package easily with pip
 
 ``` sh
 pip install recordlinkage
 ```
-
-Python 2.7 users can use version \<= 0.13, but it is advised to use
-Python \>= 3.5.
 
 The toolkit depends on popular packages like
 [Pandas](https://github.com/pydata/pandas),

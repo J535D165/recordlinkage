@@ -85,7 +85,7 @@ String comparing
 Comparing strings is computationally expensive. The Python Record Linkage
 Toolkit uses the package ``jellyfish`` for string comparisons. The package has
 two implementations, a C and a Python implementation. Ensure yourself of
-having the C-version installed (``import jellyfish.cjellyfish`` should not
+having the Rust-version installed (``import jellyfish.rustyfish`` should not
 raise an exception).
 
 There can be a large difference in the performance of different string
