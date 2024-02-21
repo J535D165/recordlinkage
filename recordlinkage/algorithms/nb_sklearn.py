@@ -35,6 +35,8 @@ __all__ = ["NaiveBayes", "ECM"]
 
 _ALPHA_MIN = 1e-10
 
+def log(x):
+    return np.log(x + np.finfo(float).eps)
 
 def check_is_fitted(estimator, attributes, msg=None, all_or_any=all):
     """Perform is_fitted validation for estimator.
@@ -595,10 +597,10 @@ class ECM(BaseNB):
             g_freq_sum = g_freq.sum(axis=0)
 
             # maximisation step
-            class_log_prior_ = np.log(g_freq_sum) - np.log(X.shape[0])  # p
+            class_log_prior_ = log(g_freq_sum) - log(X.shape[0])  # p
             feature_prob_ = safe_sparse_dot(g_freq.T, X_unique_bin)
-            feature_log_prob_ = np.log(feature_prob_)
-            feature_log_prob_ -= np.log(np.atleast_2d(g_freq_sum).T)
+            feature_log_prob_ = log(feature_prob_)
+            feature_log_prob_ -= log(np.atleast_2d(g_freq_sum).T)
 
             # Stop iterating when the class prior and feature probs are close
             # to the values in the to previous iteration (parameters starting
