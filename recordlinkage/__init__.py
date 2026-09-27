@@ -1,11 +1,5 @@
 # register the configuration
 import recordlinkage.config_init  # noqa
-from recordlinkage.classifiers import FellegiSunter
-from recordlinkage.classifiers import KMeansClassifier
-from recordlinkage.classifiers import LogisticRegressionClassifier
-from recordlinkage.classifiers import NaiveBayesClassifier
-from recordlinkage.classifiers import SVMClassifier
-from recordlinkage.classifiers import ECMClassifier
 from recordlinkage.measures import reduction_ratio
 from recordlinkage.measures import max_pairs
 from recordlinkage.measures import full_index_size
@@ -42,6 +36,27 @@ try:
 except ImportError:
     __version__ = "0.0.0"
     __version_tuple__ = (0, 0, 0)
+
+# Classification is optional for comparison workers. Keep the public names lazy.
+_CLASSIFIER_NAMES = frozenset(
+    {"FellegiSunter", "KMeansClassifier", "LogisticRegressionClassifier",
+     "NaiveBayesClassifier", "SVMClassifier", "ECMClassifier"}
+)
+
+
+def __getattr__(name):
+    if name in _CLASSIFIER_NAMES:
+        from importlib import import_module
+
+        value = getattr(import_module("recordlinkage.classifiers"), name)
+        globals()[name] = value
+        return value
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
+def __dir__():
+    return sorted(set(globals()) | _CLASSIFIER_NAMES)
+
 
 
 __all__ = [

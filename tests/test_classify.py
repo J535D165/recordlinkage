@@ -623,3 +623,52 @@ class TestFellegiSunter(TestClassifyData):
     #     cl.fit(self.X_train, self.y_train)
     #     cl.predict(self.X_test)
     #     cl.prob(self.X_train)
+
+
+def test_comparison_import_does_not_load_classifiers_or_sklearn():
+    import subprocess
+    import sys
+
+    # Import order matters: this must run in a fresh interpreter.
+    code = """
+import sys
+
+class BlockSklearn:
+    def find_spec(self, fullname, path=None, target=None):
+        if fullname == 'sklearn' or fullname.startswith('sklearn.'):
+            raise ModuleNotFoundError(fullname)
+
+sys.meta_path.insert(0, BlockSklearn())
+import recordlinkage as rl
+from recordlinkage import Compare, Index
+import recordlinkage.algorithms.string as string
+assert Compare is rl.Compare and Index is rl.Index
+assert 'recordlinkage.classifiers' not in sys.modules
+assert 'KMeansClassifier' in dir(rl)
+assert callable(string.levenshtein_similarity)
+"""
+    result = subprocess.run(
+        [sys.executable, "-B", "-c", code], capture_output=True, text=True
+    )
+    assert result.returncode == 0, result.stderr
+
+
+def test_lazy_classifier_exports_keep_public_identity():
+    import subprocess
+    import sys
+
+    code = """
+import recordlinkage as rl
+import recordlinkage.classifiers as classifiers
+from recordlinkage import *
+for name in ('FellegiSunter', 'KMeansClassifier',
+             'LogisticRegressionClassifier', 'NaiveBayesClassifier',
+             'SVMClassifier', 'ECMClassifier'):
+    assert name in rl.__all__ and name in dir(rl)
+    assert globals()[name] is getattr(rl, name)
+    assert getattr(rl, name) is getattr(classifiers, name)
+"""
+    result = subprocess.run(
+        [sys.executable, "-B", "-c", code], capture_output=True, text=True
+    )
+    assert result.returncode == 0, result.stderr

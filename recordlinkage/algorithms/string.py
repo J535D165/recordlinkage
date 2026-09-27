@@ -2,7 +2,6 @@ import warnings
 
 import numpy as np
 import pandas
-from sklearn.feature_extraction.text import CountVectorizer
 
 # Ingore zero devision errors in cosine and qgram algorithms
 # warnings.filterwarnings("ignore")
@@ -13,7 +12,7 @@ from sklearn.feature_extraction.text import CountVectorizer
 
 
 def jaro_similarity(s1, s2):
-    conc = pandas.Series(list(zip(s1, s2)))
+    pairs = list(zip(s1, s2))
 
     from jellyfish import jaro_similarity
 
@@ -26,11 +25,11 @@ def jaro_similarity(s1, s2):
             else:
                 raise err
 
-    return conc.apply(jaro_apply)
+    return pandas.Series([jaro_apply(pair) for pair in pairs])
 
 
 def jarowinkler_similarity(s1, s2):
-    conc = pandas.Series(list(zip(s1, s2)))
+    pairs = list(zip(s1, s2))
 
     from jellyfish import jaro_winkler_similarity
 
@@ -43,46 +42,54 @@ def jarowinkler_similarity(s1, s2):
             else:
                 raise err
 
-    return conc.apply(jaro_winkler_apply)
+    return pandas.Series([jaro_winkler_apply(pair) for pair in pairs])
 
 
 def levenshtein_similarity(s1, s2):
-    conc = pandas.Series(list(zip(s1, s2)))
+    pairs = list(zip(s1, s2))
 
     from jellyfish import levenshtein_distance
 
     def levenshtein_apply(x):
         try:
-            return 1 - levenshtein_distance(x[0], x[1]) / np.max([len(x[0]), len(x[1])])
+            distance = levenshtein_distance(x[0], x[1])
+            longest = max(len(x[0]), len(x[1]))
+            if longest == 0:
+                longest = np.int64(0)
+            return 1 - distance / longest
         except Exception as err:
             if pandas.isnull(x[0]) or pandas.isnull(x[1]):
                 return np.nan
             else:
                 raise err
 
-    return conc.apply(levenshtein_apply)
+    return pandas.Series([levenshtein_apply(pair) for pair in pairs])
 
 
 def damerau_levenshtein_similarity(s1, s2):
-    conc = pandas.Series(list(zip(s1, s2)))
+    pairs = list(zip(s1, s2))
 
     from jellyfish import damerau_levenshtein_distance
 
     def damerau_levenshtein_apply(x):
         try:
-            return 1 - damerau_levenshtein_distance(x[0], x[1]) / np.max(
-                [len(x[0]), len(x[1])]
-            )
+            distance = damerau_levenshtein_distance(x[0], x[1])
+            longest = max(len(x[0]), len(x[1]))
+            if longest == 0:
+                longest = np.int64(0)
+            return 1 - distance / longest
         except Exception as err:
             if pandas.isnull(x[0]) or pandas.isnull(x[1]):
                 return np.nan
             else:
                 raise err
 
-    return conc.apply(damerau_levenshtein_apply)
+    return pandas.Series([damerau_levenshtein_apply(pair) for pair in pairs])
 
 
 def qgram_similarity(s1, s2, include_wb=True, ngram=(2, 2)):
+    from sklearn.feature_extraction.text import CountVectorizer
+
     if len(s1) != len(s2):
         raise ValueError("Arrays or Series have to be same length.")
 
@@ -119,6 +126,8 @@ def qgram_similarity(s1, s2, include_wb=True, ngram=(2, 2)):
 
 
 def cosine_similarity(s1, s2, include_wb=True, ngram=(2, 2)):
+    from sklearn.feature_extraction.text import CountVectorizer
+
     if len(s1) != len(s2):
         raise ValueError("Arrays or Series have to be same length.")
 
@@ -557,3 +566,15 @@ def longest_common_substring_similarity(s1, s2, norm="dice", min_len=2):
         return (normalize_lcs(lcs_acc_1) + normalize_lcs(lcs_acc_2)) / 2
 
     return conc.apply(lcs_apply)
+
+
+def __getattr__(name):
+    if name == "CountVectorizer":
+        from sklearn.feature_extraction.text import CountVectorizer
+
+        return CountVectorizer
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
+def __dir__():
+    return sorted(set(globals()) | {"CountVectorizer"})
