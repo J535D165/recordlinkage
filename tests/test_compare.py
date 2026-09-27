@@ -1489,3 +1489,24 @@ class TestCompareVariable:
         expected = Series(arrayA, index=ix)
         expected.iloc[90:] = missing_value
         pdt.assert_series_equal(result, expected)
+
+
+@pytest.mark.parametrize(
+    "similarity_name", ["levenshtein_similarity", "damerau_levenshtein_similarity"]
+)
+def test_edit_distance_empty_missing_and_series_contract(similarity_name):
+    from recordlinkage.algorithms import string
+
+    left = Series(["", "", "ab", None, "ab"], index=[10, 20, 30, 40, 50])
+    right = Series(["", "ab", "ac", "ab", nan], index=[50, 40, 30, 20, 10])
+    left_before = left.copy(deep=True)
+    right_before = right.copy(deep=True)
+
+    # Two empty strings retain the NumPy zero-division warning and NaN result.
+    with pytest.warns(RuntimeWarning):
+        actual = getattr(string, similarity_name)(left, right)
+
+    expected = Series([nan, 0.0, 0.5, nan, nan], dtype="float64")
+    pdt.assert_series_equal(actual, expected)
+    pdt.assert_series_equal(left, left_before)
+    pdt.assert_series_equal(right, right_before)
